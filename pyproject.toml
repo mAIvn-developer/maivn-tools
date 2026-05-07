@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "maivn-tools"
+dynamic = ["version"]
+description = "Optional tool integrations for the mAIvn Python SDK"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Chad Heathcote", email = "developer@maivn.io" }]
+keywords = ["maivn", "tools", "ai", "agents", "sdk"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "maivn>=0.2.0,<0.3.0",
+]
+
+[project.urls]
+Homepage = "https://maivn.io"
+Repository = "https://github.com/mAIvn-developer/maivn-tools"
+Issues = "https://github.com/mAIvn-developer/maivn-tools/issues"
+Changelog = "https://github.com/mAIvn-developer/maivn-tools/blob/master/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.409",
+    "pytest>=9.0.3",
+    "ruff>=0.15.12,<1",
+]
+
+[tool.hatch.version]
+path = "src/maivn_tools/__version__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/maivn_tools"]
+include = ["src/maivn_tools/py.typed"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = []
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
+[tool.pyright]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+
+[tool.pytest.ini_options]
+addopts = "-q -ra --strict-config --strict-markers"
+testpaths = ["tests"]
