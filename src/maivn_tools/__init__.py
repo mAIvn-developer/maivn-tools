@@ -1,0 +1,7 @@
+"""Optional tool integrations for the mAIvn Python SDK."""
+
+from __future__ import annotations
+
+from .__version__ import __version__
+
+__all__ = ["__version__"]
