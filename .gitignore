@@ -8,3 +8,15 @@ dist/
 htmlcov/
 .coverage
 uv.lock
+
+# Internal planning documents. Keep these out of public repository/docs pushes.
+private-docs/
+docs/OFFICIAL_TOOL_SET_OUTLINE.md
+docs/OFFICIAL_TOOL_SET_IMPLEMENTATION_TRACKER.md
+
+# Local-only agent adapters that point agents at private planning documents.
+AGENTS.md
+CLAUDE.md
+CLAUDE.local.md
+.windsurf/
+.cursor/
