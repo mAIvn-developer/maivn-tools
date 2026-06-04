@@ -15,16 +15,31 @@ keywords = ["maivn", "tools", "ai", "agents", "sdk"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
 dependencies = [
-    "maivn>=0.2.0,<0.3.0",
+    "maivn>=0.3.0,<0.4.0",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.1"]
+pdf = ["pypdf>=4.0"]
+docx = ["python-docx>=1.0"]
+html = []
+all = [
+    "psycopg[binary]>=3.1",
+    "pypdf>=4.0",
+    "python-docx>=1.0",
 ]
 
 [project.urls]
@@ -63,5 +78,5 @@ pythonVersion = "3.10"
 typeCheckingMode = "basic"
 
 [tool.pytest.ini_options]
-addopts = "-q -ra --strict-config --strict-markers"
+addopts = "-q -ra --strict-config --strict-markers --import-mode=importlib"
 testpaths = ["tests"]
