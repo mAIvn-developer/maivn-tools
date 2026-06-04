@@ -1,0 +1,23 @@
+{
+  "venvPath": "../..",
+  "venv": ".venv",
+  "typeCheckingMode": "strict",
+  "include": [
+    "src",
+    "tests"
+  ],
+  "exclude": [
+    ".venv",
+    ".deps"
+  ],
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "extraPaths": [
+        "src",
+        "../../libraries/maivn/src",
+        "../../libraries/maivn-shared/src"
+      ]
+    }
+  ]
+}
