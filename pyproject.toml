@@ -27,7 +27,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "maivn>=0.3.0,<0.4.0",
+    "maivn>=0.4.0,<0.5.0",
     "pydantic>=2.0",
 ]
 
