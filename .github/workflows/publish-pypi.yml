@@ -28,7 +28,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
 
       - name: Validate release version
-        run: uv run --with packaging --no-project python scripts/release_guard.py
+        # release_guard imports tomllib (3.11+ stdlib). This repo's .python-version
+        # pins 3.10, which uv honors even with --no-project, so pin 3.12 here.
+        run: uv run --with packaging --no-project --python 3.12 python scripts/release_guard.py
 
       - name: Build distributions
         run: uv build
