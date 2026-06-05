@@ -44,6 +44,7 @@ all = [
 
 [project.urls]
 Homepage = "https://maivn.io"
+Documentation = "https://developer.maivn.io/docs"
 Repository = "https://github.com/mAIvn-developer/maivn-tools"
 Issues = "https://github.com/mAIvn-developer/maivn-tools/issues"
 Changelog = "https://github.com/mAIvn-developer/maivn-tools/blob/master/CHANGELOG.md"
