@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_FOLDER_ITEMS_OUTPUT, SEARCH_OUTPUT
 
 
 def _extract_box_id(candidate: Any, *, key_hints: tuple[str, ...] = ()) -> str:
@@ -185,6 +186,7 @@ class BoxToolSet:
         return self._client.get(f"/2.0/folders/{folder_id}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_FOLDER_ITEMS_OUTPUT)
     def list_folder_items(
         self,
         folder_id: Any = "0",
@@ -386,6 +388,7 @@ class BoxToolSet:
     # MARK: - Search
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_OUTPUT)
     def search(
         self,
         query: str,

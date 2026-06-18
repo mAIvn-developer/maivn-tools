@@ -29,13 +29,21 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_BRANCHES_OUTPUT,
+    LIST_COMMITS_OUTPUT,
+    LIST_ISSUES_OUTPUT,
+    LIST_MERGE_REQUESTS_OUTPUT,
+    LIST_PIPELINES_OUTPUT,
+    LIST_PROJECTS_OUTPUT,
+)
 
 _SHA_DISPLAY_LEN = 8
 
@@ -354,6 +362,7 @@ class GitLabToolSet:
     # MARK: - Projects
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PROJECTS_OUTPUT)
     def list_projects(
         self,
         *,
@@ -420,6 +429,7 @@ class GitLabToolSet:
     # MARK: - Issues
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ISSUES_OUTPUT)
     def list_issues(
         self,
         project: str | int | dict[str, Any],
@@ -569,6 +579,7 @@ class GitLabToolSet:
     # MARK: - Merge requests
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_MERGE_REQUESTS_OUTPUT)
     def list_merge_requests(
         self,
         project: str | int | dict[str, Any],
@@ -692,6 +703,7 @@ class GitLabToolSet:
     # MARK: - Pipelines
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PIPELINES_OUTPUT)
     def list_pipelines(
         self,
         project: str | int | dict[str, Any],
@@ -795,6 +807,7 @@ class GitLabToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_BRANCHES_OUTPUT)
     def list_branches(
         self,
         project: str | int | dict[str, Any],
@@ -831,6 +844,7 @@ class GitLabToolSet:
         return {"branches": summaries, "count": len(summaries)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_COMMITS_OUTPUT)
     def list_commits(
         self,
         project: str | int | dict[str, Any],

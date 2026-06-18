@@ -32,13 +32,25 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_BRANCHES_OUTPUT,
+    LIST_COMMITS_OUTPUT,
+    LIST_ISSUES_OUTPUT,
+    LIST_PULL_REQUESTS_OUTPUT,
+    LIST_RELEASES_OUTPUT,
+    LIST_REPOSITORIES_OUTPUT,
+    LIST_WORKFLOW_RUNS_OUTPUT,
+    LIST_WORKFLOWS_OUTPUT,
+    SEARCH_ISSUES_OUTPUT,
+    SEARCH_REPOSITORIES_OUTPUT,
+)
 
 GITHUB_API_URL = "https://api.github.com"
 GITHUB_ACCEPT_HEADER = "application/vnd.github+json"
@@ -453,6 +465,7 @@ class GitHubToolSet:
     # MARK: - Repositories
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_REPOSITORIES_OUTPUT)
     def list_repositories(
         self,
         type: str = "owner",
@@ -509,6 +522,7 @@ class GitHubToolSet:
     # MARK: - Issues
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ISSUES_OUTPUT)
     def list_issues(
         self,
         owner: str,
@@ -633,6 +647,7 @@ class GitHubToolSet:
     # MARK: - Pull requests
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PULL_REQUESTS_OUTPUT)
     def list_pull_requests(
         self,
         owner: str,
@@ -750,6 +765,7 @@ class GitHubToolSet:
         return self._client.get("/search/code", params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_ISSUES_OUTPUT)
     def search_issues(
         self,
         query: str,
@@ -803,6 +819,7 @@ class GitHubToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_REPOSITORIES_OUTPUT)
     def search_repositories(
         self,
         query: str,
@@ -1293,6 +1310,7 @@ class GitHubToolSet:
     # MARK: - Branches, commits, refs
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_BRANCHES_OUTPUT)
     def list_branches(
         self,
         owner: str,
@@ -1386,6 +1404,7 @@ class GitHubToolSet:
         return {"branch": branch_name, "deleted": True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_COMMITS_OUTPUT)
     def list_commits(
         self,
         owner: str,
@@ -1556,6 +1575,7 @@ class GitHubToolSet:
     # MARK: - Releases
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_RELEASES_OUTPUT)
     def list_releases(
         self,
         owner: str,
@@ -1662,6 +1682,7 @@ class GitHubToolSet:
     # MARK: - Workflows & checks
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_WORKFLOWS_OUTPUT)
     def list_workflows(
         self,
         owner: str,
@@ -1706,6 +1727,7 @@ class GitHubToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_WORKFLOW_RUNS_OUTPUT)
     def list_workflow_runs(
         self,
         owner: str,

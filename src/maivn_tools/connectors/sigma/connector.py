@@ -6,13 +6,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_DATASETS_OUTPUT,
+    LIST_MEMBERS_OUTPUT,
+    LIST_WORKBOOKS_OUTPUT,
+)
 
 # MARK: - Module helpers
 
@@ -131,6 +136,7 @@ class SigmaToolSet:
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_WORKBOOKS_OUTPUT)
     def list_workbooks(
         self,
         *,
@@ -225,6 +231,7 @@ class SigmaToolSet:
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_DATASETS_OUTPUT)
     def list_datasets(
         self,
         *,
@@ -276,6 +283,7 @@ class SigmaToolSet:
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_MEMBERS_OUTPUT)
     def list_members(
         self,
         *,

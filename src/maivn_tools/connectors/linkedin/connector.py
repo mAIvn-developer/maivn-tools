@@ -7,13 +7,14 @@ from __future__ import annotations
 from typing import Any, cast
 from urllib.parse import quote
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_COMMENTS_OUTPUT, LIST_POSTS_FOR_AUTHOR_OUTPUT
 
 # LinkedIn uses monthly API versions (YYYYMM) with a ~12-month rolling support
 # window. 202410 was sunset on 2025-10-15; keep this pinned to a currently
@@ -236,6 +237,7 @@ class LinkedInToolSet:
         return {"urn": post_urn, "deleted": True, "status": response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_POSTS_FOR_AUTHOR_OUTPUT)
     def list_posts_for_author(
         self,
         *,
@@ -306,6 +308,7 @@ class LinkedInToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_COMMENTS_OUTPUT)
     def list_comments(
         self,
         post_urn: str,

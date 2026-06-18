@@ -6,13 +6,19 @@ from __future__ import annotations
 
 from typing import Any, TypeGuard, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.api_key import ApiKeyAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_CAMPAIGNS_OUTPUT,
+    LIST_FLOWS_OUTPUT,
+    LIST_LISTS_OUTPUT,
+    LIST_PROFILES_OUTPUT,
+)
 
 # MARK: - Constants
 
@@ -161,6 +167,7 @@ class KlaviyoToolSet:
     # MARK: - Profiles
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PROFILES_OUTPUT)
     def list_profiles(
         self,
         *,
@@ -260,6 +267,7 @@ class KlaviyoToolSet:
     # MARK: - Lists
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_LISTS_OUTPUT)
     def list_lists(
         self,
         *,
@@ -383,6 +391,7 @@ class KlaviyoToolSet:
     # MARK: - Campaigns & flows
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CAMPAIGNS_OUTPUT)
     def list_campaigns(
         self,
         *,
@@ -424,6 +433,7 @@ class KlaviyoToolSet:
         return self._client.get(f"/api/campaigns/{campaign_id}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_FLOWS_OUTPUT)
     def list_flows(
         self,
         *,

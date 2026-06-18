@@ -7,13 +7,20 @@ from __future__ import annotations
 from typing import Any, cast
 from urllib.parse import quote
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_CLIENTS_OUTPUT,
+    LIST_CONNECTIONS_OUTPUT,
+    LIST_ORGANIZATIONS_OUTPUT,
+    LIST_ROLES_OUTPUT,
+    LIST_USERS_OUTPUT,
+)
 
 
 @toolset(prefix="auth0")
@@ -170,6 +177,7 @@ class Auth0ToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_USERS_OUTPUT)
     def list_users(
         self,
         *,
@@ -320,6 +328,7 @@ class Auth0ToolSet:
         return {"user_id": resolved_id, "deleted": True, "status": response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ROLES_OUTPUT)
     def list_roles(
         self,
         *,
@@ -388,6 +397,7 @@ class Auth0ToolSet:
         return {"status": response.status, "assigned": True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CONNECTIONS_OUTPUT)
     def list_connections(
         self,
         *,
@@ -441,6 +451,7 @@ class Auth0ToolSet:
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CLIENTS_OUTPUT)
     def list_clients(
         self,
         *,
@@ -487,6 +498,7 @@ class Auth0ToolSet:
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ORGANIZATIONS_OUTPUT)
     def list_organizations(
         self,
         *,

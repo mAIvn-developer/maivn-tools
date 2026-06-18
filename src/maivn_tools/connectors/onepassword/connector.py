@@ -6,13 +6,19 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    DELETE_ITEM_OUTPUT,
+    HEARTBEAT_OUTPUT,
+    LIST_ITEMS_OUTPUT,
+    LIST_VAULTS_OUTPUT,
+)
 
 
 @toolset(prefix="onepassword")
@@ -147,6 +153,7 @@ class OnePasswordToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_VAULTS_OUTPUT)
     def list_vaults(
         self,
         *,
@@ -179,6 +186,7 @@ class OnePasswordToolSet:
         return self._client.get(f"/v1/vaults/{vault_id}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ITEMS_OUTPUT)
     def list_items(
         self,
         vault_id: Any,
@@ -282,6 +290,7 @@ class OnePasswordToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
+    @tool_output(DELETE_ITEM_OUTPUT)
     def delete_item(self, *, vault_id: Any, item_id: Any) -> dict[str, Any]:
         """Permanently delete an item.
 
@@ -312,6 +321,7 @@ class OnePasswordToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(HEARTBEAT_OUTPUT)
     def get_heartbeat(self) -> dict[str, Any]:
         """Check the 1Password Connect server is alive.
 

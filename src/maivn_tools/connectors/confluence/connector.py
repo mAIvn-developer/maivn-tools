@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.basic import BasicAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_CONTENT_OUTPUT, SEARCH_CONTENT_OUTPUT, SEARCH_OUTPUT
 
 
 @toolset(prefix="confluence")
@@ -167,6 +168,7 @@ class ConfluenceToolSet:
     # MARK: - Content (pages and blog posts)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CONTENT_OUTPUT)
     def list_content(
         self,
         *,
@@ -447,6 +449,7 @@ class ConfluenceToolSet:
     # MARK: - Search
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_OUTPUT)
     def search(
         self,
         cql: str,
@@ -477,6 +480,7 @@ class ConfluenceToolSet:
         return self._summarize_search(response, include_ids=include_ids)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_CONTENT_OUTPUT)
     def search_content(
         self,
         cql: str,

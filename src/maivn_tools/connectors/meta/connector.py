@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.api_key import ApiKeyAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_PAGE_POSTS_OUTPUT, LIST_POST_COMMENTS_OUTPUT
 
 # Default Graph API version. v19.0 was sunset on 2026-05-21; this must stay a
 # currently-supported version. v24.0 gives headroom without being bleeding-edge
@@ -186,6 +187,7 @@ class MetaToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PAGE_POSTS_OUTPUT)
     def list_page_posts(
         self,
         page_id: str,
@@ -281,6 +283,7 @@ class MetaToolSet:
         return self._client.delete(self._path(f"/{post_id}")).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_POST_COMMENTS_OUTPUT)
     def list_post_comments(
         self,
         post_id: str,

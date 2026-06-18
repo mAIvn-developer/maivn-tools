@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.base import AuthStrategy
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_OUTBOUND_MESSAGES_OUTPUT, LIST_TEMPLATES_OUTPUT
 
 # MARK: - Auth
 
@@ -200,6 +201,7 @@ class PostmarkToolSet:
     # MARK: - Templates
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_TEMPLATES_OUTPUT)
     def list_templates(
         self,
         *,
@@ -283,6 +285,7 @@ class PostmarkToolSet:
     # MARK: - Messages, streams, servers
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_OUTBOUND_MESSAGES_OUTPUT)
     def list_outbound_messages(
         self,
         *,

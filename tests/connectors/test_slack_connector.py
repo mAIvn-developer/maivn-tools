@@ -1,12 +1,28 @@
 # pyright: strict
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import cast
 
 import pytest
+from maivn._internal.api.agent import Agent
+from maivn._internal.api.client import Client
+from maivn._internal.core.tool_specs.schema_builder import SchemaBuilder
+from maivn._internal.utils.configuration import MaivnConfiguration, ServerConfiguration
 
 from maivn_tools.connectors.slack import SlackApiError, SlackToolSet
 from maivn_tools.testing import MockTransport, json_response
+
+
+def _make_agent() -> Agent:
+    config = MaivnConfiguration(
+        server=ServerConfiguration(
+            base_url="http://example.com",
+            mock_base_url="http://example.com",
+        )
+    )
+    client = Client.from_configuration(api_key="key", configuration=config)
+    return Agent(name="t", client=client)
 
 
 def _connector() -> tuple[SlackToolSet, MockTransport]:
@@ -29,6 +45,78 @@ def test_slack_connector_is_a_toolset() -> None:
     connector, _ = _connector()
     assert get_toolify_options(connector.auth_test) is not None
     assert get_toolify_options(connector.post_message) is not None
+
+
+def test_slack_channel_history_tool_schema_constrains_channel_input() -> None:
+    connector, _ = _connector()
+    schema = cast(
+        "Mapping[str, object]",
+        SchemaBuilder().create_from_function(connector.channel_history, tool_id="slack-history"),
+    )
+    properties = cast("Mapping[str, object]", schema["properties"])
+    channel_schema = cast("Mapping[str, object]", properties["channel"])
+    any_of = channel_schema.get("anyOf")
+
+    assert isinstance(any_of, list)
+    variants = [
+        cast("Mapping[str, object]", variant)
+        for variant in cast("list[object]", any_of)
+        if isinstance(variant, Mapping)
+    ]
+    types = {variant.get("type") for variant in variants}
+    assert {"string", "object", "array"} <= types
+    assert "null" not in types
+
+    object_variant = next(variant for variant in variants if variant.get("type") == "object")
+    object_any_of = object_variant.get("anyOf")
+    assert isinstance(object_any_of, list)
+    object_variants = [
+        cast("Mapping[str, object]", variant)
+        for variant in cast("list[object]", object_any_of)
+        if isinstance(variant, Mapping)
+    ]
+    required_sets: set[tuple[object, ...]] = set()
+    for variant in object_variants:
+        required = variant.get("required")
+        if isinstance(required, list):
+            required_sets.add(tuple(cast("list[object]", required)))
+    assert {("channel_id",), ("id",), ("channel",), ("name",)} <= required_sets
+
+
+def test_slack_compact_read_tools_register_first_class_output_schemas() -> None:
+    connector, _ = _connector()
+    agent = _make_agent()
+    tools = agent.add_toolset(connector)
+
+    schemas_by_name = {tool.name: tool.output_schema for tool in tools}
+
+    list_channels_schema = schemas_by_name["SLACK_list_channels"]
+    assert isinstance(list_channels_schema, dict)
+    list_channels_properties = cast("dict[str, object]", list_channels_schema["properties"])
+    channels = cast("dict[str, object]", list_channels_properties["channels"])
+    assert channels["type"] == "array"
+
+    channel_history_schema = schemas_by_name["SLACK_channel_history"]
+    assert isinstance(channel_history_schema, dict)
+    channel_history_properties = cast("dict[str, object]", channel_history_schema["properties"])
+    messages = cast("dict[str, object]", channel_history_properties["messages"])
+    assert messages["type"] == "array"
+
+    search_messages_schema = schemas_by_name["SLACK_search_messages"]
+    assert isinstance(search_messages_schema, dict)
+    search_messages_properties = cast("dict[str, object]", search_messages_schema["properties"])
+    search_results = cast("dict[str, object]", search_messages_properties["messages"])
+    assert search_results["type"] == "array"
+
+
+def test_slack_output_schemas_are_not_published_through_tool_metadata() -> None:
+    from maivn._internal.utils.toolset import get_toolify_options
+
+    connector, _ = _connector()
+    opts = get_toolify_options(connector.list_channels)
+
+    assert opts is not None
+    assert "output_schema" not in opts.metadata
 
 
 def test_auth_test_attaches_bearer_header() -> None:

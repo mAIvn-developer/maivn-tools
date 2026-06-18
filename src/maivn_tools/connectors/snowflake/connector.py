@@ -7,13 +7,20 @@ from __future__ import annotations
 import re
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_DATABASES_OUTPUT,
+    LIST_SCHEMAS_OUTPUT,
+    LIST_TABLES_OUTPUT,
+    LIST_VIEWS_OUTPUT,
+    LIST_WAREHOUSES_OUTPUT,
+)
 
 _FORBIDDEN_KEYWORDS = re.compile(
     r"\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|merge|copy|put|get)\b",
@@ -284,6 +291,7 @@ class SnowflakeToolSet:
     # MARK: - Catalog helpers (build small SHOW queries)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_DATABASES_OUTPUT)
     def list_databases(
         self,
         *,
@@ -311,6 +319,7 @@ class SnowflakeToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_SCHEMAS_OUTPUT)
     def list_schemas(
         self,
         *,
@@ -342,6 +351,7 @@ class SnowflakeToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_TABLES_OUTPUT)
     def list_tables(
         self,
         *,
@@ -373,6 +383,7 @@ class SnowflakeToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_VIEWS_OUTPUT)
     def list_views(
         self,
         *,
@@ -420,6 +431,7 @@ class SnowflakeToolSet:
         return self._submit_statement(f"DESCRIBE TABLE {qualified}")
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_WAREHOUSES_OUTPUT)
     def list_warehouses(
         self,
         *,

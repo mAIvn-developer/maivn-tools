@@ -6,13 +6,20 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    GET_FOLLOWERS_OUTPUT,
+    GET_FOLLOWING_OUTPUT,
+    GET_USER_MENTIONS_OUTPUT,
+    GET_USER_TWEETS_OUTPUT,
+    SEARCH_RECENT_TWEETS_OUTPUT,
+)
 
 
 @toolset(prefix="x")
@@ -290,6 +297,7 @@ class XToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_RECENT_TWEETS_OUTPUT)
     def search_recent_tweets(
         self,
         query: str,
@@ -369,6 +377,7 @@ class XToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(GET_USER_TWEETS_OUTPUT)
     def get_user_tweets(
         self,
         user_id: str,
@@ -431,6 +440,7 @@ class XToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(GET_USER_MENTIONS_OUTPUT)
     def get_user_mentions(
         self,
         user_id: str,
@@ -633,6 +643,7 @@ class XToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(GET_FOLLOWERS_OUTPUT)
     def get_followers(
         self,
         user_id: str,
@@ -680,6 +691,7 @@ class XToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(GET_FOLLOWING_OUTPUT)
     def get_following(
         self,
         user_id: str,

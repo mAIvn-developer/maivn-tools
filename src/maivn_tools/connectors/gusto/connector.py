@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_COMPANIES_OUTPUT, LIST_EMPLOYEES_OUTPUT
 
 _API_VERSION = "2026-02-01"
 
@@ -100,6 +101,7 @@ class GustoToolSet:
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_COMPANIES_OUTPUT)
     def list_companies(self) -> dict[str, Any]:
         """List companies the token can access.
 
@@ -148,6 +150,7 @@ class GustoToolSet:
         return self._client.get(f"/v1/companies/{company_uuid}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_EMPLOYEES_OUTPUT)
     def list_employees(
         self,
         company_uuid: str,

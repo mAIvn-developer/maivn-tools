@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.base import NoAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import GET_UPDATES_OUTPUT
 
 # MARK: - Constants
 
@@ -99,6 +100,7 @@ class TelegramToolSet:
         return self._method("getMe")
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(GET_UPDATES_OUTPUT)
     def get_updates(
         self,
         *,

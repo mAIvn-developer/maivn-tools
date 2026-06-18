@@ -5,13 +5,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.basic import BasicAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_CAMPAIGNS_OUTPUT,
+    LIST_LISTS_OUTPUT,
+    LIST_MEMBERS_OUTPUT,
+)
 
 
 @toolset(prefix="mailchimp")
@@ -140,6 +145,7 @@ class MailchimpToolSet:
     # MARK: - Lists / Audiences
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_LISTS_OUTPUT)
     def list_lists(
         self,
         *,
@@ -186,6 +192,7 @@ class MailchimpToolSet:
         return self._client.get(f"/3.0/lists/{list_id}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_MEMBERS_OUTPUT)
     def list_members(
         self,
         list_id: str,
@@ -276,6 +283,7 @@ class MailchimpToolSet:
     # MARK: - Campaigns
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CAMPAIGNS_OUTPUT)
     def list_campaigns(
         self,
         *,

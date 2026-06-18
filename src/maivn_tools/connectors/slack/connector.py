@@ -14,9 +14,10 @@ common scopes via :attr:`metadata.scopes` for documentation purposes.
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Annotated, Any, TypeAlias, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
+from pydantic import JsonValue, WithJsonSchema
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
@@ -31,6 +32,137 @@ SLACK_API_URL = "https://slack.com/api"
 _DEFAULT_LIST_LIMIT = 25
 _DEFAULT_HISTORY_LIMIT = 20
 _DEFAULT_SEARCH_COUNT = 20
+
+_SLACK_CHANNEL_STRING_SCHEMA: dict[str, object] = {
+    "type": "string",
+    "minLength": 1,
+    "description": "Friendly channel name such as 'incidents' or raw Slack channel ID.",
+}
+_SLACK_CHANNEL_OBJECT_SCHEMA: dict[str, object] = {
+    "type": "object",
+    "description": "Channel-summary object returned by list_channels.",
+    "properties": {
+        "channel_id": {"type": "string", "minLength": 1},
+        "id": {"type": "string", "minLength": 1},
+        "channel": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+    },
+    "anyOf": [
+        {"type": "object", "required": ["channel_id"]},
+        {"type": "object", "required": ["id"]},
+        {"type": "object", "required": ["channel"]},
+        {"type": "object", "required": ["name"]},
+    ],
+    "additionalProperties": True,
+}
+_SLACK_CHANNEL_INPUT_SCHEMA: dict[str, object] = {
+    "description": (
+        "A Slack channel reference: friendly channel name, raw channel ID, "
+        "channel-summary dict from list_channels, or single-item list containing one."
+    ),
+    "anyOf": [
+        _SLACK_CHANNEL_STRING_SCHEMA,
+        _SLACK_CHANNEL_OBJECT_SCHEMA,
+        {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+                "anyOf": [
+                    _SLACK_CHANNEL_STRING_SCHEMA,
+                    _SLACK_CHANNEL_OBJECT_SCHEMA,
+                ]
+            },
+        },
+    ],
+}
+_SLACK_MESSAGE_TS_STRING_SCHEMA: dict[str, object] = {
+    "type": "string",
+    "minLength": 1,
+    "description": "Raw Slack message timestamp string.",
+}
+_SLACK_MESSAGE_TS_OBJECT_SCHEMA: dict[str, object] = {
+    "type": "object",
+    "description": "Message-summary object returned by channel_history or post_message.",
+    "properties": {
+        "ts": {"type": "string", "minLength": 1},
+        "timestamp": {"type": "string", "minLength": 1},
+        "message_ts": {"type": "string", "minLength": 1},
+    },
+    "anyOf": [
+        {"type": "object", "required": ["ts"]},
+        {"type": "object", "required": ["timestamp"]},
+        {"type": "object", "required": ["message_ts"]},
+    ],
+    "additionalProperties": True,
+}
+_SLACK_MESSAGE_TS_INPUT_SCHEMA: dict[str, object] = {
+    "description": "A Slack message timestamp string or message-summary dict containing ts.",
+    "anyOf": [
+        _SLACK_MESSAGE_TS_STRING_SCHEMA,
+        _SLACK_MESSAGE_TS_OBJECT_SCHEMA,
+    ],
+}
+_SLACK_CHANNEL_SUMMARY_OUTPUT_SCHEMA: dict[str, JsonValue] = {
+    "type": "object",
+    "properties": {
+        "channel_ref": {"type": "string"},
+        "name": {"type": "string"},
+        "topic": {"type": "string"},
+        "num_members": {"type": "integer"},
+        "is_member": {"type": "boolean"},
+        "is_private": {"type": "boolean"},
+    },
+    "required": ["channel_ref", "name"],
+}
+_SLACK_MESSAGE_SUMMARY_OUTPUT_SCHEMA: dict[str, JsonValue] = {
+    "type": "object",
+    "properties": {
+        "message_ref": {"type": "string"},
+        "channel_name": {"type": "string"},
+        "username": {"type": "string"},
+        "text": {"type": "string"},
+        "ts": {"type": "string"},
+        "permalink": {"type": "string"},
+    },
+    "required": ["message_ref", "text"],
+}
+_SLACK_LIST_CHANNELS_OUTPUT_SCHEMA: dict[str, JsonValue] = {
+    "type": "object",
+    "properties": {
+        "channels": {"type": "array", "items": _SLACK_CHANNEL_SUMMARY_OUTPUT_SCHEMA},
+        "next_cursor": {"type": "string"},
+    },
+    "required": ["channels"],
+}
+_SLACK_CHANNEL_HISTORY_OUTPUT_SCHEMA: dict[str, JsonValue] = {
+    "type": "object",
+    "properties": {
+        "channel": {"type": "string"},
+        "messages": {"type": "array", "items": _SLACK_MESSAGE_SUMMARY_OUTPUT_SCHEMA},
+        "has_more": {"type": "boolean"},
+        "next_cursor": {"type": "string"},
+    },
+    "required": ["messages"],
+}
+_SLACK_SEARCH_MESSAGES_OUTPUT_SCHEMA: dict[str, JsonValue] = {
+    "type": "object",
+    "properties": {
+        "messages": {"type": "array", "items": _SLACK_MESSAGE_SUMMARY_OUTPUT_SCHEMA},
+        "total": {"type": "integer"},
+        "page": {"type": "integer"},
+    },
+    "required": ["messages"],
+}
+
+SlackChannelInput: TypeAlias = Annotated[
+    str | dict[str, Any] | list[Any],
+    WithJsonSchema(_SLACK_CHANNEL_INPUT_SCHEMA),
+]
+SlackMessageTsInput: TypeAlias = Annotated[
+    str | dict[str, Any],
+    WithJsonSchema(_SLACK_MESSAGE_TS_INPUT_SCHEMA),
+]
 
 
 # MARK: - Helpers
@@ -150,6 +282,7 @@ class SlackToolSet:
     # MARK: - Channels and messages
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(_SLACK_LIST_CHANNELS_OUTPUT_SCHEMA)
     def list_channels(
         self,
         *,
@@ -213,9 +346,10 @@ class SlackToolSet:
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(_SLACK_CHANNEL_HISTORY_OUTPUT_SCHEMA)
     def channel_history(
         self,
-        channel: Any,
+        channel: SlackChannelInput,
         *,
         limit: int = _DEFAULT_HISTORY_LIMIT,
         cursor: str | None = None,
@@ -277,7 +411,7 @@ class SlackToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def post_message(
         self,
-        channel: Any,
+        channel: SlackChannelInput,
         text: str | None = None,
         *,
         blocks: list[dict[str, Any]] | None = None,
@@ -306,6 +440,7 @@ class SlackToolSet:
         return self._call("POST", "/chat.postMessage", json=payload)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(_SLACK_SEARCH_MESSAGES_OUTPUT_SCHEMA)
     def search_messages(
         self,
         query: str,
@@ -466,7 +601,7 @@ class SlackToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def channel_info(
         self,
-        channel: Any,
+        channel: SlackChannelInput,
         *,
         include_locale: bool = False,
         include_num_members: bool = False,
@@ -490,7 +625,7 @@ class SlackToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def channel_members(
         self,
-        channel: Any,
+        channel: SlackChannelInput,
         *,
         limit: int = 100,
         cursor: str | None = None,
@@ -510,7 +645,7 @@ class SlackToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def thread_replies(
         self,
-        channel: Any,
+        channel: SlackChannelInput,
         thread_ts: str,
         *,
         limit: int = 50,
@@ -563,7 +698,7 @@ class SlackToolSet:
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def rename_channel(self, channel: Any, name: str) -> dict[str, Any]:
+    def rename_channel(self, channel: SlackChannelInput, name: str) -> dict[str, Any]:
         """Rename a channel.
 
         Accepts a channel name, raw ID, or channel-summary dict.
@@ -578,7 +713,7 @@ class SlackToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def set_channel_topic(self, channel: Any, topic: str) -> dict[str, Any]:
+    def set_channel_topic(self, channel: SlackChannelInput, topic: str) -> dict[str, Any]:
         """Set the topic on a channel."""
         resolved = self._resolve_channel(channel)
         return self._call(
@@ -588,7 +723,7 @@ class SlackToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def set_channel_purpose(self, channel: Any, purpose: str) -> dict[str, Any]:
+    def set_channel_purpose(self, channel: SlackChannelInput, purpose: str) -> dict[str, Any]:
         """Set the purpose/description on a channel."""
         resolved = self._resolve_channel(channel)
         return self._call(
@@ -598,19 +733,19 @@ class SlackToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def join_channel(self, channel: Any) -> dict[str, Any]:
+    def join_channel(self, channel: SlackChannelInput) -> dict[str, Any]:
         """Join a public channel."""
         resolved = self._resolve_channel(channel)
         return self._call("POST", "/conversations.join", json={"channel": resolved})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def leave_channel(self, channel: Any) -> dict[str, Any]:
+    def leave_channel(self, channel: SlackChannelInput) -> dict[str, Any]:
         """Leave a channel."""
         resolved = self._resolve_channel(channel)
         return self._call("POST", "/conversations.leave", json={"channel": resolved})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def invite_to_channel(self, channel: Any, users: list[str]) -> dict[str, Any]:
+    def invite_to_channel(self, channel: SlackChannelInput, users: list[str]) -> dict[str, Any]:
         """Invite one or more users (Slack user IDs) to a channel."""
         resolved = self._resolve_channel(channel)
         if not users:
@@ -622,7 +757,7 @@ class SlackToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def kick_from_channel(self, channel: Any, user: str) -> dict[str, Any]:
+    def kick_from_channel(self, channel: SlackChannelInput, user: str) -> dict[str, Any]:
         """Kick a user from a channel."""
         resolved = self._resolve_channel(channel)
         if not user:
@@ -634,13 +769,13 @@ class SlackToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def archive_channel(self, channel: Any) -> dict[str, Any]:
+    def archive_channel(self, channel: SlackChannelInput) -> dict[str, Any]:
         """Archive a channel (recoverable)."""
         resolved = self._resolve_channel(channel)
         return self._call("POST", "/conversations.archive", json={"channel": resolved})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def unarchive_channel(self, channel: Any) -> dict[str, Any]:
+    def unarchive_channel(self, channel: SlackChannelInput) -> dict[str, Any]:
         """Unarchive a channel."""
         resolved = self._resolve_channel(channel)
         return self._call("POST", "/conversations.unarchive", json={"channel": resolved})
@@ -665,7 +800,7 @@ class SlackToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def post_ephemeral(
         self,
-        channel: Any,
+        channel: SlackChannelInput,
         user: str,
         text: str | None = None,
         *,
@@ -687,8 +822,8 @@ class SlackToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_message(
         self,
-        channel: Any,
-        ts: Any,
+        channel: SlackChannelInput,
+        ts: SlackMessageTsInput,
         text: str | None = None,
         *,
         blocks: list[dict[str, Any]] | None = None,
@@ -711,7 +846,7 @@ class SlackToolSet:
         return self._call("POST", "/chat.update", json=payload)
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
-    def delete_message(self, channel: Any, ts: Any) -> dict[str, Any]:
+    def delete_message(self, channel: SlackChannelInput, ts: SlackMessageTsInput) -> dict[str, Any]:
         """Delete a message.
 
         Destructive: the message cannot be recovered. Accepts the same input
@@ -724,7 +859,7 @@ class SlackToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def schedule_message(
         self,
-        channel: Any,
+        channel: SlackChannelInput,
         post_at: int,
         text: str,
     ) -> dict[str, Any]:
@@ -744,7 +879,9 @@ class SlackToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
-    def get_permalink(self, channel: Any, message_ts: Any) -> dict[str, Any]:
+    def get_permalink(
+        self, channel: SlackChannelInput, message_ts: SlackMessageTsInput
+    ) -> dict[str, Any]:
         """Return a permalink to a specific message.
 
         Accepts the same tolerant inputs as :meth:`update_message`.
@@ -760,8 +897,8 @@ class SlackToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def add_reaction(
         self,
-        channel: Any,
-        timestamp: Any,
+        channel: SlackChannelInput,
+        timestamp: SlackMessageTsInput,
         name: str,
     ) -> dict[str, Any]:
         """Add an emoji reaction to a message.
@@ -782,8 +919,8 @@ class SlackToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def remove_reaction(
         self,
-        channel: Any,
-        timestamp: Any,
+        channel: SlackChannelInput,
+        timestamp: SlackMessageTsInput,
         name: str,
     ) -> dict[str, Any]:
         """Remove an emoji reaction from a message."""
@@ -798,7 +935,9 @@ class SlackToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def pin_message(self, channel: Any, timestamp: Any) -> dict[str, Any]:
+    def pin_message(
+        self, channel: SlackChannelInput, timestamp: SlackMessageTsInput
+    ) -> dict[str, Any]:
         """Pin a message to a channel."""
         resolved = self._resolve_channel(channel)
         resolved_ts = self._resolve_message_ts(timestamp)
@@ -809,7 +948,9 @@ class SlackToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def unpin_message(self, channel: Any, timestamp: Any) -> dict[str, Any]:
+    def unpin_message(
+        self, channel: SlackChannelInput, timestamp: SlackMessageTsInput
+    ) -> dict[str, Any]:
         """Unpin a message from a channel."""
         resolved = self._resolve_channel(channel)
         resolved_ts = self._resolve_message_ts(timestamp)
@@ -820,7 +961,7 @@ class SlackToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
-    def list_pins(self, channel: Any) -> dict[str, Any]:
+    def list_pins(self, channel: SlackChannelInput) -> dict[str, Any]:
         """List pinned items in a channel."""
         resolved = self._resolve_channel(channel)
         return self._call("GET", "/pins.list", params={"channel": resolved})
@@ -831,7 +972,7 @@ class SlackToolSet:
     def list_files(
         self,
         *,
-        channel: Any | None = None,
+        channel: SlackChannelInput | None = None,
         user: str | None = None,
         count: int = 100,
         page: int = 1,

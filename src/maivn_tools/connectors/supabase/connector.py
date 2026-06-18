@@ -7,13 +7,14 @@ from __future__ import annotations
 import re
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.base import AuthStrategy
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_BUCKETS_OUTPUT, LIST_OBJECTS_OUTPUT, LIST_USERS_OUTPUT
 
 _VALID_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -439,6 +440,7 @@ class SupabaseToolSet:
     # MARK: - Auth admin
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_USERS_OUTPUT)
     def list_users(
         self,
         *,
@@ -583,6 +585,7 @@ class SupabaseToolSet:
     # MARK: - Storage
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_BUCKETS_OUTPUT)
     def list_buckets(
         self,
         *,
@@ -648,6 +651,7 @@ class SupabaseToolSet:
         return {"id": resolved, "deleted": True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_OBJECTS_OUTPUT)
     def list_objects(
         self,
         bucket_id: Any,

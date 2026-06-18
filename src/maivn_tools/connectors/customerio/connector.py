@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.base import AuthStrategy
 from ...auth.basic import BasicAuth
@@ -15,6 +15,11 @@ from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_BROADCASTS_OUTPUT,
+    LIST_CAMPAIGNS_OUTPUT,
+    LIST_SEGMENTS_OUTPUT,
+)
 
 
 @toolset(prefix="customerio")
@@ -263,6 +268,7 @@ class CustomerIOToolSet:
     # MARK: - App API: segments, broadcasts, exports
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_SEGMENTS_OUTPUT)
     def list_segments(
         self,
         *,
@@ -286,6 +292,7 @@ class CustomerIOToolSet:
         return {"segments": summaries, "count": len(summaries)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_BROADCASTS_OUTPUT)
     def list_broadcasts(
         self,
         *,
@@ -339,6 +346,7 @@ class CustomerIOToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CAMPAIGNS_OUTPUT)
     def list_campaigns(
         self,
         *,

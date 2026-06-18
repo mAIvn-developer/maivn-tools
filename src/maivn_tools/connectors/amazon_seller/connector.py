@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.api_key import ApiKeyAuth
 from ...auth.base import AuthStrategy
@@ -19,6 +19,7 @@ from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_ORDERS_OUTPUT
 
 # MARK: ToolSet
 
@@ -95,6 +96,7 @@ class AmazonSellerToolSet:
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ORDERS_OUTPUT)
     def list_orders(
         self,
         *,

@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.api_key import ApiKeyAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_COMMENTS_OUTPUT, LIST_MEDIA_OUTPUT
 
 _API_VERSION = "v25.0"
 
@@ -135,6 +136,7 @@ class InstagramToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_MEDIA_OUTPUT)
     def list_media(
         self,
         ig_user_id: str,
@@ -280,6 +282,7 @@ class InstagramToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_COMMENTS_OUTPUT)
     def list_comments(
         self,
         media_id: str,

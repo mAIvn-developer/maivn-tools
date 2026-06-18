@@ -5,13 +5,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_CONTRACTS_OUTPUT, LIST_PEOPLE_OUTPUT
 
 
 @toolset(prefix="deel")
@@ -122,6 +123,7 @@ class DeelToolSet:
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PEOPLE_OUTPUT)
     def list_people(
         self,
         *,
@@ -173,6 +175,7 @@ class DeelToolSet:
         return self._client.get(f"/rest/v2/people/{person_id}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CONTRACTS_OUTPUT)
     def list_contracts(
         self,
         *,

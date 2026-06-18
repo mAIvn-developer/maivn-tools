@@ -7,13 +7,14 @@ from __future__ import annotations
 import base64
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 from ._shared import TokenSource, make_bearer_auth
+from .output_schemas import SEARCH_FILES_OUTPUT
 
 DRIVE_API_URL = "https://www.googleapis.com/drive/v3"
 _DEFAULT_LIST_FIELDS = "files(id,name,mimeType,modifiedTime,size,owners,parents),nextPageToken"
@@ -142,6 +143,7 @@ class GoogleDriveToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_FILES_OUTPUT)
     def search_files(
         self,
         query: str = "",

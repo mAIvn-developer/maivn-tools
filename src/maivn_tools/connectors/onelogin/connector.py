@@ -6,13 +6,20 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    ASSIGN_ROLE_TO_USER_OUTPUT,
+    DELETE_USER_OUTPUT,
+    LIST_APPS_OUTPUT,
+    LIST_ROLES_OUTPUT,
+    LIST_USERS_OUTPUT,
+)
 
 
 @toolset(prefix="onelogin")
@@ -153,6 +160,7 @@ class OneLoginToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_USERS_OUTPUT)
     def list_users(
         self,
         *,
@@ -257,6 +265,7 @@ class OneLoginToolSet:
         return self._client.put(f"/api/2/users/{resolved_id}", json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
+    @tool_output(DELETE_USER_OUTPUT)
     def delete_user(self, user_id: Any) -> dict[str, Any]:
         """Permanently delete a OneLogin user. ``user_id`` accepts dict or int.
 
@@ -285,6 +294,7 @@ class OneLoginToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ROLES_OUTPUT)
     def list_roles(
         self,
         *,
@@ -305,6 +315,7 @@ class OneLoginToolSet:
         return {"roles": summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
+    @tool_output(ASSIGN_ROLE_TO_USER_OUTPUT)
     def assign_role_to_user(
         self,
         *,
@@ -332,6 +343,7 @@ class OneLoginToolSet:
         return {"user_id": resolved_id, "assigned_role_ids": list(role_ids)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_APPS_OUTPUT)
     def list_apps(
         self,
         *,

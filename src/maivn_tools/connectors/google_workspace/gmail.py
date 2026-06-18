@@ -34,13 +34,14 @@ import base64
 from email.message import EmailMessage
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 from ._shared import TokenSource, make_bearer_auth
+from .output_schemas import SEARCH_MESSAGES_OUTPUT
 
 # MARK: - Constants
 
@@ -179,6 +180,7 @@ class GmailToolSet:
         return cast("list[dict[str, Any]]", labels) if isinstance(labels, list) else []
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_MESSAGES_OUTPUT)
     def search_messages(
         self,
         query: str = "",

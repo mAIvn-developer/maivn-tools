@@ -6,13 +6,19 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.api_key import ApiKeyAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_DATASOURCES_OUTPUT,
+    LIST_PROJECTS_OUTPUT,
+    LIST_VIEWS_FOR_WORKBOOK_OUTPUT,
+    LIST_WORKBOOKS_OUTPUT,
+)
 
 _API_VERSION = "3.24"
 
@@ -230,6 +236,7 @@ class TableauToolSet:
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PROJECTS_OUTPUT)
     def list_projects(
         self,
         *,
@@ -263,6 +270,7 @@ class TableauToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_WORKBOOKS_OUTPUT)
     def list_workbooks(
         self,
         *,
@@ -324,6 +332,7 @@ class TableauToolSet:
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_VIEWS_FOR_WORKBOOK_OUTPUT)
     def list_views_for_workbook(
         self,
         workbook_id: str,
@@ -386,6 +395,7 @@ class TableauToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_DATASOURCES_OUTPUT)
     def list_datasources(
         self,
         *,

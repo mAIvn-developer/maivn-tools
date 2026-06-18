@@ -6,13 +6,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_EVENTS_OUTPUT,
+    LIST_INSIGHTS_OUTPUT,
+    LIST_PERSONS_OUTPUT,
+)
 
 # PostHog Cloud uses region-specific, split hosts: the private management API
 # lives on ``{region}.posthog.com`` and event ingestion on the public
@@ -195,6 +200,7 @@ class PostHogToolSet:
         return self._client.post(f"{self._ingestion_base_url}{_CAPTURE_PATH}", json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_EVENTS_OUTPUT)
     def list_events(
         self,
         *,
@@ -244,6 +250,7 @@ class PostHogToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_INSIGHTS_OUTPUT)
     def list_insights(
         self,
         *,
@@ -371,6 +378,7 @@ class PostHogToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PERSONS_OUTPUT)
     def list_persons(
         self,
         *,

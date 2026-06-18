@@ -6,13 +6,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_CANDIDATES_OUTPUT,
+    LIST_JOB_POSTINGS_OUTPUT,
+    LIST_WORKERS_OUTPUT,
+)
 
 # MARK: - Constants
 
@@ -149,6 +154,7 @@ class WorkdayToolSet:
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_WORKERS_OUTPUT)
     def list_workers(
         self,
         *,
@@ -290,6 +296,7 @@ class WorkdayToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_JOB_POSTINGS_OUTPUT)
     def list_job_postings(
         self,
         *,
@@ -324,6 +331,7 @@ class WorkdayToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CANDIDATES_OUTPUT)
     def list_candidates(
         self,
         *,

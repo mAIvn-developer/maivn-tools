@@ -6,13 +6,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.basic import BasicAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    EXPORT_RAW_EVENTS_OUTPUT,
+    GET_USER_SEARCH_OUTPUT,
+    LIST_COHORTS_OUTPUT,
+)
 
 # Dashboard / Cohort / Export REST hosts (Basic auth).
 _REST_HOST_US = "amplitude.com"
@@ -301,6 +306,7 @@ class AmplitudeToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(GET_USER_SEARCH_OUTPUT)
     def get_user_search(
         self,
         search: str,
@@ -336,6 +342,7 @@ class AmplitudeToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_COHORTS_OUTPUT)
     def list_cohorts(
         self,
         *,
@@ -392,6 +399,7 @@ class AmplitudeToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(EXPORT_RAW_EVENTS_OUTPUT)
     def export_raw_events(
         self,
         *,

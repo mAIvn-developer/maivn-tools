@@ -7,13 +7,18 @@ from __future__ import annotations
 from typing import Any, cast
 from urllib.parse import quote
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_DASHBOARDS_OUTPUT,
+    LIST_LOOKS_OUTPUT,
+    LIST_USERS_OUTPUT,
+)
 
 
 @toolset(prefix="looker")
@@ -133,6 +138,7 @@ class LookerToolSet:
         return self._client.get("/api/4.0/user").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_LOOKS_OUTPUT)
     def list_looks(
         self,
         *,
@@ -230,6 +236,7 @@ class LookerToolSet:
             return {"status": response.status, "body": response.text()}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_DASHBOARDS_OUTPUT)
     def list_dashboards(
         self,
         *,
@@ -336,6 +343,7 @@ class LookerToolSet:
             return {"status": response.status, "body": response.text()}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_USERS_OUTPUT)
     def list_users(
         self,
         *,

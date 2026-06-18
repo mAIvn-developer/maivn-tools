@@ -1,7 +1,12 @@
 # pyright: strict
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
+from maivn._internal.api.agent import Agent
+from maivn._internal.api.client import Client
+from maivn._internal.utils.configuration import MaivnConfiguration, ServerConfiguration
 from maivn._internal.utils.toolset import get_toolify_options, get_toolset_options
 
 from maivn_tools.connectors.github import GitHubToolSet
@@ -12,6 +17,51 @@ def _connector() -> tuple[GitHubToolSet, MockTransport]:
     transport = MockTransport()
     connector = GitHubToolSet(token="ghp_secret", transport=transport)
     return connector, transport
+
+
+def _make_agent() -> Agent:
+    config = MaivnConfiguration(
+        server=ServerConfiguration(
+            base_url="http://example.com",
+            mock_base_url="http://example.com",
+        )
+    )
+    client = Client.from_configuration(api_key="key", configuration=config)
+    return Agent(name="t", client=client)
+
+
+def test_github_list_tools_register_first_class_output_schemas() -> None:
+    connector, _ = _connector()
+    agent = _make_agent()
+    tools = agent.add_toolset(connector)
+
+    schemas_by_name = {tool.name: tool.output_schema for tool in tools}
+    # (tool suffix, expected array property key)
+    expected: dict[str, str] = {
+        "GITHUB_list_repositories": "repositories",
+        "GITHUB_list_issues": "issues",
+        "GITHUB_list_pull_requests": "pull_requests",
+        "GITHUB_search_issues": "issues",
+        "GITHUB_search_repositories": "repositories",
+        "GITHUB_list_branches": "branches",
+        "GITHUB_list_commits": "commits",
+        "GITHUB_list_releases": "releases",
+        "GITHUB_list_workflows": "workflows",
+        "GITHUB_list_workflow_runs": "workflow_runs",
+    }
+    for name, array_key in expected.items():
+        schema = schemas_by_name.get(name)
+        assert isinstance(schema, dict), f"{name} missing first-class output_schema"
+        properties = cast("dict[str, object]", schema["properties"])
+        array_prop = cast("dict[str, object]", properties[array_key])
+        assert array_prop["type"] == "array", f"{name}.{array_key} should be an array"
+
+
+def test_github_output_schemas_not_published_through_metadata() -> None:
+    connector, _ = _connector()
+    opts = get_toolify_options(connector.list_repositories)
+    assert opts is not None
+    assert "output_schema" not in opts.metadata
 
 
 def test_github_connector_validates_inputs() -> None:

@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.api_key import ApiKeyAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_CARDS_OUTPUT, LIST_DASHBOARDS_OUTPUT
 
 
 @toolset(prefix="metabase")
@@ -136,6 +137,7 @@ class MetabaseToolSet:
         return self._client.get("/api/database").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CARDS_OUTPUT)
     def list_cards(
         self,
         *,
@@ -199,6 +201,7 @@ class MetabaseToolSet:
         return self._client.post(f"/api/card/{card_id}/query", json=body or None).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_DASHBOARDS_OUTPUT)
     def list_dashboards(
         self,
         *,

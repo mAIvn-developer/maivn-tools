@@ -7,13 +7,20 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    GET_AUTHOR_FEED_OUTPUT,
+    GET_FOLLOWERS_OUTPUT,
+    GET_FOLLOWS_OUTPUT,
+    GET_TIMELINE_OUTPUT,
+    SEARCH_POSTS_OUTPUT,
+)
 
 
 @toolset(prefix="bluesky")
@@ -215,6 +222,7 @@ class BlueskyToolSet:
         return profile
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(GET_TIMELINE_OUTPUT)
     def get_timeline(
         self,
         *,
@@ -255,6 +263,7 @@ class BlueskyToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(GET_AUTHOR_FEED_OUTPUT)
     def get_author_feed(
         self,
         actor: str,
@@ -294,6 +303,7 @@ class BlueskyToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_POSTS_OUTPUT)
     def search_posts(
         self,
         query: str,
@@ -484,6 +494,7 @@ class BlueskyToolSet:
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(GET_FOLLOWERS_OUTPUT)
     def get_followers(
         self,
         actor: str,
@@ -525,6 +536,7 @@ class BlueskyToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(GET_FOLLOWS_OUTPUT)
     def get_follows(
         self,
         actor: str,

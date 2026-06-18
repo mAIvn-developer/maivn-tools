@@ -7,13 +7,14 @@ from __future__ import annotations
 import base64
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpTransport
 from ._shared import GRAPH_API_URL, TokenSource, make_graph_client
+from .output_schemas import LIST_DRIVE_ITEMS_OUTPUT
 
 
 def _extract_item_id(candidate: Any) -> str:
@@ -168,6 +169,7 @@ class MicrosoftFilesToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_DRIVE_ITEMS_OUTPUT)
     def list_root_children(
         self,
         *,
@@ -196,6 +198,7 @@ class MicrosoftFilesToolSet:
         return _summarize_value_payload(payload, include_ids=include_ids)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_DRIVE_ITEMS_OUTPUT)
     def search_files(
         self,
         query: str,
@@ -299,6 +302,7 @@ class MicrosoftFilesToolSet:
         return {"deleted": True, "status": response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_DRIVE_ITEMS_OUTPUT)
     def list_children(
         self,
         item_id: Any,

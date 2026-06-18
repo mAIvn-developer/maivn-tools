@@ -18,13 +18,14 @@ import time
 import urllib.parse
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.base import AuthStrategy
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_GROUPS_OUTPUT, LIST_PHONES_OUTPUT, LIST_USERS_OUTPUT
 
 # Default authentication-log lookback window: 24 hours, expressed in
 # milliseconds. The v2 logs endpoint requires both mintime and maxtime as
@@ -205,6 +206,7 @@ class DuoToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_USERS_OUTPUT)
     def list_users(
         self,
         *,
@@ -303,6 +305,7 @@ class DuoToolSet:
         return self._client.delete(f"/admin/v1/users/{resolved_id}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PHONES_OUTPUT)
     def list_phones(
         self,
         *,
@@ -330,6 +333,7 @@ class DuoToolSet:
         return {"phones": summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_GROUPS_OUTPUT)
     def list_groups(
         self,
         *,

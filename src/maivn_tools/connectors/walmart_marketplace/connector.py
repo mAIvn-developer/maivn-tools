@@ -11,13 +11,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.base import NoAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_ITEMS_OUTPUT, LIST_ORDERS_OUTPUT
 
 # MARK: Helpers
 
@@ -141,6 +142,7 @@ class WalmartMarketplaceToolSet:
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ITEMS_OUTPUT)
     def list_items(
         self,
         *,
@@ -202,6 +204,7 @@ class WalmartMarketplaceToolSet:
         return self._client.delete(f"/v3/items/{resolved_sku}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ORDERS_OUTPUT)
     def list_orders(
         self,
         *,

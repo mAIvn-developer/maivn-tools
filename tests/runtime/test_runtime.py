@@ -12,6 +12,7 @@ from maivn_tools.runtime import (
     CursorPaginator,
     DeltaTokenPaginator,
     HttpClient,
+    HttpRequest,
     NotFoundError,
     OffsetPaginator,
     PageTokenPaginator,
@@ -26,6 +27,7 @@ from maivn_tools.runtime import (
     ValidationError,
     normalize_status_error,
 )
+from maivn_tools.runtime.http import UrllibTransport
 from maivn_tools.testing import MockResponse, MockTransport, json_response, text_response
 
 
@@ -36,6 +38,28 @@ def _client(transport: MockTransport, **kwargs: Any) -> HttpClient:
         sleep=lambda _: None,
         **kwargs,
     )
+
+
+def test_urllib_transport_rejects_non_http_schemes() -> None:
+    """SSRF/LFI guard: urlopen honors file:/ftp:/data:, so the transport must
+    reject any non-http(s) scheme before opening the URL."""
+    transport = UrllibTransport()
+    for url in (
+        "file:///etc/passwd",
+        "ftp://example.test/secret",
+        "data:text/plain;base64,aGk=",
+    ):
+        with pytest.raises(ValueError):
+            transport.send(HttpRequest(method="GET", url=url))
+
+
+def test_urllib_transport_allows_http_scheme_past_guard() -> None:
+    """Regression: a valid http(s) scheme must pass the guard and proceed to
+    the network layer -- it fails there with TransportError (unreachable port),
+    NOT with the ValueError the scheme guard raises."""
+    transport = UrllibTransport()
+    with pytest.raises(TransportError):
+        transport.send(HttpRequest(method="GET", url="http://127.0.0.1:9/never", timeout=0.5))
 
 
 def test_http_client_requires_base_url_for_relative_paths() -> None:

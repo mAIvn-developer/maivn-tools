@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_PROJECTS_OUTPUT, LIST_SECRETS_OUTPUT
 
 
 @toolset(prefix="infisical")
@@ -111,6 +112,7 @@ class InfisicalToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PROJECTS_OUTPUT)
     def list_projects(
         self,
         *,
@@ -155,6 +157,7 @@ class InfisicalToolSet:
         return self._client.get(f"/api/v1/workspace/{workspace_id}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_SECRETS_OUTPUT)
     def list_secrets(
         self,
         *,

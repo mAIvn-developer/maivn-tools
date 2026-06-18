@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpTransport
 from ._shared import GRAPH_API_URL, TokenSource, make_graph_client
+from .output_schemas import LIST_FOLDERS_OUTPUT, LIST_MESSAGES_OUTPUT
 
 _DEFAULT_MESSAGE_SELECT = "id,subject,from,toRecipients,receivedDateTime,bodyPreview,isRead"
 _DEFAULT_FOLDER_LIST_TOP = 25
@@ -73,6 +74,7 @@ class OutlookMailToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_FOLDERS_OUTPUT)
     def list_folders(
         self,
         *,
@@ -117,6 +119,7 @@ class OutlookMailToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_MESSAGES_OUTPUT)
     def search_messages(
         self,
         *,
@@ -454,6 +457,7 @@ class OutlookMailToolSet:
         return self._client.get(self._user_path(f"/mailFolders/{resolved}")).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_MESSAGES_OUTPUT)
     def list_messages_in_folder(
         self,
         folder_id: Any,
