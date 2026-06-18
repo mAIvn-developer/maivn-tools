@@ -16,13 +16,18 @@ from __future__ import annotations
 import re
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.oauth import OAuth2BearerAuth, OAuth2Token, OAuth2TokenProvider
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    DELETE_RECORD_OUTPUT,
+    SOQL_QUERY_OUTPUT,
+    UPDATE_RECORD_OUTPUT,
+)
 
 TokenSource = OAuth2TokenProvider | OAuth2Token | str
 
@@ -129,6 +134,7 @@ class SalesforceToolSet:
         return self._client.get(f"{self._base()}/sobjects/{object_name}/describe").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SOQL_QUERY_OUTPUT)
     def soql_query(
         self,
         query: str,
@@ -201,6 +207,7 @@ class SalesforceToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
+    @tool_output(UPDATE_RECORD_OUTPUT)
     def update_record(
         self,
         object_name: str,
@@ -223,6 +230,7 @@ class SalesforceToolSet:
         return {"updated": True, "id": resolved, "status": response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
+    @tool_output(DELETE_RECORD_OUTPUT)
     def delete_record(self, object_name: str, record_id: Any) -> dict[str, Any]:
         """Delete an sObject record.
 

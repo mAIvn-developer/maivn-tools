@@ -6,13 +6,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_BOARD_PINS_OUTPUT,
+    LIST_BOARDS_OUTPUT,
+    LIST_PINS_OUTPUT,
+)
 
 
 @toolset(prefix="pinterest")
@@ -154,6 +159,7 @@ class PinterestToolSet:
         return self._client.get("/v5/user_account").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_BOARDS_OUTPUT)
     def list_boards(
         self,
         *,
@@ -241,6 +247,7 @@ class PinterestToolSet:
         return {"board_id": board_id, "deleted": True, "status": response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_BOARD_PINS_OUTPUT)
     def list_board_pins(
         self,
         board_id: str,
@@ -281,6 +288,7 @@ class PinterestToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PINS_OUTPUT)
     def list_pins(
         self,
         *,

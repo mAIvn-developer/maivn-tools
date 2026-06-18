@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpTransport
 from ._shared import GRAPH_API_URL, TokenSource, make_graph_client
+from .output_schemas import LIST_CALENDARS_OUTPUT, LIST_EVENTS_OUTPUT
 
 # MARK: - Constants
 
@@ -63,6 +64,7 @@ class OutlookCalendarToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CALENDARS_OUTPUT)
     def list_calendars(
         self,
         *,
@@ -102,6 +104,7 @@ class OutlookCalendarToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_EVENTS_OUTPUT)
     def list_events(
         self,
         *,
@@ -233,6 +236,7 @@ class OutlookCalendarToolSet:
         return self._client.get(self._user_path(f"/calendars/{resolved}")).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_EVENTS_OUTPUT)
     def list_event_instances(
         self,
         event_id: Any,

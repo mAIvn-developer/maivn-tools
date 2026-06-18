@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_MAILING_LISTS_OUTPUT
 
 
 @toolset(prefix="loops")
@@ -196,6 +197,7 @@ class LoopsToolSet:
         return self._client.post("/contacts/delete", json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_MAILING_LISTS_OUTPUT)
     def list_mailing_lists(
         self,
         *,

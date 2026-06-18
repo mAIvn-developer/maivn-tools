@@ -9,10 +9,21 @@ from collections.abc import Callable, Sequence
 from contextlib import closing
 from typing import Any, Protocol, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
+from .output_schemas import (
+    MYSQL_COUNT_ROWS_OUTPUT,
+    MYSQL_DESCRIBE_TABLE_OUTPUT,
+    MYSQL_EXPLAIN_QUERY_OUTPUT,
+    MYSQL_LIST_DATABASES_OUTPUT,
+    MYSQL_LIST_INDEXES_OUTPUT,
+    MYSQL_LIST_TABLES_OUTPUT,
+    MYSQL_RUN_QUERY_OUTPUT,
+    MYSQL_SAMPLE_TABLE_OUTPUT,
+    MYSQL_SERVER_VERSION_OUTPUT,
+)
 
 # MARK: Constants
 
@@ -50,6 +61,17 @@ MySQLConnectionFactory = Callable[[], MySQLConnection]
 
 
 # MARK: SQL helpers
+
+
+def _is_safe_identifier(name: str) -> bool:
+    """Allow only plain SQL identifiers (no backticks/dots/whitespace).
+
+    ``sample_table``/``count_rows`` interpolate ``schema``/``name`` into
+    backtick-quoted identifiers; an embedded backtick could break out and
+    inject SQL. Restrict to the same strict shape the sqlite connector
+    enforces; exotic identifiers can go through ``run_query`` with quoting.
+    """
+    return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name))
 
 
 def _validate_read_only_sql(sql: str) -> None:
@@ -200,6 +222,7 @@ class MySQLToolSet:
         return cast(MySQLConnection, cast(object, conn))
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(MYSQL_LIST_DATABASES_OUTPUT)
     def list_databases(
         self,
         *,
@@ -226,6 +249,7 @@ class MySQLToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(MYSQL_LIST_TABLES_OUTPUT)
     def list_tables(
         self,
         schema: str | None = None,
@@ -263,6 +287,7 @@ class MySQLToolSet:
         return _paginate_summary(rows, key="tables", ref_prefix="table", max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(MYSQL_DESCRIBE_TABLE_OUTPUT)
     def describe_table(
         self,
         name: str,
@@ -306,6 +331,7 @@ class MySQLToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(MYSQL_LIST_INDEXES_OUTPUT)
     def list_indexes(
         self,
         name: str,
@@ -333,6 +359,7 @@ class MySQLToolSet:
         return _paginate_summary(rows, key="indexes", ref_prefix="index", max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(MYSQL_EXPLAIN_QUERY_OUTPUT)
     def explain_query(self, sql: str, *, analyze: bool = False) -> dict[str, Any]:
         """Return ``EXPLAIN FORMAT=JSON`` output for ``sql``.
 
@@ -351,6 +378,7 @@ class MySQLToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(MYSQL_SERVER_VERSION_OUTPUT)
     def server_version(self) -> dict[str, Any]:
         """Return ``VERSION()`` and ``DATABASE()`` of the server.
 
@@ -366,6 +394,7 @@ class MySQLToolSet:
         return rows[0] if rows else {"version": None, "database": None}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(MYSQL_SAMPLE_TABLE_OUTPUT)
     def sample_table(
         self,
         name: str,
@@ -382,10 +411,15 @@ class MySQLToolSet:
         """
         if limit < 1 or limit > self._row_limit:
             raise ValueError(f"limit must be between 1 and {self._row_limit}")
+        if schema is not None and not _is_safe_identifier(schema):
+            raise ValueError(f"Invalid schema name: {schema!r}")
+        if not _is_safe_identifier(name):
+            raise ValueError(f"Invalid table name: {name!r}")
         qualified = f"`{schema}`.`{name}`" if schema else f"`{name}`"
         return self.run_query(f"SELECT * FROM {qualified} LIMIT %s", [limit], row_limit=limit)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(MYSQL_COUNT_ROWS_OUTPUT)
     def count_rows(self, name: str, schema: str | None = None) -> dict[str, Any]:
         """Return ``COUNT(*)`` for a table.
 
@@ -393,6 +427,10 @@ class MySQLToolSet:
         well-indexed tables; an exact count over a huge table will scan
         the index.
         """
+        if schema is not None and not _is_safe_identifier(schema):
+            raise ValueError(f"Invalid schema name: {schema!r}")
+        if not _is_safe_identifier(name):
+            raise ValueError(f"Invalid table name: {name!r}")
         qualified = f"`{schema}`.`{name}`" if schema else f"`{name}`"
         rows = _run_select(
             self._open(),
@@ -407,6 +445,7 @@ class MySQLToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(MYSQL_RUN_QUERY_OUTPUT)
     def run_query(
         self,
         sql: str,

@@ -9,10 +9,21 @@ from collections.abc import Callable
 from contextlib import closing
 from typing import Any, Protocol, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
+from .output_schemas import (
+    SQLSERVER_COUNT_ROWS_OUTPUT,
+    SQLSERVER_DESCRIBE_TABLE_OUTPUT,
+    SQLSERVER_LIST_DATABASES_OUTPUT,
+    SQLSERVER_LIST_SCHEMAS_OUTPUT,
+    SQLSERVER_LIST_TABLES_OUTPUT,
+    SQLSERVER_LIST_VIEWS_OUTPUT,
+    SQLSERVER_RUN_QUERY_OUTPUT,
+    SQLSERVER_SAMPLE_TABLE_OUTPUT,
+    SQLSERVER_SERVER_VERSION_OUTPUT,
+)
 
 # MARK: Constants
 
@@ -50,6 +61,17 @@ SQLServerConnectionFactory = Callable[[], SQLServerConnection]
 
 
 # MARK: Helpers
+
+
+def _is_safe_identifier(name: str) -> bool:
+    """Allow only plain SQL identifiers (no brackets/dots/whitespace).
+
+    ``sample_table``/``count_rows`` interpolate ``schema``/``name`` into
+    bracket-quoted identifiers; an embedded ``]`` could break out and inject
+    SQL. Restrict to the same strict shape the sqlite connector enforces;
+    exotic identifiers can go through ``run_query`` with proper quoting.
+    """
+    return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name))
 
 
 def _validate_read_only_sql(sql: object) -> None:
@@ -200,6 +222,7 @@ class SQLServerToolSet:
         return cast("SQLServerConnection", pyodbc_connect(**self._connect_kwargs))
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLSERVER_LIST_DATABASES_OUTPUT)
     def list_databases(
         self,
         *,
@@ -226,6 +249,7 @@ class SQLServerToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLSERVER_LIST_SCHEMAS_OUTPUT)
     def list_schemas(
         self,
         *,
@@ -249,6 +273,7 @@ class SQLServerToolSet:
         return _paginate_summary(rows, key="schemas", ref_prefix="schema", max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLSERVER_LIST_TABLES_OUTPUT)
     def list_tables(
         self,
         schema: str = "dbo",
@@ -278,6 +303,7 @@ class SQLServerToolSet:
         return _paginate_summary(rows, key="tables", ref_prefix="table", max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLSERVER_DESCRIBE_TABLE_OUTPUT)
     def describe_table(
         self,
         name: str,
@@ -321,6 +347,7 @@ class SQLServerToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLSERVER_LIST_VIEWS_OUTPUT)
     def list_views(
         self,
         schema: str = "dbo",
@@ -347,6 +374,7 @@ class SQLServerToolSet:
         return _paginate_summary(rows, key="views", ref_prefix="view", max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLSERVER_SERVER_VERSION_OUTPUT)
     def server_version(self) -> dict[str, Any]:
         """Return SQL Server ``@@VERSION`` and current ``DB_NAME()``.
 
@@ -362,6 +390,7 @@ class SQLServerToolSet:
         return rows[0] if rows else {"version": None, "database": None}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLSERVER_SAMPLE_TABLE_OUTPUT)
     def sample_table(
         self,
         name: str,
@@ -376,17 +405,22 @@ class SQLServerToolSet:
         """
         if limit < 1 or limit > self._row_limit:
             raise ValueError(f"limit must be between 1 and {self._row_limit}")
+        if not _is_safe_identifier(schema) or not _is_safe_identifier(name):
+            raise ValueError(f"Invalid table reference: {schema!r}.{name!r}")
         return self.run_query(
             f"SELECT TOP {int(limit)} * FROM [{schema}].[{name}]",
             row_limit=limit,
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLSERVER_COUNT_ROWS_OUTPUT)
     def count_rows(self, name: str, schema: str = "dbo") -> dict[str, Any]:
         """Return ``COUNT(*)`` for a table.
 
         Returns ``{"schema", "name", "row_count"}``.
         """
+        if not _is_safe_identifier(schema) or not _is_safe_identifier(name):
+            raise ValueError(f"Invalid table reference: {schema!r}.{name!r}")
         rows = _run_select(
             self._open(),
             f"SELECT COUNT(*) AS row_count FROM [{schema}].[{name}]",
@@ -400,6 +434,7 @@ class SQLServerToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLSERVER_RUN_QUERY_OUTPUT)
     def run_query(
         self,
         sql: str,

@@ -6,13 +6,19 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.api_key import ApiKeyAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_APPLICATIONS_OUTPUT,
+    LIST_SYSTEMS_OUTPUT,
+    LIST_USER_GROUPS_OUTPUT,
+    LIST_USERS_OUTPUT,
+)
 
 
 @toolset(prefix="jumpcloud")
@@ -166,6 +172,7 @@ class JumpCloudToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_USERS_OUTPUT)
     def list_users(
         self,
         *,
@@ -278,6 +285,7 @@ class JumpCloudToolSet:
         return {"user_id": resolved_id, "deleted": True, "status": response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_USER_GROUPS_OUTPUT)
     def list_user_groups(
         self,
         *,
@@ -329,6 +337,7 @@ class JumpCloudToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_SYSTEMS_OUTPUT)
     def list_systems(
         self,
         *,
@@ -353,6 +362,7 @@ class JumpCloudToolSet:
         return {"systems": summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_APPLICATIONS_OUTPUT)
     def list_applications(
         self,
         *,

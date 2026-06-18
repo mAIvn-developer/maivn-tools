@@ -14,13 +14,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.base import AuthStrategy, NoAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_IDENTITIES_OUTPUT, LIST_TEMPLATES_OUTPUT
 
 
 @toolset(prefix="ses")
@@ -189,6 +190,7 @@ class AmazonSESToolSet:
     # MARK: - Identities
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_IDENTITIES_OUTPUT)
     def list_identities(
         self,
         *,
@@ -259,6 +261,7 @@ class AmazonSESToolSet:
     # MARK: - Templates
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_TEMPLATES_OUTPUT)
     def list_templates(
         self,
         *,

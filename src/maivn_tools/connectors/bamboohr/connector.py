@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.basic import BasicAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_EMPLOYEES_OUTPUT
 
 
 @toolset(prefix="bamboohr")
@@ -124,6 +125,7 @@ class BambooHRToolSet:
         raise ValueError("employee_id is required")
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_EMPLOYEES_OUTPUT)
     def list_employees(
         self,
         *,

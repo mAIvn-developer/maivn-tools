@@ -34,7 +34,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.base import AuthStrategy
 from ...auth.basic import BasicAuth
@@ -43,6 +43,14 @@ from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    GET_FILE_CONTENTS_OUTPUT,
+    LIST_BRANCHES_OUTPUT,
+    LIST_ISSUES_OUTPUT,
+    LIST_PIPELINES_OUTPUT,
+    LIST_PULL_REQUESTS_OUTPUT,
+    LIST_REPOSITORIES_OUTPUT,
+)
 
 _SHA_DISPLAY_LEN = 7
 
@@ -376,6 +384,7 @@ class BitbucketToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_REPOSITORIES_OUTPUT)
     def list_repositories(
         self,
         workspace: str,
@@ -446,6 +455,7 @@ class BitbucketToolSet:
     # MARK: - Pull requests
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PULL_REQUESTS_OUTPUT)
     def list_pull_requests(
         self,
         workspace: str,
@@ -606,6 +616,7 @@ class BitbucketToolSet:
     # MARK: - Issues
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ISSUES_OUTPUT)
     def list_issues(
         self,
         workspace: str,
@@ -687,6 +698,7 @@ class BitbucketToolSet:
     # MARK: - Pipelines
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PIPELINES_OUTPUT)
     def list_pipelines(
         self,
         workspace: str,
@@ -758,6 +770,7 @@ class BitbucketToolSet:
     # MARK: - Repository contents
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_BRANCHES_OUTPUT)
     def list_branches(
         self,
         workspace: str,
@@ -799,6 +812,7 @@ class BitbucketToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(GET_FILE_CONTENTS_OUTPUT)
     def get_file_contents(
         self,
         workspace: str,

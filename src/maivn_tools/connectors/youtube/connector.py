@@ -6,13 +6,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 from ..google_workspace._shared import TokenSource, make_bearer_auth
+from .output_schemas import (
+    LIST_COMMENT_THREADS_OUTPUT,
+    LIST_VIDEOS_OUTPUT,
+    SEARCH_OUTPUT,
+)
 
 
 @toolset(prefix="youtube")
@@ -178,6 +183,7 @@ class YouTubeToolSet:
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_VIDEOS_OUTPUT)
     def list_videos(
         self,
         *,
@@ -220,6 +226,7 @@ class YouTubeToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_OUTPUT)
     def search(
         self,
         *,
@@ -419,6 +426,7 @@ class YouTubeToolSet:
         return {"id": video_id, "deleted": True, "status": response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_COMMENT_THREADS_OUTPUT)
     def list_comment_threads(
         self,
         *,

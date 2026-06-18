@@ -24,10 +24,25 @@ from collections.abc import Callable
 from contextlib import closing
 from typing import Any, Protocol, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
+from .output_schemas import (
+    PG_COUNT_ROWS_OUTPUT,
+    PG_DESCRIBE_TABLE_OUTPUT,
+    PG_EXPLAIN_QUERY_OUTPUT,
+    PG_GET_TABLE_SIZE_OUTPUT,
+    PG_LIST_EXTENSIONS_OUTPUT,
+    PG_LIST_FOREIGN_KEYS_OUTPUT,
+    PG_LIST_INDEXES_OUTPUT,
+    PG_LIST_SCHEMAS_OUTPUT,
+    PG_LIST_TABLES_OUTPUT,
+    PG_LIST_VIEWS_OUTPUT,
+    PG_RUN_QUERY_OUTPUT,
+    PG_SAMPLE_TABLE_OUTPUT,
+    PG_SERVER_VERSION_OUTPUT,
+)
 
 _FORBIDDEN_KEYWORDS = re.compile(
     r"\b(insert|update|delete|drop|alter|create|replace|truncate|grant|revoke|comment|vacuum|analyze|copy)\b",
@@ -131,6 +146,7 @@ class PostgresToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_LIST_TABLES_OUTPUT)
     def list_tables(
         self,
         schema: str = "public",
@@ -161,6 +177,7 @@ class PostgresToolSet:
         return _paginate_summary(rows, key="tables", ref_prefix="table", max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_DESCRIBE_TABLE_OUTPUT)
     def describe_table(self, name: str, schema: str = "public") -> dict[str, Any]:
         """Return columns and primary-key columns for ``schema.name``.
 
@@ -198,6 +215,7 @@ class PostgresToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_LIST_SCHEMAS_OUTPUT)
     def list_schemas(self, *, max_results: int = _DEFAULT_LIST_LIMIT) -> dict[str, Any]:
         """List non-system schemas in the current database.
 
@@ -220,6 +238,7 @@ class PostgresToolSet:
         return _paginate_summary(rows, key="schemas", ref_prefix="schema", max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_LIST_VIEWS_OUTPUT)
     def list_views(
         self,
         schema: str = "public",
@@ -251,6 +270,7 @@ class PostgresToolSet:
         return _paginate_summary(rows, key="views", ref_prefix="view", max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_LIST_INDEXES_OUTPUT)
     def list_indexes(
         self,
         *,
@@ -289,6 +309,7 @@ class PostgresToolSet:
         return _paginate_summary(rows, key="indexes", ref_prefix="index", max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_LIST_FOREIGN_KEYS_OUTPUT)
     def list_foreign_keys(
         self,
         name: str,
@@ -320,6 +341,7 @@ class PostgresToolSet:
         return _run_select(self._open(), sql, (schema, name), self._row_limit)["rows"]
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_LIST_EXTENSIONS_OUTPUT)
     def list_extensions(self) -> list[dict[str, Any]]:
         """List installed PostgreSQL extensions.
 
@@ -331,6 +353,7 @@ class PostgresToolSet:
         return _run_select(self._open(), sql, None, self._row_limit)["rows"]
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_GET_TABLE_SIZE_OUTPUT)
     def get_table_size(self, name: str, schema: str = "public") -> dict[str, Any]:
         """Return total and table sizes (in bytes) for ``schema.name``.
 
@@ -355,6 +378,7 @@ class PostgresToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_EXPLAIN_QUERY_OUTPUT)
     def explain_query(
         self,
         sql: str,
@@ -381,6 +405,7 @@ class PostgresToolSet:
         return _run_select(self._open(), f"{prefix} {sql}", None, self._row_limit)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_SERVER_VERSION_OUTPUT)
     def server_version(self) -> dict[str, Any]:
         """Return ``version()`` and ``current_database()`` of the server.
 
@@ -392,6 +417,7 @@ class PostgresToolSet:
         return rows[0] if rows else {"version": None, "database": None}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_SAMPLE_TABLE_OUTPUT)
     def sample_table(
         self,
         name: str,
@@ -407,6 +433,8 @@ class PostgresToolSet:
         """
         if limit < 1 or limit > self._row_limit:
             raise ValueError(f"limit must be between 1 and {self._row_limit}")
+        if not _is_safe_identifier(schema) or not _is_safe_identifier(name):
+            raise ValueError(f"Invalid table reference: {schema!r}.{name!r}")
         return self.run_query(
             f'SELECT * FROM "{schema}"."{name}" LIMIT %s',
             [limit],
@@ -414,6 +442,7 @@ class PostgresToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_COUNT_ROWS_OUTPUT)
     def count_rows(self, name: str, schema: str = "public") -> dict[str, Any]:
         """Return ``COUNT(*)`` for ``schema.name``.
 
@@ -421,6 +450,8 @@ class PostgresToolSet:
         well-indexed tables; for huge tables consider
         :meth:`get_table_size` to estimate via reltuples instead.
         """
+        if not _is_safe_identifier(schema) or not _is_safe_identifier(name):
+            raise ValueError(f"Invalid table reference: {schema!r}.{name!r}")
         rows = _run_select(
             self._open(),
             f'SELECT COUNT(*) AS row_count FROM "{schema}"."{name}"',
@@ -430,6 +461,7 @@ class PostgresToolSet:
         return {"schema": schema, "name": name, "row_count": rows[0]["row_count"] if rows else 0}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PG_RUN_QUERY_OUTPUT)
     def run_query(
         self,
         sql: str,
@@ -487,6 +519,18 @@ class PostgresToolSet:
                     "to be installed, or a custom connection_factory."
                 ) from exc
         return psycopg.connect(self._dsn)  # type: ignore[return-value]
+
+
+def _is_safe_identifier(name: str) -> bool:
+    """Allow only plain SQL identifiers (no quotes/dots/whitespace).
+
+    ``sample_table``/``count_rows`` interpolate ``schema``/``name`` straight
+    into quoted identifiers, so an embedded quote could break out of the
+    identifier and inject arbitrary SQL. Restrict to the same strict shape the
+    sqlite connector enforces; callers needing exotic identifiers can use
+    ``run_query`` with proper quoting.
+    """
+    return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name))
 
 
 def _validate_read_only_sql(sql: object) -> None:

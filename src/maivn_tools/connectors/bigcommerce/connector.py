@@ -5,13 +5,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.api_key import ApiKeyAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_CUSTOMERS_OUTPUT,
+    LIST_ORDERS_OUTPUT,
+    LIST_PRODUCTS_OUTPUT,
+)
 
 # MARK: Helpers
 
@@ -142,6 +147,7 @@ class BigCommerceToolSet:
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PRODUCTS_OUTPUT)
     def list_products(
         self,
         *,
@@ -222,6 +228,7 @@ class BigCommerceToolSet:
         return {"id": resolved_id, "deleted": True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ORDERS_OUTPUT)
     def list_orders(
         self,
         *,
@@ -263,6 +270,7 @@ class BigCommerceToolSet:
         return self._client.get(self._v2(f"/orders/{order_id}")).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CUSTOMERS_OUTPUT)
     def list_customers(
         self,
         *,

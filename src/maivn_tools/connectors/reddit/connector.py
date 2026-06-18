@@ -7,13 +7,14 @@ from __future__ import annotations
 from typing import Any, cast
 from urllib.parse import urlencode
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_SUBREDDIT_POSTS_OUTPUT, SEARCH_OUTPUT
 
 
 @toolset(prefix="reddit")
@@ -190,6 +191,7 @@ class RedditToolSet:
         return self._client.get(f"/r/{subreddit}/about").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_SUBREDDIT_POSTS_OUTPUT)
     def list_subreddit_posts(
         self,
         subreddit: str,
@@ -240,6 +242,7 @@ class RedditToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_OUTPUT)
     def search(
         self,
         query: str,

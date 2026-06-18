@@ -6,13 +6,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_FOLDER_CONTINUE_OUTPUT,
+    LIST_FOLDER_OUTPUT,
+    SEARCH_OUTPUT,
+)
 
 
 def _extract_dropbox_path(candidate: Any) -> str:
@@ -199,6 +204,7 @@ class DropboxToolSet:
     # MARK: - Files (list and metadata)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_FOLDER_OUTPUT)
     def list_folder(
         self,
         path: Any = "",
@@ -236,6 +242,7 @@ class DropboxToolSet:
         return _summarize_dropbox_entries(raw, include_ids=include_ids)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_FOLDER_CONTINUE_OUTPUT)
     def list_folder_continue(
         self,
         cursor: str,
@@ -274,6 +281,7 @@ class DropboxToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_OUTPUT)
     def search(
         self,
         query: str,

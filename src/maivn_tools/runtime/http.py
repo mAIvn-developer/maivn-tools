@@ -129,6 +129,15 @@ class UrllibTransport(HttpTransport):
 
     def send(self, request: HttpRequest) -> HttpResponse:
         url = request.url
+        # SSRF/LFI guard: urllib.request.urlopen also handles ``file:``,
+        # ``ftp:`` and ``data:`` URLs. A connector (or a model-influenced URL)
+        # pointing at ``file:///etc/passwd`` would otherwise read local files,
+        # so reject anything that is not plain HTTP(S) before opening it.
+        scheme = urllib.parse.urlparse(url).scheme.lower()
+        if scheme not in ("http", "https"):
+            raise ValueError(
+                f"Unsupported URL scheme {scheme!r}: only 'http' and 'https' are allowed"
+            )
         if request.params:
             sep = "&" if urllib.parse.urlparse(url).query else "?"
             url = f"{url}{sep}{urllib.parse.urlencode(request.params, doseq=True)}"

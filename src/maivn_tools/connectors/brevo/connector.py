@@ -6,13 +6,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.api_key import ApiKeyAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_CONTACTS_OUTPUT,
+    LIST_EMAIL_CAMPAIGNS_OUTPUT,
+    LIST_LISTS_OUTPUT,
+)
 
 # MARK: ToolSet
 
@@ -163,6 +168,7 @@ class BrevoToolSet:
         return self._client.post("/v3/smtp/email", json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CONTACTS_OUTPUT)
     def list_contacts(
         self,
         *,
@@ -256,6 +262,7 @@ class BrevoToolSet:
         return {"id": email_or_id, "deleted": True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_LISTS_OUTPUT)
     def list_lists(
         self,
         *,
@@ -303,6 +310,7 @@ class BrevoToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_EMAIL_CAMPAIGNS_OUTPUT)
     def list_email_campaigns(
         self,
         *,

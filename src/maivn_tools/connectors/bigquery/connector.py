@@ -7,13 +7,14 @@ from __future__ import annotations
 import re
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 from ..google_workspace._shared import TokenSource, make_bearer_auth
+from .output_schemas import LIST_DATASETS_OUTPUT, LIST_TABLES_OUTPUT
 
 # MARK: - Constants
 
@@ -150,6 +151,7 @@ class BigQueryToolSet:
     # MARK: - Datasets
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_DATASETS_OUTPUT)
     def list_datasets(
         self,
         *,
@@ -218,6 +220,7 @@ class BigQueryToolSet:
     # MARK: - Tables
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_TABLES_OUTPUT)
     def list_tables(
         self,
         dataset_id: str,

@@ -9,13 +9,18 @@ import urllib.parse
 from collections.abc import Iterable
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.api_key import ApiKeyAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpResponse, HttpTransport
+from .output_schemas import (
+    LIST_APPLICATIONS_OUTPUT,
+    LIST_GROUPS_OUTPUT,
+    LIST_USERS_OUTPUT,
+)
 
 # Okta returns pagination links exclusively in the HTTP ``Link`` response
 # header, e.g. ``<https://org/api/v1/users?limit=200&after=...>; rel="next"``.
@@ -197,6 +202,7 @@ class OktaToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_USERS_OUTPUT)
     def list_users(
         self,
         *,
@@ -336,6 +342,7 @@ class OktaToolSet:
         return {"status": response.status, "deactivated": True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_GROUPS_OUTPUT)
     def list_groups(
         self,
         *,
@@ -412,6 +419,7 @@ class OktaToolSet:
         return {"status": response.status, "removed": True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_APPLICATIONS_OUTPUT)
     def list_applications(
         self,
         *,

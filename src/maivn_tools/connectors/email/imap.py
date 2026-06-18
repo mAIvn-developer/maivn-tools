@@ -21,10 +21,11 @@ from email.message import Message
 from email.utils import parseaddr
 from typing import Any, Protocol, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
+from .output_schemas import SEARCH_MESSAGES_OUTPUT
 
 # MARK: - Constants
 
@@ -182,6 +183,7 @@ class IMAPToolSet:
             _safe_logout(client)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_MESSAGES_OUTPUT)
     def search_messages(
         self,
         mailbox: str = "INBOX",

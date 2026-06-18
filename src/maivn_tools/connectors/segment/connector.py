@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.basic import BasicAuth
 from ...auth.bearer import BearerTokenAuth
@@ -14,6 +14,11 @@ from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_DESTINATIONS_OUTPUT,
+    LIST_SOURCES_OUTPUT,
+    LIST_WAREHOUSES_OUTPUT,
+)
 
 
 @toolset(prefix="segment")
@@ -271,6 +276,7 @@ class SegmentToolSet:
         return self._require_public().get("/workspace").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_SOURCES_OUTPUT)
     def list_sources(
         self,
         *,
@@ -324,6 +330,7 @@ class SegmentToolSet:
         return self._require_public().get(f"/sources/{source_id}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_DESTINATIONS_OUTPUT)
     def list_destinations(
         self,
         *,
@@ -363,6 +370,7 @@ class SegmentToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_WAREHOUSES_OUTPUT)
     def list_warehouses(
         self,
         *,

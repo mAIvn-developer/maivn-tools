@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.basic import BasicAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_PROJECTS_OUTPUT, SEARCH_ISSUES_OUTPUT
 
 
 @toolset(prefix="jira")
@@ -88,6 +89,7 @@ class JiraToolSet:
         return self._client.get("/rest/api/3/myself").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SEARCH_ISSUES_OUTPUT)
     def search_issues(
         self,
         jql: str,
@@ -440,6 +442,7 @@ class JiraToolSet:
     # MARK: - Projects, users, statuses
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PROJECTS_OUTPUT)
     def list_projects(
         self,
         *,

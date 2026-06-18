@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.api_key import ApiKeyAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_REPLIES_OUTPUT, LIST_THREADS_OUTPUT
 
 
 @toolset(prefix="threads")
@@ -124,6 +125,7 @@ class ThreadsToolSet:
         return self._client.get(self._path("/me"), params=params or None).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_THREADS_OUTPUT)
     def list_threads(
         self,
         user_id: str,
@@ -267,6 +269,7 @@ class ThreadsToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_REPLIES_OUTPUT)
     def list_replies(
         self,
         media_id: str,

@@ -22,10 +22,22 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
+from .output_schemas import (
+    SQLITE_COUNT_ROWS_OUTPUT,
+    SQLITE_DESCRIBE_TABLE_OUTPUT,
+    SQLITE_EXPLAIN_QUERY_OUTPUT,
+    SQLITE_GET_SCHEMA_DUMP_OUTPUT,
+    SQLITE_LIST_FOREIGN_KEYS_OUTPUT,
+    SQLITE_LIST_INDEXES_OUTPUT,
+    SQLITE_LIST_TABLES_OUTPUT,
+    SQLITE_LIST_VIEWS_OUTPUT,
+    SQLITE_RUN_QUERY_OUTPUT,
+    SQLITE_SAMPLE_TABLE_OUTPUT,
+)
 
 _FORBIDDEN_KEYWORDS = re.compile(
     r"\b(insert|update|delete|drop|alter|create|replace|truncate|attach|detach|vacuum|reindex|pragma)\b",
@@ -90,6 +102,7 @@ class SQLiteToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLITE_LIST_TABLES_OUTPUT)
     def list_tables(
         self,
         *,
@@ -138,6 +151,7 @@ class SQLiteToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLITE_DESCRIBE_TABLE_OUTPUT)
     def describe_table(self, name: str) -> dict[str, Any]:
         """Return column metadata, primary keys, and indexes for ``name``.
 
@@ -191,6 +205,7 @@ class SQLiteToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLITE_RUN_QUERY_OUTPUT)
     def run_query(
         self,
         sql: str,
@@ -249,6 +264,7 @@ class SQLiteToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLITE_LIST_VIEWS_OUTPUT)
     def list_views(
         self,
         *,
@@ -288,6 +304,7 @@ class SQLiteToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLITE_LIST_INDEXES_OUTPUT)
     def list_indexes(
         self,
         table: str | None = None,
@@ -339,6 +356,7 @@ class SQLiteToolSet:
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLITE_LIST_FOREIGN_KEYS_OUTPUT)
     def list_foreign_keys(self, table: str) -> list[dict[str, Any]]:
         """Return foreign-key definitions for ``table``.
 
@@ -365,6 +383,7 @@ class SQLiteToolSet:
             ]
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLITE_EXPLAIN_QUERY_OUTPUT)
     def explain_query(self, sql: str, *, plan: bool = False) -> dict[str, Any]:
         """Return ``EXPLAIN`` (or ``EXPLAIN QUERY PLAN``) output for ``sql``.
 
@@ -382,6 +401,7 @@ class SQLiteToolSet:
         return {"plan": plan, "columns": columns, "rows": rows}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLITE_GET_SCHEMA_DUMP_OUTPUT)
     def get_schema_dump(self) -> list[dict[str, Any]]:
         """Return DDL statements for every object in ``sqlite_master``.
 
@@ -408,6 +428,7 @@ class SQLiteToolSet:
             ]
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLITE_SAMPLE_TABLE_OUTPUT)
     def sample_table(
         self,
         name: str,
@@ -429,6 +450,7 @@ class SQLiteToolSet:
         return self.run_query(f"SELECT * FROM {name} LIMIT {int(limit)}", row_limit=limit)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(SQLITE_COUNT_ROWS_OUTPUT)
     def count_rows(self, name: str) -> dict[str, Any]:
         """Return ``COUNT(*)`` for ``name``.
 

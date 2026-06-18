@@ -7,13 +7,14 @@ from __future__ import annotations
 from typing import Any, cast
 from urllib.parse import quote, urlencode
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.basic import BasicAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_MESSAGES_OUTPUT
 
 
 @toolset(prefix="twilio")
@@ -151,6 +152,7 @@ class TwilioToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_MESSAGES_OUTPUT)
     def list_messages(
         self,
         *,

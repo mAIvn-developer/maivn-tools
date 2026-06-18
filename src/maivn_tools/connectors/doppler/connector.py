@@ -6,13 +6,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_CONFIGS_OUTPUT,
+    LIST_PROJECTS_OUTPUT,
+    LIST_SECRETS_OUTPUT,
+)
 
 
 @toolset(prefix="doppler")
@@ -126,6 +131,7 @@ class DopplerToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PROJECTS_OUTPUT)
     def list_projects(
         self,
         *,
@@ -189,6 +195,7 @@ class DopplerToolSet:
         return self._client.delete("/v3/projects/project", json={"project": project}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CONFIGS_OUTPUT)
     def list_configs(
         self,
         *,
@@ -229,6 +236,7 @@ class DopplerToolSet:
         return {"configs": summaries, "project": project}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_SECRETS_OUTPUT)
     def list_secrets(
         self,
         *,

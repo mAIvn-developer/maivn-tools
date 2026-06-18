@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.base import NoAuth
 from ...auth.bearer import BearerTokenAuth
@@ -20,6 +20,12 @@ from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_DEPLOYMENTS_OUTPUT,
+    LIST_NAMESPACES_OUTPUT,
+    LIST_PODS_OUTPUT,
+    LIST_SERVICES_OUTPUT,
+)
 
 # MARK: Constants
 
@@ -173,6 +179,7 @@ class KubernetesToolSet:
         return version_info
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_NAMESPACES_OUTPUT)
     def list_namespaces(
         self,
         *,
@@ -201,6 +208,7 @@ class KubernetesToolSet:
         return {"namespaces": summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PODS_OUTPUT)
     def list_pods(
         self,
         *,
@@ -291,6 +299,7 @@ class KubernetesToolSet:
         return {"status": response.status, "logs": response.text()}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_DEPLOYMENTS_OUTPUT)
     def list_deployments(
         self,
         *,
@@ -375,6 +384,7 @@ class KubernetesToolSet:
         return deleted
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_SERVICES_OUTPUT)
     def list_services(
         self,
         namespace: str | None = None,

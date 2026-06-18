@@ -18,6 +18,15 @@ pulls the SDK as well:
 pip install maivn-tools
 ```
 
+Some connectors need optional dependencies:
+
+```bash
+pip install "maivn-tools[pdf]"      # pypdf — PDF tooling
+pip install "maivn-tools[docx]"     # python-docx — Word docs
+pip install "maivn-tools[postgres]" # psycopg — Postgres connector
+pip install "maivn-tools[all]"      # everything above
+```
+
 The package is not exposed as a `maivn[tools]` extra. That would create the same
 circular release coupling we removed for `maivn[studio]` in 0.3.0; instead,
 `maivn-tools` pins a compatible SDK version range directly.

@@ -6,13 +6,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.api_key import ApiKeyAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_ISSUES_OUTPUT,
+    LIST_ORGANIZATIONS_OUTPUT,
+    LIST_PROJECTS_OUTPUT,
+)
 
 # Currently recommended GA REST API date version (see docs.snyk.io REST API docs).
 _API_VERSION = "2024-10-15"
@@ -141,6 +146,7 @@ class SnykToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ORGANIZATIONS_OUTPUT)
     def list_organizations(
         self,
         *,
@@ -179,6 +185,7 @@ class SnykToolSet:
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PROJECTS_OUTPUT)
     def list_projects(
         self,
         *,
@@ -239,6 +246,7 @@ class SnykToolSet:
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_ISSUES_OUTPUT)
     def list_issues(
         self,
         *,

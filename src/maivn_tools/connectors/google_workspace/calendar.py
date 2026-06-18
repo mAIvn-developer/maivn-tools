@@ -5,13 +5,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 from ._shared import TokenSource, make_bearer_auth
+from .output_schemas import LIST_CALENDARS_OUTPUT, LIST_EVENTS_OUTPUT
 
 CALENDAR_API_URL = "https://www.googleapis.com/calendar/v3"
 _DEFAULT_EVENT_LIST_MAX = 25
@@ -76,6 +77,7 @@ class GoogleCalendarToolSet:
     # MARK: - Tools
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CALENDARS_OUTPUT)
     def list_calendars(
         self,
         *,
@@ -136,6 +138,7 @@ class GoogleCalendarToolSet:
         return self._client.get(f"/calendars/{resolved}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_EVENTS_OUTPUT)
     def list_events(
         self,
         calendar_id: Any = "primary",
@@ -292,6 +295,7 @@ class GoogleCalendarToolSet:
         return {"deleted": True, "status": response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_EVENTS_OUTPUT)
     def list_event_instances(
         self,
         event_id: Any,

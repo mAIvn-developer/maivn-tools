@@ -6,13 +6,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    HASHTAG_TIMELINE_OUTPUT,
+    HOME_TIMELINE_OUTPUT,
+    PUBLIC_TIMELINE_OUTPUT,
+)
 
 
 @toolset(prefix="mastodon")
@@ -155,6 +160,7 @@ class MastodonToolSet:
         return self._client.get("/api/v1/accounts/lookup", params={"acct": acct}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(HOME_TIMELINE_OUTPUT)
     def home_timeline(
         self,
         *,
@@ -182,6 +188,7 @@ class MastodonToolSet:
         return self._summarize_statuses(payload, include_metadata, include_ids)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(PUBLIC_TIMELINE_OUTPUT)
     def public_timeline(
         self,
         *,
@@ -209,6 +216,7 @@ class MastodonToolSet:
         return self._summarize_statuses(payload, include_metadata, include_ids)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(HASHTAG_TIMELINE_OUTPUT)
     def hashtag_timeline(
         self,
         hashtag: str,

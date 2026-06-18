@@ -77,8 +77,10 @@ Use this checklist when creating or reviewing a toolset:
 - **Write tools accept natural read results when safe.** If a read tool returns
   a record with `record_id`, a write tool can accept either the raw ID or that
   record shape when the mapping is obvious and non-dangerous.
-- **Structured outputs are documented.** Pydantic model/final tools should use
-  short `Field(description=...)` values on every field.
+- **Structured outputs are first class.** Use SDK return-type inference for
+  precise return annotations, `@tool_output(...)` for generic return types that
+  still have a stable public result shape, and app-side `ToolOverride` when the
+  app needs to replace a provider-owned result contract.
 - **Provider code stays generic.** Use SDK `ToolOverride` registration options
   for app-specific names, descriptions, default args, dependencies, or
   final-tool behavior.
@@ -186,6 +188,51 @@ class Example:
 (`@depends_on_tool`, `@depends_on_agent`, `@compose_artifact_policy`, etc.).
 Order doesn't matter — each decorator attaches its own attribute and the
 dependency collector reads them all at registration time.
+
+### `@tool_output(...)`
+
+Use `@tool_output(...)` when a method returns a generic container such as
+`dict[str, object]` but the compact provider response has a stable shape that
+agents should be able to plan against. Keep output contracts separate from
+`@toolify(...)` metadata; `metadata` remains for operational tags and provider
+notes, not result schemas.
+
+```python
+from maivn import tool_output, toolify, toolset
+
+
+_SEARCH_OUTPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "records": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "record_ref": {"type": "string"},
+                    "title": {"type": "string"},
+                },
+                "required": ["record_ref", "title"],
+            },
+        }
+    },
+    "required": ["records"],
+}
+
+
+@toolset(prefix="records")
+class RecordsToolSet:
+    @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(_SEARCH_OUTPUT_SCHEMA)
+    def search_records(self, query: str) -> dict[str, object]:
+        """Search records and return compact summaries."""
+        ...
+```
+
+When the return annotation is already precise, prefer the annotation. When a
+specific application needs a different contract than the provider connector
+declares, pass `ToolOverride(output_schema=...)` at registration time instead
+of changing the provider toolset.
 
 ## Registration
 

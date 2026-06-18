@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.oauth import OAuth2Token, OAuth2TokenProvider
 from ...core.connections import ConnectionMetadata
@@ -13,6 +13,13 @@ from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 from ..microsoft_graph._shared import TokenSource, make_graph_client
+from .output_schemas import (
+    LIST_CHANNEL_MESSAGES_OUTPUT,
+    LIST_CHANNELS_OUTPUT,
+    LIST_CHAT_MESSAGES_OUTPUT,
+    LIST_CHATS_OUTPUT,
+    LIST_JOINED_TEAMS_OUTPUT,
+)
 
 _DEFAULT_LIST_LIMIT = 25
 
@@ -68,6 +75,7 @@ class MicrosoftTeamsToolSet:
     # MARK: - Joined teams
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_JOINED_TEAMS_OUTPUT)
     def list_joined_teams(
         self,
         *,
@@ -121,6 +129,7 @@ class MicrosoftTeamsToolSet:
     # MARK: - Channels
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CHANNELS_OUTPUT)
     def list_channels(
         self,
         team_id: Any,
@@ -222,6 +231,7 @@ class MicrosoftTeamsToolSet:
     # MARK: - Channel messages
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CHANNEL_MESSAGES_OUTPUT)
     def list_channel_messages(
         self,
         team_id: Any,
@@ -382,6 +392,7 @@ class MicrosoftTeamsToolSet:
     # MARK: - Chats
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CHATS_OUTPUT)
     def list_chats(
         self,
         *,
@@ -433,6 +444,7 @@ class MicrosoftTeamsToolSet:
         return self._client.get(f"/chats/{resolved}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CHAT_MESSAGES_OUTPUT)
     def list_chat_messages(
         self,
         chat_id: Any,

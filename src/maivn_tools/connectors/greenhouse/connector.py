@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.basic import BasicAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_CANDIDATES_OUTPUT, LIST_JOBS_OUTPUT
 
 
 @toolset(prefix="greenhouse")
@@ -160,6 +161,7 @@ class GreenhouseToolSet:
         raise ValueError("application_id is required")
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_JOBS_OUTPUT)
     def list_jobs(
         self,
         *,
@@ -203,6 +205,7 @@ class GreenhouseToolSet:
         return self._client.get(f"/v1/jobs/{job_id}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_CANDIDATES_OUTPUT)
     def list_candidates(
         self,
         *,

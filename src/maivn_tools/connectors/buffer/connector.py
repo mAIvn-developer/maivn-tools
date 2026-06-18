@@ -19,13 +19,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.bearer import BearerTokenAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import LIST_UPDATES_OUTPUT
 
 # Buffer's current public API is a single unversioned GraphQL endpoint.
 _API_BASE_URL = "https://api.buffer.com"
@@ -381,6 +382,7 @@ class BufferToolSet:
         return self._execute(_CHANNEL_QUERY, {"id": profile_id})
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_UPDATES_OUTPUT)
     def list_pending_updates(
         self,
         profile_id: str,
@@ -409,6 +411,7 @@ class BufferToolSet:
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_UPDATES_OUTPUT)
     def list_sent_updates(
         self,
         profile_id: str,

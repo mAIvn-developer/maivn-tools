@@ -379,3 +379,33 @@ def test_postgres_destructive_tag_absent() -> None:
         opts = get_toolify_options(method)
         assert opts is not None
         assert opts.destructive is False
+
+
+def test_postgres_sample_table_rejects_identifier_injection() -> None:
+    """sample_table interpolates name/schema into quoted identifiers; a quote
+    break-out must be rejected before any SQL is issued."""
+    connector = PostgresToolSet(connection_factory=make_factory([]), row_limit=10)
+    with pytest.raises(ValueError):
+        connector.sample_table(
+            name='users" UNION SELECT table_name, 1 FROM information_schema.tables --'
+        )
+    with pytest.raises(ValueError):
+        connector.sample_table(name="users", schema='public" UNION SELECT 1 --')
+
+
+def test_postgres_count_rows_rejects_identifier_injection() -> None:
+    """count_rows builds its SELECT directly via _run_select, bypassing the
+    read-only SQL guard; identifier validation must stop the break-out."""
+    connector = PostgresToolSet(connection_factory=make_factory([]), row_limit=10)
+    with pytest.raises(ValueError):
+        connector.count_rows(name="users\" UNION SELECT current_setting('x'), 1 --")
+    with pytest.raises(ValueError):
+        connector.count_rows(name="users", schema='evil"."x')
+
+
+def test_postgres_sample_table_accepts_valid_identifier_with_schema() -> None:
+    """Regression: legitimate identifiers must still pass validation and run."""
+    plan = [{"columns": ["id"], "rows": [(1,), (2,)]}]
+    connector = PostgresToolSet(connection_factory=make_factory(plan), row_limit=10)
+    result = connector.sample_table(name="users", schema="public", limit=2)
+    assert result["row_count"] == 2

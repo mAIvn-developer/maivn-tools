@@ -6,13 +6,20 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.basic import BasicAuth
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
+from .output_schemas import (
+    LIST_DESTINATIONS_OUTPUT,
+    LIST_MODELS_OUTPUT,
+    LIST_SOURCES_OUTPUT,
+    LIST_SYNC_RUNS_OUTPUT,
+    LIST_SYNCS_OUTPUT,
+)
 
 # MARK: Helpers
 
@@ -201,6 +208,7 @@ class CensusToolSet:
         return self._client
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_SOURCES_OUTPUT)
     def list_sources(
         self,
         *,
@@ -244,6 +252,7 @@ class CensusToolSet:
         return self._client.get(f"/api/v1/sources/{resolved_id}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_DESTINATIONS_OUTPUT)
     def list_destinations(
         self,
         *,
@@ -274,6 +283,7 @@ class CensusToolSet:
         return {"destinations": summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_MODELS_OUTPUT)
     def list_models(
         self,
         *,
@@ -324,6 +334,7 @@ class CensusToolSet:
         return self._client.get(f"/api/v1/models/{resolved_id}").json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_SYNCS_OUTPUT)
     def list_syncs(
         self,
         *,
@@ -399,6 +410,7 @@ class CensusToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_SYNC_RUNS_OUTPUT)
     def list_sync_runs(
         self,
         sync_id: Any,

@@ -29,13 +29,21 @@ from __future__ import annotations
 from base64 import b64encode
 from typing import Any, cast
 
-from maivn import toolify, toolset
+from maivn import tool_output, toolify, toolset
 
 from ...auth.base import AuthStrategy
 from ...core.connections import ConnectionMetadata
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpResponse, HttpTransport
+from .output_schemas import (
+    LIST_BRANCHES_OUTPUT,
+    LIST_BUILDS_OUTPUT,
+    LIST_PIPELINES_OUTPUT,
+    LIST_PROJECTS_OUTPUT,
+    LIST_PULL_REQUESTS_OUTPUT,
+    LIST_REPOSITORIES_OUTPUT,
+)
 
 _API_VERSION = "7.1"
 _SHA_DISPLAY_LEN = 7
@@ -356,6 +364,7 @@ class AzureDevOpsToolSet:
     # MARK: - Projects
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PROJECTS_OUTPUT)
     def list_projects(
         self,
         *,
@@ -423,6 +432,7 @@ class AzureDevOpsToolSet:
     # MARK: - Repositories & pull requests
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_REPOSITORIES_OUTPUT)
     def list_repositories(
         self,
         project: str | dict[str, Any],
@@ -481,6 +491,7 @@ class AzureDevOpsToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PULL_REQUESTS_OUTPUT)
     def list_pull_requests(
         self,
         project: str | dict[str, Any],
@@ -613,6 +624,7 @@ class AzureDevOpsToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_BRANCHES_OUTPUT)
     def list_branches(
         self,
         project: str | dict[str, Any],
@@ -795,6 +807,7 @@ class AzureDevOpsToolSet:
     # MARK: - Pipelines and builds
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_PIPELINES_OUTPUT)
     def list_pipelines(
         self,
         project: str | dict[str, Any],
@@ -867,6 +880,7 @@ class AzureDevOpsToolSet:
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(LIST_BUILDS_OUTPUT)
     def list_builds(
         self,
         project: str | dict[str, Any],
