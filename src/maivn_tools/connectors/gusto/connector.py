@@ -15,10 +15,10 @@ from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_COMPANIES_OUTPUT, LIST_EMPLOYEES_OUTPUT
 
-_API_VERSION = "2026-02-01"
+_API_VERSION = '2026-02-01'
 
 
-@toolset(prefix="gusto")
+@toolset(prefix='gusto')
 class GustoToolSet:
     """A connector for Gusto's v1 REST API.
 
@@ -29,37 +29,37 @@ class GustoToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="gusto",
-        display_name="Gusto",
-        version="0.1.0",
-        description="Companies, employees, payrolls, pay schedules, and time off.",
+        name='gusto',
+        display_name='Gusto',
+        version='0.1.0',
+        description='Companies, employees, payrolls, pay schedules, and time off.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://docs.gusto.com/embedded-payroll/reference",
-        homepage_url="https://gusto.com/",
-        tags=("hr", "payroll"),
+        documentation_url='https://docs.gusto.com/embedded-payroll/reference',
+        homepage_url='https://gusto.com/',
+        tags=('hr', 'payroll'),
     )
 
     def __init__(
         self,
         *,
         access_token: str,
-        base_url: str = "https://api.gusto.com",
+        base_url: str = 'https://api.gusto.com',
         api_version: str = _API_VERSION,
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(access_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "X-Gusto-API-Version": api_version,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Gusto-API-Version': api_version,
             },
         )
 
@@ -76,28 +76,28 @@ class GustoToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        first = employee.get("first_name", "")
-        last = employee.get("last_name", "")
-        jobs: object = employee.get("jobs", [])
-        primary_title: object = ""
+        first = employee.get('first_name', '')
+        last = employee.get('last_name', '')
+        jobs: object = employee.get('jobs', [])
+        primary_title: object = ''
         if isinstance(jobs, list) and jobs:
-            jobs_list = cast("list[object]", jobs)
+            jobs_list = cast('list[object]', jobs)
             first_raw = jobs_list[0]
             first_job: dict[str, Any] = (
-                cast("dict[str, Any]", first_raw) if isinstance(first_raw, dict) else {}
+                cast('dict[str, Any]', first_raw) if isinstance(first_raw, dict) else {}
             )
-            primary_title = (first_job or {}).get("title", "")
+            primary_title = (first_job or {}).get('title', '')
         summary: dict[str, Any] = {
-            "employee_ref": f"employee_{index}",
-            "name": (employee.get("preferred_first_name") or f"{first} {last}").strip(),
-            "email": employee.get("email", ""),
-            "title": primary_title,
-            "department": employee.get("department", "") or "",
-            "hire_date": employee.get("current_employment_status_date", ""),
-            "is_terminated": employee.get("terminated", False),
+            'employee_ref': f'employee_{index}',
+            'name': (employee.get('preferred_first_name') or f'{first} {last}').strip(),
+            'email': employee.get('email', ''),
+            'title': primary_title,
+            'department': employee.get('department', '') or '',
+            'hire_date': employee.get('current_employment_status_date', ''),
+            'is_terminated': employee.get('terminated', False),
         }
         if include_ids:
-            summary["employee_id"] = employee.get("uuid", "") or employee.get("id", "")
+            summary['employee_id'] = employee.get('uuid', '') or employee.get('id', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -112,32 +112,32 @@ class GustoToolSet:
         ``{"companies": [...]}`` where each entry has a ``uuid``. Use that
         ``uuid`` as ``company_uuid`` in other Gusto tools.
         """
-        me: Any = self._client.get("/v1/me").json()
-        roles: object = cast("dict[str, Any]", me).get("roles", {}) if isinstance(me, dict) else {}
+        me: Any = self._client.get('/v1/me').json()
+        roles: object = cast('dict[str, Any]', me).get('roles', {}) if isinstance(me, dict) else {}
         companies: list[dict[str, Any]] = []
         seen: set[str] = set()
         if isinstance(roles, dict):
-            roles_dict = cast("dict[str, Any]", roles)
+            roles_dict = cast('dict[str, Any]', roles)
             for role in roles_dict.values():
                 role_companies: object = (
-                    cast("dict[str, Any]", role).get("companies", [])
+                    cast('dict[str, Any]', role).get('companies', [])
                     if isinstance(role, dict)
                     else []
                 )
                 if not isinstance(role_companies, list):
                     continue
-                companies_list = cast("list[object]", role_companies)
+                companies_list = cast('list[object]', role_companies)
                 for company in companies_list:
                     if not isinstance(company, dict):
                         continue
-                    company_dict = cast("dict[str, Any]", company)
-                    uuid: str = company_dict.get("uuid", "")
+                    company_dict = cast('dict[str, Any]', company)
+                    uuid: str = company_dict.get('uuid', '')
                     if uuid and uuid in seen:
                         continue
                     if uuid:
                         seen.add(uuid)
                     companies.append(company_dict)
-        return {"companies": companies}
+        return {'companies': companies}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_company(self, company_uuid: str) -> dict[str, Any]:
@@ -146,8 +146,8 @@ class GustoToolSet:
         ``company_uuid`` is the raw Gusto company UUID.
         """
         if not company_uuid:
-            raise ValueError("company_uuid is required")
-        return self._client.get(f"/v1/companies/{company_uuid}").json()
+            raise ValueError('company_uuid is required')
+        return self._client.get(f'/v1/companies/{company_uuid}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_EMPLOYEES_OUTPUT)
@@ -170,26 +170,26 @@ class GustoToolSet:
         is via ``page``.
         """
         if not company_uuid:
-            raise ValueError("company_uuid is required")
+            raise ValueError('company_uuid is required')
         payload: Any = self._client.get(
-            f"/v1/companies/{company_uuid}/employees",
+            f'/v1/companies/{company_uuid}/employees',
             params={
-                "terminated": str(terminated).lower(),
-                "page": page,
-                "per": per,
+                'terminated': str(terminated).lower(),
+                'page': page,
+                'per': per,
             },
         ).json()
         if not isinstance(payload, list):
-            return cast("dict[str, Any]", payload)
-        payload_list = cast("list[object]", payload)
+            return cast('dict[str, Any]', payload)
+        payload_list = cast('list[object]', payload)
         summaries = [
             self._employee_summary(
-                cast("dict[str, Any]", employee), index=index, include_ids=include_ids
+                cast('dict[str, Any]', employee), index=index, include_ids=include_ids
             )
             for index, employee in enumerate(payload_list, start=1)
             if isinstance(employee, dict)
         ]
-        return {"employees": summaries}
+        return {'employees': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_employee(self, employee_uuid: str) -> dict[str, Any]:
@@ -200,8 +200,8 @@ class GustoToolSet:
         handle and should not appear in final answers.
         """
         if not employee_uuid:
-            raise ValueError("employee_uuid is required")
-        return self._client.get(f"/v1/employees/{employee_uuid}").json()
+            raise ValueError('employee_uuid is required')
+        return self._client.get(f'/v1/employees/{employee_uuid}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_employee(
@@ -217,13 +217,13 @@ class GustoToolSet:
         All four args are required. Confirm with the user before calling.
         """
         if not company_uuid or not first_name or not last_name or not email:
-            raise ValueError("company_uuid, first_name, last_name, and email are required")
+            raise ValueError('company_uuid, first_name, last_name, and email are required')
         return self._client.post(
-            f"/v1/companies/{company_uuid}/employees",
+            f'/v1/companies/{company_uuid}/employees',
             json={
-                "first_name": first_name,
-                "last_name": last_name,
-                "email": email,
+                'first_name': first_name,
+                'last_name': last_name,
+                'email': email,
             },
         ).json()
 
@@ -241,11 +241,11 @@ class GustoToolSet:
         Optionally filter by ``processing_statuses`` (e.g. ``["paid"]``).
         """
         if not company_uuid:
-            raise ValueError("company_uuid is required")
-        params: dict[str, Any] = {"page": page, "per": per}
+            raise ValueError('company_uuid is required')
+        params: dict[str, Any] = {'page': page, 'per': per}
         if processing_statuses is not None:
-            params["processing_statuses"] = ",".join(processing_statuses)
-        return self._client.get(f"/v1/companies/{company_uuid}/payrolls", params=params).json()
+            params['processing_statuses'] = ','.join(processing_statuses)
+        return self._client.get(f'/v1/companies/{company_uuid}/payrolls', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_payroll(
@@ -260,8 +260,8 @@ class GustoToolSet:
         resource with line items.
         """
         if not company_uuid or not payroll_uuid:
-            raise ValueError("company_uuid and payroll_uuid are required")
-        return self._client.get(f"/v1/companies/{company_uuid}/payrolls/{payroll_uuid}").json()
+            raise ValueError('company_uuid and payroll_uuid are required')
+        return self._client.get(f'/v1/companies/{company_uuid}/payrolls/{payroll_uuid}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_pay_schedules(self, company_uuid: str) -> dict[str, Any]:
@@ -270,8 +270,8 @@ class GustoToolSet:
         Returns the raw Gusto pay-schedule list.
         """
         if not company_uuid:
-            raise ValueError("company_uuid is required")
-        return self._client.get(f"/v1/companies/{company_uuid}/pay_schedules").json()
+            raise ValueError('company_uuid is required')
+        return self._client.get(f'/v1/companies/{company_uuid}/pay_schedules').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_time_off_requests(
@@ -288,12 +288,12 @@ class GustoToolSet:
         ``denied``).
         """
         if not company_uuid:
-            raise ValueError("company_uuid is required")
-        params: dict[str, Any] = {"page": page, "per": per}
+            raise ValueError('company_uuid is required')
+        params: dict[str, Any] = {'page': page, 'per': per}
         if status is not None:
-            params["status"] = status
+            params['status'] = status
         return self._client.get(
-            f"/v1/companies/{company_uuid}/time_off_requests",
+            f'/v1/companies/{company_uuid}/time_off_requests',
             params=params,
         ).json()
 
@@ -304,5 +304,5 @@ class GustoToolSet:
         Returns the raw Gusto job list for that employee.
         """
         if not employee_uuid:
-            raise ValueError("employee_uuid is required")
-        return self._client.get(f"/v1/employees/{employee_uuid}/jobs").json()
+            raise ValueError('employee_uuid is required')
+        return self._client.get(f'/v1/employees/{employee_uuid}/jobs').json()

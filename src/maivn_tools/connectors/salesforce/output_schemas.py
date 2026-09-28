@@ -21,64 +21,64 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_summarize_query`` builder)
 
 _RECORD_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "record_ref": {"type": "string"},
-        "object_type": {"type": "string"},
-        "Name": {"type": ["string", "null"]},
-        "Subject": {"type": ["string", "null"]},
-        "Title": {"type": ["string", "null"]},
-        "FirstName": {"type": ["string", "null"]},
-        "LastName": {"type": ["string", "null"]},
-        "Email": {"type": ["string", "null"]},
-        "Phone": {"type": ["string", "null"]},
-        "Status": {"type": ["string", "null"]},
-        "StageName": {"type": ["string", "null"]},
-        "Amount": {"type": ["number", "null"]},
-        "CloseDate": {"type": ["string", "null"]},
-        "Type": {"type": ["string", "null"]},
-        "record_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'record_ref': {'type': 'string'},
+        'object_type': {'type': 'string'},
+        'Name': {'type': ['string', 'null']},
+        'Subject': {'type': ['string', 'null']},
+        'Title': {'type': ['string', 'null']},
+        'FirstName': {'type': ['string', 'null']},
+        'LastName': {'type': ['string', 'null']},
+        'Email': {'type': ['string', 'null']},
+        'Phone': {'type': ['string', 'null']},
+        'Status': {'type': ['string', 'null']},
+        'StageName': {'type': ['string', 'null']},
+        'Amount': {'type': ['number', 'null']},
+        'CloseDate': {'type': ['string', 'null']},
+        'Type': {'type': ['string', 'null']},
+        'record_id': {'type': 'string'},
     },
-    "required": ["record_ref", "object_type"],
+    'required': ['record_ref', 'object_type'],
 }
 
 
 # MARK: - Tool output schemas
 
 SOQL_QUERY_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "records": {"type": "array", "items": _RECORD_SUMMARY},
-        "totalSize": {"type": "integer"},
-        "done": {"type": "boolean"},
-        "nextRecordsUrl": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'records': {'type': 'array', 'items': _RECORD_SUMMARY},
+        'totalSize': {'type': 'integer'},
+        'done': {'type': 'boolean'},
+        'nextRecordsUrl': {'type': 'string'},
     },
-    "required": ["records", "totalSize", "done"],
+    'required': ['records', 'totalSize', 'done'],
 }
 
 UPDATE_RECORD_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "updated": {"type": "boolean"},
-        "id": {"type": "string"},
-        "status": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'updated': {'type': 'boolean'},
+        'id': {'type': 'string'},
+        'status': {'type': 'integer'},
     },
-    "required": ["updated", "id"],
+    'required': ['updated', 'id'],
 }
 
 DELETE_RECORD_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "deleted": {"type": "boolean"},
-        "id": {"type": "string"},
-        "status": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'deleted': {'type': 'boolean'},
+        'id': {'type': 'string'},
+        'status': {'type': 'integer'},
     },
-    "required": ["deleted", "id"],
+    'required': ['deleted', 'id'],
 }
 
 
 __all__ = [
-    "DELETE_RECORD_OUTPUT",
-    "SOQL_QUERY_OUTPUT",
-    "UPDATE_RECORD_OUTPUT",
+    'DELETE_RECORD_OUTPUT',
+    'SOQL_QUERY_OUTPUT',
+    'UPDATE_RECORD_OUTPUT',
 ]

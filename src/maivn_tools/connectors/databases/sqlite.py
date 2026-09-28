@@ -40,7 +40,7 @@ from .output_schemas import (
 )
 
 _FORBIDDEN_KEYWORDS = re.compile(
-    r"\b(insert|update|delete|drop|alter|create|replace|truncate|attach|detach|vacuum|reindex|pragma)\b",
+    r'\b(insert|update|delete|drop|alter|create|replace|truncate|attach|detach|vacuum|reindex|pragma)\b',
     re.IGNORECASE,
 )
 
@@ -51,7 +51,7 @@ _DEFAULT_SAMPLE_LIMIT = 5
 _DEFAULT_QUERY_LIMIT = 100
 
 
-@toolset(prefix="sqlite")
+@toolset(prefix='sqlite')
 class SQLiteToolSet:
     """A connector that exposes read-only SQLite tools.
 
@@ -69,13 +69,13 @@ class SQLiteToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="sqlite",
-        display_name="SQLite",
-        version="0.1.0",
-        description="Read-only access to a local SQLite database file.",
+        name='sqlite',
+        display_name='SQLite',
+        version='0.1.0',
+        description='Read-only access to a local SQLite database file.',
         auth_modes=(AuthMode.NONE,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.SEARCH}),
-        tags=("database", "sqlite", "sql"),
+        tags=('database', 'sqlite', 'sql'),
     )
 
     def __init__(
@@ -86,9 +86,9 @@ class SQLiteToolSet:
         query_timeout_seconds: float = 5.0,
     ) -> None:
         if row_limit < 1:
-            raise ValueError("row_limit must be at least 1")
+            raise ValueError('row_limit must be at least 1')
         if query_timeout_seconds <= 0:
-            raise ValueError("query_timeout_seconds must be positive")
+            raise ValueError('query_timeout_seconds must be positive')
         self._database = str(database)
         self._row_limit = row_limit
         self._timeout = query_timeout_seconds
@@ -122,13 +122,13 @@ class SQLiteToolSet:
         client-side because SQLite catalogs are small.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
-        types = ("table", "view") if include_views else ("table",)
-        placeholders = ",".join("?" * len(types))
+            raise ValueError('max_results must be at least 1')
+        types = ('table', 'view') if include_views else ('table',)
+        placeholders = ','.join('?' * len(types))
         sql = (
-            "SELECT name, type FROM sqlite_master "
+            'SELECT name, type FROM sqlite_master '
             f"WHERE type IN ({placeholders}) AND name NOT LIKE 'sqlite_%' "
-            "ORDER BY name"
+            'ORDER BY name'
         )
         with closing(self._connect()) as conn, closing(conn.cursor()) as cur:
             cur.execute(sql, types)
@@ -137,17 +137,17 @@ class SQLiteToolSet:
         slice_ = rows[:max_results]
         summaries = [
             {
-                "table_ref": f"table_{index}",
-                "name": row["name"],
-                "type": row["type"],
+                'table_ref': f'table_{index}',
+                'name': row['name'],
+                'type': row['type'],
             }
             for index, row in enumerate(slice_, start=1)
         ]
         return {
-            "tables": summaries,
-            "returned": len(summaries),
-            "total": total,
-            "truncated": total > len(summaries),
+            'tables': summaries,
+            'returned': len(summaries),
+            'total': total,
+            'truncated': total > len(summaries),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -162,46 +162,46 @@ class SQLiteToolSet:
         SQLite column attributes a SELECT typically needs.
         """
         if not _is_safe_identifier(name):
-            raise ValueError(f"Invalid table name: {name!r}")
+            raise ValueError(f'Invalid table name: {name!r}')
         with closing(self._connect()) as conn:
             columns = [
                 {
-                    "cid": row["cid"],
-                    "name": row["name"],
-                    "type": row["type"],
-                    "notnull": bool(row["notnull"]),
-                    "default": row["dflt_value"],
-                    "primary_key": bool(row["pk"]),
+                    'cid': row['cid'],
+                    'name': row['name'],
+                    'type': row['type'],
+                    'notnull': bool(row['notnull']),
+                    'default': row['dflt_value'],
+                    'primary_key': bool(row['pk']),
                 }
-                for row in conn.execute(f"PRAGMA table_info({name})")
+                for row in conn.execute(f'PRAGMA table_info({name})')
             ]
             if not columns:
-                raise LookupError(f"Table {name!r} does not exist")
+                raise LookupError(f'Table {name!r} does not exist')
             indexes = [
                 {
-                    "name": row["name"],
-                    "unique": bool(row["unique"]),
-                    "origin": row["origin"],
-                    "partial": bool(row["partial"]),
+                    'name': row['name'],
+                    'unique': bool(row['unique']),
+                    'origin': row['origin'],
+                    'partial': bool(row['partial']),
                 }
-                for row in conn.execute(f"PRAGMA index_list({name})")
+                for row in conn.execute(f'PRAGMA index_list({name})')
             ]
             foreign_keys = [
                 {
-                    "id": row["id"],
-                    "table": row["table"],
-                    "from": row["from"],
-                    "to": row["to"],
-                    "on_delete": row["on_delete"],
-                    "on_update": row["on_update"],
+                    'id': row['id'],
+                    'table': row['table'],
+                    'from': row['from'],
+                    'to': row['to'],
+                    'on_delete': row['on_delete'],
+                    'on_update': row['on_update'],
                 }
-                for row in conn.execute(f"PRAGMA foreign_key_list({name})")
+                for row in conn.execute(f'PRAGMA foreign_key_list({name})')
             ]
         return {
-            "name": name,
-            "columns": columns,
-            "indexes": indexes,
-            "foreign_keys": foreign_keys,
+            'name': name,
+            'columns': columns,
+            'indexes': indexes,
+            'foreign_keys': foreign_keys,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -240,7 +240,7 @@ class SQLiteToolSet:
         effective_limit = min(self._row_limit, _DEFAULT_QUERY_LIMIT)
         limit = effective_limit if row_limit is None else int(row_limit)
         if limit < 1:
-            raise ValueError("row_limit must be at least 1")
+            raise ValueError('row_limit must be at least 1')
         if limit > self._row_limit:
             limit = self._row_limit
         params: Any
@@ -257,10 +257,10 @@ class SQLiteToolSet:
             rows = [dict(row) for row in fetched[:limit]]
             columns = [desc[0] for desc in cur.description] if cur.description else []
         return {
-            "columns": columns,
-            "rows": rows,
-            "row_count": len(rows),
-            "truncated": truncated,
+            'columns': columns,
+            'rows': rows,
+            'row_count': len(rows),
+            'truncated': truncated,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -278,29 +278,29 @@ class SQLiteToolSet:
         :meth:`describe_table` or :meth:`sample_table` to inspect rows.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         with closing(self._connect()) as conn, closing(conn.cursor()) as cur:
             cur.execute(
-                "SELECT name, sql FROM sqlite_master "
+                'SELECT name, sql FROM sqlite_master '
                 "WHERE type = 'view' AND name NOT LIKE 'sqlite_%' "
-                "ORDER BY name"
+                'ORDER BY name'
             )
             rows = cur.fetchall()
         total = len(rows)
         slice_ = rows[:max_results]
         summaries = [
             {
-                "view_ref": f"view_{index}",
-                "name": row["name"],
-                "sql": row["sql"],
+                'view_ref': f'view_{index}',
+                'name': row['name'],
+                'sql': row['sql'],
             }
             for index, row in enumerate(slice_, start=1)
         ]
         return {
-            "views": summaries,
-            "returned": len(summaries),
-            "total": total,
-            "truncated": total > len(summaries),
+            'views': summaries,
+            'returned': len(summaries),
+            'total': total,
+            'truncated': total > len(summaries),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -319,21 +319,21 @@ class SQLiteToolSet:
         Auto-indexes created by SQLite (``sqlite_*``) are filtered out.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         with closing(self._connect()) as conn, closing(conn.cursor()) as cur:
             if table is None:
                 cur.execute(
-                    "SELECT name, tbl_name, sql FROM sqlite_master "
+                    'SELECT name, tbl_name, sql FROM sqlite_master '
                     "WHERE type = 'index' AND name NOT LIKE 'sqlite_%' "
-                    "ORDER BY tbl_name, name"
+                    'ORDER BY tbl_name, name'
                 )
             else:
                 if not _is_safe_identifier(table):
-                    raise ValueError(f"Invalid table name: {table!r}")
+                    raise ValueError(f'Invalid table name: {table!r}')
                 cur.execute(
-                    "SELECT name, tbl_name, sql FROM sqlite_master "
+                    'SELECT name, tbl_name, sql FROM sqlite_master '
                     "WHERE type = 'index' AND name NOT LIKE 'sqlite_%' AND tbl_name = ? "
-                    "ORDER BY name",
+                    'ORDER BY name',
                     (table,),
                 )
             rows = cur.fetchall()
@@ -341,18 +341,18 @@ class SQLiteToolSet:
         slice_ = rows[:max_results]
         summaries = [
             {
-                "index_ref": f"index_{index}",
-                "name": row["name"],
-                "table": row["tbl_name"],
-                "sql": row["sql"],
+                'index_ref': f'index_{index}',
+                'name': row['name'],
+                'table': row['tbl_name'],
+                'sql': row['sql'],
             }
             for index, row in enumerate(slice_, start=1)
         ]
         return {
-            "indexes": summaries,
-            "returned": len(summaries),
-            "total": total,
-            "truncated": total > len(summaries),
+            'indexes': summaries,
+            'returned': len(summaries),
+            'total': total,
+            'truncated': total > len(summaries),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -366,20 +366,20 @@ class SQLiteToolSet:
         joins before composing a query.
         """
         if not _is_safe_identifier(table):
-            raise ValueError(f"Invalid table name: {table!r}")
+            raise ValueError(f'Invalid table name: {table!r}')
         with closing(self._connect()) as conn:
             return [
                 {
-                    "id": row["id"],
-                    "seq": row["seq"],
-                    "table": row["table"],
-                    "from": row["from"],
-                    "to": row["to"],
-                    "on_update": row["on_update"],
-                    "on_delete": row["on_delete"],
-                    "match": row["match"],
+                    'id': row['id'],
+                    'seq': row['seq'],
+                    'table': row['table'],
+                    'from': row['from'],
+                    'to': row['to'],
+                    'on_update': row['on_update'],
+                    'on_delete': row['on_delete'],
+                    'match': row['match'],
                 }
-                for row in conn.execute(f"PRAGMA foreign_key_list({table})")
+                for row in conn.execute(f'PRAGMA foreign_key_list({table})')
             ]
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -393,12 +393,12 @@ class SQLiteToolSet:
         ``plan=False`` they describe the low-level VDBE program.
         """
         _validate_read_only_sql(sql)
-        prefix = "EXPLAIN QUERY PLAN" if plan else "EXPLAIN"
+        prefix = 'EXPLAIN QUERY PLAN' if plan else 'EXPLAIN'
         with closing(self._connect()) as conn, closing(conn.cursor()) as cur:
-            cur.execute(f"{prefix} {sql}")
+            cur.execute(f'{prefix} {sql}')
             columns = [desc[0] for desc in cur.description] if cur.description else []
             rows = [dict(row) for row in cur.fetchall()]
-        return {"plan": plan, "columns": columns, "rows": rows}
+        return {'plan': plan, 'columns': columns, 'rows': rows}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(SQLITE_GET_SCHEMA_DUMP_OUTPUT)
@@ -413,16 +413,16 @@ class SQLiteToolSet:
         """
         with closing(self._connect()) as conn, closing(conn.cursor()) as cur:
             cur.execute(
-                "SELECT type, name, tbl_name, sql FROM sqlite_master "
+                'SELECT type, name, tbl_name, sql FROM sqlite_master '
                 "WHERE name NOT LIKE 'sqlite_%' AND sql IS NOT NULL "
-                "ORDER BY type, name"
+                'ORDER BY type, name'
             )
             return [
                 {
-                    "type": row["type"],
-                    "name": row["name"],
-                    "table": row["tbl_name"],
-                    "sql": row["sql"],
+                    'type': row['type'],
+                    'name': row['name'],
+                    'table': row['tbl_name'],
+                    'sql': row['sql'],
                 }
                 for row in cur.fetchall()
             ]
@@ -444,10 +444,10 @@ class SQLiteToolSet:
         explicit ``LIMIT``/``OFFSET``.
         """
         if not _is_safe_identifier(name):
-            raise ValueError(f"Invalid table name: {name!r}")
+            raise ValueError(f'Invalid table name: {name!r}')
         if limit < 1 or limit > self._row_limit:
-            raise ValueError(f"limit must be between 1 and {self._row_limit}")
-        return self.run_query(f"SELECT * FROM {name} LIMIT {int(limit)}", row_limit=limit)
+            raise ValueError(f'limit must be between 1 and {self._row_limit}')
+        return self.run_query(f'SELECT * FROM {name} LIMIT {int(limit)}', row_limit=limit)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(SQLITE_COUNT_ROWS_OUTPUT)
@@ -458,11 +458,11 @@ class SQLiteToolSet:
         tables; expensive on huge tables (SQLite has no row-count cache).
         """
         if not _is_safe_identifier(name):
-            raise ValueError(f"Invalid table name: {name!r}")
+            raise ValueError(f'Invalid table name: {name!r}')
         with closing(self._connect()) as conn, closing(conn.cursor()) as cur:
-            cur.execute(f"SELECT COUNT(*) AS row_count FROM {name}")
+            cur.execute(f'SELECT COUNT(*) AS row_count FROM {name}')
             row = cur.fetchone()
-            return {"table": name, "row_count": row["row_count"] if row else 0}
+            return {'table': name, 'row_count': row['row_count'] if row else 0}
 
     # MARK: - Internal helpers
 
@@ -475,22 +475,22 @@ class SQLiteToolSet:
         conn.row_factory = sqlite3.Row
         # Defense-in-depth: the connector never issues writes, but enforcing
         # query_only at the SQLite level rejects accidental mutations too.
-        conn.execute("PRAGMA query_only = ON;")
+        conn.execute('PRAGMA query_only = ON;')
         return conn
 
 
 def _is_safe_identifier(name: str) -> bool:
-    return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name))
+    return bool(re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', name))
 
 
 def _validate_read_only_sql(sql: object) -> None:
     if not isinstance(sql, str) or not sql.strip():
-        raise ValueError("sql must be a non-empty string")
-    stripped = sql.strip().rstrip(";")
-    if ";" in stripped:
-        raise ValueError("Compound statements are not allowed")
+        raise ValueError('sql must be a non-empty string')
+    stripped = sql.strip().rstrip(';')
+    if ';' in stripped:
+        raise ValueError('Compound statements are not allowed')
     first_word = stripped.split(None, 1)[0].lower()
-    if first_word not in {"select", "with", "explain"}:
-        raise ValueError("Only SELECT, WITH, and EXPLAIN statements are allowed in run_query")
+    if first_word not in {'select', 'with', 'explain'}:
+        raise ValueError('Only SELECT, WITH, and EXPLAIN statements are allowed in run_query')
     if _FORBIDDEN_KEYWORDS.search(stripped):
-        raise ValueError("Query contains a forbidden mutation keyword")
+        raise ValueError('Query contains a forbidden mutation keyword')

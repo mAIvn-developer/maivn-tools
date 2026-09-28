@@ -19,17 +19,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator, Sequence
-from typing import Any, Generic, TypeVar
-
-# MARK: Type variables
-
-Page = TypeVar("Page")
-Item = TypeVar("Item")
+from typing import Any
 
 # MARK: Base paginator
 
 
-class Paginator(ABC, Generic[Page, Item]):
+class Paginator[Page, Item](ABC):
     """Base class for paginators.
 
     Subclasses fetch one page at a time. The base class provides
@@ -86,7 +81,7 @@ class CursorPaginator(Paginator[dict[str, Any], Any]):
         self,
         fetch_page: Callable[[Any], tuple[dict[str, Any], Any]],
         *,
-        items_key: str = "items",
+        items_key: str = 'items',
     ) -> None:
         self._fetch = fetch_page
         self._items_key = items_key
@@ -120,11 +115,11 @@ class OffsetPaginator(Paginator[dict[str, Any], Any]):
         fetch_page: Callable[[int, int], dict[str, Any]],
         *,
         page_size: int,
-        items_key: str = "items",
+        items_key: str = 'items',
         total_key: str | None = None,
     ) -> None:
         if page_size < 1:
-            raise ValueError("page_size must be at least 1")
+            raise ValueError('page_size must be at least 1')
         self._fetch = fetch_page
         self._page_size = page_size
         self._items_key = items_key
@@ -168,8 +163,8 @@ class PageTokenPaginator(Paginator[dict[str, Any], Any]):
         self,
         fetch_page: Callable[[str | None], dict[str, Any]],
         *,
-        token_key: str = "next_page_token",
-        items_key: str = "items",
+        token_key: str = 'next_page_token',
+        items_key: str = 'items',
     ) -> None:
         self._fetch = fetch_page
         self._token_key = token_key
@@ -206,9 +201,9 @@ class DeltaTokenPaginator(Paginator[dict[str, Any], Any]):
         self,
         fetch_page: Callable[[str | None], dict[str, Any]],
         *,
-        next_key: str = "next_link",
-        delta_key: str = "delta_token",
-        items_key: str = "items",
+        next_key: str = 'next_link',
+        delta_key: str = 'delta_token',
+        items_key: str = 'items',
     ) -> None:
         self._fetch = fetch_page
         self._next_key = next_key

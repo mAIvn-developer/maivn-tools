@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import AzureOpenAIToolSet
 
-__all__ = ["AzureOpenAIToolSet"]
+__all__ = ['AzureOpenAIToolSet']

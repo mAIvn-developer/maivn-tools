@@ -18,78 +18,78 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _USER_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "user_ref": {"type": "string"},
-        "username": {"type": "string"},
-        "email": {"type": "string"},
-        "realname": {"type": "string"},
-        "status": {"type": "string"},
-        "last_login": {"type": ["string", "null"]},
-        "user_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'user_ref': {'type': 'string'},
+        'username': {'type': 'string'},
+        'email': {'type': 'string'},
+        'realname': {'type': 'string'},
+        'status': {'type': 'string'},
+        'last_login': {'type': ['string', 'null']},
+        'user_id': {'type': 'string'},
     },
-    "required": ["user_ref", "username"],
+    'required': ['user_ref', 'username'],
 }
 
 _PHONE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "phone_ref": {"type": "string"},
-        "number": {"type": "string"},
-        "name": {"type": "string"},
-        "platform": {"type": "string"},
-        "type": {"type": "string"},
-        "activated": {"type": "boolean"},
-        "phone_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'phone_ref': {'type': 'string'},
+        'number': {'type': 'string'},
+        'name': {'type': 'string'},
+        'platform': {'type': 'string'},
+        'type': {'type': 'string'},
+        'activated': {'type': 'boolean'},
+        'phone_id': {'type': 'string'},
     },
-    "required": ["phone_ref"],
+    'required': ['phone_ref'],
 }
 
 _GROUP_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "group_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "description": {"type": "string"},
-        "status": {"type": "string"},
-        "mobile_otp_enabled": {"type": "boolean"},
-        "push_enabled": {"type": "boolean"},
-        "group_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'group_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'description': {'type': 'string'},
+        'status': {'type': 'string'},
+        'mobile_otp_enabled': {'type': 'boolean'},
+        'push_enabled': {'type': 'boolean'},
+        'group_id': {'type': 'string'},
     },
-    "required": ["group_ref"],
+    'required': ['group_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_USERS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "users": {"type": "array", "items": _USER_SUMMARY},
-        "metadata": {"type": "object"},
+    'type': 'object',
+    'properties': {
+        'users': {'type': 'array', 'items': _USER_SUMMARY},
+        'metadata': {'type': 'object'},
     },
-    "required": ["users"],
+    'required': ['users'],
 }
 
 LIST_PHONES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "phones": {"type": "array", "items": _PHONE_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'phones': {'type': 'array', 'items': _PHONE_SUMMARY},
     },
-    "required": ["phones"],
+    'required': ['phones'],
 }
 
 LIST_GROUPS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "groups": {"type": "array", "items": _GROUP_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'groups': {'type': 'array', 'items': _GROUP_SUMMARY},
     },
-    "required": ["groups"],
+    'required': ['groups'],
 }
 
 
 __all__ = [
-    "LIST_GROUPS_OUTPUT",
-    "LIST_PHONES_OUTPUT",
-    "LIST_USERS_OUTPUT",
+    'LIST_GROUPS_OUTPUT',
+    'LIST_PHONES_OUTPUT',
+    'LIST_USERS_OUTPUT',
 ]

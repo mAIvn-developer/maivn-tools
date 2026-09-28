@@ -21,7 +21,7 @@ from .output_schemas import (
 )
 
 
-@toolset(prefix="looker")
+@toolset(prefix='looker')
 class LookerToolSet:
     """A connector for the Looker API 4.0.
 
@@ -38,15 +38,15 @@ class LookerToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="looker",
-        display_name="Looker",
-        version="0.1.0",
-        description="Looks, dashboards, queries, users, and content.",
+        name='looker',
+        display_name='Looker',
+        version='0.1.0',
+        description='Looks, dashboards, queries, users, and content.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://cloud.google.com/looker/docs/api-and-integration",
-        homepage_url="https://looker.com/",
-        tags=("bi", "analytics"),
+        documentation_url='https://cloud.google.com/looker/docs/api-and-integration',
+        homepage_url='https://looker.com/',
+        tags=('bi', 'analytics'),
     )
 
     def __init__(
@@ -58,15 +58,15 @@ class LookerToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not base_url or not access_token:
-            raise ValueError("base_url and access_token are required")
+            raise ValueError('base_url and access_token are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=BearerTokenAuth(access_token, scheme="token"),
+            base_url=base_url.rstrip('/'),
+            auth=BearerTokenAuth(access_token, scheme='token'),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -84,14 +84,14 @@ class LookerToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "look_ref": f"look_{index}",
-            "title": look.get("title", ""),
-            "description": look.get("description", "") or "",
-            "view_count": look.get("view_count", 0),
-            "updated_at": look.get("updated_at", ""),
+            'look_ref': f'look_{index}',
+            'title': look.get('title', ''),
+            'description': look.get('description', '') or '',
+            'view_count': look.get('view_count', 0),
+            'updated_at': look.get('updated_at', ''),
         }
         if include_ids:
-            summary["look_id"] = look.get("id", "")
+            summary['look_id'] = look.get('id', '')
         return summary
 
     @staticmethod
@@ -102,14 +102,14 @@ class LookerToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "dashboard_ref": f"dashboard_{index}",
-            "title": dashboard.get("title", ""),
-            "description": dashboard.get("description", "") or "",
-            "view_count": dashboard.get("view_count", 0),
-            "updated_at": dashboard.get("updated_at", ""),
+            'dashboard_ref': f'dashboard_{index}',
+            'title': dashboard.get('title', ''),
+            'description': dashboard.get('description', '') or '',
+            'view_count': dashboard.get('view_count', 0),
+            'updated_at': dashboard.get('updated_at', ''),
         }
         if include_ids:
-            summary["dashboard_id"] = dashboard.get("id", "")
+            summary['dashboard_id'] = dashboard.get('id', '')
         return summary
 
     @staticmethod
@@ -120,13 +120,13 @@ class LookerToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "user_ref": f"user_{index}",
-            "name": user.get("display_name", "") or user.get("first_name", ""),
-            "email": user.get("email", ""),
-            "is_disabled": user.get("is_disabled", False),
+            'user_ref': f'user_{index}',
+            'name': user.get('display_name', '') or user.get('first_name', ''),
+            'email': user.get('email', ''),
+            'is_disabled': user.get('is_disabled', False),
         }
         if include_ids:
-            summary["user_id"] = user.get("id", "")
+            summary['user_id'] = user.get('id', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -135,7 +135,7 @@ class LookerToolSet:
 
         Use once at startup to confirm the token works.
         """
-        return self._client.get("/api/4.0/user").json()
+        return self._client.get('/api/4.0/user').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_LOOKS_OUTPUT)
@@ -157,12 +157,12 @@ class LookerToolSet:
         Pagination uses ``limit``/``offset`` (Looker's supported scheme;
         ``page``/``per_page`` are deprecated).
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if fields is not None:
-            params["fields"] = fields
+            params['fields'] = fields
         if offset is not None:
-            params["offset"] = offset
-        payload: Any = self._client.get("/api/4.0/looks", params=params).json()
+            params['offset'] = offset
+        payload: Any = self._client.get('/api/4.0/looks', params=params).json()
         if not isinstance(payload, list):
             return cast(dict[str, Any], payload)
         items = cast(list[Any], payload)
@@ -171,7 +171,7 @@ class LookerToolSet:
             for index, look in enumerate(items, start=1)
             if isinstance(look, dict)
         ]
-        return {"looks": summaries}
+        return {'looks': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_look(
@@ -187,18 +187,18 @@ class LookerToolSet:
         should not appear in final answers.
         """
         if not look_id:
-            raise ValueError("look_id is required")
+            raise ValueError('look_id is required')
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = fields
-        return self._client.get(f"/api/4.0/looks/{look_id}", params=params or None).json()
+            params['fields'] = fields
+        return self._client.get(f'/api/4.0/looks/{look_id}', params=params or None).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def run_look(
         self,
         look_id: int,
         *,
-        result_format: str = "json",
+        result_format: str = 'json',
         limit: int | None = None,
     ) -> dict[str, Any]:
         """Run a Look and return its data.
@@ -209,31 +209,31 @@ class LookerToolSet:
         a ``{"status", "body"}`` dict for non-JSON formats.
         """
         if not look_id:
-            raise ValueError("look_id is required")
+            raise ValueError('look_id is required')
         if result_format not in {
-            "json",
-            "json_detail",
-            "csv",
-            "txt",
-            "html",
-            "md",
-            "xlsx",
-            "sql",
-            "png",
-            "jpg",
+            'json',
+            'json_detail',
+            'csv',
+            'txt',
+            'html',
+            'md',
+            'xlsx',
+            'sql',
+            'png',
+            'jpg',
         }:
-            raise ValueError("invalid result_format")
+            raise ValueError('invalid result_format')
         params: dict[str, Any] = {}
         if limit is not None:
-            params["limit"] = limit
+            params['limit'] = limit
         response = self._client.get(
-            f"/api/4.0/looks/{look_id}/run/{result_format}",
+            f'/api/4.0/looks/{look_id}/run/{result_format}',
             params=params or None,
         )
         try:
             return response.json()
         except ValueError:
-            return {"status": response.status, "body": response.text()}
+            return {'status': response.status, 'body': response.text()}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_DASHBOARDS_OUTPUT)
@@ -253,8 +253,8 @@ class LookerToolSet:
         """
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = fields
-        payload: Any = self._client.get("/api/4.0/dashboards", params=params or None).json()
+            params['fields'] = fields
+        payload: Any = self._client.get('/api/4.0/dashboards', params=params or None).json()
         if not isinstance(payload, list):
             return cast(dict[str, Any], payload)
         items = cast(list[Any], payload)
@@ -265,7 +265,7 @@ class LookerToolSet:
             for index, dashboard in enumerate(items, start=1)
             if isinstance(dashboard, dict)
         ]
-        return {"dashboards": summaries}
+        return {'dashboards': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_dashboard(
@@ -281,12 +281,12 @@ class LookerToolSet:
         handle and should not appear in final answers.
         """
         if not dashboard_id:
-            raise ValueError("dashboard_id is required")
+            raise ValueError('dashboard_id is required')
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = fields
+            params['fields'] = fields
         return self._client.get(
-            f"/api/4.0/dashboards/{dashboard_id}",
+            f'/api/4.0/dashboards/{dashboard_id}',
             params=params or None,
         ).json()
 
@@ -308,26 +308,26 @@ class LookerToolSet:
         to execute.
         """
         if not model or not view or not fields:
-            raise ValueError("model, view, and fields are required")
+            raise ValueError('model, view, and fields are required')
         body: dict[str, Any] = {
-            "model": model,
-            "view": view,
-            "fields": fields,
+            'model': model,
+            'view': view,
+            'fields': fields,
         }
         if filters is not None:
-            body["filters"] = filters
+            body['filters'] = filters
         if sorts is not None:
-            body["sorts"] = sorts
+            body['sorts'] = sorts
         if limit is not None:
-            body["limit"] = limit
-        return self._client.post("/api/4.0/queries", json=body).json()
+            body['limit'] = limit
+        return self._client.post('/api/4.0/queries', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def run_query(
         self,
         query_id: int,
         *,
-        result_format: str = "json",
+        result_format: str = 'json',
     ) -> dict[str, Any]:
         """Run a previously created query.
 
@@ -335,12 +335,12 @@ class LookerToolSet:
         ``json`` format, otherwise ``{"status", "body"}``.
         """
         if not query_id:
-            raise ValueError("query_id is required")
-        response = self._client.get(f"/api/4.0/queries/{query_id}/run/{result_format}")
+            raise ValueError('query_id is required')
+        response = self._client.get(f'/api/4.0/queries/{query_id}/run/{result_format}')
         try:
             return response.json()
         except ValueError:
-            return {"status": response.status, "body": response.text()}
+            return {'status': response.status, 'body': response.text()}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_USERS_OUTPUT)
@@ -359,12 +359,12 @@ class LookerToolSet:
         ``include_ids=True``. Pagination uses ``limit``/``offset`` (Looker's
         supported scheme; ``page``/``per_page`` are deprecated).
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if offset is not None:
-            params["offset"] = offset
+            params['offset'] = offset
         if sorts is not None:
-            params["sorts"] = sorts
-        payload: Any = self._client.get("/api/4.0/users", params=params).json()
+            params['sorts'] = sorts
+        payload: Any = self._client.get('/api/4.0/users', params=params).json()
         if not isinstance(payload, list):
             return cast(dict[str, Any], payload)
         items = cast(list[Any], payload)
@@ -373,7 +373,7 @@ class LookerToolSet:
             for index, user in enumerate(items, start=1)
             if isinstance(user, dict)
         ]
-        return {"users": summaries}
+        return {'users': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def search_content(
@@ -392,11 +392,11 @@ class LookerToolSet:
         (Looker's supported scheme; ``page``/``per_page`` are deprecated).
         """
         if not terms:
-            raise ValueError("terms is required")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('terms is required')
+        params: dict[str, Any] = {'limit': limit}
         if types is not None:
-            params["types"] = types
+            params['types'] = types
         if offset is not None:
-            params["offset"] = offset
-        path = f"/api/4.0/content/{quote(terms, safe='')}"
+            params['offset'] = offset
+        path = f'/api/4.0/content/{quote(terms, safe="")}'
         return self._client.get(path, params=params).json()

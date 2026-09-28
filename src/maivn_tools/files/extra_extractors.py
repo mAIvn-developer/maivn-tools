@@ -20,8 +20,29 @@ from __future__ import annotations
 
 import io
 from html.parser import HTMLParser
+from typing import TYPE_CHECKING, Protocol, cast
 
 from .extractors import ExtractionResult, TextExtractor, register_extractor
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+
+class _PdfPage(Protocol):
+    def extract_text(self) -> str | None: ...
+
+
+class _PdfReader(Protocol):
+    pages: Sequence[_PdfPage]
+
+
+class _DocxParagraph(Protocol):
+    text: str
+
+
+class _DocxDocument(Protocol):
+    paragraphs: Sequence[_DocxParagraph]
+
 
 # MARK: HTML extractor
 
@@ -31,19 +52,19 @@ class _PlainTextHTMLParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self._chunks: list[str] = []
         self._skip_depth = 0
-        self._skip_tags = {"script", "style", "head"}
+        self._skip_tags = {'script', 'style', 'head'}
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag in self._skip_tags:
             self._skip_depth += 1
-        elif tag in {"br", "p", "li", "div", "tr"}:
-            self._chunks.append("\n")
+        elif tag in {'br', 'p', 'li', 'div', 'tr'}:
+            self._chunks.append('\n')
 
     def handle_endtag(self, tag: str) -> None:
         if tag in self._skip_tags and self._skip_depth > 0:
             self._skip_depth -= 1
-        elif tag in {"p", "li", "div", "tr"}:
-            self._chunks.append("\n")
+        elif tag in {'p', 'li', 'div', 'tr'}:
+            self._chunks.append('\n')
 
     def handle_data(self, data: str) -> None:
         if self._skip_depth == 0:
@@ -51,7 +72,7 @@ class _PlainTextHTMLParser(HTMLParser):
 
     @property
     def text(self) -> str:
-        joined = "".join(self._chunks)
+        joined = ''.join(self._chunks)
         # Collapse runs of blank lines and strip leading/trailing whitespace.
         lines = [line.strip() for line in joined.splitlines()]
         cleaned: list[str] = []
@@ -64,7 +85,7 @@ class _PlainTextHTMLParser(HTMLParser):
             else:
                 previous_blank = False
             cleaned.append(line)
-        return "\n".join(cleaned).strip()
+        return '\n'.join(cleaned).strip()
 
 
 class HtmlTextExtractor(TextExtractor):
@@ -76,7 +97,7 @@ class HtmlTextExtractor(TextExtractor):
     plug in a richer parser (e.g. ``readability-lxml``).
     """
 
-    mime_types = ("text/html", "application/xhtml+xml")
+    mime_types = ('text/html', 'application/xhtml+xml')
 
     def extract(
         self,
@@ -85,14 +106,14 @@ class HtmlTextExtractor(TextExtractor):
         mime_type: str | None = None,
         filename: str | None = None,
     ) -> ExtractionResult:
-        text_in = data.decode("utf-8", errors="replace") if data else ""
+        text_in = data.decode('utf-8', errors='replace') if data else ''
         parser = _PlainTextHTMLParser()
         parser.feed(text_in)
         parser.close()
         return ExtractionResult(
             text=parser.text,
-            mime_type="text/plain",
-            metadata={"source_mime": mime_type or "text/html"},
+            mime_type='text/plain',
+            metadata={'source_mime': mime_type or 'text/html'},
         )
 
 
@@ -106,7 +127,7 @@ class PdfTextExtractor(TextExtractor):
     remains import-safe even when the ``pdf`` extra is not installed.
     """
 
-    mime_types = ("application/pdf",)
+    mime_types = ('application/pdf',)
 
     def extract(
         self,
@@ -116,20 +137,20 @@ class PdfTextExtractor(TextExtractor):
         filename: str | None = None,
     ) -> ExtractionResult:
         try:
-            from pypdf import PdfReader  # type: ignore[import-not-found]
+            from pypdf import PdfReader  # noqa: PLC0415 - pypdf
         except ImportError as exc:  # pragma: no cover - depends on env
             raise RuntimeError(
                 "PdfTextExtractor requires the 'pdf' extra. "
-                "Install with: pip install maivn-tools[pdf]"
+                'Install with: pip install maivn-tools[pdf]'
             ) from exc
-        reader = PdfReader(io.BytesIO(data))
+        reader = cast('_PdfReader', PdfReader(io.BytesIO(data)))
         pages: list[str] = []
         for page in reader.pages:
-            pages.append(page.extract_text() or "")
+            pages.append(page.extract_text() or '')
         return ExtractionResult(
-            text="\n\n".join(pages).strip(),
-            mime_type="text/plain",
-            metadata={"page_count": len(reader.pages), "source_mime": "application/pdf"},
+            text='\n\n'.join(pages).strip(),
+            mime_type='text/plain',
+            metadata={'page_count': len(reader.pages), 'source_mime': 'application/pdf'},
         )
 
 
@@ -139,7 +160,7 @@ class PdfTextExtractor(TextExtractor):
 class DocxTextExtractor(TextExtractor):
     """DOCX extractor backed by ``python-docx``."""
 
-    mime_types = ("application/vnd.openxmlformats-officedocument.wordprocessingml.document",)
+    mime_types = ('application/vnd.openxmlformats-officedocument.wordprocessingml.document',)
 
     def extract(
         self,
@@ -149,20 +170,20 @@ class DocxTextExtractor(TextExtractor):
         filename: str | None = None,
     ) -> ExtractionResult:
         try:
-            from docx import Document  # type: ignore[import-not-found]
+            from docx import Document  # noqa: PLC0415 - docx
         except ImportError as exc:  # pragma: no cover - depends on env
             raise RuntimeError(
                 "DocxTextExtractor requires the 'docx' extra. "
-                "Install with: pip install maivn-tools[docx]"
+                'Install with: pip install maivn-tools[docx]'
             ) from exc
-        document = Document(io.BytesIO(data))
+        document = cast('_DocxDocument', Document(io.BytesIO(data)))
         paragraphs = [para.text for para in document.paragraphs if para.text]
         return ExtractionResult(
-            text="\n".join(paragraphs).strip(),
-            mime_type="text/plain",
+            text='\n'.join(paragraphs).strip(),
+            mime_type='text/plain',
             metadata={
-                "paragraph_count": len(document.paragraphs),
-                "source_mime": mime_type or "docx",
+                'paragraph_count': len(document.paragraphs),
+                'source_mime': mime_type or 'docx',
             },
         )
 
@@ -183,8 +204,8 @@ def register_default_extractors() -> None:
 
 
 __all__ = [
-    "DocxTextExtractor",
-    "HtmlTextExtractor",
-    "PdfTextExtractor",
-    "register_default_extractors",
+    'DocxTextExtractor',
+    'HtmlTextExtractor',
+    'PdfTextExtractor',
+    'register_default_extractors',
 ]

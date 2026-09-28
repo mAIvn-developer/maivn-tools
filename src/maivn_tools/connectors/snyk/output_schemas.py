@@ -18,79 +18,79 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _ORG_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "org_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "slug": {"type": "string"},
-        "org_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'org_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'slug': {'type': 'string'},
+        'org_id': {'type': 'string'},
     },
-    "required": ["org_ref"],
+    'required': ['org_ref'],
 }
 
 _PROJECT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "project_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "origin": {"type": "string"},
-        "type": {"type": "string"},
-        "target_reference": {"type": "string"},
-        "status": {"type": "string"},
-        "project_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'project_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'origin': {'type': 'string'},
+        'type': {'type': 'string'},
+        'target_reference': {'type': 'string'},
+        'status': {'type': 'string'},
+        'project_id': {'type': 'string'},
     },
-    "required": ["project_ref"],
+    'required': ['project_ref'],
 }
 
 _ISSUE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "vuln_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "severity": {"type": "string"},
-        "type": {"type": "string"},
-        "status": {"type": "string"},
-        "ignored": {"type": "boolean"},
-        "created_at": {"type": "string"},
-        "vuln_id": {"type": "string"},
-        "key": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'vuln_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'severity': {'type': 'string'},
+        'type': {'type': 'string'},
+        'status': {'type': 'string'},
+        'ignored': {'type': 'boolean'},
+        'created_at': {'type': 'string'},
+        'vuln_id': {'type': 'string'},
+        'key': {'type': 'string'},
     },
-    "required": ["vuln_ref"],
+    'required': ['vuln_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_ORGANIZATIONS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "organizations": {"type": "array", "items": _ORG_SUMMARY},
-        "links": {"type": "object"},
+    'type': 'object',
+    'properties': {
+        'organizations': {'type': 'array', 'items': _ORG_SUMMARY},
+        'links': {'type': 'object'},
     },
-    "required": ["organizations"],
+    'required': ['organizations'],
 }
 
 LIST_PROJECTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "projects": {"type": "array", "items": _PROJECT_SUMMARY},
-        "links": {"type": "object"},
+    'type': 'object',
+    'properties': {
+        'projects': {'type': 'array', 'items': _PROJECT_SUMMARY},
+        'links': {'type': 'object'},
     },
-    "required": ["projects"],
+    'required': ['projects'],
 }
 
 LIST_ISSUES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "vulns": {"type": "array", "items": _ISSUE_SUMMARY},
-        "links": {"type": "object"},
+    'type': 'object',
+    'properties': {
+        'vulns': {'type': 'array', 'items': _ISSUE_SUMMARY},
+        'links': {'type': 'object'},
     },
-    "required": ["vulns"],
+    'required': ['vulns'],
 }
 
 
 __all__ = [
-    "LIST_ISSUES_OUTPUT",
-    "LIST_ORGANIZATIONS_OUTPUT",
-    "LIST_PROJECTS_OUTPUT",
+    'LIST_ISSUES_OUTPUT',
+    'LIST_ORGANIZATIONS_OUTPUT',
+    'LIST_PROJECTS_OUTPUT',
 ]

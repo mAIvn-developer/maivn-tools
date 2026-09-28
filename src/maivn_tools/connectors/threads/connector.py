@@ -16,7 +16,7 @@ from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_REPLIES_OUTPUT, LIST_THREADS_OUTPUT
 
 
-@toolset(prefix="threads")
+@toolset(prefix='threads')
 class ThreadsToolSet:
     """A connector for the Threads (Meta) Graph API.
 
@@ -26,42 +26,42 @@ class ThreadsToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="threads",
-        display_name="Threads",
-        version="0.1.0",
-        description="Threads profile, media containers, publish, replies, and insights.",
+        name='threads',
+        display_name='Threads',
+        version='0.1.0',
+        description='Threads profile, media containers, publish, replies, and insights.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "threads_basic": "Read profile / threads.",
-            "threads_content_publish": "Publish threads.",
-            "threads_manage_replies": "Reply / hide replies.",
-            "threads_read_replies": "Read replies.",
-            "threads_manage_insights": "Read insights.",
+            'threads_basic': 'Read profile / threads.',
+            'threads_content_publish': 'Publish threads.',
+            'threads_manage_replies': 'Reply / hide replies.',
+            'threads_read_replies': 'Read replies.',
+            'threads_manage_insights': 'Read insights.',
         },
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developers.facebook.com/docs/threads/",
-        homepage_url="https://www.threads.net/",
-        tags=("social-media", "meta"),
+        documentation_url='https://developers.facebook.com/docs/threads/',
+        homepage_url='https://www.threads.net/',
+        tags=('social-media', 'meta'),
     )
 
     def __init__(
         self,
         *,
         access_token: str,
-        graph_version: str = "v1.0",
-        base_url: str = "https://graph.threads.net",
+        graph_version: str = 'v1.0',
+        base_url: str = 'https://graph.threads.net',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._version = graph_version
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(access_token, query_param="access_token"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(access_token, query_param='access_token'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -69,7 +69,7 @@ class ThreadsToolSet:
         return self._client
 
     def _path(self, suffix: str) -> str:
-        return f"/{self._version}{suffix}"
+        return f'/{self._version}{suffix}'
 
     # MARK: - Internal helpers
 
@@ -82,15 +82,15 @@ class ThreadsToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "post_ref": f"post_{index}",
-            "author": thread.get("username", ""),
-            "text": thread.get("text", ""),
-            "posted_at": thread.get("timestamp", ""),
-            "media_type": thread.get("media_type", ""),
-            "permalink": thread.get("permalink", ""),
+            'post_ref': f'post_{index}',
+            'author': thread.get('username', ''),
+            'text': thread.get('text', ''),
+            'posted_at': thread.get('timestamp', ''),
+            'media_type': thread.get('media_type', ''),
+            'permalink': thread.get('permalink', ''),
         }
         if include_ids:
-            summary["post_id"] = thread.get("id", "")
+            summary['post_id'] = thread.get('id', '')
         return summary
 
     @classmethod
@@ -102,14 +102,14 @@ class ThreadsToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "reply_ref": f"reply_{index}",
-            "author": reply.get("username", ""),
-            "text": reply.get("text", ""),
-            "posted_at": reply.get("timestamp", ""),
-            "permalink": reply.get("permalink", ""),
+            'reply_ref': f'reply_{index}',
+            'author': reply.get('username', ''),
+            'text': reply.get('text', ''),
+            'posted_at': reply.get('timestamp', ''),
+            'permalink': reply.get('permalink', ''),
         }
         if include_ids:
-            summary["reply_id"] = reply.get("id", "")
+            summary['reply_id'] = reply.get('id', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -121,8 +121,8 @@ class ThreadsToolSet:
         """
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = ",".join(fields)
-        return self._client.get(self._path("/me"), params=params or None).json()
+            params['fields'] = ','.join(fields)
+        return self._client.get(self._path('/me'), params=params or None).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_THREADS_OUTPUT)
@@ -147,36 +147,36 @@ class ThreadsToolSet:
         ``include_metadata=False`` for the raw Graph response.
         """
         if not user_id:
-            raise ValueError("user_id is required")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('user_id is required')
+        params: dict[str, Any] = {'limit': limit}
         merged_fields = list(fields) if fields else []
         if include_metadata:
-            for needed in ("id", "text", "media_type", "permalink", "timestamp", "username"):
+            for needed in ('id', 'text', 'media_type', 'permalink', 'timestamp', 'username'):
                 if needed not in merged_fields:
                     merged_fields.append(needed)
         if merged_fields:
-            params["fields"] = ",".join(merged_fields)
+            params['fields'] = ','.join(merged_fields)
         if after is not None:
-            params["after"] = after
+            params['after'] = after
         if since is not None:
-            params["since"] = since
+            params['since'] = since
         if until is not None:
-            params["until"] = until
+            params['until'] = until
         payload: dict[str, Any] = self._client.get(
-            self._path(f"/{user_id}/threads"), params=params
+            self._path(f'/{user_id}/threads'), params=params
         ).json()
         if not include_metadata:
             return payload
         summaries: list[dict[str, Any]] = []
-        data: list[Any] = payload.get("data", [])
+        data: list[Any] = payload.get('data', [])
         for index, thread in enumerate(data, start=1):
             if not isinstance(thread, dict):
                 continue
             thread_obj = cast(dict[str, Any], thread)
             summaries.append(self._thread_summary(thread_obj, index=index, include_ids=include_ids))
         return {
-            "posts": summaries,
-            "paging": payload.get("paging"),
+            'posts': summaries,
+            'paging': payload.get('paging'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -193,11 +193,11 @@ class ThreadsToolSet:
         details.
         """
         if not media_id:
-            raise ValueError("media_id is required")
+            raise ValueError('media_id is required')
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = ",".join(fields)
-        return self._client.get(self._path(f"/{media_id}"), params=params or None).json()
+            params['fields'] = ','.join(fields)
+        return self._client.get(self._path(f'/{media_id}'), params=params or None).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_media_container(
@@ -218,27 +218,27 @@ class ThreadsToolSet:
         ``VIDEO``, or ``CAROUSEL``.
         """
         if not user_id:
-            raise ValueError("user_id is required")
-        if media_type not in {"TEXT", "IMAGE", "VIDEO", "CAROUSEL"}:
-            raise ValueError("media_type must be TEXT/IMAGE/VIDEO/CAROUSEL")
-        if media_type == "IMAGE" and not image_url:
-            raise ValueError("image_url is required for IMAGE media")
-        if media_type == "VIDEO" and not video_url:
-            raise ValueError("video_url is required for VIDEO media")
-        if media_type == "CAROUSEL" and not children:
-            raise ValueError("children is required for CAROUSEL media")
-        body: dict[str, Any] = {"media_type": media_type}
+            raise ValueError('user_id is required')
+        if media_type not in {'TEXT', 'IMAGE', 'VIDEO', 'CAROUSEL'}:
+            raise ValueError('media_type must be TEXT/IMAGE/VIDEO/CAROUSEL')
+        if media_type == 'IMAGE' and not image_url:
+            raise ValueError('image_url is required for IMAGE media')
+        if media_type == 'VIDEO' and not video_url:
+            raise ValueError('video_url is required for VIDEO media')
+        if media_type == 'CAROUSEL' and not children:
+            raise ValueError('children is required for CAROUSEL media')
+        body: dict[str, Any] = {'media_type': media_type}
         if text is not None:
-            body["text"] = text
+            body['text'] = text
         if image_url is not None:
-            body["image_url"] = image_url
+            body['image_url'] = image_url
         if video_url is not None:
-            body["video_url"] = video_url
+            body['video_url'] = video_url
         if reply_to_id is not None:
-            body["reply_to_id"] = reply_to_id
+            body['reply_to_id'] = reply_to_id
         if children is not None:
-            body["children"] = ",".join(children)
-        return self._client.post(self._path(f"/{user_id}/threads"), params=body).json()
+            body['children'] = ','.join(children)
+        return self._client.post(self._path(f'/{user_id}/threads'), params=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def publish_media(self, *, user_id: str, creation_id: str) -> dict[str, Any]:
@@ -248,10 +248,10 @@ class ThreadsToolSet:
         user before calling — this posts publicly.
         """
         if not user_id or not creation_id:
-            raise ValueError("user_id and creation_id are required")
+            raise ValueError('user_id and creation_id are required')
         return self._client.post(
-            self._path(f"/{user_id}/threads_publish"),
-            params={"creation_id": creation_id},
+            self._path(f'/{user_id}/threads_publish'),
+            params={'creation_id': creation_id},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -262,10 +262,10 @@ class ThreadsToolSet:
         Poll until status is terminal before calling ``publish_media``.
         """
         if not container_id:
-            raise ValueError("container_id is required")
+            raise ValueError('container_id is required')
         return self._client.get(
-            self._path(f"/{container_id}"),
-            params={"fields": "status,error_message"},
+            self._path(f'/{container_id}'),
+            params={'fields': 'status,error_message'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -287,30 +287,30 @@ class ThreadsToolSet:
         ``include_metadata=False`` for the raw Graph response.
         """
         if not media_id:
-            raise ValueError("media_id is required")
-        params: dict[str, Any] = {"reverse": str(reverse).lower()}
+            raise ValueError('media_id is required')
+        params: dict[str, Any] = {'reverse': str(reverse).lower()}
         merged_fields = list(fields) if fields else []
         if include_metadata:
-            for needed in ("id", "text", "username", "timestamp", "permalink"):
+            for needed in ('id', 'text', 'username', 'timestamp', 'permalink'):
                 if needed not in merged_fields:
                     merged_fields.append(needed)
         if merged_fields:
-            params["fields"] = ",".join(merged_fields)
+            params['fields'] = ','.join(merged_fields)
         payload: dict[str, Any] = self._client.get(
-            self._path(f"/{media_id}/replies"), params=params
+            self._path(f'/{media_id}/replies'), params=params
         ).json()
         if not include_metadata:
             return payload
         summaries: list[dict[str, Any]] = []
-        data: list[Any] = payload.get("data", [])
+        data: list[Any] = payload.get('data', [])
         for index, reply in enumerate(data, start=1):
             if not isinstance(reply, dict):
                 continue
             reply_obj = cast(dict[str, Any], reply)
             summaries.append(self._reply_summary(reply_obj, index=index, include_ids=include_ids))
         return {
-            "replies": summaries,
-            "paging": payload.get("paging"),
+            'replies': summaries,
+            'paging': payload.get('paging'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -321,10 +321,10 @@ class ThreadsToolSet:
         the reply still exists, just hidden from public view.
         """
         if not reply_id:
-            raise ValueError("reply_id is required")
+            raise ValueError('reply_id is required')
         return self._client.post(
-            self._path(f"/{reply_id}/manage_reply"),
-            params={"hide": str(hide).lower()},
+            self._path(f'/{reply_id}/manage_reply'),
+            params={'hide': str(hide).lower()},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -340,10 +340,10 @@ class ThreadsToolSet:
         of insight names (e.g. ``["views", "likes", "replies"]``).
         """
         if not media_id or not metric:
-            raise ValueError("media_id and metric are required")
+            raise ValueError('media_id and metric are required')
         return self._client.get(
-            self._path(f"/{media_id}/insights"),
-            params={"metric": ",".join(metric)},
+            self._path(f'/{media_id}/insights'),
+            params={'metric': ','.join(metric)},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -363,10 +363,10 @@ class ThreadsToolSet:
         earliest allowed 1712991600), not ISO-8601 dates.
         """
         if not user_id or not metric:
-            raise ValueError("user_id and metric are required")
-        params: dict[str, Any] = {"metric": ",".join(metric)}
+            raise ValueError('user_id and metric are required')
+        params: dict[str, Any] = {'metric': ','.join(metric)}
         if since is not None:
-            params["since"] = since
+            params['since'] = since
         if until is not None:
-            params["until"] = until
-        return self._client.get(self._path(f"/{user_id}/threads_insights"), params=params).json()
+            params['until'] = until
+        return self._client.get(self._path(f'/{user_id}/threads_insights'), params=params).json()

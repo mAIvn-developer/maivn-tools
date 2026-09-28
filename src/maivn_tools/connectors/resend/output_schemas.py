@@ -18,31 +18,31 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_contact_summary`` builder)
 
 _CONTACT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "contact_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "email": {"type": "string"},
-        "unsubscribed": {"type": "boolean"},
-        "created_at": {"type": "string"},
-        "contact_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'contact_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'email': {'type': 'string'},
+        'unsubscribed': {'type': 'boolean'},
+        'created_at': {'type': 'string'},
+        'contact_id': {'type': 'string'},
     },
-    "required": ["contact_ref", "email"],
+    'required': ['contact_ref', 'email'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_CONTACTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "contacts": {"type": "array", "items": _CONTACT_SUMMARY},
-        "count": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'contacts': {'type': 'array', 'items': _CONTACT_SUMMARY},
+        'count': {'type': 'integer'},
     },
-    "required": ["contacts"],
+    'required': ['contacts'],
 }
 
 
 __all__ = [
-    "LIST_CONTACTS_OUTPUT",
+    'LIST_CONTACTS_OUTPUT',
 ]

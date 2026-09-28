@@ -22,7 +22,7 @@ from .._aws.sigv4 import SigV4Auth
 _SUMMARY_MAX = 25
 
 # IAM Query protocol responses are XML namespaced under the API version.
-_NS_RE = re.compile(r"^\{[^}]*\}")
+_NS_RE = re.compile(r'^\{[^}]*\}')
 
 
 # MARK: Coercion helpers
@@ -30,17 +30,17 @@ _NS_RE = re.compile(r"^\{[^}]*\}")
 
 def _as_dict(value: Any) -> dict[str, Any]:
     """Return ``value`` as a ``dict[str, Any]`` when it is a mapping, else ``{}``."""
-    return cast("dict[str, Any]", value) if isinstance(value, dict) else {}
+    return cast('dict[str, Any]', value) if isinstance(value, dict) else {}
 
 
 def _as_list(value: Any) -> list[Any] | None:
     """Return ``value`` as a ``list[Any]`` when it is a list, else ``None``."""
-    return cast("list[Any]", value) if isinstance(value, list) else None
+    return cast('list[Any]', value) if isinstance(value, list) else None
 
 
 def _local_tag(tag: str) -> str:
     """Strip the XML namespace (e.g. ``{https://.../2010-05-08/}Users``)."""
-    return _NS_RE.sub("", tag)
+    return _NS_RE.sub('', tag)
 
 
 # MARK: XML parsing
@@ -55,8 +55,8 @@ def _xml_element_to_obj(element: ElementTree.Element) -> Any:
     """
     children = list(element)
     if not children:
-        return (element.text or "").strip()
-    if all(_local_tag(child.tag) == "member" for child in children):
+        return (element.text or '').strip()
+    if all(_local_tag(child.tag) == 'member' for child in children):
         return [_xml_element_to_obj(child) for child in children]
     obj: dict[str, Any] = {}
     for child in children:
@@ -78,7 +78,7 @@ class _SafeXmlTarget(ElementTree.TreeBuilder):
     """TreeBuilder that rejects DTDs/entity declarations (XXE / billion-laughs)."""
 
     def doctype(self, name: str, pubid: str, system: str) -> None:  # noqa: D102
-        raise ValueError("XML DOCTYPE declarations are not allowed")
+        raise ValueError('XML DOCTYPE declarations are not allowed')
 
 
 def _parse_xml_response(text: str) -> dict[str, Any]:
@@ -102,7 +102,7 @@ def _coerce_named(candidate: Any, *, field: str, dict_keys: tuple[str, ...]) -> 
     """Accept a string name, a resource dict, or a list of such."""
     if isinstance(candidate, str):
         if not candidate:
-            raise ValueError(f"{field} is required")
+            raise ValueError(f'{field} is required')
         return candidate
     if isinstance(candidate, dict):
         candidate_dict = _as_dict(candidate)
@@ -112,20 +112,20 @@ def _coerce_named(candidate: Any, *, field: str, dict_keys: tuple[str, ...]) -> 
                 return value
     if isinstance(candidate, list) and candidate:
         return _coerce_named(candidate[0], field=field, dict_keys=dict_keys)
-    raise ValueError(f"{field} must be a non-empty string (or a resource dict)")
+    raise ValueError(f'{field} must be a non-empty string (or a resource dict)')
 
 
 def _coerce_user_name(candidate: Any) -> str:
-    return _coerce_named(candidate, field="user_name", dict_keys=("UserName", "user_name", "name"))
+    return _coerce_named(candidate, field='user_name', dict_keys=('UserName', 'user_name', 'name'))
 
 
 def _coerce_role_name(candidate: Any) -> str:
-    return _coerce_named(candidate, field="role_name", dict_keys=("RoleName", "role_name", "name"))
+    return _coerce_named(candidate, field='role_name', dict_keys=('RoleName', 'role_name', 'name'))
 
 
 def _coerce_policy_arn(candidate: Any) -> str:
     return _coerce_named(
-        candidate, field="policy_arn", dict_keys=("PolicyArn", "policy_arn", "Arn", "arn")
+        candidate, field='policy_arn', dict_keys=('PolicyArn', 'policy_arn', 'Arn', 'arn')
     )
 
 
@@ -135,45 +135,45 @@ def _coerce_policy_arn(candidate: Any) -> str:
 def _users_from_response(payload: Any) -> list[Any]:
     typed_payload = _as_dict(payload)
     response: Any = (
-        typed_payload.get("ListUsersResponse") or typed_payload.get("ListUsersResult") or {}
+        typed_payload.get('ListUsersResponse') or typed_payload.get('ListUsersResult') or {}
     )
     if isinstance(response, dict):
-        result = _as_dict(_as_dict(response).get("ListUsersResult") or response)
-        users = _as_list(result.get("Users") or result.get("users"))
+        result = _as_dict(_as_dict(response).get('ListUsersResult') or response)
+        users = _as_list(result.get('Users') or result.get('users'))
         if users is not None:
             return users
-    direct = _as_list(typed_payload.get("Users"))
+    direct = _as_list(typed_payload.get('Users'))
     return direct if direct is not None else []
 
 
 def _roles_from_response(payload: Any) -> list[Any]:
     typed_payload = _as_dict(payload)
-    response: Any = typed_payload.get("ListRolesResponse") or {}
+    response: Any = typed_payload.get('ListRolesResponse') or {}
     if isinstance(response, dict):
-        result = _as_dict(_as_dict(response).get("ListRolesResult") or response)
-        roles = _as_list(result.get("Roles") or result.get("roles"))
+        result = _as_dict(_as_dict(response).get('ListRolesResult') or response)
+        roles = _as_list(result.get('Roles') or result.get('roles'))
         if roles is not None:
             return roles
-    direct = _as_list(typed_payload.get("Roles"))
+    direct = _as_list(typed_payload.get('Roles'))
     return direct if direct is not None else []
 
 
 def _policies_from_response(payload: Any) -> list[Any]:
     typed_payload = _as_dict(payload)
-    response: Any = typed_payload.get("ListPoliciesResponse") or {}
+    response: Any = typed_payload.get('ListPoliciesResponse') or {}
     if isinstance(response, dict):
-        result = _as_dict(_as_dict(response).get("ListPoliciesResult") or response)
-        policies = _as_list(result.get("Policies") or result.get("policies"))
+        result = _as_dict(_as_dict(response).get('ListPoliciesResult') or response)
+        policies = _as_list(result.get('Policies') or result.get('policies'))
         if policies is not None:
             return policies
-    direct = _as_list(typed_payload.get("Policies"))
+    direct = _as_list(typed_payload.get('Policies'))
     return direct if direct is not None else []
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="aws_iam")
+@toolset(prefix='aws_iam')
 class AmazonIAMToolSet:
     """A connector for AWS IAM.
 
@@ -186,15 +186,15 @@ class AmazonIAMToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="aws_iam",
-        display_name="AWS IAM",
-        version="0.1.0",
-        description="Users, roles, policies, attachments, and access keys.",
+        name='aws_iam',
+        display_name='AWS IAM',
+        version='0.1.0',
+        description='Users, roles, policies, attachments, and access keys.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url=("https://docs.aws.amazon.com/IAM/latest/APIReference/welcome.html"),
-        homepage_url="https://aws.amazon.com/iam/",
-        tags=("cloud", "identity", "aws"),
+        documentation_url=('https://docs.aws.amazon.com/IAM/latest/APIReference/welcome.html'),
+        homepage_url='https://aws.amazon.com/iam/',
+        tags=('cloud', 'identity', 'aws'),
     )
 
     def __init__(
@@ -207,21 +207,21 @@ class AmazonIAMToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_key or not secret_key:
-            raise ValueError("access_key and secret_key are required")
+            raise ValueError('access_key and secret_key are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url="https://iam.amazonaws.com",
+            base_url='https://iam.amazonaws.com',
             auth=SigV4Auth(
                 access_key=access_key,
                 secret_key=secret_key,
-                region="us-east-1",
-                service="iam",
+                region='us-east-1',
+                service='iam',
                 session_token=session_token,
             ),
             transport=transport,
             default_headers={
                 # The IAM Query protocol always returns XML; Accept is ignored.
-                "Content-Type": "application/x-www-form-urlencoded",
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
         )
 
@@ -230,16 +230,16 @@ class AmazonIAMToolSet:
         return self._client
 
     def _call(self, action: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
-        form: dict[str, Any] = {"Action": action, "Version": "2010-05-08"}
+        form: dict[str, Any] = {'Action': action, 'Version': '2010-05-08'}
         if params:
             form.update(params)
-        body = urlencode(form).encode("utf-8")
-        response = self._client.post("/", data=body)
+        body = urlencode(form).encode('utf-8')
+        response = self._client.post('/', data=body)
         text = response.text()
         try:
             return _parse_xml_response(text)
         except (ElementTree.ParseError, ValueError):
-            return {"status": response.status, "body": text}
+            return {'status': response.status, 'body': text}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_users(
@@ -260,15 +260,15 @@ class AmazonIAMToolSet:
         ``include_ids=True`` when needed.
         """
         if max_items < 1 or max_items > 1000:
-            raise ValueError("max_items must be between 1 and 1000")
+            raise ValueError('max_items must be between 1 and 1000')
         if include_metadata:
             max_items = min(max_items, _SUMMARY_MAX)
-        params: dict[str, Any] = {"MaxItems": max_items}
+        params: dict[str, Any] = {'MaxItems': max_items}
         if path_prefix is not None:
-            params["PathPrefix"] = path_prefix
+            params['PathPrefix'] = path_prefix
         if marker is not None:
-            params["Marker"] = marker
-        payload = self._call("ListUsers", params)
+            params['Marker'] = marker
+        payload = self._call('ListUsers', params)
         if not include_metadata:
             return payload
         users = _users_from_response(payload)
@@ -278,17 +278,17 @@ class AmazonIAMToolSet:
                 continue
             user = _as_dict(raw_user)
             summary: dict[str, Any] = {
-                "user_ref": f"user_{index}",
-                "user_name": user.get("UserName", user.get("user_name", "")),
-                "path": user.get("Path", ""),
-                "create_date": user.get("CreateDate", ""),
-                "password_last_used": user.get("PasswordLastUsed", ""),
+                'user_ref': f'user_{index}',
+                'user_name': user.get('UserName', user.get('user_name', '')),
+                'path': user.get('Path', ''),
+                'create_date': user.get('CreateDate', ''),
+                'password_last_used': user.get('PasswordLastUsed', ''),
             }
             if include_ids:
-                summary["user_id"] = user.get("UserId", "")
-                summary["arn"] = user.get("Arn", "")
+                summary['user_id'] = user.get('UserId', '')
+                summary['arn'] = user.get('Arn', '')
             summaries.append(summary)
-        return {"users": summaries}
+        return {'users': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_user(self, *, user_name: Any | None = None) -> dict[str, Any]:
@@ -299,8 +299,8 @@ class AmazonIAMToolSet:
         """
         params: dict[str, Any] = {}
         if user_name is not None:
-            params["UserName"] = _coerce_user_name(user_name)
-        return self._call("GetUser", params)
+            params['UserName'] = _coerce_user_name(user_name)
+        return self._call('GetUser', params)
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_user(
@@ -316,13 +316,13 @@ class AmazonIAMToolSet:
         cap the maximum permissions the user can have.
         """
         if not user_name:
-            raise ValueError("user_name is required")
-        params: dict[str, Any] = {"UserName": user_name}
+            raise ValueError('user_name is required')
+        params: dict[str, Any] = {'UserName': user_name}
         if path is not None:
-            params["Path"] = path
+            params['Path'] = path
         if permissions_boundary is not None:
-            params["PermissionsBoundary"] = permissions_boundary
-        return self._call("CreateUser", params)
+            params['PermissionsBoundary'] = permissions_boundary
+        return self._call('CreateUser', params)
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_user(self, user_name: Any) -> dict[str, Any]:
@@ -333,7 +333,7 @@ class AmazonIAMToolSet:
         ``user_name`` accepts a string name or a user dict.
         """
         name = _coerce_user_name(user_name)
-        return self._call("DeleteUser", {"UserName": name})
+        return self._call('DeleteUser', {'UserName': name})
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_roles(
@@ -354,15 +354,15 @@ class AmazonIAMToolSet:
         ``include_ids=True`` when needed.
         """
         if max_items < 1 or max_items > 1000:
-            raise ValueError("max_items must be between 1 and 1000")
+            raise ValueError('max_items must be between 1 and 1000')
         if include_metadata:
             max_items = min(max_items, _SUMMARY_MAX)
-        params: dict[str, Any] = {"MaxItems": max_items}
+        params: dict[str, Any] = {'MaxItems': max_items}
         if path_prefix is not None:
-            params["PathPrefix"] = path_prefix
+            params['PathPrefix'] = path_prefix
         if marker is not None:
-            params["Marker"] = marker
-        payload = self._call("ListRoles", params)
+            params['Marker'] = marker
+        payload = self._call('ListRoles', params)
         if not include_metadata:
             return payload
         roles = _roles_from_response(payload)
@@ -372,18 +372,18 @@ class AmazonIAMToolSet:
                 continue
             role = _as_dict(raw_role)
             summary: dict[str, Any] = {
-                "role_ref": f"role_{index}",
-                "role_name": role.get("RoleName", ""),
-                "path": role.get("Path", ""),
-                "description": role.get("Description", ""),
-                "create_date": role.get("CreateDate", ""),
-                "max_session_duration": role.get("MaxSessionDuration", 0),
+                'role_ref': f'role_{index}',
+                'role_name': role.get('RoleName', ''),
+                'path': role.get('Path', ''),
+                'description': role.get('Description', ''),
+                'create_date': role.get('CreateDate', ''),
+                'max_session_duration': role.get('MaxSessionDuration', 0),
             }
             if include_ids:
-                summary["role_id"] = role.get("RoleId", "")
-                summary["arn"] = role.get("Arn", "")
+                summary['role_id'] = role.get('RoleId', '')
+                summary['arn'] = role.get('Arn', '')
             summaries.append(summary)
-        return {"roles": summaries}
+        return {'roles': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_role(self, role_name: Any) -> dict[str, Any]:
@@ -393,7 +393,7 @@ class AmazonIAMToolSet:
         ``list_roles``.
         """
         name = _coerce_role_name(role_name)
-        return self._call("GetRole", {"RoleName": name})
+        return self._call('GetRole', {'RoleName': name})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_role(
@@ -411,18 +411,18 @@ class AmazonIAMToolSet:
         string defining who can assume the role (the trust policy).
         """
         if not role_name or not assume_role_policy_document:
-            raise ValueError("role_name and assume_role_policy_document are required")
+            raise ValueError('role_name and assume_role_policy_document are required')
         params: dict[str, Any] = {
-            "RoleName": role_name,
-            "AssumeRolePolicyDocument": assume_role_policy_document,
+            'RoleName': role_name,
+            'AssumeRolePolicyDocument': assume_role_policy_document,
         }
         if path is not None:
-            params["Path"] = path
+            params['Path'] = path
         if description is not None:
-            params["Description"] = description
+            params['Description'] = description
         if max_session_duration is not None:
-            params["MaxSessionDuration"] = max_session_duration
-        return self._call("CreateRole", params)
+            params['MaxSessionDuration'] = max_session_duration
+        return self._call('CreateRole', params)
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_role(self, role_name: Any) -> dict[str, Any]:
@@ -433,13 +433,13 @@ class AmazonIAMToolSet:
         ``role_name`` accepts a string name or a role dict.
         """
         name = _coerce_role_name(role_name)
-        return self._call("DeleteRole", {"RoleName": name})
+        return self._call('DeleteRole', {'RoleName': name})
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_policies(
         self,
         *,
-        scope: str = "All",
+        scope: str = 'All',
         only_attached: bool = False,
         max_items: int = 25,
         marker: str | None = None,
@@ -455,20 +455,20 @@ class AmazonIAMToolSet:
         omitted by default; set ``include_ids=True`` if a follow-up tool
         (``attach_user_policy``, ``attach_role_policy``) needs the ARN.
         """
-        if scope not in {"All", "AWS", "Local"}:
-            raise ValueError("scope must be All/AWS/Local")
+        if scope not in {'All', 'AWS', 'Local'}:
+            raise ValueError('scope must be All/AWS/Local')
         if max_items < 1 or max_items > 1000:
-            raise ValueError("max_items must be between 1 and 1000")
+            raise ValueError('max_items must be between 1 and 1000')
         if include_metadata:
             max_items = min(max_items, _SUMMARY_MAX)
         params: dict[str, Any] = {
-            "Scope": scope,
-            "OnlyAttached": str(only_attached).lower(),
-            "MaxItems": max_items,
+            'Scope': scope,
+            'OnlyAttached': str(only_attached).lower(),
+            'MaxItems': max_items,
         }
         if marker is not None:
-            params["Marker"] = marker
-        payload = self._call("ListPolicies", params)
+            params['Marker'] = marker
+        payload = self._call('ListPolicies', params)
         if not include_metadata:
             return payload
         policies = _policies_from_response(payload)
@@ -478,19 +478,19 @@ class AmazonIAMToolSet:
                 continue
             policy = _as_dict(raw_policy)
             summary: dict[str, Any] = {
-                "policy_ref": f"policy_{index}",
-                "policy_name": policy.get("PolicyName", ""),
-                "path": policy.get("Path", ""),
-                "attachment_count": policy.get("AttachmentCount", 0),
-                "description": policy.get("Description", ""),
-                "create_date": policy.get("CreateDate", ""),
-                "is_attachable": policy.get("IsAttachable", False),
+                'policy_ref': f'policy_{index}',
+                'policy_name': policy.get('PolicyName', ''),
+                'path': policy.get('Path', ''),
+                'attachment_count': policy.get('AttachmentCount', 0),
+                'description': policy.get('Description', ''),
+                'create_date': policy.get('CreateDate', ''),
+                'is_attachable': policy.get('IsAttachable', False),
             }
             if include_ids:
-                summary["policy_arn"] = policy.get("Arn", "")
-                summary["policy_id"] = policy.get("PolicyId", "")
+                summary['policy_arn'] = policy.get('Arn', '')
+                summary['policy_id'] = policy.get('PolicyId', '')
             summaries.append(summary)
-        return {"policies": summaries}
+        return {'policies': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_policy(self, policy_arn: Any) -> dict[str, Any]:
@@ -500,7 +500,7 @@ class AmazonIAMToolSet:
         ``list_policies(include_ids=True)``.
         """
         arn = _coerce_policy_arn(policy_arn)
-        return self._call("GetPolicy", {"PolicyArn": arn})
+        return self._call('GetPolicy', {'PolicyArn': arn})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def attach_user_policy(
@@ -517,8 +517,8 @@ class AmazonIAMToolSet:
         name = _coerce_user_name(user_name)
         arn = _coerce_policy_arn(policy_arn)
         return self._call(
-            "AttachUserPolicy",
-            {"UserName": name, "PolicyArn": arn},
+            'AttachUserPolicy',
+            {'UserName': name, 'PolicyArn': arn},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -536,8 +536,8 @@ class AmazonIAMToolSet:
         name = _coerce_role_name(role_name)
         arn = _coerce_policy_arn(policy_arn)
         return self._call(
-            "AttachRolePolicy",
-            {"RoleName": name, "PolicyArn": arn},
+            'AttachRolePolicy',
+            {'RoleName': name, 'PolicyArn': arn},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -555,8 +555,8 @@ class AmazonIAMToolSet:
         name = _coerce_user_name(user_name)
         arn = _coerce_policy_arn(policy_arn)
         return self._call(
-            "DetachUserPolicy",
-            {"UserName": name, "PolicyArn": arn},
+            'DetachUserPolicy',
+            {'UserName': name, 'PolicyArn': arn},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -571,7 +571,7 @@ class AmazonIAMToolSet:
         as sensitive. ``user_name`` accepts a string or a user dict.
         """
         name = _coerce_user_name(user_name)
-        return self._call("CreateAccessKey", {"UserName": name})
+        return self._call('CreateAccessKey', {'UserName': name})
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_access_key(
@@ -587,8 +587,8 @@ class AmazonIAMToolSet:
         """
         name = _coerce_user_name(user_name)
         if not access_key_id:
-            raise ValueError("access_key_id is required")
+            raise ValueError('access_key_id is required')
         return self._call(
-            "DeleteAccessKey",
-            {"UserName": name, "AccessKeyId": access_key_id},
+            'DeleteAccessKey',
+            {'UserName': name, 'AccessKeyId': access_key_id},
         )

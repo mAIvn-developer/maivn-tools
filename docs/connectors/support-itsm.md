@@ -129,7 +129,7 @@ cannot inject URL path segments.
 ### Agent-ready behavior
 
 - `list_records` and `list_incidents` return compact summaries by
-  default. Each summary carries a stable `record_ref`
+  default. Each summary carries a response-local `record_ref`
   (`record_1`, `record_2`, ...), the source `table`, and any of the
   common user-facing fields that are present on the row
   (`number`, `short_description`, `state`, `priority`, `urgency`,

@@ -10,11 +10,11 @@ agent needs most. It is built on `maivn_tools.runtime.HttpClient` (or the
 relevant transport), and inherits retries, rate limits, and error
 normalization from the kernel.
 
-```python
+```text
 from maivn import Agent
 from maivn_tools import <Provider>ToolSet, register_connector
 
-agent = Agent(model="auto")
+agent = Agent(name="provider-example", model="auto")
 agent.add_toolset(<Provider>ToolSet(token="..."))
 
 # Builder-style connectors (the `<Provider>Connector` name) register

@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import SegmentToolSet
 
-__all__ = ["SegmentToolSet"]
+__all__ = ['SegmentToolSet']

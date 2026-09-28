@@ -22,7 +22,7 @@ from .output_schemas import (
 )
 
 
-@toolset(prefix="onelogin")
+@toolset(prefix='onelogin')
 class OneLoginToolSet:
     """A connector for the OneLogin v2 REST API.
 
@@ -34,15 +34,15 @@ class OneLoginToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="onelogin",
-        display_name="OneLogin",
-        version="0.1.0",
-        description="Users, roles, groups, apps, MFA, and events.",
+        name='onelogin',
+        display_name='OneLogin',
+        version='0.1.0',
+        description='Users, roles, groups, apps, MFA, and events.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developers.onelogin.com/api-docs/",
-        homepage_url="https://www.onelogin.com/",
-        tags=("identity", "sso"),
+        documentation_url='https://developers.onelogin.com/api-docs/',
+        homepage_url='https://www.onelogin.com/',
+        tags=('identity', 'sso'),
     )
 
     def __init__(
@@ -50,23 +50,23 @@ class OneLoginToolSet:
         *,
         access_token: str,
         subdomain: str,
-        region: str = "us",
+        region: str = 'us',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token or not subdomain:
-            raise ValueError("access_token and subdomain are required")
-        if region not in {"us", "eu"}:
-            raise ValueError("region must be us or eu")
+            raise ValueError('access_token and subdomain are required')
+        if region not in {'us', 'eu'}:
+            raise ValueError('region must be us or eu')
         self.connection = connection
-        host = f"{subdomain}.onelogin.com" if region == "us" else f"{subdomain}.onelogin.eu"
+        host = f'{subdomain}.onelogin.com' if region == 'us' else f'{subdomain}.onelogin.eu'
         self._client = HttpClient(
-            base_url=f"https://{host}",
+            base_url=f'https://{host}',
             auth=BearerTokenAuth(access_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -84,18 +84,18 @@ class OneLoginToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "user_ref": f"user_{index}",
-            "email": user.get("email", ""),
-            "username": user.get("username", ""),
-            "name": " ".join(
-                part for part in (user.get("firstname", ""), user.get("lastname", "")) if part
+            'user_ref': f'user_{index}',
+            'email': user.get('email', ''),
+            'username': user.get('username', ''),
+            'name': ' '.join(
+                part for part in (user.get('firstname', ''), user.get('lastname', '')) if part
             ).strip(),
-            "status": user.get("status", ""),
-            "last_login": user.get("last_login", ""),
-            "locked_until": user.get("locked_until", ""),
+            'status': user.get('status', ''),
+            'last_login': user.get('last_login', ''),
+            'locked_until': user.get('locked_until', ''),
         }
         if include_ids:
-            summary["user_id"] = user.get("id", 0)
+            summary['user_id'] = user.get('id', 0)
         return summary
 
     @staticmethod
@@ -106,11 +106,11 @@ class OneLoginToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "role_ref": f"role_{index}",
-            "name": role.get("name", ""),
+            'role_ref': f'role_{index}',
+            'name': role.get('name', ''),
         }
         if include_ids:
-            summary["role_id"] = role.get("id", 0)
+            summary['role_id'] = role.get('id', 0)
         return summary
 
     @staticmethod
@@ -121,14 +121,14 @@ class OneLoginToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "app_ref": f"app_{index}",
-            "name": app.get("name", ""),
-            "auth_method": app.get("auth_method", ""),
-            "connector_id": app.get("connector_id", 0),
-            "visible": bool(app.get("visible", False)),
+            'app_ref': f'app_{index}',
+            'name': app.get('name', ''),
+            'auth_method': app.get('auth_method', ''),
+            'connector_id': app.get('connector_id', 0),
+            'visible': bool(app.get('visible', False)),
         }
         if include_ids:
-            summary["app_id"] = app.get("id", 0)
+            summary['app_id'] = app.get('id', 0)
         return summary
 
     @staticmethod
@@ -137,7 +137,7 @@ class OneLoginToolSet:
             return user_or_id
         if isinstance(user_or_id, dict):
             user_dict = cast(dict[str, Any], user_or_id)
-            for key in ("user_id", "id"):
+            for key in ('user_id', 'id'):
                 value: Any = user_dict.get(key)
                 if isinstance(value, int) and value:
                     return value
@@ -150,7 +150,7 @@ class OneLoginToolSet:
             return [r for r in items if isinstance(r, dict)]
         if isinstance(payload, dict):
             payload_dict = cast(dict[str, Any], payload)
-            for key in ("data", "users", "roles", "apps"):
+            for key in ('data', 'users', 'roles', 'apps'):
                 field: Any = payload_dict.get(key)
                 if isinstance(field, list):
                     field_items = cast(list[Any], field)
@@ -178,31 +178,31 @@ class OneLoginToolSet:
         Pass the returned ``after_cursor`` back as ``cursor`` to page.
         """
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 1000')
+        params: dict[str, Any] = {'limit': limit}
         if fields is not None:
-            params["fields"] = ",".join(fields)
+            params['fields'] = ','.join(fields)
         if email is not None:
-            params["email"] = email
+            params['email'] = email
         if cursor is not None:
-            params["cursor"] = cursor
-        response = self._client.get("/api/2/users", params=params)
+            params['cursor'] = cursor
+        response = self._client.get('/api/2/users', params=params)
         raw_users = self._coerce_results(response.json())
         summaries = [
             self._user_summary(user, index=index, include_ids=include_ids)
             for index, user in enumerate(raw_users, start=1)
         ]
-        result: dict[str, Any] = {"users": summaries}
+        result: dict[str, Any] = {'users': summaries}
         # v2 list endpoints return cursors as response headers, not body keys.
-        after_cursor = response.header("After-Cursor")
-        before_cursor = response.header("Before-Cursor")
-        total_count = response.header("Total-Count")
+        after_cursor = response.header('After-Cursor')
+        before_cursor = response.header('Before-Cursor')
+        total_count = response.header('Total-Count')
         if after_cursor is not None:
-            result["after_cursor"] = after_cursor
+            result['after_cursor'] = after_cursor
         if before_cursor is not None:
-            result["before_cursor"] = before_cursor
+            result['before_cursor'] = before_cursor
         if total_count is not None:
-            result["total_count"] = total_count
+            result['total_count'] = total_count
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -213,8 +213,8 @@ class OneLoginToolSet:
         role ids, group id, and all profile fields.
         """
         if not user_id:
-            raise ValueError("user_id is required")
-        return self._client.get(f"/api/2/users/{user_id}").json()
+            raise ValueError('user_id is required')
+        return self._client.get(f'/api/2/users/{user_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_user(
@@ -233,19 +233,19 @@ class OneLoginToolSet:
         before calling.
         """
         if not email:
-            raise ValueError("email is required")
-        body: dict[str, Any] = {"email": email}
+            raise ValueError('email is required')
+        body: dict[str, Any] = {'email': email}
         if username is not None:
-            body["username"] = username
+            body['username'] = username
         if firstname is not None:
-            body["firstname"] = firstname
+            body['firstname'] = firstname
         if lastname is not None:
-            body["lastname"] = lastname
+            body['lastname'] = lastname
         if password is not None:
-            body["password"] = password
+            body['password'] = password
         if password_confirmation is not None:
-            body["password_confirmation"] = password_confirmation
-        return self._client.post("/api/2/users", json=body).json()
+            body['password_confirmation'] = password_confirmation
+        return self._client.post('/api/2/users', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_user(
@@ -261,8 +261,8 @@ class OneLoginToolSet:
         """
         resolved_id = self._resolve_user_id(user_id)
         if not body:
-            raise ValueError("body is required")
-        return self._client.put(f"/api/2/users/{resolved_id}", json=body).json()
+            raise ValueError('body is required')
+        return self._client.put(f'/api/2/users/{resolved_id}', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     @tool_output(DELETE_USER_OUTPUT)
@@ -274,8 +274,8 @@ class OneLoginToolSet:
         ``{"user_id": ..., "deleted": True, "status": ...}``.
         """
         resolved_id = self._resolve_user_id(user_id)
-        response = self._client.delete(f"/api/2/users/{resolved_id}")
-        return {"user_id": resolved_id, "deleted": True, "status": response.status}
+        response = self._client.delete(f'/api/2/users/{resolved_id}')
+        return {'user_id': resolved_id, 'deleted': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
     def lock_user(self, user_id: Any, *, locked_until: int = 0) -> dict[str, Any]:
@@ -289,8 +289,8 @@ class OneLoginToolSet:
         """
         resolved_id = self._resolve_user_id(user_id)
         return self._client.put(
-            f"/api/1/users/{resolved_id}/lock_user",
-            json={"locked_until": locked_until},
+            f'/api/1/users/{resolved_id}/lock_user',
+            json={'locked_until': locked_until},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -306,13 +306,13 @@ class OneLoginToolSet:
         ``include_ids=True`` when assign_role_to_user needs the integer
         role ids.
         """
-        payload = self._client.get("/api/2/roles").json()
+        payload = self._client.get('/api/2/roles').json()
         raw_roles = self._coerce_results(payload)
         summaries = [
             self._role_summary(role, index=index, include_ids=include_ids)
             for index, role in enumerate(raw_roles, start=1)
         ]
-        return {"roles": summaries}
+        return {'roles': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     @tool_output(ASSIGN_ROLE_TO_USER_OUTPUT)
@@ -334,13 +334,13 @@ class OneLoginToolSet:
         """
         resolved_id = self._resolve_user_id(user_id)
         if not role_ids:
-            raise ValueError("role_ids is required")
+            raise ValueError('role_ids is required')
         for role_id in role_ids:
             self._client.post(
-                f"/api/2/roles/{role_id}/users",
+                f'/api/2/roles/{role_id}/users',
                 json=[resolved_id],
             )
-        return {"user_id": resolved_id, "assigned_role_ids": list(role_ids)}
+        return {'user_id': resolved_id, 'assigned_role_ids': list(role_ids)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_APPS_OUTPUT)
@@ -354,13 +354,13 @@ class OneLoginToolSet:
         Returns ``{"apps": [...]}`` with ``app_ref``, ``name``,
         ``auth_method``, ``connector_id``, ``visible``.
         """
-        payload = self._client.get("/api/2/apps").json()
+        payload = self._client.get('/api/2/apps').json()
         raw_apps = self._coerce_results(payload)
         summaries = [
             self._app_summary(app, index=index, include_ids=include_ids)
             for index, app in enumerate(raw_apps, start=1)
         ]
-        return {"apps": summaries}
+        return {'apps': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_events(
@@ -378,9 +378,9 @@ class OneLoginToolSet:
         ``per_page`` drive pagination. Returns the raw event payload.
         Useful for investigating sign-in failures and admin actions.
         """
-        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        params: dict[str, Any] = {'page': page, 'per_page': per_page}
         if from_timestamp is not None:
-            params["from_timestamp"] = from_timestamp
+            params['from_timestamp'] = from_timestamp
         if event_type_id is not None:
-            params["event_type_id"] = event_type_id
-        return self._client.get("/api/1/events", params=params).json()
+            params['event_type_id'] = event_type_id
+        return self._client.get('/api/1/events', params=params).json()

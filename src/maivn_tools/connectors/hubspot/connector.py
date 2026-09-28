@@ -9,6 +9,7 @@ companies, deals, and tickets, plus an engagement helper for notes.
 
 from __future__ import annotations
 
+import time as _time
 from typing import Any, cast
 
 from maivn import toolify, toolset
@@ -19,20 +20,20 @@ from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 
-HUBSPOT_API_URL = "https://api.hubapi.com"
+HUBSPOT_API_URL = 'https://api.hubapi.com'
 
-_SUPPORTED_OBJECTS = {"contacts", "companies", "deals", "tickets"}
-_ENGAGEMENT_TYPES = {"notes", "calls", "emails", "meetings", "tasks"}
+_SUPPORTED_OBJECTS = {'contacts', 'companies', 'deals', 'tickets'}
+_ENGAGEMENT_TYPES = {'notes', 'calls', 'emails', 'meetings', 'tasks'}
 
 _DISPLAY_FIELDS: dict[str, tuple[str, ...]] = {
-    "contacts": ("email", "firstname", "lastname", "company", "lifecyclestage"),
-    "companies": ("name", "domain", "industry", "country", "lifecyclestage"),
-    "deals": ("dealname", "dealstage", "pipeline", "amount", "closedate"),
-    "tickets": ("subject", "content", "hs_pipeline_stage", "hs_ticket_priority"),
+    'contacts': ('email', 'firstname', 'lastname', 'company', 'lifecyclestage'),
+    'companies': ('name', 'domain', 'industry', 'country', 'lifecyclestage'),
+    'deals': ('dealname', 'dealstage', 'pipeline', 'amount', 'closedate'),
+    'tickets': ('subject', 'content', 'hs_pipeline_stage', 'hs_ticket_priority'),
 }
 
 
-@toolset(prefix="hubspot")
+@toolset(prefix='hubspot')
 class HubSpotToolSet:
     """A connector for HubSpot CRM.
 
@@ -43,19 +44,19 @@ class HubSpotToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="hubspot",
-        display_name="HubSpot",
-        version="0.1.0",
-        description="Search, read, and update HubSpot CRM contacts, companies, deals, and tickets.",
+        name='hubspot',
+        display_name='HubSpot',
+        version='0.1.0',
+        description='Search, read, and update HubSpot CRM contacts, companies, deals, and tickets.',
         auth_modes=(AuthMode.BEARER, AuthMode.OAUTH2_AUTH_CODE),
         scopes={
-            "crm.objects.contacts.read": "Read contacts.",
-            "crm.objects.contacts.write": "Write contacts.",
-            "crm.objects.companies.read": "Read companies.",
-            "crm.objects.companies.write": "Write companies.",
-            "crm.objects.deals.read": "Read deals.",
-            "crm.objects.deals.write": "Write deals.",
-            "tickets": "Read and write tickets.",
+            'crm.objects.contacts.read': 'Read contacts.',
+            'crm.objects.contacts.write': 'Write contacts.',
+            'crm.objects.companies.read': 'Read companies.',
+            'crm.objects.companies.write': 'Write companies.',
+            'crm.objects.deals.read': 'Read deals.',
+            'crm.objects.deals.write': 'Write deals.',
+            'tickets': 'Read and write tickets.',
         },
         capabilities=frozenset(
             {
@@ -65,9 +66,9 @@ class HubSpotToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://developers.hubspot.com/docs/api/crm/understanding-the-crm",
-        homepage_url="https://www.hubspot.com",
-        tags=("crm", "marketing"),
+        documentation_url='https://developers.hubspot.com/docs/api/crm/understanding-the-crm',
+        homepage_url='https://www.hubspot.com',
+        tags=('crm', 'marketing'),
     )
 
     def __init__(
@@ -79,13 +80,13 @@ class HubSpotToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not token:
-            raise ValueError("token must be a non-empty string")
+            raise ValueError('token must be a non-empty string')
         self.connection = connection
         self._client = HttpClient(
             base_url=base_url,
             auth=BearerTokenAuth(token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -116,13 +117,13 @@ class HubSpotToolSet:
         """
         _check_object_type(object_type)
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit}
         if after is not None:
-            params["after"] = after
+            params['after'] = after
         if properties is not None:
-            params["properties"] = ",".join(properties)
-        payload = self._client.get(f"/crm/v3/objects/{object_type}", params=params).json()
+            params['properties'] = ','.join(properties)
+        payload = self._client.get(f'/crm/v3/objects/{object_type}', params=params).json()
         if not include_metadata:
             return payload
         return self._summarize_objects(
@@ -149,8 +150,8 @@ class HubSpotToolSet:
         resolved = self._extract_object_id(object_id)
         params: dict[str, Any] | None = None
         if properties is not None:
-            params = {"properties": ",".join(properties)}
-        return self._client.get(f"/crm/v3/objects/{object_type}/{resolved}", params=params).json()
+            params = {'properties': ','.join(properties)}
+        return self._client.get(f'/crm/v3/objects/{object_type}/{resolved}', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def search_objects(
@@ -177,20 +178,20 @@ class HubSpotToolSet:
         """
         _check_object_type(object_type)
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        payload_in: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        payload_in: dict[str, Any] = {'limit': limit}
         if filter_groups is not None:
-            payload_in["filterGroups"] = filter_groups
+            payload_in['filterGroups'] = filter_groups
         if query is not None:
-            payload_in["query"] = query
+            payload_in['query'] = query
         if sorts is not None:
-            payload_in["sorts"] = sorts
+            payload_in['sorts'] = sorts
         if after is not None:
-            payload_in["after"] = after
+            payload_in['after'] = after
         if properties is not None:
-            payload_in["properties"] = properties
+            payload_in['properties'] = properties
         response = self._client.post(
-            f"/crm/v3/objects/{object_type}/search",
+            f'/crm/v3/objects/{object_type}/search',
             json=payload_in,
         ).json()
         if not include_metadata:
@@ -214,10 +215,10 @@ class HubSpotToolSet:
         """
         _check_object_type(object_type)
         if not properties:
-            raise ValueError("properties must be a non-empty dict")
+            raise ValueError('properties must be a non-empty dict')
         return self._client.post(
-            f"/crm/v3/objects/{object_type}",
-            json={"properties": properties},
+            f'/crm/v3/objects/{object_type}',
+            json={'properties': properties},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -235,10 +236,10 @@ class HubSpotToolSet:
         _check_object_type(object_type)
         resolved = self._extract_object_id(object_id)
         if not properties:
-            raise ValueError("properties must be a non-empty dict")
+            raise ValueError('properties must be a non-empty dict')
         return self._client.patch(
-            f"/crm/v3/objects/{object_type}/{resolved}",
-            json={"properties": properties},
+            f'/crm/v3/objects/{object_type}/{resolved}',
+            json={'properties': properties},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -251,8 +252,8 @@ class HubSpotToolSet:
         """
         _check_object_type(object_type)
         resolved = self._extract_object_id(object_id)
-        response = self._client.delete(f"/crm/v3/objects/{object_type}/{resolved}")
-        return {"archived": True, "id": resolved, "status": response.status}
+        response = self._client.delete(f'/crm/v3/objects/{object_type}/{resolved}')
+        return {'archived': True, 'id': resolved, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_note(
@@ -266,16 +267,16 @@ class HubSpotToolSet:
         Returns the new note resource.
         """
         if not body:
-            raise ValueError("body must be a non-empty string")
+            raise ValueError('body must be a non-empty string')
         payload: dict[str, Any] = {
-            "properties": {
-                "hs_note_body": body,
-                "hs_timestamp": _utc_now_ms(),
+            'properties': {
+                'hs_note_body': body,
+                'hs_timestamp': _utc_now_ms(),
             },
         }
         if associations is not None:
-            payload["associations"] = associations
-        return self._client.post("/crm/v3/objects/notes", json=payload).json()
+            payload['associations'] = associations
+        return self._client.post('/crm/v3/objects/notes', json=payload).json()
 
     # MARK: - Engagements (notes/calls/emails/meetings/tasks)
 
@@ -290,12 +291,12 @@ class HubSpotToolSet:
         """List engagements of a given type."""
         _check_engagement_type(engagement_type)
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit}
         if after is not None:
-            params["after"] = after
+            params['after'] = after
         return self._client.get(
-            f"/crm/v3/objects/{engagement_type}",
+            f'/crm/v3/objects/{engagement_type}',
             params=params,
         ).json()
 
@@ -305,34 +306,34 @@ class HubSpotToolSet:
         subject: str,
         *,
         body: str | None = None,
-        priority: str = "NONE",
-        status: str = "NOT_STARTED",
+        priority: str = 'NONE',
+        status: str = 'NOT_STARTED',
         due_timestamp_ms: int | None = None,
         associations: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Create a task engagement."""
         if not subject:
-            raise ValueError("subject must be a non-empty string")
-        if priority not in {"NONE", "LOW", "MEDIUM", "HIGH"}:
-            raise ValueError("priority must be NONE, LOW, MEDIUM, or HIGH")
-        if status not in {"NOT_STARTED", "IN_PROGRESS", "WAITING", "COMPLETED", "DEFERRED"}:
+            raise ValueError('subject must be a non-empty string')
+        if priority not in {'NONE', 'LOW', 'MEDIUM', 'HIGH'}:
+            raise ValueError('priority must be NONE, LOW, MEDIUM, or HIGH')
+        if status not in {'NOT_STARTED', 'IN_PROGRESS', 'WAITING', 'COMPLETED', 'DEFERRED'}:
             raise ValueError(
-                "status must be NOT_STARTED, IN_PROGRESS, WAITING, COMPLETED, or DEFERRED"
+                'status must be NOT_STARTED, IN_PROGRESS, WAITING, COMPLETED, or DEFERRED'
             )
         properties: dict[str, Any] = {
-            "hs_task_subject": subject,
-            "hs_task_priority": priority,
-            "hs_task_status": status,
-            "hs_timestamp": _utc_now_ms(),
+            'hs_task_subject': subject,
+            'hs_task_priority': priority,
+            'hs_task_status': status,
+            'hs_timestamp': _utc_now_ms(),
         }
         if body is not None:
-            properties["hs_task_body"] = body
+            properties['hs_task_body'] = body
         if due_timestamp_ms is not None:
-            properties["hs_task_completion_date"] = due_timestamp_ms
-        payload: dict[str, Any] = {"properties": properties}
+            properties['hs_task_completion_date'] = due_timestamp_ms
+        payload: dict[str, Any] = {'properties': properties}
         if associations is not None:
-            payload["associations"] = associations
-        return self._client.post("/crm/v3/objects/tasks", json=payload).json()
+            payload['associations'] = associations
+        return self._client.post('/crm/v3/objects/tasks', json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_email_engagement(
@@ -340,25 +341,25 @@ class HubSpotToolSet:
         *,
         subject: str,
         text: str,
-        direction: str = "EMAIL",
+        direction: str = 'EMAIL',
         timestamp_ms: int | None = None,
         associations: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Log an email engagement (does not send mail)."""
         if not subject or not text:
-            raise ValueError("subject and text must be non-empty")
-        if direction not in {"EMAIL", "INCOMING_EMAIL", "FORWARDED_EMAIL"}:
-            raise ValueError("direction must be EMAIL, INCOMING_EMAIL, or FORWARDED_EMAIL")
+            raise ValueError('subject and text must be non-empty')
+        if direction not in {'EMAIL', 'INCOMING_EMAIL', 'FORWARDED_EMAIL'}:
+            raise ValueError('direction must be EMAIL, INCOMING_EMAIL, or FORWARDED_EMAIL')
         properties: dict[str, Any] = {
-            "hs_email_subject": subject,
-            "hs_email_text": text,
-            "hs_email_direction": direction,
-            "hs_timestamp": timestamp_ms or _utc_now_ms(),
+            'hs_email_subject': subject,
+            'hs_email_text': text,
+            'hs_email_direction': direction,
+            'hs_timestamp': timestamp_ms or _utc_now_ms(),
         }
-        payload: dict[str, Any] = {"properties": properties}
+        payload: dict[str, Any] = {'properties': properties}
         if associations is not None:
-            payload["associations"] = associations
-        return self._client.post("/crm/v3/objects/emails", json=payload).json()
+            payload['associations'] = associations
+        return self._client.post('/crm/v3/objects/emails', json=payload).json()
 
     # MARK: - Pipelines, owners, properties
 
@@ -366,15 +367,15 @@ class HubSpotToolSet:
     def list_pipelines(self, object_type: str) -> dict[str, Any]:
         """List pipelines defined for ``object_type`` (e.g. ``deals``, ``tickets``)."""
         _check_object_type(object_type)
-        return self._client.get(f"/crm/v3/pipelines/{object_type}").json()
+        return self._client.get(f'/crm/v3/pipelines/{object_type}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_pipeline(self, object_type: str, pipeline_id: str) -> dict[str, Any]:
         """Return one pipeline definition."""
         _check_object_type(object_type)
         if not pipeline_id:
-            raise ValueError("pipeline_id must be a non-empty string")
-        return self._client.get(f"/crm/v3/pipelines/{object_type}/{pipeline_id}").json()
+            raise ValueError('pipeline_id must be a non-empty string')
+        return self._client.get(f'/crm/v3/pipelines/{object_type}/{pipeline_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_owners(
@@ -386,34 +387,34 @@ class HubSpotToolSet:
     ) -> dict[str, Any]:
         """List HubSpot owners (assignable agents)."""
         if limit < 1 or limit > 500:
-            raise ValueError("limit must be between 1 and 500")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 500')
+        params: dict[str, Any] = {'limit': limit}
         if email is not None:
-            params["email"] = email
+            params['email'] = email
         if after is not None:
-            params["after"] = after
-        return self._client.get("/crm/v3/owners", params=params).json()
+            params['after'] = after
+        return self._client.get('/crm/v3/owners', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_owner(self, owner_id: str) -> dict[str, Any]:
         """Return a single owner."""
         if not owner_id:
-            raise ValueError("owner_id must be a non-empty string")
-        return self._client.get(f"/crm/v3/owners/{owner_id}").json()
+            raise ValueError('owner_id must be a non-empty string')
+        return self._client.get(f'/crm/v3/owners/{owner_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_properties(self, object_type: str) -> dict[str, Any]:
         """List property definitions for ``object_type``."""
         _check_object_type(object_type)
-        return self._client.get(f"/crm/v3/properties/{object_type}").json()
+        return self._client.get(f'/crm/v3/properties/{object_type}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_property(self, object_type: str, property_name: str) -> dict[str, Any]:
         """Return one property definition."""
         _check_object_type(object_type)
         if not property_name:
-            raise ValueError("property_name must be a non-empty string")
-        return self._client.get(f"/crm/v3/properties/{object_type}/{property_name}").json()
+            raise ValueError('property_name must be a non-empty string')
+        return self._client.get(f'/crm/v3/properties/{object_type}/{property_name}').json()
 
     # MARK: - Associations & batch
 
@@ -426,7 +427,7 @@ class HubSpotToolSet:
         to_object_type: str,
         to_object_id: str,
         association_type_id: int | None = None,
-        association_category: str = "HUBSPOT_DEFINED",
+        association_category: str = 'HUBSPOT_DEFINED',
     ) -> dict[str, Any]:
         """Create an association between two CRM objects (v4 Associations API).
 
@@ -440,28 +441,28 @@ class HubSpotToolSet:
         _check_object_type(from_object_type)
         _check_object_type(to_object_type)
         if not from_object_id or not to_object_id:
-            raise ValueError("from_object_id and to_object_id must be non-empty")
+            raise ValueError('from_object_id and to_object_id must be non-empty')
         if association_type_id is None:
             return self._client.put(
-                f"/crm/v4/objects/{from_object_type}/{from_object_id}/associations/default/"
-                f"{to_object_type}/{to_object_id}",
+                f'/crm/v4/objects/{from_object_type}/{from_object_id}/associations/default/'
+                f'{to_object_type}/{to_object_id}',
                 json=None,
             ).json()
         if association_category not in {
-            "HUBSPOT_DEFINED",
-            "USER_DEFINED",
-            "INTEGRATOR_DEFINED",
+            'HUBSPOT_DEFINED',
+            'USER_DEFINED',
+            'INTEGRATOR_DEFINED',
         }:
             raise ValueError(
-                "association_category must be HUBSPOT_DEFINED, USER_DEFINED, or INTEGRATOR_DEFINED"
+                'association_category must be HUBSPOT_DEFINED, USER_DEFINED, or INTEGRATOR_DEFINED'
             )
         return self._client.put(
-            f"/crm/v4/objects/{from_object_type}/{from_object_id}/associations/"
-            f"{to_object_type}/{to_object_id}",
+            f'/crm/v4/objects/{from_object_type}/{from_object_id}/associations/'
+            f'{to_object_type}/{to_object_id}',
             json=[
                 {
-                    "associationCategory": association_category,
-                    "associationTypeId": association_type_id,
+                    'associationCategory': association_category,
+                    'associationTypeId': association_type_id,
                 }
             ],
         ).json()
@@ -483,12 +484,12 @@ class HubSpotToolSet:
         _check_object_type(from_object_type)
         _check_object_type(to_object_type)
         if not from_object_id or not to_object_id:
-            raise ValueError("from_object_id and to_object_id must be non-empty")
+            raise ValueError('from_object_id and to_object_id must be non-empty')
         self._client.delete(
-            f"/crm/v4/objects/{from_object_type}/{from_object_id}/associations/"
-            f"{to_object_type}/{to_object_id}"
+            f'/crm/v4/objects/{from_object_type}/{from_object_id}/associations/'
+            f'{to_object_type}/{to_object_id}'
         )
-        return {"removed": True}
+        return {'removed': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def batch_read_objects(
@@ -505,13 +506,13 @@ class HubSpotToolSet:
         """
         _check_object_type(object_type)
         if not ids:
-            raise ValueError("ids must contain at least one id")
+            raise ValueError('ids must contain at least one id')
         resolved = [self._extract_object_id(item) for item in ids]
-        payload: dict[str, Any] = {"inputs": [{"id": i} for i in resolved]}
+        payload: dict[str, Any] = {'inputs': [{'id': i} for i in resolved]}
         if properties is not None:
-            payload["properties"] = properties
+            payload['properties'] = properties
         return self._client.post(
-            f"/crm/v3/objects/{object_type}/batch/read",
+            f'/crm/v3/objects/{object_type}/batch/read',
             json=payload,
         ).json()
 
@@ -527,10 +528,10 @@ class HubSpotToolSet:
         """
         _check_object_type(object_type)
         if not inputs:
-            raise ValueError("inputs must contain at least one record")
+            raise ValueError('inputs must contain at least one record')
         return self._client.post(
-            f"/crm/v3/objects/{object_type}/batch/create",
-            json={"inputs": inputs},
+            f'/crm/v3/objects/{object_type}/batch/create',
+            json={'inputs': inputs},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -542,10 +543,10 @@ class HubSpotToolSet:
         """Batch-update CRM objects (each input needs ``id`` and ``properties``)."""
         _check_object_type(object_type)
         if not inputs:
-            raise ValueError("inputs must contain at least one record")
+            raise ValueError('inputs must contain at least one record')
         return self._client.post(
-            f"/crm/v3/objects/{object_type}/batch/update",
-            json={"inputs": inputs},
+            f'/crm/v3/objects/{object_type}/batch/update',
+            json={'inputs': inputs},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -562,13 +563,13 @@ class HubSpotToolSet:
         """
         _check_object_type(object_type)
         if not ids:
-            raise ValueError("ids must contain at least one id")
+            raise ValueError('ids must contain at least one id')
         resolved = [self._extract_object_id(item) for item in ids]
         response = self._client.post(
-            f"/crm/v3/objects/{object_type}/batch/archive",
-            json={"inputs": [{"id": i} for i in resolved]},
+            f'/crm/v3/objects/{object_type}/batch/archive',
+            json={'inputs': [{'id': i} for i in resolved]},
         )
-        return {"archived": len(resolved), "status": response.status}
+        return {'archived': len(resolved), 'status': response.status}
 
     # MARK: - Internal
 
@@ -581,26 +582,26 @@ class HubSpotToolSet:
     ) -> dict[str, Any]:
         display_fields = _DISPLAY_FIELDS.get(object_type, ())
         summaries: list[dict[str, Any]] = []
-        results: Any = payload.get("results", []) or []
+        results: Any = payload.get('results', []) or []
         item: Any
         for index, item in enumerate(results, start=1):
             if not isinstance(item, dict):
                 continue
             item_dict = cast(dict[str, Any], item)
-            properties: dict[str, Any] = item_dict.get("properties") or {}
+            properties: dict[str, Any] = item_dict.get('properties') or {}
             summary: dict[str, Any] = {
-                "object_ref": f"object_{index}",
-                "object_type": object_type,
-                "updated_at": item_dict.get("updatedAt", ""),
+                'object_ref': f'object_{index}',
+                'object_type': object_type,
+                'updated_at': item_dict.get('updatedAt', ''),
             }
             for field in display_fields:
-                summary[field] = properties.get(field, "")
+                summary[field] = properties.get(field, '')
             if include_ids:
-                summary["object_id"] = item_dict.get("id", "")
+                summary['object_id'] = item_dict.get('id', '')
             summaries.append(summary)
-        result: dict[str, Any] = {"objects": summaries}
-        if payload.get("paging"):
-            result["paging"] = payload["paging"]
+        result: dict[str, Any] = {'objects': summaries}
+        if payload.get('paging'):
+            result['paging'] = payload['paging']
         return result
 
     @staticmethod
@@ -614,39 +615,37 @@ class HubSpotToolSet:
         """
         if isinstance(candidate, str):
             if not candidate:
-                raise ValueError("object_id must be a non-empty string")
+                raise ValueError('object_id must be a non-empty string')
             return candidate
         if isinstance(candidate, int) and not isinstance(candidate, bool):
             return str(candidate)
         if isinstance(candidate, dict):
             candidate_dict = cast(dict[Any, Any], candidate)
-            for key in ("object_id", "id"):
+            for key in ('object_id', 'id'):
                 value: Any = candidate_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
                 if isinstance(value, int) and not isinstance(value, bool):
                     return str(value)
         if isinstance(candidate, list | tuple):
-            candidate_seq = cast("list[Any] | tuple[Any, ...]", candidate)
+            candidate_seq = cast('list[Any] | tuple[Any, ...]', candidate)
             for item in candidate_seq:
                 try:
                     return HubSpotToolSet._extract_object_id(item)
                 except ValueError:
                     continue
-        raise ValueError(f"could not extract HubSpot object id from: {candidate!r}")
+        raise ValueError(f'could not extract HubSpot object id from: {candidate!r}')
 
 
 def _check_object_type(object_type: str) -> None:
     if object_type not in _SUPPORTED_OBJECTS:
-        raise ValueError(f"object_type must be one of: {sorted(_SUPPORTED_OBJECTS)!r}")
+        raise ValueError(f'object_type must be one of: {sorted(_SUPPORTED_OBJECTS)!r}')
 
 
 def _check_engagement_type(engagement_type: str) -> None:
     if engagement_type not in _ENGAGEMENT_TYPES:
-        raise ValueError(f"engagement_type must be one of: {sorted(_ENGAGEMENT_TYPES)!r}")
+        raise ValueError(f'engagement_type must be one of: {sorted(_ENGAGEMENT_TYPES)!r}')
 
 
 def _utc_now_ms() -> int:
-    import time as _time
-
     return int(_time.time() * 1000)

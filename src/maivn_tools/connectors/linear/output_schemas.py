@@ -18,39 +18,39 @@ from pydantic import JsonValue
 # MARK: - Entity summary (mirrors the connector's ``_issue_summary`` builder)
 
 _ISSUE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "issue_ref": {"type": "string"},
-        "identifier": {"type": "string"},
-        "title": {"type": "string"},
-        "status": {"type": "string"},
-        "priority": {"type": "integer"},
-        "assignee": {"type": "string"},
-        "team": {"type": "string"},
-        "updated_at": {"type": "string"},
-        "url": {"type": "string"},
-        "issue_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'issue_ref': {'type': 'string'},
+        'identifier': {'type': 'string'},
+        'title': {'type': 'string'},
+        'status': {'type': 'string'},
+        'priority': {'type': 'integer'},
+        'assignee': {'type': 'string'},
+        'team': {'type': 'string'},
+        'updated_at': {'type': 'string'},
+        'url': {'type': 'string'},
+        'issue_id': {'type': 'string'},
     },
-    "required": ["issue_ref", "identifier", "title"],
+    'required': ['issue_ref', 'identifier', 'title'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_ISSUES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "issues": {"type": "array", "items": _ISSUE_SUMMARY},
-        "pageInfo": {
-            "type": "object",
-            "properties": {
-                "hasNextPage": {"type": "boolean"},
-                "endCursor": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'issues': {'type': 'array', 'items': _ISSUE_SUMMARY},
+        'pageInfo': {
+            'type': 'object',
+            'properties': {
+                'hasNextPage': {'type': 'boolean'},
+                'endCursor': {'type': ['string', 'null']},
             },
         },
     },
-    "required": ["issues"],
+    'required': ['issues'],
 }
 
 
-__all__ = ["LIST_ISSUES_OUTPUT"]
+__all__ = ['LIST_ISSUES_OUTPUT']

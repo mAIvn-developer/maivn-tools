@@ -19,61 +19,61 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's summary builders)
 
 _ISSUE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "issue_ref": {"type": "string"},
-        "key": {"type": "string"},
-        "summary": {"type": "string"},
-        "status": {"type": "string"},
-        "assignee": {"type": "string"},
-        "priority": {"type": "string"},
-        "issue_type": {"type": "string"},
-        "updated": {"type": "string"},
-        "issue_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'issue_ref': {'type': 'string'},
+        'key': {'type': 'string'},
+        'summary': {'type': 'string'},
+        'status': {'type': 'string'},
+        'assignee': {'type': 'string'},
+        'priority': {'type': 'string'},
+        'issue_type': {'type': 'string'},
+        'updated': {'type': 'string'},
+        'issue_id': {'type': 'string'},
     },
-    "required": ["issue_ref", "key"],
+    'required': ['issue_ref', 'key'],
 }
 
 _PROJECT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "project_ref": {"type": "string"},
-        "key": {"type": "string"},
-        "name": {"type": "string"},
-        "type": {"type": "string"},
-        "lead": {"type": "string"},
-        "project_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'project_ref': {'type': 'string'},
+        'key': {'type': 'string'},
+        'name': {'type': 'string'},
+        'type': {'type': 'string'},
+        'lead': {'type': 'string'},
+        'project_id': {'type': 'string'},
     },
-    "required": ["project_ref", "key"],
+    'required': ['project_ref', 'key'],
 }
 
 
 # MARK: - Tool output schemas
 
 SEARCH_ISSUES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "issues": {"type": "array", "items": _ISSUE_SUMMARY},
-        "nextPageToken": {"type": ["string", "null"]},
-        "isLast": {"type": ["boolean", "null"]},
+    'type': 'object',
+    'properties': {
+        'issues': {'type': 'array', 'items': _ISSUE_SUMMARY},
+        'nextPageToken': {'type': ['string', 'null']},
+        'isLast': {'type': ['boolean', 'null']},
     },
-    "required": ["issues"],
+    'required': ['issues'],
 }
 
 LIST_PROJECTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "projects": {"type": "array", "items": _PROJECT_SUMMARY},
-        "startAt": {"type": "integer"},
-        "maxResults": {"type": "integer"},
-        "total": {"type": "integer"},
-        "isLast": {"type": ["boolean", "null"]},
+    'type': 'object',
+    'properties': {
+        'projects': {'type': 'array', 'items': _PROJECT_SUMMARY},
+        'startAt': {'type': 'integer'},
+        'maxResults': {'type': 'integer'},
+        'total': {'type': 'integer'},
+        'isLast': {'type': ['boolean', 'null']},
     },
-    "required": ["projects"],
+    'required': ['projects'],
 }
 
 
 __all__ = [
-    "LIST_PROJECTS_OUTPUT",
-    "SEARCH_ISSUES_OUTPUT",
+    'LIST_PROJECTS_OUTPUT',
+    'SEARCH_ISSUES_OUTPUT',
 ]

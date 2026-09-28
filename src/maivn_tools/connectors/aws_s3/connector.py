@@ -26,25 +26,25 @@ _SUMMARY_MAX = 25
 
 def _extract_text(xml: str, tag: str) -> list[str]:
     """Extract text content for all occurrences of ``<tag>...</tag>`` (handles namespaces)."""
-    pattern = re.compile(rf"<(?:\w+:)?{tag}\b[^>]*>([\s\S]*?)</(?:\w+:)?{tag}>", re.IGNORECASE)
+    pattern = re.compile(rf'<(?:\w+:)?{tag}\b[^>]*>([\s\S]*?)</(?:\w+:)?{tag}>', re.IGNORECASE)
     return [match.group(1).strip() for match in pattern.finditer(xml)]
 
 
 def _extract_buckets(xml: str) -> list[dict[str, str]]:
     """Pull bucket name + creation date out of the ListBuckets XML."""
     block = re.compile(
-        r"<(?:\w+:)?Bucket\b[^>]*>([\s\S]*?)</(?:\w+:)?Bucket>",
+        r'<(?:\w+:)?Bucket\b[^>]*>([\s\S]*?)</(?:\w+:)?Bucket>',
         re.IGNORECASE,
     )
     buckets: list[dict[str, str]] = []
     for match in block.finditer(xml):
         chunk = match.group(1)
-        names = _extract_text(chunk, "Name")
-        dates = _extract_text(chunk, "CreationDate")
+        names = _extract_text(chunk, 'Name')
+        dates = _extract_text(chunk, 'CreationDate')
         buckets.append(
             {
-                "name": names[0] if names else "",
-                "creation_date": dates[0] if dates else "",
+                'name': names[0] if names else '',
+                'creation_date': dates[0] if dates else '',
             }
         )
     return buckets
@@ -53,45 +53,45 @@ def _extract_buckets(xml: str) -> list[dict[str, str]]:
 def _extract_objects(xml: str) -> tuple[list[dict[str, Any]], dict[str, str]]:
     """Pull object key/size/etag out of the ListObjectsV2 XML."""
     block = re.compile(
-        r"<(?:\w+:)?Contents\b[^>]*>([\s\S]*?)</(?:\w+:)?Contents>",
+        r'<(?:\w+:)?Contents\b[^>]*>([\s\S]*?)</(?:\w+:)?Contents>',
         re.IGNORECASE,
     )
     objects: list[dict[str, Any]] = []
     for match in block.finditer(xml):
         chunk = match.group(1)
-        keys = _extract_text(chunk, "Key")
-        sizes = _extract_text(chunk, "Size")
-        last_modified = _extract_text(chunk, "LastModified")
-        etags = _extract_text(chunk, "ETag")
-        storage_class = _extract_text(chunk, "StorageClass")
-        size_str = sizes[0] if sizes else ""
+        keys = _extract_text(chunk, 'Key')
+        sizes = _extract_text(chunk, 'Size')
+        last_modified = _extract_text(chunk, 'LastModified')
+        etags = _extract_text(chunk, 'ETag')
+        storage_class = _extract_text(chunk, 'StorageClass')
+        size_str = sizes[0] if sizes else ''
         try:
             size_int: int | str = int(size_str) if size_str else 0
         except ValueError:
             size_int = size_str
         objects.append(
             {
-                "key": keys[0] if keys else "",
-                "size": size_int,
-                "last_modified": last_modified[0] if last_modified else "",
-                "etag": (etags[0].strip('"') if etags else ""),
-                "storage_class": storage_class[0] if storage_class else "",
+                'key': keys[0] if keys else '',
+                'size': size_int,
+                'last_modified': last_modified[0] if last_modified else '',
+                'etag': (etags[0].strip('"') if etags else ''),
+                'storage_class': storage_class[0] if storage_class else '',
             }
         )
     paging: dict[str, Any] = {}
-    truncated = _extract_text(xml, "IsTruncated")
+    truncated = _extract_text(xml, 'IsTruncated')
     if truncated:
-        paging["is_truncated"] = truncated[0].lower() == "true"
-    next_token = _extract_text(xml, "NextContinuationToken")
+        paging['is_truncated'] = truncated[0].lower() == 'true'
+    next_token = _extract_text(xml, 'NextContinuationToken')
     if next_token:
-        paging["next_continuation_token"] = next_token[0]
+        paging['next_continuation_token'] = next_token[0]
     return objects, paging
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="aws_s3")
+@toolset(prefix='aws_s3')
 class AmazonS3ToolSet:
     """A connector for Amazon S3 (REST + SigV4).
 
@@ -103,15 +103,15 @@ class AmazonS3ToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="aws_s3",
-        display_name="Amazon S3",
-        version="0.1.0",
-        description="Buckets, objects, listings, multipart uploads, and policies.",
+        name='aws_s3',
+        display_name='Amazon S3',
+        version='0.1.0',
+        description='Buckets, objects, listings, multipart uploads, and policies.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html",
-        homepage_url="https://aws.amazon.com/s3/",
-        tags=("cloud", "storage", "aws"),
+        documentation_url='https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html',
+        homepage_url='https://aws.amazon.com/s3/',
+        tags=('cloud', 'storage', 'aws'),
     )
 
     def __init__(
@@ -119,26 +119,26 @@ class AmazonS3ToolSet:
         *,
         access_key: str,
         secret_key: str,
-        region: str = "us-east-1",
+        region: str = 'us-east-1',
         session_token: str | None = None,
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_key or not secret_key:
-            raise ValueError("access_key and secret_key are required")
+            raise ValueError('access_key and secret_key are required')
         self.connection = connection
         self._region = region
         self._client = HttpClient(
-            base_url=f"https://s3.{region}.amazonaws.com",
+            base_url=f'https://s3.{region}.amazonaws.com',
             auth=SigV4Auth(
                 access_key=access_key,
                 secret_key=secret_key,
                 region=region,
-                service="s3",
+                service='s3',
                 session_token=session_token,
             ),
             transport=transport,
-            default_headers={"Accept": "application/xml"},
+            default_headers={'Accept': 'application/xml'},
         )
 
     @property
@@ -158,20 +158,20 @@ class AmazonS3ToolSet:
         S3 identifier, user-facing), ``creation_date``. Set
         ``include_metadata=False`` to get the raw XML body.
         """
-        response = self._client.get("/")
+        response = self._client.get('/')
         if not include_metadata:
-            return {"status": response.status, "body": response.text()}
+            return {'status': response.status, 'body': response.text()}
         body = response.text()
         buckets = _extract_buckets(body)
         summaries = [
             {
-                "bucket_ref": f"bucket_{index}",
-                "name": bucket["name"],
-                "creation_date": bucket["creation_date"],
+                'bucket_ref': f'bucket_{index}',
+                'name': bucket['name'],
+                'creation_date': bucket['creation_date'],
             }
             for index, bucket in enumerate(buckets[:_SUMMARY_MAX], start=1)
         ]
-        return {"status": response.status, "buckets": summaries}
+        return {'status': response.status, 'buckets': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_bucket(
@@ -187,20 +187,20 @@ class AmazonS3ToolSet:
         region of this connector.
         """
         if not bucket:
-            raise ValueError("bucket is required")
-        body = b""
+            raise ValueError('bucket is required')
+        body = b''
         headers: dict[str, str] = {}
         if location_constraint:
             body = (
                 '<?xml version="1.0" encoding="UTF-8"?>'
-                "<CreateBucketConfiguration "
+                '<CreateBucketConfiguration '
                 'xmlns="http://s3.amazonaws.com/doc/2006-03-01/">'
-                f"<LocationConstraint>{location_constraint}</LocationConstraint>"
-                "</CreateBucketConfiguration>"
+                f'<LocationConstraint>{location_constraint}</LocationConstraint>'
+                '</CreateBucketConfiguration>'
             ).encode()
-            headers["Content-Type"] = "application/xml"
-        response = self._client.put(f"/{bucket}", data=body, headers=headers)
-        return {"status": response.status, "bucket": bucket}
+            headers['Content-Type'] = 'application/xml'
+        response = self._client.put(f'/{bucket}', data=body, headers=headers)
+        return {'status': response.status, 'bucket': bucket}
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_bucket(self, bucket: str) -> dict[str, Any]:
@@ -210,9 +210,9 @@ class AmazonS3ToolSet:
         deleted the name becomes available for any AWS account.
         """
         if not bucket:
-            raise ValueError("bucket is required")
-        response = self._client.delete(f"/{bucket}")
-        return {"status": response.status, "bucket": bucket, "deleted": True}
+            raise ValueError('bucket is required')
+        response = self._client.delete(f'/{bucket}')
+        return {'status': response.status, 'bucket': bucket, 'deleted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_objects_v2(
@@ -236,39 +236,39 @@ class AmazonS3ToolSet:
         raw XML body.
         """
         if not bucket:
-            raise ValueError("bucket is required")
+            raise ValueError('bucket is required')
         if max_keys < 1 or max_keys > 1000:
-            raise ValueError("max_keys must be between 1 and 1000")
+            raise ValueError('max_keys must be between 1 and 1000')
         if include_metadata:
             max_keys = min(max_keys, _SUMMARY_MAX)
         params: dict[str, Any] = {
-            "list-type": "2",
-            "max-keys": max_keys,
+            'list-type': '2',
+            'max-keys': max_keys,
         }
         if prefix is not None:
-            params["prefix"] = prefix
+            params['prefix'] = prefix
         if delimiter is not None:
-            params["delimiter"] = delimiter
+            params['delimiter'] = delimiter
         if continuation_token is not None:
-            params["continuation-token"] = continuation_token
+            params['continuation-token'] = continuation_token
         if start_after is not None:
-            params["start-after"] = start_after
-        response = self._client.get(f"/{bucket}", params=params)
+            params['start-after'] = start_after
+        response = self._client.get(f'/{bucket}', params=params)
         if not include_metadata:
-            return {"status": response.status, "body": response.text()}
+            return {'status': response.status, 'body': response.text()}
         body = response.text()
         objects, paging = _extract_objects(body)
         summaries = [
             {
-                "object_ref": f"object_{index}",
+                'object_ref': f'object_{index}',
                 **obj,
             }
             for index, obj in enumerate(objects[:_SUMMARY_MAX], start=1)
         ]
         return {
-            "status": response.status,
-            "bucket": bucket,
-            "objects": summaries,
+            'status': response.status,
+            'bucket': bucket,
+            'objects': summaries,
             **paging,
         }
 
@@ -286,18 +286,18 @@ class AmazonS3ToolSet:
         checking existence and size without downloading bytes.
         """
         if not bucket or not key:
-            raise ValueError("bucket and key are required")
+            raise ValueError('bucket and key are required')
         params: dict[str, Any] = {}
         if version_id is not None:
-            params["versionId"] = version_id
+            params['versionId'] = version_id
         response = self._client.request(
-            "HEAD",
-            f"/{bucket}/{quote(key, safe='/')}",
+            'HEAD',
+            f'/{bucket}/{quote(key, safe="/")}',
             params=params or None,
         )
         return {
-            "status": response.status,
-            "headers": dict(response.headers),
+            'status': response.status,
+            'headers': dict(response.headers),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -316,21 +316,21 @@ class AmazonS3ToolSet:
         should be downloaded directly rather than via this tool.
         """
         if not bucket or not key:
-            raise ValueError("bucket and key are required")
+            raise ValueError('bucket and key are required')
         params: dict[str, Any] = {}
         if version_id is not None:
-            params["versionId"] = version_id
+            params['versionId'] = version_id
         headers: dict[str, str] = {}
         if range_header is not None:
-            headers["Range"] = range_header
+            headers['Range'] = range_header
         response = self._client.get(
-            f"/{bucket}/{quote(key, safe='/')}",
+            f'/{bucket}/{quote(key, safe="/")}',
             params=params or None,
             headers=headers or None,
         )
         return {
-            "status": response.status,
-            "body": response.text(),
+            'status': response.status,
+            'body': response.text(),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -351,25 +351,25 @@ class AmazonS3ToolSet:
         sent as ``x-amz-meta-<key>`` headers (custom user metadata).
         """
         if not bucket or not key:
-            raise ValueError("bucket and key are required")
+            raise ValueError('bucket and key are required')
         headers: dict[str, str] = {}
         if content_type is not None:
-            headers["Content-Type"] = content_type
+            headers['Content-Type'] = content_type
         if cache_control is not None:
-            headers["Cache-Control"] = cache_control
+            headers['Cache-Control'] = cache_control
         if acl is not None:
-            headers["x-amz-acl"] = acl
+            headers['x-amz-acl'] = acl
         if metadata is not None:
             for k, v in metadata.items():
-                headers[f"x-amz-meta-{k}"] = v
+                headers[f'x-amz-meta-{k}'] = v
         response = self._client.put(
-            f"/{bucket}/{quote(key, safe='/')}",
+            f'/{bucket}/{quote(key, safe="/")}',
             data=body,
             headers=headers or None,
         )
         return {
-            "status": response.status,
-            "etag": response.headers.get("ETag"),
+            'status': response.status,
+            'etag': response.headers.get('ETag'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -386,15 +386,15 @@ class AmazonS3ToolSet:
         recovered. Confirm with the user before calling.
         """
         if not bucket or not key:
-            raise ValueError("bucket and key are required")
+            raise ValueError('bucket and key are required')
         params: dict[str, Any] = {}
         if version_id is not None:
-            params["versionId"] = version_id
+            params['versionId'] = version_id
         response = self._client.delete(
-            f"/{bucket}/{quote(key, safe='/')}",
+            f'/{bucket}/{quote(key, safe="/")}',
             params=params or None,
         )
-        return {"status": response.status, "deleted": True}
+        return {'status': response.status, 'deleted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def copy_object(
@@ -404,7 +404,7 @@ class AmazonS3ToolSet:
         source_key: str,
         dest_bucket: str,
         dest_key: str,
-        metadata_directive: str = "COPY",
+        metadata_directive: str = 'COPY',
     ) -> dict[str, Any]:
         """Server-side copy an object.
 
@@ -413,16 +413,16 @@ class AmazonS3ToolSet:
         is dropped and the destination starts fresh.
         """
         if not source_bucket or not source_key or not dest_bucket or not dest_key:
-            raise ValueError("source_bucket, source_key, dest_bucket, and dest_key are required")
+            raise ValueError('source_bucket, source_key, dest_bucket, and dest_key are required')
         headers = {
-            "x-amz-copy-source": f"/{source_bucket}/{quote(source_key, safe='/')}",
-            "x-amz-metadata-directive": metadata_directive,
+            'x-amz-copy-source': f'/{source_bucket}/{quote(source_key, safe="/")}',
+            'x-amz-metadata-directive': metadata_directive,
         }
         response = self._client.put(
-            f"/{dest_bucket}/{quote(dest_key, safe='/')}",
+            f'/{dest_bucket}/{quote(dest_key, safe="/")}',
             headers=headers,
         )
-        return {"status": response.status, "body": response.text()}
+        return {'status': response.status, 'body': response.text()}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_bucket_location(self, bucket: str) -> dict[str, Any]:
@@ -432,9 +432,9 @@ class AmazonS3ToolSet:
         contains ``<LocationConstraint>``.
         """
         if not bucket:
-            raise ValueError("bucket is required")
-        response = self._client.get(f"/{bucket}", params={"location": ""})
-        return {"status": response.status, "body": response.text()}
+            raise ValueError('bucket is required')
+        response = self._client.get(f'/{bucket}', params={'location': ''})
+        return {'status': response.status, 'body': response.text()}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_bucket_policy(self, bucket: str) -> dict[str, Any]:
@@ -443,6 +443,6 @@ class AmazonS3ToolSet:
         Returns ``{"status": ..., "body": <JSON-as-string>}``.
         """
         if not bucket:
-            raise ValueError("bucket is required")
-        response = self._client.get(f"/{bucket}", params={"policy": ""})
-        return {"status": response.status, "body": response.text()}
+            raise ValueError('bucket is required')
+        response = self._client.get(f'/{bucket}', params={'policy': ''})
+        return {'status': response.status, 'body': response.text()}

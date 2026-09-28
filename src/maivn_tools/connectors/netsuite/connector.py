@@ -39,7 +39,7 @@ def _coerce_id(candidate: Any) -> str | int:
         return candidate
     if isinstance(candidate, dict):
         mapping = cast(dict[str, Any], candidate)
-        for key in ("record_id", "id", "internalId"):
+        for key in ('record_id', 'id', 'internalId'):
             value: Any = mapping.get(key)
             if isinstance(value, str | int) and value:
                 return value
@@ -51,20 +51,20 @@ def _coerce_id(candidate: Any) -> str | int:
                 except ValueError:
                     continue
     if isinstance(candidate, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+        sequence = cast('list[Any] | tuple[Any, ...]', candidate)
         item: Any
         for item in sequence:
             try:
                 return _coerce_id(item)
             except ValueError:
                 continue
-    raise ValueError("could not resolve a NetSuite record id from the given input")
+    raise ValueError('could not resolve a NetSuite record id from the given input')
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="netsuite")
+@toolset(prefix='netsuite')
 class NetSuiteToolSet:
     """A connector for the NetSuite SuiteTalk REST API.
 
@@ -74,15 +74,15 @@ class NetSuiteToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="netsuite",
-        display_name="NetSuite",
-        version="0.1.0",
-        description="SuiteQL queries, record CRUD across NetSuite REST records.",
+        name='netsuite',
+        display_name='NetSuite',
+        version='0.1.0',
+        description='SuiteQL queries, record CRUD across NetSuite REST records.',
         auth_modes=(AuthMode.CUSTOM,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_1540391670.html",
-        homepage_url="https://www.netsuite.com/",
-        tags=("erp", "accounting", "finance"),
+        documentation_url='https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_1540391670.html',
+        homepage_url='https://www.netsuite.com/',
+        tags=('erp', 'accounting', 'finance'),
     )
 
     def __init__(
@@ -95,18 +95,18 @@ class NetSuiteToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not account_id:
-            raise ValueError("account_id is required")
+            raise ValueError('account_id is required')
         self.connection = connection
         # Account IDs use '_' in the URL but a dash variant is also accepted.
-        host_segment = account_id.lower().replace("_", "-")
-        url = base_url or f"https://{host_segment}.suitetalk.api.netsuite.com"
+        host_segment = account_id.lower().replace('_', '-')
+        url = base_url or f'https://{host_segment}.suitetalk.api.netsuite.com'
         self._client = HttpClient(
-            base_url=url.rstrip("/"),
+            base_url=url.rstrip('/'),
             auth=auth or NoAuth(),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -122,14 +122,14 @@ class NetSuiteToolSet:
         ``hasMore``, ``links``).
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
+            raise ValueError('limit must be between 1 and 1000')
         result: dict[str, Any] = self._client.post(
-            "/services/rest/query/v1/suiteql",
-            params={"limit": limit, "offset": offset},
-            headers={"Prefer": "transient"},
-            json={"q": query},
+            '/services/rest/query/v1/suiteql',
+            params={'limit': limit, 'offset': offset},
+            headers={'Prefer': 'transient'},
+            json={'q': query},
         ).json()
         return result
 
@@ -152,17 +152,17 @@ class NetSuiteToolSet:
         :meth:`get_record` / :meth:`update_record` / :meth:`delete_record`).
         """
         if not record_type:
-            raise ValueError("record_type must be a non-empty string")
+            raise ValueError('record_type must be a non-empty string')
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
-        params: dict[str, Any] = {"limit": limit, "offset": offset}
+            raise ValueError('limit must be between 1 and 1000')
+        params: dict[str, Any] = {'limit': limit, 'offset': offset}
         if q is not None:
-            params["q"] = q
+            params['q'] = q
         payload: JsonValue = self._client.get(
-            f"/services/rest/record/v1/{record_type}",
+            f'/services/rest/record/v1/{record_type}',
             params=params,
         ).json()
-        items: Any = payload.get("items", []) if isinstance(payload, dict) else []
+        items: Any = payload.get('items', []) if isinstance(payload, dict) else []
         summaries: list[dict[str, Any]] = []
         item: Any
         for index, item in enumerate(items, start=1):
@@ -170,45 +170,45 @@ class NetSuiteToolSet:
                 continue
             record = cast(dict[str, Any], item)
             summary: dict[str, Any] = {
-                "record_ref": f"{record_type}_{index}",
-                "record_type": record_type,
+                'record_ref': f'{record_type}_{index}',
+                'record_type': record_type,
             }
-            for display_field in ("entityId", "companyName", "name", "email", "subsidiary"):
+            for display_field in ('entityId', 'companyName', 'name', 'email', 'subsidiary'):
                 value: Any = record.get(display_field)
-                if isinstance(value, str | int | float) and value not in ("", None):
+                if isinstance(value, str | int | float) and value not in ('', None):
                     summary[display_field] = value
             if include_ids:
-                summary["record_id"] = record.get("id", "")
+                summary['record_id'] = record.get('id', '')
             summaries.append(summary)
         count: Any = None
         if isinstance(payload, dict):
             # Record collections return 'totalResults'; SuiteQL-style payloads
             # use 'count'. Prefer the documented record-collection field.
-            count = payload.get("totalResults", payload.get("count"))
+            count = payload.get('totalResults', payload.get('count'))
         return {
-            "records": summaries,
-            "record_type": record_type,
-            "count": count,
-            "has_more": bool(payload.get("hasMore")) if isinstance(payload, dict) else False,
-            "offset": payload.get("offset") if isinstance(payload, dict) else None,
+            'records': summaries,
+            'record_type': record_type,
+            'count': count,
+            'has_more': bool(payload.get('hasMore')) if isinstance(payload, dict) else False,
+            'offset': payload.get('offset') if isinstance(payload, dict) else None,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_record(self, record_type: str, record_id: str | int) -> dict[str, Any]:
         """Return one NetSuite record by type + id."""
         if not record_type or not record_id:
-            raise ValueError("record_type and record_id must be non-empty")
+            raise ValueError('record_type and record_id must be non-empty')
         return self._client.get(
-            f"/services/rest/record/v1/{record_type}/{record_id}",
+            f'/services/rest/record/v1/{record_type}/{record_id}',
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_record(self, record_type: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Create a NetSuite record. Returns the new record."""
         if not record_type or not payload:
-            raise ValueError("record_type and payload must be non-empty")
+            raise ValueError('record_type and payload must be non-empty')
         return self._client.post(
-            f"/services/rest/record/v1/{record_type}",
+            f'/services/rest/record/v1/{record_type}',
             json=payload,
         ).json()
 
@@ -227,9 +227,9 @@ class NetSuiteToolSet:
         """
         resolved = _coerce_id(record_id)
         if not record_type or not payload:
-            raise ValueError("record_type and payload must be non-empty")
+            raise ValueError('record_type and payload must be non-empty')
         return self._client.patch(
-            f"/services/rest/record/v1/{record_type}/{resolved}",
+            f'/services/rest/record/v1/{record_type}/{resolved}',
             json=payload,
         ).json()
 
@@ -240,7 +240,7 @@ class NetSuiteToolSet:
         ``record_id`` accepts a raw ID or a dict from list/get tools.
         """
         if not record_type:
-            raise ValueError("record_type must be a non-empty string")
+            raise ValueError('record_type must be a non-empty string')
         resolved = _coerce_id(record_id)
-        self._client.delete(f"/services/rest/record/v1/{record_type}/{resolved}")
-        return {"type": record_type, "id": resolved, "deleted": True}
+        self._client.delete(f'/services/rest/record/v1/{record_type}/{resolved}')
+        return {'type': record_type, 'id': resolved, 'deleted': True}

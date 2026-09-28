@@ -2,14 +2,14 @@
 
 **Give your agents real-world reach.** `maivn-tools` is the official
 connector layer for the [mAIvn Python SDK](https://maivn.io): it turns
-external services — Gmail, Slack, GitHub, Stripe, Postgres, and 170+
-more — into tools an `Agent` or `Swarm` can call, with one line of
+external services (Gmail, Slack, GitHub, Stripe, Postgres, and 170+
+more) into tools an `Agent` or `Swarm` can call, with one line of
 registration each. Bring an API of your own, and the generic adapters
 expose it the same way.
 
 > [!warning]
-> **Experimental — use with care.** `maivn-tools` is in early development
-> (alpha). Connectors and toolsets are exercised against a mock transport in
+> **Experimental — use with care.** `maivn-tools` is in early development.
+> Connectors and toolsets are exercised against a mock transport in
 > CI, but **most have not yet been validated end-to-end against live
 > third-party provider APIs**. Request shapes, behavior, and the public surface
 > may change between releases. Test against your own provider accounts before
@@ -23,8 +23,8 @@ It ships in three parts:
 - **Generic adapters** that turn HTTP, OpenAPI, GraphQL, webhooks, and
   MCP servers into Agent- and Swarm-ready tools without writing any
   per-provider glue.
-- **Provider toolsets** — `GmailToolSet`, `SlackToolSet`,
-  `GitHubToolSet`, `StripeToolSet`, `AnthropicToolSet`, and friends —
+- **Provider toolsets** (`GmailToolSet`, `SlackToolSet`,
+  `GitHubToolSet`, `StripeToolSet`, `AnthropicToolSet`, and friends)
   declared with the `@toolset` / `@toolify` decorators from `maivn`.
   Register a whole toolset (or a filtered subset) on an `Agent` with
   one call.
@@ -33,14 +33,15 @@ It ships in three parts:
 [Architecture](architecture.md) to see how the layers fit, then jump to
 the connector category below that matches the service you want to reach.
 
-Install the package — it pulls the SDK automatically:
+Install the package. It pulls the SDK automatically:
 
 ```bash
 pip install maivn-tools
 ```
 
 `maivn-tools` depends on `maivn` directly, so a single install command
-gives you both the SDK and every connector. The package is **not**
+gives you the SDK and connector code. Optional drivers and provider credentials
+are still required for the connectors that use them. Python 3.12+ is required. The package is **not**
 exposed as a `maivn[tools]` extra; doing so creates circular
 release-time coupling between the SDK and the add-on, which is why
 `maivn[studio]` was retired in 0.3.0 as well.
@@ -56,6 +57,7 @@ release-time coupling between the SDK and the add-on, which is why
 | [HTTP runtime](runtime.md) | Transport, retries, rate limits, pagination, and error normalization. |
 | [Generic adapters](generic-adapters.md) | HTTP, OpenAPI, GraphQL, webhook, and MCP helpers. |
 | [Files & attachments](files.md) | MIME detection, attachments, extractors, and bulk transfers. |
+| [Images in editable artifacts](artifact-images.md) | Local image admission, persisted composition, layout inspection, and workbook print settings. |
 | [Events & audit](events.md) | Audit events, sinks, and webhook signature verification. |
 | [Testing connectors](testing.md) | Using `MockTransport` and fixtures to test without live providers. |
 | [Permissions & dry-run](permissions.md) | Permission flags, destructive markers, and the dry-run contract. |
@@ -177,7 +179,7 @@ release-time coupling between the SDK and the add-on, which is why
 
 ## Stability
 
-`maivn-tools` is in active development (alpha). Public imports rooted at
+`maivn-tools` is in active development. Public imports rooted at
 `maivn_tools.*` follow semantic versioning. Modules under `_internal` or
 explicitly marked experimental may change between minor releases.
 
@@ -190,3 +192,20 @@ accounts, and please report any discrepancies.
 ## License
 
 Apache-2.0. See [`LICENSE`](https://github.com/mAIvn-developer/maivn-tools/blob/master/LICENSE).
+
+- [Files from custom toolsets](custom-files.md): generic attachment custody and optional custom editable sources.
+
+Ordinal summary refs such as `message_1` label items in one response. They are not
+persistent provider IDs. Request `include_ids=True` when a follow-up needs an ID,
+and retain the required parent context (repository, mailbox, project or account).
+
+## Result references and registration filters
+
+Ordinal references such as `customer_1` identify items within one response.
+They are not provider IDs and can change across pages or calls. Request
+`include_ids=True` when a follow-up tool needs an ID, and keep any required
+parent context (workspace, repository, drive or account).
+
+Permission and destructive tags describe tools; they do not restrict a provider
+token. Excluding `destructive` still leaves ordinary WRITE methods available.
+Use an explicit method allowlist and restricted credentials for read-only agents.

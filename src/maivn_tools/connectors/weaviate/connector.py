@@ -24,24 +24,24 @@ def _coerce_class_name(candidate: Any) -> str:
         return candidate
     if isinstance(candidate, dict):
         mapping = cast(dict[str, Any], candidate)
-        for key in ("class_name", "class", "name"):
+        for key in ('class_name', 'class', 'name'):
             value = mapping.get(key)
             if isinstance(value, str):
                 return value
-        return ""
+        return ''
     if isinstance(candidate, list | tuple):
-        items = cast("list[Any] | tuple[Any, ...]", candidate)
+        items = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in items:
             value = _coerce_class_name(item)
             if value:
                 return value
-    return ""
+    return ''
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="weaviate")
+@toolset(prefix='weaviate')
 class WeaviateToolSet:
     """A connector for the Weaviate REST + GraphQL API.
 
@@ -51,10 +51,10 @@ class WeaviateToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="weaviate",
-        display_name="Weaviate",
-        version="0.1.0",
-        description="Classes (collections), objects, GraphQL search, and batch ops.",
+        name='weaviate',
+        display_name='Weaviate',
+        version='0.1.0',
+        description='Classes (collections), objects, GraphQL search, and batch ops.',
         auth_modes=(AuthMode.BEARER, AuthMode.NONE),
         capabilities=frozenset(
             {
@@ -63,9 +63,9 @@ class WeaviateToolSet:
                 ProviderCapability.SEARCH,
             }
         ),
-        documentation_url="https://weaviate.io/developers/weaviate/api",
-        homepage_url="https://weaviate.io/",
-        tags=("vector-store", "ai"),
+        documentation_url='https://weaviate.io/developers/weaviate/api',
+        homepage_url='https://weaviate.io/',
+        tags=('vector-store', 'ai'),
     )
 
     def __init__(
@@ -77,16 +77,16 @@ class WeaviateToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not base_url:
-            raise ValueError("base_url is required")
+            raise ValueError('base_url is required')
         self.connection = connection
         auth = BearerTokenAuth(api_key) if api_key else NoAuth()
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=auth,
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -102,7 +102,7 @@ class WeaviateToolSet:
         Use this once at startup to confirm connectivity and version
         before issuing other calls.
         """
-        return self._client.get("/v1/meta").json()
+        return self._client.get('/v1/meta').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_classes(self, *, include_ids: bool = False) -> dict[str, Any]:
@@ -117,35 +117,35 @@ class WeaviateToolSet:
         Set ``include_ids=True`` to include the full raw schema record
         per class.
         """
-        payload: dict[str, Any] = self._client.get("/v1/schema").json()
-        raw_classes: Any = payload.get("classes", [])
+        payload: dict[str, Any] = self._client.get('/v1/schema').json()
+        raw_classes: Any = payload.get('classes', [])
         classes: list[Any] = cast(list[Any], raw_classes) if isinstance(raw_classes, list) else []
         summaries: list[dict[str, Any]] = []
         for index, raw_cls in enumerate(classes, start=1):
             if not isinstance(raw_cls, dict):
                 continue
             cls = cast(dict[str, Any], raw_cls)
-            replication: Any = cls.get("replicationConfig") or {}
-            vector_index = cls.get("vectorIndexType", "")
-            raw_properties: Any = cls.get("properties", [])
+            replication: Any = cls.get('replicationConfig') or {}
+            vector_index = cls.get('vectorIndexType', '')
+            raw_properties: Any = cls.get('properties', [])
             properties: list[Any] = (
                 cast(list[Any], raw_properties) if isinstance(raw_properties, list) else []
             )
             summary: dict[str, Any] = {
-                "class_ref": f"class_{index}",
-                "class_name": cls.get("class", ""),
-                "description": cls.get("description", ""),
-                "vectorizer": cls.get("vectorizer", ""),
-                "vector_index_type": vector_index,
-                "replication_factor": cast(dict[str, Any], replication).get("factor")
+                'class_ref': f'class_{index}',
+                'class_name': cls.get('class', ''),
+                'description': cls.get('description', ''),
+                'vectorizer': cls.get('vectorizer', ''),
+                'vector_index_type': vector_index,
+                'replication_factor': cast(dict[str, Any], replication).get('factor')
                 if isinstance(replication, dict)
                 else None,
-                "property_count": len(properties),
+                'property_count': len(properties),
             }
             if include_ids:
-                summary["raw"] = cls
+                summary['raw'] = cls
             summaries.append(summary)
-        return {"classes": summaries}
+        return {'classes': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_class(self, class_name: Any) -> dict[str, Any]:
@@ -157,8 +157,8 @@ class WeaviateToolSet:
         """
         resolved = _coerce_class_name(class_name)
         if not resolved:
-            raise ValueError("class_name is required")
-        return self._client.get(f"/v1/schema/{resolved}").json()
+            raise ValueError('class_name is required')
+        return self._client.get(f'/v1/schema/{resolved}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_class(self, schema: dict[str, Any]) -> dict[str, Any]:
@@ -167,9 +167,9 @@ class WeaviateToolSet:
         ``schema`` must include a ``class`` field (the class name).
         Returns the new class definition.
         """
-        if not schema or "class" not in schema:
+        if not schema or 'class' not in schema:
             raise ValueError("schema must include a 'class' field")
-        return self._client.post("/v1/schema", json=schema).json()
+        return self._client.post('/v1/schema', json=schema).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_class(self, class_name: Any) -> dict[str, Any]:
@@ -181,9 +181,9 @@ class WeaviateToolSet:
         """
         resolved = _coerce_class_name(class_name)
         if not resolved:
-            raise ValueError("class_name is required")
-        response = self._client.delete(f"/v1/schema/{resolved}")
-        return {"class": resolved, "deleted": True, "status": response.status}
+            raise ValueError('class_name is required')
+        response = self._client.delete(f'/v1/schema/{resolved}')
+        return {'class': resolved, 'deleted': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_object(
@@ -202,11 +202,11 @@ class WeaviateToolSet:
         ``/v1/objects/{id}`` path, which Weaviate has deprecated.
         """
         if not object_id:
-            raise ValueError("object_id is required")
-        path = f"/v1/objects/{class_name}/{object_id}" if class_name else f"/v1/objects/{object_id}"
+            raise ValueError('object_id is required')
+        path = f'/v1/objects/{class_name}/{object_id}' if class_name else f'/v1/objects/{object_id}'
         params: dict[str, Any] = {}
         if include is not None:
-            params["include"] = ",".join(include)
+            params['include'] = ','.join(include)
         return self._client.get(path, params=params or None).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -225,13 +225,13 @@ class WeaviateToolSet:
         and you bring your own embeddings.
         """
         if not class_name or not properties:
-            raise ValueError("class_name and properties are required")
-        body: dict[str, Any] = {"class": class_name, "properties": properties}
+            raise ValueError('class_name and properties are required')
+        body: dict[str, Any] = {'class': class_name, 'properties': properties}
         if id is not None:
-            body["id"] = id
+            body['id'] = id
         if vector is not None:
-            body["vector"] = vector
-        return self._client.post("/v1/objects", json=body).json()
+            body['vector'] = vector
+        return self._client.post('/v1/objects', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_object(
@@ -248,13 +248,13 @@ class WeaviateToolSet:
         Returns the updated object resource.
         """
         if not class_name or not object_id:
-            raise ValueError("class_name and object_id are required")
-        body: dict[str, Any] = {"class": class_name, "id": object_id}
+            raise ValueError('class_name and object_id are required')
+        body: dict[str, Any] = {'class': class_name, 'id': object_id}
         if properties is not None:
-            body["properties"] = properties
+            body['properties'] = properties
         if vector is not None:
-            body["vector"] = vector
-        return self._client.patch(f"/v1/objects/{class_name}/{object_id}", json=body).json()
+            body['vector'] = vector
+        return self._client.patch(f'/v1/objects/{class_name}/{object_id}', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_object(
@@ -268,12 +268,12 @@ class WeaviateToolSet:
         Destructive and not reversible. Confirm with the user first.
         """
         if not class_name or not object_id:
-            raise ValueError("class_name and object_id are required")
-        response = self._client.delete(f"/v1/objects/{class_name}/{object_id}")
+            raise ValueError('class_name and object_id are required')
+        response = self._client.delete(f'/v1/objects/{class_name}/{object_id}')
         return {
-            "object_id": object_id,
-            "deleted": True,
-            "status": response.status,
+            'object_id': object_id,
+            'deleted': True,
+            'status': response.status,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -284,8 +284,8 @@ class WeaviateToolSet:
         Returns the per-object status array.
         """
         if not objects:
-            raise ValueError("objects must be non-empty")
-        return self._client.post("/v1/batch/objects", json={"objects": objects}).json()
+            raise ValueError('objects must be non-empty')
+        return self._client.post('/v1/batch/objects', json={'objects': objects}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def graphql_query(
@@ -304,8 +304,8 @@ class WeaviateToolSet:
         :meth:`get_object`.
         """
         if not query:
-            raise ValueError("query is required")
-        body: dict[str, Any] = {"query": query}
+            raise ValueError('query is required')
+        body: dict[str, Any] = {'query': query}
         if variables is not None:
-            body["variables"] = variables
-        return self._client.post("/v1/graphql", json=body).json()
+            body['variables'] = variables
+        return self._client.post('/v1/graphql', json=body).json()

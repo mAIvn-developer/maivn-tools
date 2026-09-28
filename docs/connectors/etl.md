@@ -7,7 +7,7 @@ connector follows the standard `@toolset` / `@toolify` shape.
 ## Agent-ready behavior (overview)
 
 All list tools across this category return compact summaries with
-stable display refs (`group_ref`, `connector_ref`, `destination_ref`,
+response-local display refs (`group_ref`, `connector_ref`, `destination_ref`,
 `user_ref`, `workspace_ref`, `source_ref`, `connection_ref`,
 `job_ref`, `project_ref`, `environment_ref`, `model_ref`, `sync_ref`,
 `run_ref`). Raw provider IDs (Fivetran connector / group IDs, Airbyte

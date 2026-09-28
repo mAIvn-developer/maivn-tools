@@ -25,33 +25,33 @@ def _coerce_resource_id(candidate: Any, *, field: str) -> str | int:
     """Accept a dict from list/get or a raw ID and return the ID."""
     if isinstance(candidate, dict):
         mapping = cast(dict[str, Any], candidate)
-        for key in (field, "id"):
+        for key in (field, 'id'):
             value: Any = mapping.get(key)
             if isinstance(value, str | int) and value:
                 return value
     if isinstance(candidate, str | int) and candidate:
         return candidate
     type_name = type(cast(object, candidate)).__name__
-    raise ValueError(f"{field} is required (got: {type_name})")
+    raise ValueError(f'{field} is required (got: {type_name})')
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="woo")
+@toolset(prefix='woo')
 class WooCommerceToolSet:
     """A connector for the WooCommerce REST API v3."""
 
     metadata = ProviderMetadata(
-        name="woocommerce",
-        display_name="WooCommerce",
-        version="0.1.0",
-        description="Products, customers, orders, coupons, and reports.",
+        name='woocommerce',
+        display_name='WooCommerce',
+        version='0.1.0',
+        description='Products, customers, orders, coupons, and reports.',
         auth_modes=(AuthMode.BASIC,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://woocommerce.github.io/woocommerce-rest-api-docs/",
-        homepage_url="https://woocommerce.com/",
-        tags=("ecommerce", "wordpress"),
+        documentation_url='https://woocommerce.github.io/woocommerce-rest-api-docs/',
+        homepage_url='https://woocommerce.com/',
+        tags=('ecommerce', 'wordpress'),
     )
 
     def __init__(
@@ -64,13 +64,13 @@ class WooCommerceToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not site_url or not consumer_key or not consumer_secret:
-            raise ValueError("site_url, consumer_key, and consumer_secret are required")
+            raise ValueError('site_url, consumer_key, and consumer_secret are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=site_url.rstrip("/"),
+            base_url=site_url.rstrip('/'),
             auth=BasicAuth(consumer_key, consumer_secret),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -85,16 +85,16 @@ class WooCommerceToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "product_ref": f"product_{index}",
-            "name": product.get("name", ""),
-            "sku": product.get("sku", ""),
-            "price": product.get("price", ""),
-            "status": product.get("status", ""),
-            "stock_status": product.get("stock_status", ""),
-            "stock_quantity": product.get("stock_quantity"),
+            'product_ref': f'product_{index}',
+            'name': product.get('name', ''),
+            'sku': product.get('sku', ''),
+            'price': product.get('price', ''),
+            'status': product.get('status', ''),
+            'stock_status': product.get('stock_status', ''),
+            'stock_quantity': product.get('stock_quantity'),
         }
         if include_ids:
-            summary["product_id"] = product.get("id")
+            summary['product_id'] = product.get('id')
         return summary
 
     @staticmethod
@@ -104,25 +104,25 @@ class WooCommerceToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        raw_billing: Any = order.get("billing") or {}
+        raw_billing: Any = order.get('billing') or {}
         billing: dict[str, Any] = (
             cast(dict[str, Any], raw_billing) if isinstance(raw_billing, dict) else {}
         )
-        first = billing.get("first_name") or ""
-        last = billing.get("last_name") or ""
-        email = billing.get("email") or ""
+        first = billing.get('first_name') or ''
+        last = billing.get('last_name') or ''
+        email = billing.get('email') or ''
         summary: dict[str, Any] = {
-            "order_ref": f"order_{index}",
-            "order_number": order.get("number") or order.get("id", ""),
-            "customer_name": f"{first} {last}".strip() or email,
-            "customer_email": email,
-            "total": order.get("total", ""),
-            "currency": order.get("currency", ""),
-            "status": order.get("status", ""),
-            "date_created": order.get("date_created", ""),
+            'order_ref': f'order_{index}',
+            'order_number': order.get('number') or order.get('id', ''),
+            'customer_name': f'{first} {last}'.strip() or email,
+            'customer_email': email,
+            'total': order.get('total', ''),
+            'currency': order.get('currency', ''),
+            'status': order.get('status', ''),
+            'date_created': order.get('date_created', ''),
         }
         if include_ids:
-            summary["order_id"] = order.get("id")
+            summary['order_id'] = order.get('id')
         return summary
 
     @staticmethod
@@ -132,17 +132,17 @@ class WooCommerceToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        first = customer.get("first_name") or ""
-        last = customer.get("last_name") or ""
+        first = customer.get('first_name') or ''
+        last = customer.get('last_name') or ''
         summary: dict[str, Any] = {
-            "customer_ref": f"customer_{index}",
-            "name": f"{first} {last}".strip() or customer.get("email", ""),
-            "email": customer.get("email", ""),
-            "username": customer.get("username", ""),
-            "role": customer.get("role", ""),
+            'customer_ref': f'customer_{index}',
+            'name': f'{first} {last}'.strip() or customer.get('email', ''),
+            'email': customer.get('email', ''),
+            'username': customer.get('username', ''),
+            'role': customer.get('role', ''),
         }
         if include_ids:
-            summary["customer_id"] = customer.get("id")
+            summary['customer_id'] = customer.get('id')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -167,14 +167,14 @@ class WooCommerceToolSet:
         unmodified payload.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
-        params: dict[str, Any] = {"per_page": per_page, "page": page}
+            raise ValueError('per_page must be between 1 and 100')
+        params: dict[str, Any] = {'per_page': per_page, 'page': page}
         if search is not None:
-            params["search"] = search
+            params['search'] = search
         if status is not None:
-            params["status"] = status
+            params['status'] = status
         payload: Any = self._client.get(
-            "/wp-json/wc/v3/products",
+            '/wp-json/wc/v3/products',
             params=params,
         ).json()
         if include_raw:
@@ -182,14 +182,14 @@ class WooCommerceToolSet:
         products: list[Any] = (
             cast(list[Any], payload)
             if isinstance(payload, list)
-            else cast(list[Any], payload.get("products") or [])
+            else cast(list[Any], payload.get('products') or [])
         )
         summaries = [
             self._product_summary(cast(dict[str, Any], p), index=i, include_ids=include_ids)
             for i, p in enumerate(products, start=1)
             if isinstance(p, dict)
         ]
-        return {"products": summaries, "count": len(summaries)}
+        return {'products': summaries, 'count': len(summaries)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_product(self, product_id: int | str) -> dict[str, Any]:
@@ -199,8 +199,8 @@ class WooCommerceToolSet:
         variations, images, and metadata.
         """
         if not product_id:
-            raise ValueError("product_id is required")
-        return self._client.get(f"/wp-json/wc/v3/products/{product_id}").json()
+            raise ValueError('product_id is required')
+        return self._client.get(f'/wp-json/wc/v3/products/{product_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_product(self, product: dict[str, Any]) -> dict[str, Any]:
@@ -209,9 +209,9 @@ class WooCommerceToolSet:
         Returns the new product resource (with its server-assigned ID).
         """
         if not product:
-            raise ValueError("product must be non-empty")
+            raise ValueError('product must be non-empty')
         return self._client.post(
-            "/wp-json/wc/v3/products",
+            '/wp-json/wc/v3/products',
             json=product,
         ).json()
 
@@ -224,10 +224,10 @@ class WooCommerceToolSet:
         the updated product resource.
         """
         if not fields:
-            raise ValueError("fields must be non-empty")
-        resolved_id = _coerce_resource_id(product_id, field="product_id")
+            raise ValueError('fields must be non-empty')
+        resolved_id = _coerce_resource_id(product_id, field='product_id')
         return self._client.put(
-            f"/wp-json/wc/v3/products/{resolved_id}",
+            f'/wp-json/wc/v3/products/{resolved_id}',
             json=fields,
         ).json()
 
@@ -239,12 +239,12 @@ class WooCommerceToolSet:
         ``product_id`` may be a raw ID or a dict returned by
         ``list_products(include_ids=True)`` / ``get_product``.
         """
-        if product_id in (None, "", 0):
-            raise ValueError("product_id is required")
-        resolved_id = _coerce_resource_id(product_id, field="product_id")
+        if product_id in (None, '', 0):
+            raise ValueError('product_id is required')
+        resolved_id = _coerce_resource_id(product_id, field='product_id')
         return self._client.delete(
-            f"/wp-json/wc/v3/products/{resolved_id}",
-            params={"force": str(force).lower()},
+            f'/wp-json/wc/v3/products/{resolved_id}',
+            params={'force': str(force).lower()},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -267,14 +267,14 @@ class WooCommerceToolSet:
         ``include_ids=True`` when ``update_order`` needs them.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
-        params: dict[str, Any] = {"per_page": per_page, "page": page}
+            raise ValueError('per_page must be between 1 and 100')
+        params: dict[str, Any] = {'per_page': per_page, 'page': page}
         if status is not None:
-            params["status"] = status
+            params['status'] = status
         if customer is not None:
-            params["customer"] = customer
+            params['customer'] = customer
         payload: Any = self._client.get(
-            "/wp-json/wc/v3/orders",
+            '/wp-json/wc/v3/orders',
             params=params,
         ).json()
         if include_raw:
@@ -282,14 +282,14 @@ class WooCommerceToolSet:
         orders: list[Any] = (
             cast(list[Any], payload)
             if isinstance(payload, list)
-            else cast(list[Any], payload.get("orders") or [])
+            else cast(list[Any], payload.get('orders') or [])
         )
         summaries = [
             self._order_summary(cast(dict[str, Any], o), index=i, include_ids=include_ids)
             for i, o in enumerate(orders, start=1)
             if isinstance(o, dict)
         ]
-        return {"orders": summaries, "count": len(summaries)}
+        return {'orders': summaries, 'count': len(summaries)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_order(self, order: dict[str, Any]) -> dict[str, Any]:
@@ -299,8 +299,8 @@ class WooCommerceToolSet:
         Returns the new order resource.
         """
         if not order:
-            raise ValueError("order must be non-empty")
-        return self._client.post("/wp-json/wc/v3/orders", json=order).json()
+            raise ValueError('order must be non-empty')
+        return self._client.post('/wp-json/wc/v3/orders', json=order).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_order(self, order_id: Any, fields: dict[str, Any]) -> dict[str, Any]:
@@ -311,10 +311,10 @@ class WooCommerceToolSet:
         cancels the order; agents should confirm before doing so.
         """
         if not fields:
-            raise ValueError("fields must be non-empty")
-        resolved_id = _coerce_resource_id(order_id, field="order_id")
+            raise ValueError('fields must be non-empty')
+        resolved_id = _coerce_resource_id(order_id, field='order_id')
         return self._client.put(
-            f"/wp-json/wc/v3/orders/{resolved_id}",
+            f'/wp-json/wc/v3/orders/{resolved_id}',
             json=fields,
         ).json()
 
@@ -335,12 +335,12 @@ class WooCommerceToolSet:
         username, role. Raw IDs omitted by default.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
-        params: dict[str, Any] = {"per_page": per_page, "page": page}
+            raise ValueError('per_page must be between 1 and 100')
+        params: dict[str, Any] = {'per_page': per_page, 'page': page}
         if search is not None:
-            params["search"] = search
+            params['search'] = search
         payload: Any = self._client.get(
-            "/wp-json/wc/v3/customers",
+            '/wp-json/wc/v3/customers',
             params=params,
         ).json()
         if include_raw:
@@ -348,14 +348,14 @@ class WooCommerceToolSet:
         customers: list[Any] = (
             cast(list[Any], payload)
             if isinstance(payload, list)
-            else cast(list[Any], payload.get("customers") or [])
+            else cast(list[Any], payload.get('customers') or [])
         )
         summaries = [
             self._customer_summary(cast(dict[str, Any], c), index=i, include_ids=include_ids)
             for i, c in enumerate(customers, start=1)
             if isinstance(c, dict)
         ]
-        return {"customers": summaries, "count": len(summaries)}
+        return {'customers': summaries, 'count': len(summaries)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_coupon(self, coupon: dict[str, Any]) -> dict[str, Any]:
@@ -364,8 +364,8 @@ class WooCommerceToolSet:
         Returns the new coupon resource.
         """
         if not coupon:
-            raise ValueError("coupon must be non-empty")
-        return self._client.post("/wp-json/wc/v3/coupons", json=coupon).json()
+            raise ValueError('coupon must be non-empty')
+        return self._client.post('/wp-json/wc/v3/coupons', json=coupon).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_reports(self) -> dict[str, Any]:
@@ -374,4 +374,4 @@ class WooCommerceToolSet:
         Returns metadata about the report endpoints (sales, top sellers,
         etc.) — use the returned ``slug`` to query a specific report.
         """
-        return self._client.get("/wp-json/wc/v3/reports").json()
+        return self._client.get('/wp-json/wc/v3/reports').json()

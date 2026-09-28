@@ -18,56 +18,56 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _MEDIA_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "media_ref": {"type": "string"},
-        "caption": {"type": "string"},
-        "media_type": {"type": "string"},
-        "permalink": {"type": "string"},
-        "posted_at": {"type": "string"},
-        "like_count": {"type": "integer"},
-        "comments_count": {"type": "integer"},
-        "media_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'media_ref': {'type': 'string'},
+        'caption': {'type': 'string'},
+        'media_type': {'type': 'string'},
+        'permalink': {'type': 'string'},
+        'posted_at': {'type': 'string'},
+        'like_count': {'type': 'integer'},
+        'comments_count': {'type': 'integer'},
+        'media_id': {'type': 'string'},
     },
-    "required": ["media_ref"],
+    'required': ['media_ref'],
 }
 
 _COMMENT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "comment_ref": {"type": "string"},
-        "author": {"type": "string"},
-        "text": {"type": "string"},
-        "posted_at": {"type": "string"},
-        "like_count": {"type": "integer"},
-        "comment_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'comment_ref': {'type': 'string'},
+        'author': {'type': 'string'},
+        'text': {'type': 'string'},
+        'posted_at': {'type': 'string'},
+        'like_count': {'type': 'integer'},
+        'comment_id': {'type': 'string'},
     },
-    "required": ["comment_ref"],
+    'required': ['comment_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_MEDIA_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "media": {"type": "array", "items": _MEDIA_SUMMARY},
-        "paging": {"type": ["object", "null"]},
+    'type': 'object',
+    'properties': {
+        'media': {'type': 'array', 'items': _MEDIA_SUMMARY},
+        'paging': {'type': ['object', 'null']},
     },
-    "required": ["media"],
+    'required': ['media'],
 }
 
 LIST_COMMENTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "comments": {"type": "array", "items": _COMMENT_SUMMARY},
-        "paging": {"type": ["object", "null"]},
+    'type': 'object',
+    'properties': {
+        'comments': {'type': 'array', 'items': _COMMENT_SUMMARY},
+        'paging': {'type': ['object', 'null']},
     },
-    "required": ["comments"],
+    'required': ['comments'],
 }
 
 
 __all__ = [
-    "LIST_COMMENTS_OUTPUT",
-    "LIST_MEDIA_OUTPUT",
+    'LIST_COMMENTS_OUTPUT',
+    'LIST_MEDIA_OUTPUT',
 ]

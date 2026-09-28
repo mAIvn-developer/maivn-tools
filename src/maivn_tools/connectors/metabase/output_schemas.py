@@ -19,55 +19,55 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _CARD_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "card_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "description": {"type": "string"},
-        "display": {"type": "string"},
-        "creator_email": {"type": "string"},
-        "updated_at": {"type": "string"},
-        "card_id": {"type": ["integer", "string"]},
+    'type': 'object',
+    'properties': {
+        'card_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'description': {'type': 'string'},
+        'display': {'type': 'string'},
+        'creator_email': {'type': 'string'},
+        'updated_at': {'type': 'string'},
+        'card_id': {'type': ['integer', 'string']},
     },
-    "required": ["card_ref"],
+    'required': ['card_ref'],
 }
 
 _DASHBOARD_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "dashboard_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "description": {"type": "string"},
-        "creator_email": {"type": "string"},
-        "updated_at": {"type": "string"},
-        "dashboard_id": {"type": ["integer", "string"]},
+    'type': 'object',
+    'properties': {
+        'dashboard_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'description': {'type': 'string'},
+        'creator_email': {'type': 'string'},
+        'updated_at': {'type': 'string'},
+        'dashboard_id': {'type': ['integer', 'string']},
     },
-    "required": ["dashboard_ref"],
+    'required': ['dashboard_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_CARDS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "cards": {"type": "array", "items": _CARD_SUMMARY},
-        "totalAvailable": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'cards': {'type': 'array', 'items': _CARD_SUMMARY},
+        'totalAvailable': {'type': 'integer'},
     },
-    "required": ["cards"],
+    'required': ['cards'],
 }
 
 LIST_DASHBOARDS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "dashboards": {"type": "array", "items": _DASHBOARD_SUMMARY},
-        "totalAvailable": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'dashboards': {'type': 'array', 'items': _DASHBOARD_SUMMARY},
+        'totalAvailable': {'type': 'integer'},
     },
-    "required": ["dashboards"],
+    'required': ['dashboards'],
 }
 
 
 __all__ = [
-    "LIST_CARDS_OUTPUT",
-    "LIST_DASHBOARDS_OUTPUT",
+    'LIST_CARDS_OUTPUT',
+    'LIST_DASHBOARDS_OUTPUT',
 ]

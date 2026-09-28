@@ -19,54 +19,54 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _POST_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "post_ref": {"type": "string"},
-        "author": {"type": "string"},
-        "commentary": {"type": "string"},
-        "posted_at": {"type": "string"},
-        "visibility": {"type": "string"},
-        "lifecycle_state": {"type": "string"},
-        "post_urn": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'post_ref': {'type': 'string'},
+        'author': {'type': 'string'},
+        'commentary': {'type': 'string'},
+        'posted_at': {'type': 'string'},
+        'visibility': {'type': 'string'},
+        'lifecycle_state': {'type': 'string'},
+        'post_urn': {'type': 'string'},
     },
-    "required": ["post_ref"],
+    'required': ['post_ref'],
 }
 
 _COMMENT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "comment_ref": {"type": "string"},
-        "actor": {"type": "string"},
-        "text": {"type": "string"},
-        "posted_at": {"type": "string"},
-        "comment_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'comment_ref': {'type': 'string'},
+        'actor': {'type': 'string'},
+        'text': {'type': 'string'},
+        'posted_at': {'type': 'string'},
+        'comment_id': {'type': 'string'},
     },
-    "required": ["comment_ref"],
+    'required': ['comment_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_POSTS_FOR_AUTHOR_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "posts": {"type": "array", "items": _POST_SUMMARY},
-        "paging": {"type": ["object", "null"]},
+    'type': 'object',
+    'properties': {
+        'posts': {'type': 'array', 'items': _POST_SUMMARY},
+        'paging': {'type': ['object', 'null']},
     },
-    "required": ["posts"],
+    'required': ['posts'],
 }
 
 LIST_COMMENTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "comments": {"type": "array", "items": _COMMENT_SUMMARY},
-        "paging": {"type": ["object", "null"]},
+    'type': 'object',
+    'properties': {
+        'comments': {'type': 'array', 'items': _COMMENT_SUMMARY},
+        'paging': {'type': ['object', 'null']},
     },
-    "required": ["comments"],
+    'required': ['comments'],
 }
 
 
 __all__ = [
-    "LIST_COMMENTS_OUTPUT",
-    "LIST_POSTS_FOR_AUTHOR_OUTPUT",
+    'LIST_COMMENTS_OUTPUT',
+    'LIST_POSTS_FOR_AUTHOR_OUTPUT',
 ]

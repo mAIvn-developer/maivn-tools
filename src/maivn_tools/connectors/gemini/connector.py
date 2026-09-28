@@ -22,38 +22,38 @@ _DEFAULT_LIST_LIMIT = 25
 # MARK: ToolSet
 
 
-@toolset(prefix="gemini")
+@toolset(prefix='gemini')
 class GeminiToolSet:
     """A connector for the Google Gemini Generative Language API v1beta."""
 
     metadata = ProviderMetadata(
-        name="gemini",
-        display_name="Google Gemini",
-        version="0.1.0",
-        description="Generate content, embeddings, count tokens, list models.",
+        name='gemini',
+        display_name='Google Gemini',
+        version='0.1.0',
+        description='Generate content, embeddings, count tokens, list models.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://ai.google.dev/api/rest",
-        homepage_url="https://ai.google.dev/",
-        tags=("ai", "llm", "google-cloud"),
+        documentation_url='https://ai.google.dev/api/rest',
+        homepage_url='https://ai.google.dev/',
+        tags=('ai', 'llm', 'google-cloud'),
     )
 
     def __init__(
         self,
         *,
         api_key: str,
-        base_url: str = "https://generativelanguage.googleapis.com",
+        base_url: str = 'https://generativelanguage.googleapis.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(api_key, header="x-goog-api-key"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(api_key, header='x-goog-api-key'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -78,18 +78,18 @@ class GeminiToolSet:
         via :meth:`list_models`.
         """
         if not model or not contents:
-            raise ValueError("model and contents must be non-empty")
-        body: dict[str, Any] = {"contents": contents}
+            raise ValueError('model and contents must be non-empty')
+        body: dict[str, Any] = {'contents': contents}
         if system_instruction is not None:
-            body["systemInstruction"] = system_instruction
+            body['systemInstruction'] = system_instruction
         if tools is not None:
-            body["tools"] = tools
+            body['tools'] = tools
         if generation_config is not None:
-            body["generationConfig"] = generation_config
+            body['generationConfig'] = generation_config
         if safety_settings is not None:
-            body["safetySettings"] = safety_settings
+            body['safetySettings'] = safety_settings
         result: dict[str, Any] = self._client.post(
-            f"/v1beta/{model}:generateContent",
+            f'/v1beta/{model}:generateContent',
             json=body,
         ).json()
         return result
@@ -106,10 +106,10 @@ class GeminiToolSet:
         Returns ``{"totalTokens": int}``.
         """
         if not model or not contents:
-            raise ValueError("model and contents must be non-empty")
+            raise ValueError('model and contents must be non-empty')
         result: dict[str, Any] = self._client.post(
-            f"/v1beta/{model}:countTokens",
-            json={"contents": contents},
+            f'/v1beta/{model}:countTokens',
+            json={'contents': contents},
         ).json()
         return result
 
@@ -133,14 +133,14 @@ class GeminiToolSet:
         compatibility but maps to the deprecated top-level ``taskType`` field.
         """
         if not model or not content:
-            raise ValueError("model and content must be non-empty")
-        body: dict[str, Any] = {"content": content}
+            raise ValueError('model and content must be non-empty')
+        body: dict[str, Any] = {'content': content}
         if embed_content_config is not None:
-            body["embedContentConfig"] = embed_content_config
+            body['embedContentConfig'] = embed_content_config
         if task_type is not None:
-            body["taskType"] = task_type
+            body['taskType'] = task_type
         result: dict[str, Any] = self._client.post(
-            f"/v1beta/{model}:embedContent",
+            f'/v1beta/{model}:embedContent',
             json=body,
         ).json()
         return result
@@ -162,37 +162,37 @@ class GeminiToolSet:
         full raw ``name`` field. Default limit: 25.
         """
         if max_results < 1:
-            raise ValueError("max_results must be positive")
+            raise ValueError('max_results must be positive')
         payload: object = self._client.get(
-            "/v1beta/models",
-            params={"pageSize": max_results},
+            '/v1beta/models',
+            params={'pageSize': max_results},
         ).json()
         payload_dict: dict[str, Any] = (
-            cast("dict[str, Any]", payload) if isinstance(payload, dict) else {}
+            cast('dict[str, Any]', payload) if isinstance(payload, dict) else {}
         )
-        raw_models: object = payload_dict.get("models", [])
+        raw_models: object = payload_dict.get('models', [])
         models: list[object] = (
-            cast("list[object]", raw_models) if isinstance(raw_models, list) else []
+            cast('list[object]', raw_models) if isinstance(raw_models, list) else []
         )
         summaries: list[dict[str, Any]] = []
         for index, model in enumerate(models, start=1):
             if not isinstance(model, dict):
                 continue
-            model_dict: dict[str, Any] = cast("dict[str, Any]", model)
+            model_dict: dict[str, Any] = cast('dict[str, Any]', model)
             summary: dict[str, Any] = {
-                "model_ref": f"model_{index}",
-                "model_name": model_dict.get("name", ""),
-                "display_name": model_dict.get("displayName", ""),
-                "supported_methods": model_dict.get("supportedGenerationMethods", []),
-                "input_token_limit": model_dict.get("inputTokenLimit"),
-                "output_token_limit": model_dict.get("outputTokenLimit"),
+                'model_ref': f'model_{index}',
+                'model_name': model_dict.get('name', ''),
+                'display_name': model_dict.get('displayName', ''),
+                'supported_methods': model_dict.get('supportedGenerationMethods', []),
+                'input_token_limit': model_dict.get('inputTokenLimit'),
+                'output_token_limit': model_dict.get('outputTokenLimit'),
             }
             if include_ids:
-                summary["name"] = model_dict.get("name", "")
+                summary['name'] = model_dict.get('name', '')
             summaries.append(summary)
         return {
-            "models": summaries,
-            "nextPageToken": payload_dict.get("nextPageToken"),
+            'models': summaries,
+            'nextPageToken': payload_dict.get('nextPageToken'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -203,6 +203,6 @@ class GeminiToolSet:
         ``supportedGenerationMethods``, token limits).
         """
         if not model_name:
-            raise ValueError("model_name must be a non-empty string")
-        result: dict[str, Any] = self._client.get(f"/v1beta/{model_name}").json()
+            raise ValueError('model_name must be a non-empty string')
+        result: dict[str, Any] = self._client.get(f'/v1beta/{model_name}').json()
         return result

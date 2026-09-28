@@ -24,17 +24,17 @@ class _LinearApiKeyAuth(AuthStrategy):
 
     def __init__(self, api_key: str) -> None:
         if not api_key:
-            raise ValueError("api_key must be a non-empty string")
+            raise ValueError('api_key must be a non-empty string')
         self._api_key = api_key
 
     def apply(self, request: dict[str, Any]) -> dict[str, Any]:
-        headers = dict(request.get("headers") or {})
-        headers["Authorization"] = self._api_key
-        request["headers"] = headers
+        headers = dict(request.get('headers') or {})
+        headers['Authorization'] = self._api_key
+        request['headers'] = headers
         return request
 
     def describe(self) -> dict[str, Any]:
-        return {"mode": self.mode.value, "header": "Authorization"}
+        return {'mode': self.mode.value, 'header': 'Authorization'}
 
 
 _VIEWER_QUERY = """
@@ -133,7 +133,7 @@ mutation CommentCreate($input: CommentCreateInput!) {
 """
 
 
-@toolset(prefix="linear")
+@toolset(prefix='linear')
 class LinearToolSet:
     """A connector for the Linear GraphQL API.
 
@@ -146,15 +146,15 @@ class LinearToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="linear",
-        display_name="Linear",
-        version="0.1.0",
-        description="Manage Linear issues, projects, teams, and cycles.",
+        name='linear',
+        display_name='Linear',
+        version='0.1.0',
+        description='Manage Linear issues, projects, teams, and cycles.',
         auth_modes=(AuthMode.API_KEY, AuthMode.OAUTH2_AUTH_CODE),
         scopes={
-            "read": "Read issues, teams, and projects.",
-            "write": "Create and update issues.",
-            "issues:create": "Create new issues.",
+            'read': 'Read issues, teams, and projects.',
+            'write': 'Create and update issues.',
+            'issues:create': 'Create new issues.',
         },
         capabilities=frozenset(
             {
@@ -164,9 +164,9 @@ class LinearToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://developers.linear.app/docs/graphql/working-with-the-graphql-api",
-        homepage_url="https://linear.app/",
-        tags=("issue-tracker", "project-management"),
+        documentation_url='https://developers.linear.app/docs/graphql/working-with-the-graphql-api',
+        homepage_url='https://linear.app/',
+        tags=('issue-tracker', 'project-management'),
     )
 
     def __init__(
@@ -174,19 +174,19 @@ class LinearToolSet:
         *,
         api_key: str,
         use_bearer: bool = False,
-        base_url: str = "https://api.linear.app/graphql",
+        base_url: str = 'https://api.linear.app/graphql',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
         auth: AuthStrategy = BearerTokenAuth(api_key) if use_bearer else _LinearApiKeyAuth(api_key)
         self._client = HttpClient(
-            base_url="",
+            base_url='',
             auth=auth,
             transport=transport,
-            default_headers={"Accept": "application/json", "Content-Type": "application/json"},
+            default_headers={'Accept': 'application/json', 'Content-Type': 'application/json'},
         )
         self._endpoint = base_url
 
@@ -199,13 +199,13 @@ class LinearToolSet:
         query: str,
         variables: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        payload: dict[str, Any] = {"query": query}
+        payload: dict[str, Any] = {'query': query}
         if variables is not None:
-            payload["variables"] = variables
+            payload['variables'] = variables
         response: dict[str, Any] = self._client.post(self._endpoint, json=payload).json()
-        if "errors" in response:
-            raise ValueError(f"Linear GraphQL error: {response['errors']}")
-        data: dict[str, Any] = response.get("data", {})
+        if 'errors' in response:
+            raise ValueError(f'Linear GraphQL error: {response["errors"]}')
+        data: dict[str, Any] = response.get('data', {})
         return data
 
     # MARK: - Identity
@@ -230,23 +230,23 @@ class LinearToolSet:
         and ``description``.
         """
         if first < 1 or first > 250:
-            raise ValueError("first must be between 1 and 250")
-        return self._execute(_TEAMS_QUERY, {"first": first, "after": after})
+            raise ValueError('first must be between 1 and 250')
+        return self._execute(_TEAMS_QUERY, {'first': first, 'after': after})
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_users(self, *, first: int = 25, after: str | None = None) -> dict[str, Any]:
         """List users in the workspace."""
-        return self._execute(_USERS_QUERY, {"first": first, "after": after})
+        return self._execute(_USERS_QUERY, {'first': first, 'after': after})
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_projects(self, *, first: int = 25, after: str | None = None) -> dict[str, Any]:
         """List projects."""
-        return self._execute(_PROJECTS_QUERY, {"first": first, "after": after})
+        return self._execute(_PROJECTS_QUERY, {'first': first, 'after': after})
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_cycles(self, *, first: int = 25, after: str | None = None) -> dict[str, Any]:
         """List cycles."""
-        return self._execute(_CYCLES_QUERY, {"first": first, "after": after})
+        return self._execute(_CYCLES_QUERY, {'first': first, 'after': after})
 
     # MARK: - Issues
 
@@ -277,29 +277,29 @@ class LinearToolSet:
         filter: ``{"team": {"key": {"eq": "ENG"}}}``.
         """
         if first < 1 or first > 250:
-            raise ValueError("first must be between 1 and 250")
-        variables: dict[str, Any] = {"first": first, "after": after}
+            raise ValueError('first must be between 1 and 250')
+        variables: dict[str, Any] = {'first': first, 'after': after}
         if filter is not None:
-            variables["filter"] = filter
+            variables['filter'] = filter
         if order_by is not None:
-            if order_by not in {"createdAt", "updatedAt"}:
+            if order_by not in {'createdAt', 'updatedAt'}:
                 raise ValueError("order_by must be 'createdAt' or 'updatedAt'")
-            variables["orderBy"] = order_by
+            variables['orderBy'] = order_by
         data = self._execute(_ISSUES_QUERY, variables)
         if not include_metadata:
             return data
-        issues_block: dict[str, Any] = data.get("issues") or {}
-        nodes: list[Any] = issues_block.get("nodes") or []
+        issues_block: dict[str, Any] = data.get('issues') or {}
+        nodes: list[Any] = issues_block.get('nodes') or []
         summaries: list[dict[str, Any]] = []
         for index, node in enumerate(nodes, start=1):
             if not isinstance(node, dict):
                 continue
             node_dict = cast(dict[str, Any], node)
             summaries.append(self._issue_summary(node_dict, index=index, include_ids=include_ids))
-        page_info: dict[str, Any] = issues_block.get("pageInfo") or {}
+        page_info: dict[str, Any] = issues_block.get('pageInfo') or {}
         return {
-            "issues": summaries,
-            "pageInfo": page_info,
+            'issues': summaries,
+            'pageInfo': page_info,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -311,7 +311,7 @@ class LinearToolSet:
         ``issue_id``), or a list of such dicts.
         """
         resolved = self._extract_issue_id(issue_id)
-        return self._execute(_ISSUE_QUERY, {"id": resolved})
+        return self._execute(_ISSUE_QUERY, {'id': resolved})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_issue(
@@ -332,21 +332,21 @@ class LinearToolSet:
         "identifier": ..., "title": ..., "url": ...}}}``.
         """
         if not team_id or not title:
-            raise ValueError("team_id and title must be non-empty")
-        input_: dict[str, Any] = {"teamId": team_id, "title": title}
+            raise ValueError('team_id and title must be non-empty')
+        input_: dict[str, Any] = {'teamId': team_id, 'title': title}
         if description is not None:
-            input_["description"] = description
+            input_['description'] = description
         if assignee_id is not None:
-            input_["assigneeId"] = assignee_id
+            input_['assigneeId'] = assignee_id
         if priority is not None:
-            input_["priority"] = priority
+            input_['priority'] = priority
         if label_ids is not None:
-            input_["labelIds"] = label_ids
+            input_['labelIds'] = label_ids
         if state_id is not None:
-            input_["stateId"] = state_id
+            input_['stateId'] = state_id
         if project_id is not None:
-            input_["projectId"] = project_id
-        return self._execute(_ISSUE_CREATE_MUTATION, {"input": input_})
+            input_['projectId'] = project_id
+        return self._execute(_ISSUE_CREATE_MUTATION, {'input': input_})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_issue(self, issue_id: Any, fields: dict[str, Any]) -> dict[str, Any]:
@@ -357,8 +357,8 @@ class LinearToolSet:
         """
         resolved = self._extract_issue_id(issue_id)
         if not fields:
-            raise ValueError("fields must be a non-empty dict")
-        return self._execute(_ISSUE_UPDATE_MUTATION, {"id": resolved, "input": fields})
+            raise ValueError('fields must be a non-empty dict')
+        return self._execute(_ISSUE_UPDATE_MUTATION, {'id': resolved, 'input': fields})
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def archive_issue(self, issue_id: Any) -> dict[str, Any]:
@@ -369,7 +369,7 @@ class LinearToolSet:
         :meth:`list_issues`.
         """
         resolved = self._extract_issue_id(issue_id)
-        return self._execute(_ISSUE_ARCHIVE_MUTATION, {"id": resolved})
+        return self._execute(_ISSUE_ARCHIVE_MUTATION, {'id': resolved})
 
     # MARK: - Comments
 
@@ -381,7 +381,7 @@ class LinearToolSet:
         dict/list from :meth:`list_issues`.
         """
         resolved = self._extract_issue_id(issue_id)
-        return self._execute(_COMMENTS_QUERY, {"issueId": resolved})
+        return self._execute(_COMMENTS_QUERY, {'issueId': resolved})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_comment(self, *, issue_id: Any, body: str) -> dict[str, Any]:
@@ -392,10 +392,10 @@ class LinearToolSet:
         """
         resolved = self._extract_issue_id(issue_id)
         if not body:
-            raise ValueError("body must be a non-empty string")
+            raise ValueError('body must be a non-empty string')
         return self._execute(
             _COMMENT_CREATE_MUTATION,
-            {"input": {"issueId": resolved, "body": body}},
+            {'input': {'issueId': resolved, 'body': body}},
         )
 
     # MARK: - Raw GraphQL
@@ -409,7 +409,7 @@ class LinearToolSet:
     ) -> dict[str, Any]:
         """Run an arbitrary GraphQL query or mutation. Use sparingly."""
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         return self._execute(query, variables)
 
     # MARK: - Internal
@@ -421,22 +421,22 @@ class LinearToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        state: Any = node.get("state") or {}
-        assignee: Any = node.get("assignee") or {}
-        team: Any = node.get("team") or {}
+        state: Any = node.get('state') or {}
+        assignee: Any = node.get('assignee') or {}
+        team: Any = node.get('team') or {}
         summary: dict[str, Any] = {
-            "issue_ref": f"issue_{index}",
-            "identifier": node.get("identifier", ""),
-            "title": node.get("title", ""),
-            "status": LinearToolSet._nested_str(state, "name"),
-            "priority": node.get("priority", 0),
-            "assignee": LinearToolSet._nested_str(assignee, "name"),
-            "team": LinearToolSet._nested_str(team, "key"),
-            "updated_at": node.get("updatedAt", ""),
-            "url": node.get("url", ""),
+            'issue_ref': f'issue_{index}',
+            'identifier': node.get('identifier', ''),
+            'title': node.get('title', ''),
+            'status': LinearToolSet._nested_str(state, 'name'),
+            'priority': node.get('priority', 0),
+            'assignee': LinearToolSet._nested_str(assignee, 'name'),
+            'team': LinearToolSet._nested_str(team, 'key'),
+            'updated_at': node.get('updatedAt', ''),
+            'url': node.get('url', ''),
         }
         if include_ids:
-            summary["issue_id"] = node.get("id", "")
+            summary['issue_id'] = node.get('id', '')
         return summary
 
     @staticmethod
@@ -444,8 +444,8 @@ class LinearToolSet:
         """Return ``value[key]`` (default ``""``) when ``value`` is a dict, else ``""``."""
         if isinstance(value, dict):
             nested = cast(dict[str, Any], value)
-            return nested.get(key, "")
-        return ""
+            return nested.get(key, '')
+        return ''
 
     @staticmethod
     def _extract_issue_id(candidate: Any) -> str:
@@ -457,19 +457,19 @@ class LinearToolSet:
         """
         if isinstance(candidate, str):
             if not candidate:
-                raise ValueError("issue_id must be a non-empty string")
+                raise ValueError('issue_id must be a non-empty string')
             return candidate
         if isinstance(candidate, dict):
             candidate_dict = cast(dict[str, Any], candidate)
-            for key in ("identifier", "issue_id", "id"):
+            for key in ('identifier', 'issue_id', 'id'):
                 value: Any = candidate_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
         if isinstance(candidate, list | tuple):
-            sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+            sequence = cast('list[Any] | tuple[Any, ...]', candidate)
             for item in sequence:
                 try:
                     return LinearToolSet._extract_issue_id(item)
                 except ValueError:
                     continue
-        raise ValueError(f"could not extract Linear issue id from: {candidate!r}")
+        raise ValueError(f'could not extract Linear issue id from: {candidate!r}')

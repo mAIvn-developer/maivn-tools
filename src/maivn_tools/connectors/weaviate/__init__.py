@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import WeaviateToolSet
 
-__all__ = ["WeaviateToolSet"]
+__all__ = ['WeaviateToolSet']

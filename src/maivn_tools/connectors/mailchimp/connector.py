@@ -3,6 +3,7 @@
 # pyright: strict
 from __future__ import annotations
 
+from hashlib import md5
 from typing import Any, cast
 
 from maivn import tool_output, toolify, toolset
@@ -19,20 +20,20 @@ from .output_schemas import (
 )
 
 
-@toolset(prefix="mailchimp")
+@toolset(prefix='mailchimp')
 class MailchimpToolSet:
     """A connector for Mailchimp Marketing API 3.0."""
 
     metadata = ProviderMetadata(
-        name="mailchimp",
-        display_name="Mailchimp",
-        version="0.1.0",
-        description="Audiences, campaigns, templates, segments, and reports.",
+        name='mailchimp',
+        display_name='Mailchimp',
+        version='0.1.0',
+        description='Audiences, campaigns, templates, segments, and reports.',
         auth_modes=(AuthMode.BASIC, AuthMode.OAUTH2_AUTH_CODE),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://mailchimp.com/developer/marketing/api/",
-        homepage_url="https://mailchimp.com/",
-        tags=("email", "marketing"),
+        documentation_url='https://mailchimp.com/developer/marketing/api/',
+        homepage_url='https://mailchimp.com/',
+        tags=('email', 'marketing'),
     )
 
     def __init__(
@@ -44,18 +45,18 @@ class MailchimpToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         dc = data_center
-        if dc is None and "-" in api_key:
-            dc = api_key.rsplit("-", 1)[-1]
+        if dc is None and '-' in api_key:
+            dc = api_key.rsplit('-', 1)[-1]
         if not dc:
-            raise ValueError("data_center could not be inferred from api_key")
+            raise ValueError('data_center could not be inferred from api_key')
         self.connection = connection
         self._client = HttpClient(
-            base_url=f"https://{dc}.api.mailchimp.com",
-            auth=BasicAuth("anystring", api_key),
+            base_url=f'https://{dc}.api.mailchimp.com',
+            auth=BasicAuth('anystring', api_key),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -69,19 +70,19 @@ class MailchimpToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        stats: object = lst.get("stats") or {}
+        stats: object = lst.get('stats') or {}
         stats_dict: dict[str, Any] = (
-            cast("dict[str, Any]", stats) if isinstance(stats, dict) else {}
+            cast('dict[str, Any]', stats) if isinstance(stats, dict) else {}
         )
         summary: dict[str, Any] = {
-            "list_ref": f"list_{index}",
-            "name": lst.get("name", ""),
-            "member_count": stats_dict.get("member_count", 0),
-            "unsubscribe_count": stats_dict.get("unsubscribe_count", 0),
-            "date_created": lst.get("date_created", ""),
+            'list_ref': f'list_{index}',
+            'name': lst.get('name', ''),
+            'member_count': stats_dict.get('member_count', 0),
+            'unsubscribe_count': stats_dict.get('unsubscribe_count', 0),
+            'date_created': lst.get('date_created', ''),
         }
         if include_ids:
-            summary["list_id"] = lst.get("id", "")
+            summary['list_id'] = lst.get('id', '')
         return summary
 
     @staticmethod
@@ -91,23 +92,23 @@ class MailchimpToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        merge_fields: object = member.get("merge_fields") or {}
+        merge_fields: object = member.get('merge_fields') or {}
         mf_dict: dict[str, Any] = (
-            cast("dict[str, Any]", merge_fields) if isinstance(merge_fields, dict) else {}
+            cast('dict[str, Any]', merge_fields) if isinstance(merge_fields, dict) else {}
         )
-        first: Any = mf_dict.get("FNAME") or ""
-        last: Any = mf_dict.get("LNAME") or ""
+        first: Any = mf_dict.get('FNAME') or ''
+        last: Any = mf_dict.get('LNAME') or ''
         summary: dict[str, Any] = {
-            "subscriber_ref": f"subscriber_{index}",
-            "name": f"{first} {last}".strip() or member.get("email_address", ""),
-            "email": member.get("email_address", ""),
-            "status": member.get("status", ""),
-            "timestamp_signup": member.get("timestamp_signup", ""),
-            "last_changed": member.get("last_changed", ""),
+            'subscriber_ref': f'subscriber_{index}',
+            'name': f'{first} {last}'.strip() or member.get('email_address', ''),
+            'email': member.get('email_address', ''),
+            'status': member.get('status', ''),
+            'timestamp_signup': member.get('timestamp_signup', ''),
+            'last_changed': member.get('last_changed', ''),
         }
         if include_ids:
-            summary["subscriber_id"] = member.get("id", "")
-            summary["unique_email_id"] = member.get("unique_email_id", "")
+            summary['subscriber_id'] = member.get('id', '')
+            summary['unique_email_id'] = member.get('unique_email_id', '')
         return summary
 
     @staticmethod
@@ -117,21 +118,21 @@ class MailchimpToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        settings: object = campaign.get("settings") or {}
+        settings: object = campaign.get('settings') or {}
         settings_dict: dict[str, Any] = (
-            cast("dict[str, Any]", settings) if isinstance(settings, dict) else {}
+            cast('dict[str, Any]', settings) if isinstance(settings, dict) else {}
         )
         summary: dict[str, Any] = {
-            "campaign_ref": f"campaign_{index}",
-            "title": settings_dict.get("title", ""),
-            "subject_line": settings_dict.get("subject_line", ""),
-            "type": campaign.get("type", ""),
-            "status": campaign.get("status", ""),
-            "send_time": campaign.get("send_time", ""),
-            "emails_sent": campaign.get("emails_sent", 0),
+            'campaign_ref': f'campaign_{index}',
+            'title': settings_dict.get('title', ''),
+            'subject_line': settings_dict.get('subject_line', ''),
+            'type': campaign.get('type', ''),
+            'status': campaign.get('status', ''),
+            'send_time': campaign.get('send_time', ''),
+            'emails_sent': campaign.get('emails_sent', 0),
         }
         if include_ids:
-            summary["campaign_id"] = campaign.get("id", "")
+            summary['campaign_id'] = campaign.get('id', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -140,7 +141,7 @@ class MailchimpToolSet:
 
         Use to validate the API key at startup.
         """
-        return self._client.get("/3.0/ping").json()
+        return self._client.get('/3.0/ping').json()
 
     # MARK: - Lists / Audiences
 
@@ -162,23 +163,23 @@ class MailchimpToolSet:
         ``list_members`` needs them.
         """
         if count < 1 or count > 1000:
-            raise ValueError("count must be between 1 and 1000")
+            raise ValueError('count must be between 1 and 1000')
         payload: dict[str, Any] = self._client.get(
-            "/3.0/lists",
-            params={"count": count, "offset": offset},
+            '/3.0/lists',
+            params={'count': count, 'offset': offset},
         ).json()
         if include_raw:
             return payload
-        items: list[Any] = payload.get("lists") or []
+        items: list[Any] = payload.get('lists') or []
         summaries = [
-            self._list_summary(cast("dict[str, Any]", lst), index=i, include_ids=include_ids)
+            self._list_summary(cast('dict[str, Any]', lst), index=i, include_ids=include_ids)
             for i, lst in enumerate(items, start=1)
             if isinstance(lst, dict)
         ]
         return {
-            "lists": summaries,
-            "count": len(summaries),
-            "total_items": payload.get("total_items"),
+            'lists': summaries,
+            'count': len(summaries),
+            'total_items': payload.get('total_items'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -188,8 +189,8 @@ class MailchimpToolSet:
         Use after ``list_lists(include_ids=True)``.
         """
         if not list_id:
-            raise ValueError("list_id must be a non-empty string")
-        return self._client.get(f"/3.0/lists/{list_id}").json()
+            raise ValueError('list_id must be a non-empty string')
+        return self._client.get(f'/3.0/lists/{list_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_MEMBERS_OUTPUT)
@@ -210,28 +211,28 @@ class MailchimpToolSet:
         ``unsubscribed``, ``cleaned``, ``pending``, ``transactional``.
         """
         if not list_id:
-            raise ValueError("list_id must be a non-empty string")
+            raise ValueError('list_id must be a non-empty string')
         if count < 1 or count > 1000:
-            raise ValueError("count must be between 1 and 1000")
-        params: dict[str, Any] = {"count": count, "offset": offset}
+            raise ValueError('count must be between 1 and 1000')
+        params: dict[str, Any] = {'count': count, 'offset': offset}
         if status is not None:
-            params["status"] = status
+            params['status'] = status
         payload: dict[str, Any] = self._client.get(
-            f"/3.0/lists/{list_id}/members",
+            f'/3.0/lists/{list_id}/members',
             params=params,
         ).json()
         if include_raw:
             return payload
-        items: list[Any] = payload.get("members") or []
+        items: list[Any] = payload.get('members') or []
         summaries = [
-            self._member_summary(cast("dict[str, Any]", m), index=i, include_ids=include_ids)
+            self._member_summary(cast('dict[str, Any]', m), index=i, include_ids=include_ids)
             for i, m in enumerate(items, start=1)
             if isinstance(m, dict)
         ]
         return {
-            "subscribers": summaries,
-            "count": len(summaries),
-            "total_items": payload.get("total_items"),
+            'subscribers': summaries,
+            'count': len(summaries),
+            'total_items': payload.get('total_items'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -240,7 +241,7 @@ class MailchimpToolSet:
         list_id: str,
         *,
         email: str,
-        status: str = "subscribed",
+        status: str = 'subscribed',
         merge_fields: dict[str, Any] | None = None,
         tags: list[str] | None = None,
     ) -> dict[str, Any]:
@@ -251,17 +252,15 @@ class MailchimpToolSet:
         Returns the member resource.
         """
         if not list_id or not email:
-            raise ValueError("list_id and email must be non-empty")
-        from hashlib import md5
-
-        sub_hash = md5(email.lower().encode("utf-8")).hexdigest()
-        body: dict[str, Any] = {"email_address": email, "status_if_new": status}
+            raise ValueError('list_id and email must be non-empty')
+        sub_hash = md5(email.lower().encode('utf-8')).hexdigest()
+        body: dict[str, Any] = {'email_address': email, 'status_if_new': status}
         if merge_fields is not None:
-            body["merge_fields"] = merge_fields
+            body['merge_fields'] = merge_fields
         if tags is not None:
-            body["tags"] = tags
+            body['tags'] = tags
         return self._client.put(
-            f"/3.0/lists/{list_id}/members/{sub_hash}",
+            f'/3.0/lists/{list_id}/members/{sub_hash}',
             json=body,
         ).json()
 
@@ -273,12 +272,10 @@ class MailchimpToolSet:
         receive no future mailings.
         """
         if not list_id or not email:
-            raise ValueError("list_id and email must be non-empty")
-        from hashlib import md5
-
-        sub_hash = md5(email.lower().encode("utf-8")).hexdigest()
-        response = self._client.delete(f"/3.0/lists/{list_id}/members/{sub_hash}")
-        return {"list_id": list_id, "email": email, "archived": True, "status": response.status}
+            raise ValueError('list_id and email must be non-empty')
+        sub_hash = md5(email.lower().encode('utf-8')).hexdigest()
+        response = self._client.delete(f'/3.0/lists/{list_id}/members/{sub_hash}')
+        return {'list_id': list_id, 'email': email, 'archived': True, 'status': response.status}
 
     # MARK: - Campaigns
 
@@ -301,23 +298,23 @@ class MailchimpToolSet:
         are omitted by default.
         """
         if count < 1 or count > 1000:
-            raise ValueError("count must be between 1 and 1000")
-        params: dict[str, Any] = {"count": count, "offset": offset}
+            raise ValueError('count must be between 1 and 1000')
+        params: dict[str, Any] = {'count': count, 'offset': offset}
         if status is not None:
-            params["status"] = status
-        payload: dict[str, Any] = self._client.get("/3.0/campaigns", params=params).json()
+            params['status'] = status
+        payload: dict[str, Any] = self._client.get('/3.0/campaigns', params=params).json()
         if include_raw:
             return payload
-        items: list[Any] = payload.get("campaigns") or []
+        items: list[Any] = payload.get('campaigns') or []
         summaries = [
-            self._campaign_summary(cast("dict[str, Any]", c), index=i, include_ids=include_ids)
+            self._campaign_summary(cast('dict[str, Any]', c), index=i, include_ids=include_ids)
             for i, c in enumerate(items, start=1)
             if isinstance(c, dict)
         ]
         return {
-            "campaigns": summaries,
-            "count": len(summaries),
-            "total_items": payload.get("total_items"),
+            'campaigns': summaries,
+            'count': len(summaries),
+            'total_items': payload.get('total_items'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -328,8 +325,8 @@ class MailchimpToolSet:
         ``schedule_campaign`` to send.
         """
         if not payload:
-            raise ValueError("payload must be non-empty")
-        return self._client.post("/3.0/campaigns", json=payload).json()
+            raise ValueError('payload must be non-empty')
+        return self._client.post('/3.0/campaigns', json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
     def send_campaign(self, campaign_id: str) -> dict[str, Any]:
@@ -339,9 +336,9 @@ class MailchimpToolSet:
         receive the email. Always confirm with the user first.
         """
         if not campaign_id:
-            raise ValueError("campaign_id must be a non-empty string")
-        response = self._client.post(f"/3.0/campaigns/{campaign_id}/actions/send")
-        return {"id": campaign_id, "sent": True, "status": response.status}
+            raise ValueError('campaign_id must be a non-empty string')
+        response = self._client.post(f'/3.0/campaigns/{campaign_id}/actions/send')
+        return {'id': campaign_id, 'sent': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def schedule_campaign(
@@ -356,20 +353,20 @@ class MailchimpToolSet:
         irreversible at that time — confirm with the user first.
         """
         if not campaign_id or not schedule_time:
-            raise ValueError("campaign_id and schedule_time must be non-empty")
+            raise ValueError('campaign_id and schedule_time must be non-empty')
         response = self._client.post(
-            f"/3.0/campaigns/{campaign_id}/actions/schedule",
-            json={"schedule_time": schedule_time},
+            f'/3.0/campaigns/{campaign_id}/actions/schedule',
+            json={'schedule_time': schedule_time},
         )
-        return {"id": campaign_id, "scheduled": True, "status": response.status}
+        return {'id': campaign_id, 'scheduled': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_campaign(self, campaign_id: str) -> dict[str, Any]:
         """Permanently delete a campaign. Destructive — confirm with the user first."""
         if not campaign_id:
-            raise ValueError("campaign_id must be a non-empty string")
-        self._client.delete(f"/3.0/campaigns/{campaign_id}")
-        return {"id": campaign_id, "deleted": True}
+            raise ValueError('campaign_id must be a non-empty string')
+        self._client.delete(f'/3.0/campaigns/{campaign_id}')
+        return {'id': campaign_id, 'deleted': True}
 
     # MARK: - Templates & reports
 
@@ -380,8 +377,8 @@ class MailchimpToolSet:
         Returns the raw provider payload.
         """
         return self._client.get(
-            "/3.0/templates",
-            params={"count": count, "offset": offset},
+            '/3.0/templates',
+            params={'count': count, 'offset': offset},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -392,8 +389,8 @@ class MailchimpToolSet:
         per campaign.
         """
         return self._client.get(
-            "/3.0/reports",
-            params={"count": count, "offset": offset},
+            '/3.0/reports',
+            params={'count': count, 'offset': offset},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -403,5 +400,5 @@ class MailchimpToolSet:
         Use after ``list_campaigns(include_ids=True)``.
         """
         if not campaign_id:
-            raise ValueError("campaign_id must be a non-empty string")
-        return self._client.get(f"/3.0/reports/{campaign_id}").json()
+            raise ValueError('campaign_id must be a non-empty string')
+        return self._client.get(f'/3.0/reports/{campaign_id}').json()

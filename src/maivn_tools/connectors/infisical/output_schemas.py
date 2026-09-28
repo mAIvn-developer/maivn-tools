@@ -19,55 +19,55 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _PROJECT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "project_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "slug": {"type": "string"},
-        "environments": {"type": "array", "items": {"type": "string"}},
-        "workspace_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'project_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'slug': {'type': 'string'},
+        'environments': {'type': 'array', 'items': {'type': 'string'}},
+        'workspace_id': {'type': 'string'},
     },
-    "required": ["project_ref", "name", "slug"],
+    'required': ['project_ref', 'name', 'slug'],
 }
 
 _SECRET_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "secret_ref": {"type": "string"},
-        "key": {"type": "string"},
-        "type": {"type": "string"},
-        "comment": {"type": "string"},
-        "updated_at": {"type": "string"},
-        "secret_id": {"type": "string"},
-        "secret_path": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'secret_ref': {'type': 'string'},
+        'key': {'type': 'string'},
+        'type': {'type': 'string'},
+        'comment': {'type': 'string'},
+        'updated_at': {'type': 'string'},
+        'secret_id': {'type': 'string'},
+        'secret_path': {'type': 'string'},
     },
-    "required": ["secret_ref", "key"],
+    'required': ['secret_ref', 'key'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_PROJECTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "projects": {"type": "array", "items": _PROJECT_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'projects': {'type': 'array', 'items': _PROJECT_SUMMARY},
     },
-    "required": ["projects"],
+    'required': ['projects'],
 }
 
 LIST_SECRETS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "secrets": {"type": "array", "items": _SECRET_SUMMARY},
-        "workspace_id": {"type": "string"},
-        "environment": {"type": "string"},
-        "secret_path": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'secrets': {'type': 'array', 'items': _SECRET_SUMMARY},
+        'workspace_id': {'type': 'string'},
+        'environment': {'type': 'string'},
+        'secret_path': {'type': 'string'},
     },
-    "required": ["secrets"],
+    'required': ['secrets'],
 }
 
 
 __all__ = [
-    "LIST_PROJECTS_OUTPUT",
-    "LIST_SECRETS_OUTPUT",
+    'LIST_PROJECTS_OUTPUT',
+    'LIST_SECRETS_OUTPUT',
 ]

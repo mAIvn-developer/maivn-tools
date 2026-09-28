@@ -20,33 +20,33 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_status_summary`` builder)
 
 _STATUS_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "status_ref": {"type": "string"},
-        "author": {"type": "string"},
-        "author_name": {"type": "string"},
-        "content": {"type": "string"},
-        "posted_at": {"type": "string"},
-        "spoiler_text": {"type": "string"},
-        "visibility": {"type": "string"},
-        "favourites_count": {"type": "integer"},
-        "reblogs_count": {"type": "integer"},
-        "replies_count": {"type": "integer"},
-        "url": {"type": "string"},
-        "status_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'status_ref': {'type': 'string'},
+        'author': {'type': 'string'},
+        'author_name': {'type': 'string'},
+        'content': {'type': 'string'},
+        'posted_at': {'type': 'string'},
+        'spoiler_text': {'type': 'string'},
+        'visibility': {'type': 'string'},
+        'favourites_count': {'type': 'integer'},
+        'reblogs_count': {'type': 'integer'},
+        'replies_count': {'type': 'integer'},
+        'url': {'type': 'string'},
+        'status_id': {'type': 'string'},
     },
-    "required": ["status_ref", "author"],
+    'required': ['status_ref', 'author'],
 }
 
 
 # MARK: - Tool output schemas
 
 _STATUSES_LISTING: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "statuses": {"type": "array", "items": _STATUS_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'statuses': {'type': 'array', 'items': _STATUS_SUMMARY},
     },
-    "required": ["statuses"],
+    'required': ['statuses'],
 }
 
 HOME_TIMELINE_OUTPUT: dict[str, JsonValue] = _STATUSES_LISTING
@@ -55,7 +55,7 @@ HASHTAG_TIMELINE_OUTPUT: dict[str, JsonValue] = _STATUSES_LISTING
 
 
 __all__ = [
-    "HASHTAG_TIMELINE_OUTPUT",
-    "HOME_TIMELINE_OUTPUT",
-    "PUBLIC_TIMELINE_OUTPUT",
+    'HASHTAG_TIMELINE_OUTPUT',
+    'HOME_TIMELINE_OUTPUT',
+    'PUBLIC_TIMELINE_OUTPUT',
 ]

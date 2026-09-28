@@ -19,34 +19,34 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _TWEET_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "tweet_ref": {"type": "string"},
-        "author": {"type": "string"},
-        "text": {"type": "string"},
-        "posted_at": {"type": "string"},
-        "like_count": {"type": "integer"},
-        "repost_count": {"type": "integer"},
-        "reply_count": {"type": "integer"},
-        "url": {"type": "string"},
-        "tweet_id": {"type": "string"},
-        "author_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'tweet_ref': {'type': 'string'},
+        'author': {'type': 'string'},
+        'text': {'type': 'string'},
+        'posted_at': {'type': 'string'},
+        'like_count': {'type': 'integer'},
+        'repost_count': {'type': 'integer'},
+        'reply_count': {'type': 'integer'},
+        'url': {'type': 'string'},
+        'tweet_id': {'type': 'string'},
+        'author_id': {'type': 'string'},
     },
-    "required": ["tweet_ref"],
+    'required': ['tweet_ref'],
 }
 
 _USER_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "user_ref": {"type": "string"},
-        "handle": {"type": "string"},
-        "name": {"type": "string"},
-        "follower_count": {"type": "integer"},
-        "following_count": {"type": "integer"},
-        "url": {"type": "string"},
-        "user_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'user_ref': {'type': 'string'},
+        'handle': {'type': 'string'},
+        'name': {'type': 'string'},
+        'follower_count': {'type': 'integer'},
+        'following_count': {'type': 'integer'},
+        'url': {'type': 'string'},
+        'user_id': {'type': 'string'},
     },
-    "required": ["user_ref"],
+    'required': ['user_ref'],
 }
 
 
@@ -56,29 +56,29 @@ _USER_SUMMARY: dict[str, JsonValue] = {
 def _listing(item_key: str, item_schema: dict[str, JsonValue]) -> dict[str, JsonValue]:
     """Build a ``{<item_key>: [...], next_token: str|null, result_count: int}`` schema."""
     return {
-        "type": "object",
-        "properties": {
-            item_key: {"type": "array", "items": item_schema},
-            "next_token": {"type": ["string", "null"]},
-            "result_count": {"type": "integer"},
+        'type': 'object',
+        'properties': {
+            item_key: {'type': 'array', 'items': item_schema},
+            'next_token': {'type': ['string', 'null']},
+            'result_count': {'type': 'integer'},
         },
-        "required": [item_key],
+        'required': [item_key],
     }
 
 
 # MARK: - Tool output schemas
 
-SEARCH_RECENT_TWEETS_OUTPUT: dict[str, JsonValue] = _listing("tweets", _TWEET_SUMMARY)
-GET_USER_TWEETS_OUTPUT: dict[str, JsonValue] = _listing("tweets", _TWEET_SUMMARY)
-GET_USER_MENTIONS_OUTPUT: dict[str, JsonValue] = _listing("tweets", _TWEET_SUMMARY)
-GET_FOLLOWERS_OUTPUT: dict[str, JsonValue] = _listing("users", _USER_SUMMARY)
-GET_FOLLOWING_OUTPUT: dict[str, JsonValue] = _listing("users", _USER_SUMMARY)
+SEARCH_RECENT_TWEETS_OUTPUT: dict[str, JsonValue] = _listing('tweets', _TWEET_SUMMARY)
+GET_USER_TWEETS_OUTPUT: dict[str, JsonValue] = _listing('tweets', _TWEET_SUMMARY)
+GET_USER_MENTIONS_OUTPUT: dict[str, JsonValue] = _listing('tweets', _TWEET_SUMMARY)
+GET_FOLLOWERS_OUTPUT: dict[str, JsonValue] = _listing('users', _USER_SUMMARY)
+GET_FOLLOWING_OUTPUT: dict[str, JsonValue] = _listing('users', _USER_SUMMARY)
 
 
 __all__ = [
-    "GET_FOLLOWERS_OUTPUT",
-    "GET_FOLLOWING_OUTPUT",
-    "GET_USER_MENTIONS_OUTPUT",
-    "GET_USER_TWEETS_OUTPUT",
-    "SEARCH_RECENT_TWEETS_OUTPUT",
+    'GET_FOLLOWERS_OUTPUT',
+    'GET_FOLLOWING_OUTPUT',
+    'GET_USER_MENTIONS_OUTPUT',
+    'GET_USER_TWEETS_OUTPUT',
+    'SEARCH_RECENT_TWEETS_OUTPUT',
 ]

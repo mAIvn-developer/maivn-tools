@@ -21,71 +21,71 @@ from pydantic import JsonValue
 
 # Gmail: GmailToolSet._message_summary
 _MESSAGE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "message_ref": {"type": "string"},
-        "sender": {"type": "string"},
-        "to": {"type": "string"},
-        "subject": {"type": "string"},
-        "received_at": {"type": "string"},
-        "snippet": {"type": "string"},
-        "label_ids": {"type": "array", "items": {"type": "string"}},
-        "message_id": {"type": "string"},
-        "thread_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'message_ref': {'type': 'string'},
+        'sender': {'type': 'string'},
+        'to': {'type': 'string'},
+        'subject': {'type': 'string'},
+        'received_at': {'type': 'string'},
+        'snippet': {'type': 'string'},
+        'label_ids': {'type': 'array', 'items': {'type': 'string'}},
+        'message_id': {'type': 'string'},
+        'thread_id': {'type': 'string'},
     },
-    "required": ["message_ref"],
+    'required': ['message_ref'],
 }
 
 # Calendar: GoogleCalendarToolSet.list_calendars inline summary
 _CALENDAR_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "calendar_ref": {"type": "string"},
-        "summary": {"type": "string"},
-        "description": {"type": "string"},
-        "time_zone": {"type": "string"},
-        "access_role": {"type": "string"},
-        "primary": {"type": "boolean"},
-        "calendar_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'calendar_ref': {'type': 'string'},
+        'summary': {'type': 'string'},
+        'description': {'type': 'string'},
+        'time_zone': {'type': 'string'},
+        'access_role': {'type': 'string'},
+        'primary': {'type': 'boolean'},
+        'calendar_id': {'type': 'string'},
     },
-    "required": ["calendar_ref"],
+    'required': ['calendar_ref'],
 }
 
 # Calendar: google_workspace.calendar._event_summary
 _EVENT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "event_ref": {"type": "string"},
-        "summary": {"type": "string"},
-        "start_time": {"type": "string"},
-        "end_time": {"type": "string"},
-        "location": {"type": "string"},
-        "organizer": {"type": "string"},
-        "attendees": {"type": "array", "items": {"type": "string"}},
-        "status": {"type": "string"},
-        "html_link": {"type": "string"},
-        "event_id": {"type": "string"},
-        "i_cal_uid": {"type": "string"},
-        "recurring_event_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'event_ref': {'type': 'string'},
+        'summary': {'type': 'string'},
+        'start_time': {'type': 'string'},
+        'end_time': {'type': 'string'},
+        'location': {'type': 'string'},
+        'organizer': {'type': 'string'},
+        'attendees': {'type': 'array', 'items': {'type': 'string'}},
+        'status': {'type': 'string'},
+        'html_link': {'type': 'string'},
+        'event_id': {'type': 'string'},
+        'i_cal_uid': {'type': 'string'},
+        'recurring_event_id': {'type': 'string'},
     },
-    "required": ["event_ref"],
+    'required': ['event_ref'],
 }
 
 # Drive: GoogleDriveToolSet._file_summary (ref key is file_ref or folder_ref)
 _FILE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "file_ref": {"type": "string"},
-        "folder_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "mime_type": {"type": "string"},
-        "modified_time": {"type": "string"},
-        "size": {"type": "string"},
-        "owner": {"type": "string"},
-        "file_id": {"type": "string"},
-        "parents": {"type": "array", "items": {"type": "string"}},
+    'type': 'object',
+    'properties': {
+        'file_ref': {'type': 'string'},
+        'folder_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'mime_type': {'type': 'string'},
+        'modified_time': {'type': 'string'},
+        'size': {'type': 'string'},
+        'owner': {'type': 'string'},
+        'file_id': {'type': 'string'},
+        'parents': {'type': 'array', 'items': {'type': 'string'}},
     },
-    "required": ["name"],
+    'required': ['name'],
 }
 
 
@@ -93,53 +93,107 @@ _FILE_SUMMARY: dict[str, JsonValue] = {
 
 # GmailToolSet.search_messages
 SEARCH_MESSAGES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "messages": {"type": "array", "items": _MESSAGE_SUMMARY},
-        "nextPageToken": {"type": ["string", "null"]},
-        "resultSizeEstimate": {"type": "integer"},
-        "requestedMaxResults": {"type": "integer"},
-        "summaryLimit": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'messages': {'type': 'array', 'items': _MESSAGE_SUMMARY},
+        'nextPageToken': {'type': ['string', 'null']},
+        'returnedCount': {'type': 'integer'},
+        'resultSizeEstimate': {'type': 'integer'},
+        'requestedMaxResults': {'type': 'integer'},
+        'summaryLimit': {'type': 'integer'},
     },
-    "required": ["messages"],
+    'required': ['messages'],
+}
+
+# GmailToolSet.get_message_content
+GET_MESSAGE_CONTENT_OUTPUT: dict[str, JsonValue] = {
+    'type': 'object',
+    'properties': {
+        'message_id': {'type': 'string'},
+        'thread_id': {'type': ['string', 'null']},
+        'sender': {'type': 'string'},
+        'to': {'type': 'string'},
+        'subject': {'type': 'string'},
+        'received_at': {'type': 'string'},
+        'text': {'type': 'string'},
+        'text_source': {'type': ['string', 'null']},
+        'text_truncated': {'type': 'boolean'},
+        'omitted_characters': {'type': 'integer'},
+        'content_omitted': {'type': 'boolean'},
+        'attachments': {
+            'type': 'array',
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'filename': {'type': ['string', 'null']},
+                    'mime_type': {'type': 'string'},
+                    'size': {'type': ['integer', 'null']},
+                },
+                'required': ['filename', 'mime_type', 'size'],
+            },
+        },
+        'omitted_parts': {
+            'type': 'array',
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'mime_type': {'type': 'string'},
+                    'attachment_id': {'type': ['string', 'null']},
+                    'size': {'type': ['integer', 'null']},
+                },
+                'required': ['mime_type', 'attachment_id', 'size'],
+            },
+        },
+    },
+    'required': [
+        'message_id',
+        'text',
+        'text_source',
+        'text_truncated',
+        'omitted_characters',
+        'content_omitted',
+        'attachments',
+        'omitted_parts',
+    ],
 }
 
 # GoogleCalendarToolSet.list_calendars
 LIST_CALENDARS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "calendars": {"type": "array", "items": _CALENDAR_SUMMARY},
-        "nextPageToken": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'calendars': {'type': 'array', 'items': _CALENDAR_SUMMARY},
+        'nextPageToken': {'type': ['string', 'null']},
     },
-    "required": ["calendars"],
+    'required': ['calendars'],
 }
 
 # GoogleCalendarToolSet.list_events and .list_event_instances (_summarize_event_list)
 LIST_EVENTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "events": {"type": "array", "items": _EVENT_SUMMARY},
-        "nextPageToken": {"type": "string"},
-        "nextSyncToken": {"type": "string"},
-        "timeZone": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'events': {'type': 'array', 'items': _EVENT_SUMMARY},
+        'nextPageToken': {'type': 'string'},
+        'nextSyncToken': {'type': 'string'},
+        'timeZone': {'type': 'string'},
     },
-    "required": ["events"],
+    'required': ['events'],
 }
 
 # GoogleDriveToolSet.search_files
 SEARCH_FILES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "files": {"type": "array", "items": _FILE_SUMMARY},
-        "nextPageToken": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'files': {'type': 'array', 'items': _FILE_SUMMARY},
+        'nextPageToken': {'type': ['string', 'null']},
     },
-    "required": ["files"],
+    'required': ['files'],
 }
 
 
 __all__ = [
-    "LIST_CALENDARS_OUTPUT",
-    "LIST_EVENTS_OUTPUT",
-    "SEARCH_FILES_OUTPUT",
-    "SEARCH_MESSAGES_OUTPUT",
+    'GET_MESSAGE_CONTENT_OUTPUT',
+    'LIST_CALENDARS_OUTPUT',
+    'LIST_EVENTS_OUTPUT',
+    'SEARCH_FILES_OUTPUT',
+    'SEARCH_MESSAGES_OUTPUT',
 ]

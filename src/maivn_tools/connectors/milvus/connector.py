@@ -24,24 +24,24 @@ def _coerce_collection_name(candidate: Any) -> str:
         return candidate
     if isinstance(candidate, dict):
         mapping = cast(dict[Any, Any], candidate)
-        for key in ("collection_name", "collectionName", "name"):
+        for key in ('collection_name', 'collectionName', 'name'):
             value: Any = mapping.get(key)
             if isinstance(value, str):
                 return value
-        return ""
+        return ''
     if isinstance(candidate, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+        sequence = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in sequence:
             resolved = _coerce_collection_name(item)
             if resolved:
                 return resolved
-    return ""
+    return ''
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="milvus")
+@toolset(prefix='milvus')
 class MilvusToolSet:
     """A connector for the Milvus / Zilliz Cloud v2 REST API.
 
@@ -52,10 +52,10 @@ class MilvusToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="milvus",
-        display_name="Milvus",
-        version="0.1.0",
-        description="Collections, entities, vector search, partitions, and indexes.",
+        name='milvus',
+        display_name='Milvus',
+        version='0.1.0',
+        description='Collections, entities, vector search, partitions, and indexes.',
         auth_modes=(AuthMode.BEARER, AuthMode.NONE),
         capabilities=frozenset(
             {
@@ -64,9 +64,9 @@ class MilvusToolSet:
                 ProviderCapability.SEARCH,
             }
         ),
-        documentation_url="https://milvus.io/api-reference/restful/v2.4.x/About.md",
-        homepage_url="https://milvus.io/",
-        tags=("vector-store", "ai"),
+        documentation_url='https://milvus.io/api-reference/restful/v2.4.x/About.md',
+        homepage_url='https://milvus.io/',
+        tags=('vector-store', 'ai'),
     )
 
     def __init__(
@@ -74,22 +74,22 @@ class MilvusToolSet:
         *,
         base_url: str,
         token: str | None = None,
-        db_name: str = "default",
+        db_name: str = 'default',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not base_url:
-            raise ValueError("base_url is required")
+            raise ValueError('base_url is required')
         self.connection = connection
         self._db = db_name
         auth = BearerTokenAuth(token) if token else NoAuth()
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=auth,
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -98,7 +98,7 @@ class MilvusToolSet:
         return self._client
 
     def _attach_db(self, body: dict[str, Any]) -> dict[str, Any]:
-        body.setdefault("dbName", self._db)
+        body.setdefault('dbName', self._db)
         return body
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -113,33 +113,33 @@ class MilvusToolSet:
         to keep raw provider records.
         """
         raw_payload: object = self._client.post(
-            "/v2/vectordb/collections/list", json=self._attach_db({})
+            '/v2/vectordb/collections/list', json=self._attach_db({})
         ).json()
         payload: dict[str, Any] = (
             cast(dict[str, Any], raw_payload) if isinstance(raw_payload, dict) else {}
         )
-        raw_data: Any = payload.get("data", [])
-        rows: list[Any] = cast("list[Any]", raw_data) if isinstance(raw_data, list) else []
+        raw_data: Any = payload.get('data', [])
+        rows: list[Any] = cast('list[Any]', raw_data) if isinstance(raw_data, list) else []
         summaries: list[dict[str, Any]] = []
         for index, item in enumerate(rows, start=1):
             if isinstance(item, str):
                 summary: dict[str, Any] = {
-                    "collection_ref": f"collection_{index}",
-                    "name": item,
+                    'collection_ref': f'collection_{index}',
+                    'name': item,
                 }
             elif isinstance(item, dict):
                 record = cast(dict[Any, Any], item)
                 summary = {
-                    "collection_ref": f"collection_{index}",
-                    "name": record.get("collectionName") or record.get("name") or "",
+                    'collection_ref': f'collection_{index}',
+                    'name': record.get('collectionName') or record.get('name') or '',
                 }
                 if include_ids:
-                    summary["raw"] = record
+                    summary['raw'] = record
             else:
                 continue
             summaries.append(summary)
-        code: Any = payload.get("code")
-        return {"collections": summaries, "code": code}
+        code: Any = payload.get('code')
+        return {'collections': summaries, 'code': code}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def describe_collection(self, collection_name: Any) -> dict[str, Any]:
@@ -151,10 +151,10 @@ class MilvusToolSet:
         """
         resolved = _coerce_collection_name(collection_name)
         if not resolved:
-            raise ValueError("collection_name is required")
+            raise ValueError('collection_name is required')
         return self._client.post(
-            "/v2/vectordb/collections/describe",
-            json=self._attach_db({"collectionName": resolved}),
+            '/v2/vectordb/collections/describe',
+            json=self._attach_db({'collectionName': resolved}),
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -163,10 +163,10 @@ class MilvusToolSet:
         *,
         collection_name: str,
         dimension: int,
-        metric_type: str = "COSINE",
-        primary_field: str = "id",
-        vector_field: str = "vector",
-        id_type: str = "Int64",
+        metric_type: str = 'COSINE',
+        primary_field: str = 'id',
+        vector_field: str = 'vector',
+        id_type: str = 'Int64',
     ) -> dict[str, Any]:
         """Create a "quick setup" collection.
 
@@ -175,19 +175,19 @@ class MilvusToolSet:
         ``VarChar``. Returns the Milvus status response.
         """
         if not collection_name or dimension < 1:
-            raise ValueError("collection_name and a positive dimension are required")
-        if metric_type not in {"L2", "IP", "COSINE", "HAMMING", "JACCARD"}:
-            raise ValueError("metric_type must be L2/IP/COSINE/HAMMING/JACCARD")
+            raise ValueError('collection_name and a positive dimension are required')
+        if metric_type not in {'L2', 'IP', 'COSINE', 'HAMMING', 'JACCARD'}:
+            raise ValueError('metric_type must be L2/IP/COSINE/HAMMING/JACCARD')
         body = {
-            "collectionName": collection_name,
-            "dimension": dimension,
-            "metricType": metric_type,
-            "primaryFieldName": primary_field,
-            "vectorFieldName": vector_field,
-            "idType": id_type,
+            'collectionName': collection_name,
+            'dimension': dimension,
+            'metricType': metric_type,
+            'primaryFieldName': primary_field,
+            'vectorFieldName': vector_field,
+            'idType': id_type,
         }
         return self._client.post(
-            "/v2/vectordb/collections/create",
+            '/v2/vectordb/collections/create',
             json=self._attach_db(body),
         ).json()
 
@@ -201,10 +201,10 @@ class MilvusToolSet:
         """
         resolved = _coerce_collection_name(collection_name)
         if not resolved:
-            raise ValueError("collection_name is required")
+            raise ValueError('collection_name is required')
         return self._client.post(
-            "/v2/vectordb/collections/drop",
-            json=self._attach_db({"collectionName": resolved}),
+            '/v2/vectordb/collections/drop',
+            json=self._attach_db({'collectionName': resolved}),
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -221,15 +221,15 @@ class MilvusToolSet:
         Milvus status response including ``insertCount``.
         """
         if not collection_name or not data:
-            raise ValueError("collection_name and data are required")
+            raise ValueError('collection_name and data are required')
         body: dict[str, Any] = {
-            "collectionName": collection_name,
-            "data": data,
+            'collectionName': collection_name,
+            'data': data,
         }
         if partition_name is not None:
-            body["partitionName"] = partition_name
+            body['partitionName'] = partition_name
         return self._client.post(
-            "/v2/vectordb/entities/insert",
+            '/v2/vectordb/entities/insert',
             json=self._attach_db(body),
         ).json()
 
@@ -243,15 +243,15 @@ class MilvusToolSet:
     ) -> dict[str, Any]:
         """Upsert entities (insert or update by primary key)."""
         if not collection_name or not data:
-            raise ValueError("collection_name and data are required")
+            raise ValueError('collection_name and data are required')
         body: dict[str, Any] = {
-            "collectionName": collection_name,
-            "data": data,
+            'collectionName': collection_name,
+            'data': data,
         }
         if partition_name is not None:
-            body["partitionName"] = partition_name
+            body['partitionName'] = partition_name
         return self._client.post(
-            "/v2/vectordb/entities/upsert",
+            '/v2/vectordb/entities/upsert',
             json=self._attach_db(body),
         ).json()
 
@@ -262,7 +262,7 @@ class MilvusToolSet:
         collection_name: str,
         data: list[list[float]],
         limit: int = 10,
-        anns_field: str = "vector",
+        anns_field: str = 'vector',
         filter: str | None = None,
         output_fields: list[str] | None = None,
         partition_names: list[str] | None = None,
@@ -276,21 +276,21 @@ class MilvusToolSet:
         ``id`` is the entity primary key the agent needs to fetch back.
         """
         if not collection_name or not data:
-            raise ValueError("collection_name and data are required")
+            raise ValueError('collection_name and data are required')
         body: dict[str, Any] = {
-            "collectionName": collection_name,
-            "data": data,
-            "limit": limit,
-            "annsField": anns_field,
+            'collectionName': collection_name,
+            'data': data,
+            'limit': limit,
+            'annsField': anns_field,
         }
         if filter is not None:
-            body["filter"] = filter
+            body['filter'] = filter
         if output_fields is not None:
-            body["outputFields"] = output_fields
+            body['outputFields'] = output_fields
         if partition_names is not None:
-            body["partitionNames"] = partition_names
+            body['partitionNames'] = partition_names
         return self._client.post(
-            "/v2/vectordb/entities/search",
+            '/v2/vectordb/entities/search',
             json=self._attach_db(body),
         ).json()
 
@@ -308,17 +308,17 @@ class MilvusToolSet:
         Use this to hydrate full entity records after :meth:`search`.
         """
         if not collection_name or not ids:
-            raise ValueError("collection_name and ids are required")
+            raise ValueError('collection_name and ids are required')
         body: dict[str, Any] = {
-            "collectionName": collection_name,
-            "id": ids,
+            'collectionName': collection_name,
+            'id': ids,
         }
         if output_fields is not None:
-            body["outputFields"] = output_fields
+            body['outputFields'] = output_fields
         if partition_names is not None:
-            body["partitionNames"] = partition_names
+            body['partitionNames'] = partition_names
         return self._client.post(
-            "/v2/vectordb/entities/get",
+            '/v2/vectordb/entities/get',
             json=self._attach_db(body),
         ).json()
 
@@ -338,17 +338,17 @@ class MilvusToolSet:
         'invoices' and year > 2020"``). Returns ``{"data": [...]}``.
         """
         if not collection_name or not filter:
-            raise ValueError("collection_name and filter are required")
+            raise ValueError('collection_name and filter are required')
         body: dict[str, Any] = {
-            "collectionName": collection_name,
-            "filter": filter,
-            "limit": limit,
-            "offset": offset,
+            'collectionName': collection_name,
+            'filter': filter,
+            'limit': limit,
+            'offset': offset,
         }
         if output_fields is not None:
-            body["outputFields"] = output_fields
+            body['outputFields'] = output_fields
         return self._client.post(
-            "/v2/vectordb/entities/query",
+            '/v2/vectordb/entities/query',
             json=self._attach_db(body),
         ).json()
 
@@ -367,18 +367,18 @@ class MilvusToolSet:
         ``ids``. Confirm with the user before bulk deletion.
         """
         if not collection_name:
-            raise ValueError("collection_name is required")
+            raise ValueError('collection_name is required')
         if not filter and not ids:
-            raise ValueError("Provide filter or ids")
-        body: dict[str, Any] = {"collectionName": collection_name}
+            raise ValueError('Provide filter or ids')
+        body: dict[str, Any] = {'collectionName': collection_name}
         if filter is not None:
-            body["filter"] = filter
+            body['filter'] = filter
         if ids is not None:
-            body["id"] = ids
+            body['id'] = ids
         if partition_name is not None:
-            body["partitionName"] = partition_name
+            body['partitionName'] = partition_name
         return self._client.post(
-            "/v2/vectordb/entities/delete",
+            '/v2/vectordb/entities/delete',
             json=self._attach_db(body),
         ).json()
 
@@ -395,13 +395,13 @@ class MilvusToolSet:
         search.
         """
         if not collection_name or not partition_name:
-            raise ValueError("collection_name and partition_name are required")
+            raise ValueError('collection_name and partition_name are required')
         return self._client.post(
-            "/v2/vectordb/partitions/create",
+            '/v2/vectordb/partitions/create',
             json=self._attach_db(
                 {
-                    "collectionName": collection_name,
-                    "partitionName": partition_name,
+                    'collectionName': collection_name,
+                    'partitionName': partition_name,
                 }
             ),
         ).json()

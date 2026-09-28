@@ -19,7 +19,7 @@ from ...runtime.http import HttpClient, HttpTransport
 # MARK: ToolSet
 
 
-@toolset(prefix="mixpanel")
+@toolset(prefix='mixpanel')
 class MixpanelToolSet:
     """A connector for Mixpanel.
 
@@ -33,15 +33,15 @@ class MixpanelToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="mixpanel",
-        display_name="Mixpanel",
-        version="0.1.0",
-        description="Event ingest, profile updates, segmentation, and exports.",
+        name='mixpanel',
+        display_name='Mixpanel',
+        version='0.1.0',
+        description='Event ingest, profile updates, segmentation, and exports.',
         auth_modes=(AuthMode.API_KEY, AuthMode.BASIC),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developer.mixpanel.com/reference/overview",
-        homepage_url="https://mixpanel.com/",
-        tags=("analytics", "product"),
+        documentation_url='https://developer.mixpanel.com/reference/overview',
+        homepage_url='https://mixpanel.com/',
+        tags=('analytics', 'product'),
     )
 
     def __init__(
@@ -51,7 +51,7 @@ class MixpanelToolSet:
         service_account_user: str,
         service_account_secret: str,
         project_id: int,
-        region: str = "US",
+        region: str = 'US',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
@@ -62,34 +62,34 @@ class MixpanelToolSet:
             or not project_id
         ):
             raise ValueError(
-                "project_token, service_account_user, "
-                "service_account_secret, and project_id are required"
+                'project_token, service_account_user, '
+                'service_account_secret, and project_id are required'
             )
-        if region not in {"US", "EU"}:
-            raise ValueError("region must be US or EU")
+        if region not in {'US', 'EU'}:
+            raise ValueError('region must be US or EU')
         self.connection = connection
         self._project_token = project_token
         self._project_id = project_id
-        api_host = "api.mixpanel.com" if region == "US" else "api-eu.mixpanel.com"
-        query_host = "mixpanel.com" if region == "US" else "eu.mixpanel.com"
-        data_host = "data.mixpanel.com" if region == "US" else "data-eu.mixpanel.com"
+        api_host = 'api.mixpanel.com' if region == 'US' else 'api-eu.mixpanel.com'
+        query_host = 'mixpanel.com' if region == 'US' else 'eu.mixpanel.com'
+        data_host = 'data.mixpanel.com' if region == 'US' else 'data-eu.mixpanel.com'
         self._ingest = HttpClient(
-            base_url=f"https://{api_host}",
+            base_url=f'https://{api_host}',
             auth=BasicAuth(service_account_user, service_account_secret),
             transport=transport,
-            default_headers={"Accept": "text/plain"},
+            default_headers={'Accept': 'text/plain'},
         )
         self._query = HttpClient(
-            base_url=f"https://{query_host}",
+            base_url=f'https://{query_host}',
             auth=BasicAuth(service_account_user, service_account_secret),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
         self._export = HttpClient(
-            base_url=f"https://{data_host}",
+            base_url=f'https://{data_host}',
             auth=BasicAuth(service_account_user, service_account_secret),
             transport=transport,
-            default_headers={"Accept": "application/x-ndjson"},
+            default_headers={'Accept': 'application/x-ndjson'},
         )
 
     @property
@@ -111,15 +111,15 @@ class MixpanelToolSet:
         ...}`` on success.
         """
         if not event or not properties:
-            raise ValueError("event and properties are required")
-        event_properties: dict[str, Any] = {**properties, "token": self._project_token}
+            raise ValueError('event and properties are required')
+        event_properties: dict[str, Any] = {**properties, 'token': self._project_token}
         if distinct_id is not None:
-            event_properties["distinct_id"] = distinct_id
-        payload: dict[str, Any] = {"event": event, "properties": event_properties}
+            event_properties['distinct_id'] = distinct_id
+        payload: dict[str, Any] = {'event': event, 'properties': event_properties}
         data = base64.b64encode(_json.dumps(payload).encode()).decode()
         return cast(
             dict[str, Any],
-            self._ingest.post("/track", params={"data": data, "verbose": "1"}).json(),
+            self._ingest.post('/track', params={'data': data, 'verbose': '1'}).json(),
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -136,12 +136,12 @@ class MixpanelToolSet:
         import receipt.
         """
         if not events:
-            raise ValueError("events must be non-empty")
+            raise ValueError('events must be non-empty')
         return cast(
             dict[str, Any],
             self._ingest.post(
-                "/import",
-                params={"project_id": self._project_id, "strict": strict},
+                '/import',
+                params={'project_id': self._project_id, 'strict': strict},
                 json=events,
             ).json(),
         )
@@ -154,12 +154,12 @@ class MixpanelToolSet:
         ``$token``, ``$distinct_id``, and an operation key like ``$set``.
         """
         if not payload:
-            raise ValueError("payload must be non-empty")
+            raise ValueError('payload must be non-empty')
         return cast(
             dict[str, Any],
             self._ingest.post(
-                "/engage",
-                params={"verbose": "1"},
+                '/engage',
+                params={'verbose': '1'},
                 json=payload,
             ).json(),
         )
@@ -173,12 +173,12 @@ class MixpanelToolSet:
         like ``$set``.
         """
         if not payload:
-            raise ValueError("payload must be non-empty")
+            raise ValueError('payload must be non-empty')
         return cast(
             dict[str, Any],
             self._ingest.post(
-                "/groups",
-                params={"verbose": "1"},
+                '/groups',
+                params={'verbose': '1'},
                 json=payload,
             ).json(),
         )
@@ -188,8 +188,8 @@ class MixpanelToolSet:
         self,
         *,
         event: list[str],
-        type: str = "general",
-        unit: str = "day",
+        type: str = 'general',
+        unit: str = 'day',
         interval: int = 7,
     ) -> dict[str, Any]:
         """Run the ``/events`` count query for one or more event names.
@@ -200,17 +200,17 @@ class MixpanelToolSet:
         ``data`` series payload.
         """
         if not event:
-            raise ValueError("event must be non-empty")
+            raise ValueError('event must be non-empty')
         return cast(
             dict[str, Any],
             self._query.get(
-                "/api/2.0/events",
+                '/api/2.0/events',
                 params={
-                    "project_id": self._project_id,
-                    "event": _json.dumps(event),
-                    "type": type,
-                    "unit": unit,
-                    "interval": interval,
+                    'project_id': self._project_id,
+                    'event': _json.dumps(event),
+                    'type': type,
+                    'unit': unit,
+                    'interval': interval,
                 },
             ).json(),
         )
@@ -223,8 +223,8 @@ class MixpanelToolSet:
         from_date: str,
         to_date: str,
         on: str | None = None,
-        unit: str = "day",
-        type: str = "general",
+        unit: str = 'day',
+        type: str = 'general',
     ) -> dict[str, Any]:
         """Segment a single event.
 
@@ -233,20 +233,20 @@ class MixpanelToolSet:
         by that property. Returns the ``data`` payload.
         """
         if not event or not from_date or not to_date:
-            raise ValueError("event, from_date, and to_date are required")
+            raise ValueError('event, from_date, and to_date are required')
         params: dict[str, Any] = {
-            "project_id": self._project_id,
-            "event": event,
-            "from_date": from_date,
-            "to_date": to_date,
-            "unit": unit,
-            "type": type,
+            'project_id': self._project_id,
+            'event': event,
+            'from_date': from_date,
+            'to_date': to_date,
+            'unit': unit,
+            'type': type,
         }
         if on is not None:
-            params["on"] = on
+            params['on'] = on
         return cast(
             dict[str, Any],
-            self._query.get("/api/2.0/segmentation", params=params).json(),
+            self._query.get('/api/2.0/segmentation', params=params).json(),
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -256,7 +256,7 @@ class MixpanelToolSet:
         funnel_id: int,
         from_date: str,
         to_date: str,
-        unit: str = "day",
+        unit: str = 'day',
     ) -> dict[str, Any]:
         """Return saved-funnel results.
 
@@ -264,17 +264,17 @@ class MixpanelToolSet:
         Returns the funnel conversion payload.
         """
         if not funnel_id or not from_date or not to_date:
-            raise ValueError("funnel_id, from_date, and to_date are required")
+            raise ValueError('funnel_id, from_date, and to_date are required')
         return cast(
             dict[str, Any],
             self._query.get(
-                "/api/2.0/funnels",
+                '/api/2.0/funnels',
                 params={
-                    "project_id": self._project_id,
-                    "funnel_id": funnel_id,
-                    "from_date": from_date,
-                    "to_date": to_date,
-                    "unit": unit,
+                    'project_id': self._project_id,
+                    'funnel_id': funnel_id,
+                    'from_date': from_date,
+                    'to_date': to_date,
+                    'unit': unit,
                 },
             ).json(),
         )
@@ -285,10 +285,10 @@ class MixpanelToolSet:
         *,
         from_date: str,
         to_date: str,
-        retention_type: str = "birth",
+        retention_type: str = 'birth',
         born_event: str | None = None,
         event: str | None = None,
-        unit: str = "day",
+        unit: str = 'day',
     ) -> dict[str, Any]:
         """Run a retention query.
 
@@ -297,21 +297,21 @@ class MixpanelToolSet:
         ``birth`` or ``compounded``.
         """
         if not from_date or not to_date:
-            raise ValueError("from_date and to_date are required")
+            raise ValueError('from_date and to_date are required')
         params: dict[str, Any] = {
-            "project_id": self._project_id,
-            "from_date": from_date,
-            "to_date": to_date,
-            "retention_type": retention_type,
-            "unit": unit,
+            'project_id': self._project_id,
+            'from_date': from_date,
+            'to_date': to_date,
+            'retention_type': retention_type,
+            'unit': unit,
         }
         if born_event is not None:
-            params["born_event"] = born_event
+            params['born_event'] = born_event
         if event is not None:
-            params["event"] = event
+            params['event'] = event
         return cast(
             dict[str, Any],
-            self._query.get("/api/2.0/retention", params=params).json(),
+            self._query.get('/api/2.0/retention', params=params).json(),
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -330,18 +330,18 @@ class MixpanelToolSet:
         (e.g. ``"properties.k=='v'"``).
         """
         if not from_date or not to_date:
-            raise ValueError("from_date and to_date are required")
+            raise ValueError('from_date and to_date are required')
         params: dict[str, Any] = {
-            "project_id": self._project_id,
-            "from_date": from_date,
-            "to_date": to_date,
+            'project_id': self._project_id,
+            'from_date': from_date,
+            'to_date': to_date,
         }
         if event is not None:
-            params["event"] = _json.dumps(event)
+            params['event'] = _json.dumps(event)
         if where is not None:
-            params["where"] = where
-        response = self._export.get("/api/2.0/export", params=params)
-        return {"status": response.status, "ndjson": response.text()}
+            params['where'] = where
+        response = self._export.get('/api/2.0/export', params=params)
+        return {'status': response.status, 'ndjson': response.text()}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def query_jql(self, *, script: str) -> dict[str, Any]:
@@ -351,13 +351,13 @@ class MixpanelToolSet:
         Returns the script's return value as JSON.
         """
         if not script:
-            raise ValueError("script is required")
+            raise ValueError('script is required')
         return cast(
             dict[str, Any],
             self._query.post(
-                "/api/2.0/jql",
-                params={"project_id": self._project_id},
-                data=("script=" + script).encode(),
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                '/api/2.0/jql',
+                params={'project_id': self._project_id},
+                data=('script=' + script).encode(),
+                headers={'Content-Type': 'application/x-www-form-urlencoded'},
             ).json(),
         )

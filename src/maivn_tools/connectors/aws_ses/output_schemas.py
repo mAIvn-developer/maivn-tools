@@ -19,53 +19,53 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _IDENTITY_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "identity_ref": {"type": "string"},
-        "identity_name": {"type": "string"},
-        "identity_type": {"type": "string"},
-        "sending_enabled": {"type": ["boolean", "null"]},
-        "verification_status": {"type": "string"},
-        "identity_arn": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'identity_ref': {'type': 'string'},
+        'identity_name': {'type': 'string'},
+        'identity_type': {'type': 'string'},
+        'sending_enabled': {'type': ['boolean', 'null']},
+        'verification_status': {'type': 'string'},
+        'identity_arn': {'type': 'string'},
     },
-    "required": ["identity_ref", "identity_name"],
+    'required': ['identity_ref', 'identity_name'],
 }
 
 _TEMPLATE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "template_ref": {"type": "string"},
-        "template_name": {"type": "string"},
-        "created_timestamp": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'template_ref': {'type': 'string'},
+        'template_name': {'type': 'string'},
+        'created_timestamp': {'type': 'string'},
     },
-    "required": ["template_ref", "template_name"],
+    'required': ['template_ref', 'template_name'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_IDENTITIES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "identities": {"type": "array", "items": _IDENTITY_SUMMARY},
-        "count": {"type": "integer"},
-        "next_token": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'identities': {'type': 'array', 'items': _IDENTITY_SUMMARY},
+        'count': {'type': 'integer'},
+        'next_token': {'type': ['string', 'null']},
     },
-    "required": ["identities"],
+    'required': ['identities'],
 }
 
 LIST_TEMPLATES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "templates": {"type": "array", "items": _TEMPLATE_SUMMARY},
-        "count": {"type": "integer"},
-        "next_token": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'templates': {'type': 'array', 'items': _TEMPLATE_SUMMARY},
+        'count': {'type': 'integer'},
+        'next_token': {'type': ['string', 'null']},
     },
-    "required": ["templates"],
+    'required': ['templates'],
 }
 
 
 __all__ = [
-    "LIST_IDENTITIES_OUTPUT",
-    "LIST_TEMPLATES_OUTPUT",
+    'LIST_IDENTITIES_OUTPUT',
+    'LIST_TEMPLATES_OUTPUT',
 ]

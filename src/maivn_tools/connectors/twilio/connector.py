@@ -17,7 +17,7 @@ from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_MESSAGES_OUTPUT
 
 
-@toolset(prefix="twilio")
+@toolset(prefix='twilio')
 class TwilioToolSet:
     """A connector for Twilio's REST API.
 
@@ -27,15 +27,15 @@ class TwilioToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="twilio",
-        display_name="Twilio",
-        version="0.1.0",
-        description="Messaging (SMS/MMS), Verify, Voice, and lookups.",
+        name='twilio',
+        display_name='Twilio',
+        version='0.1.0',
+        description='Messaging (SMS/MMS), Verify, Voice, and lookups.',
         auth_modes=(AuthMode.BASIC,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://www.twilio.com/docs/usage/api",
-        homepage_url="https://www.twilio.com/",
-        tags=("messaging", "auth", "verification"),
+        documentation_url='https://www.twilio.com/docs/usage/api',
+        homepage_url='https://www.twilio.com/',
+        tags=('messaging', 'auth', 'verification'),
     )
 
     def __init__(
@@ -43,33 +43,33 @@ class TwilioToolSet:
         *,
         account_sid: str,
         auth_token: str,
-        base_url: str = "https://api.twilio.com",
-        verify_url: str = "https://verify.twilio.com",
-        lookup_url: str = "https://lookups.twilio.com",
+        base_url: str = 'https://api.twilio.com',
+        verify_url: str = 'https://verify.twilio.com',
+        lookup_url: str = 'https://lookups.twilio.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not account_sid or not auth_token:
-            raise ValueError("account_sid and auth_token are required")
+            raise ValueError('account_sid and auth_token are required')
         self.connection = connection
         self._account_sid = account_sid
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BasicAuth(account_sid, auth_token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
         self._verify_client = HttpClient(
-            base_url=verify_url.rstrip("/"),
+            base_url=verify_url.rstrip('/'),
             auth=BasicAuth(account_sid, auth_token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
         self._lookup_client = HttpClient(
-            base_url=lookup_url.rstrip("/"),
+            base_url=lookup_url.rstrip('/'),
             auth=BasicAuth(account_sid, auth_token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -84,8 +84,8 @@ class TwilioToolSet:
     ) -> dict[str, Any]:
         return client.post(
             path,
-            data=urlencode(payload).encode("utf-8"),
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=urlencode(payload).encode('utf-8'),
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
         ).json()
 
     # MARK: - Summary helpers
@@ -98,17 +98,17 @@ class TwilioToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "message_ref": f"message_{index}",
-            "from": message.get("from", ""),
-            "to": message.get("to", ""),
-            "status": message.get("status", ""),
-            "direction": message.get("direction", ""),
-            "body": message.get("body", ""),
-            "date_sent": message.get("date_sent", ""),
-            "price": message.get("price", ""),
+            'message_ref': f'message_{index}',
+            'from': message.get('from', ''),
+            'to': message.get('to', ''),
+            'status': message.get('status', ''),
+            'direction': message.get('direction', ''),
+            'body': message.get('body', ''),
+            'date_sent': message.get('date_sent', ''),
+            'price': message.get('price', ''),
         }
         if include_ids:
-            summary["message_sid"] = message.get("sid", "")
+            summary['message_sid'] = message.get('sid', '')
         return summary
 
     # MARK: - Tools
@@ -131,23 +131,23 @@ class TwilioToolSet:
         message resource (``sid``, ``status``, ``date_created``).
         """
         if not to:
-            raise ValueError("to is required")
+            raise ValueError('to is required')
         if not body and not media_url:
-            raise ValueError("body or media_url is required")
+            raise ValueError('body or media_url is required')
         if not from_ and not messaging_service_sid:
-            raise ValueError("from_ or messaging_service_sid is required")
-        payload: dict[str, Any] = {"To": to}
+            raise ValueError('from_ or messaging_service_sid is required')
+        payload: dict[str, Any] = {'To': to}
         if body is not None:
-            payload["Body"] = body
+            payload['Body'] = body
         if from_ is not None:
-            payload["From"] = from_
+            payload['From'] = from_
         if messaging_service_sid is not None:
-            payload["MessagingServiceSid"] = messaging_service_sid
+            payload['MessagingServiceSid'] = messaging_service_sid
         if media_url is not None:
-            payload["MediaUrl"] = media_url
+            payload['MediaUrl'] = media_url
         return self._form_post(
             self._client,
-            f"/2010-04-01/Accounts/{self._account_sid}/Messages.json",
+            f'/2010-04-01/Accounts/{self._account_sid}/Messages.json',
             payload,
         )
 
@@ -169,32 +169,32 @@ class TwilioToolSet:
         ``price``. Raw ``message_sid`` is omitted by default.
         """
         if page_size < 1 or page_size > 1000:
-            raise ValueError("page_size must be between 1 and 1000")
-        params: dict[str, Any] = {"PageSize": page_size}
+            raise ValueError('page_size must be between 1 and 1000')
+        params: dict[str, Any] = {'PageSize': page_size}
         if date_sent is not None:
-            params["DateSent"] = date_sent
+            params['DateSent'] = date_sent
         if from_ is not None:
-            params["From"] = from_
+            params['From'] = from_
         if to is not None:
-            params["To"] = to
+            params['To'] = to
         raw = self._client.get(
-            f"/2010-04-01/Accounts/{self._account_sid}/Messages.json",
+            f'/2010-04-01/Accounts/{self._account_sid}/Messages.json',
             params=params,
         ).json()
-        payload: dict[str, Any] = cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
-        messages_field: object = payload.get("messages", [])
+        payload: dict[str, Any] = cast('dict[str, Any]', raw) if isinstance(raw, dict) else {}
+        messages_field: object = payload.get('messages', [])
         messages_list: list[Any] = (
-            cast("list[Any]", messages_field) if isinstance(messages_field, list) else []
+            cast('list[Any]', messages_field) if isinstance(messages_field, list) else []
         )
         raw_messages: list[dict[str, Any]] = [
-            cast("dict[str, Any]", m) for m in messages_list if isinstance(m, dict)
+            cast('dict[str, Any]', m) for m in messages_list if isinstance(m, dict)
         ]
         summaries = [
             self._message_summary(message, index=index, include_ids=include_ids)
             for index, message in enumerate(raw_messages, start=1)
         ]
-        result: dict[str, Any] = {"messages": summaries}
-        for key in ("next_page_uri", "previous_page_uri", "page"):
+        result: dict[str, Any] = {'messages': summaries}
+        for key in ('next_page_uri', 'previous_page_uri', 'page'):
             if key in payload:
                 result[key] = payload[key]
         return result
@@ -207,9 +207,9 @@ class TwilioToolSet:
         delivery timestamps, and price.
         """
         if not message_sid:
-            raise ValueError("message_sid is required")
+            raise ValueError('message_sid is required')
         return self._client.get(
-            f"/2010-04-01/Accounts/{self._account_sid}/Messages/{message_sid}.json"
+            f'/2010-04-01/Accounts/{self._account_sid}/Messages/{message_sid}.json'
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -218,7 +218,7 @@ class TwilioToolSet:
         *,
         service_sid: str,
         to: str,
-        channel: str = "sms",
+        channel: str = 'sms',
         custom_message: str | None = None,
     ) -> dict[str, Any]:
         """Send a Verify OTP to a recipient.
@@ -228,15 +228,15 @@ class TwilioToolSet:
         ``channel`` is sms / call / email / whatsapp.
         """
         if not service_sid or not to:
-            raise ValueError("service_sid and to are required")
-        if channel not in {"sms", "call", "email", "whatsapp"}:
-            raise ValueError("channel must be sms/call/email/whatsapp")
-        payload: dict[str, Any] = {"To": to, "Channel": channel}
+            raise ValueError('service_sid and to are required')
+        if channel not in {'sms', 'call', 'email', 'whatsapp'}:
+            raise ValueError('channel must be sms/call/email/whatsapp')
+        payload: dict[str, Any] = {'To': to, 'Channel': channel}
         if custom_message is not None:
-            payload["CustomMessage"] = custom_message
+            payload['CustomMessage'] = custom_message
         return self._form_post(
             self._verify_client,
-            f"/v2/Services/{service_sid}/Verifications",
+            f'/v2/Services/{service_sid}/Verifications',
             payload,
         )
 
@@ -254,11 +254,11 @@ class TwilioToolSet:
         be ``approved`` on success.
         """
         if not service_sid or not to or not code:
-            raise ValueError("service_sid, to, and code are required")
+            raise ValueError('service_sid, to, and code are required')
         return self._form_post(
             self._verify_client,
-            f"/v2/Services/{service_sid}/VerificationCheck",
-            {"To": to, "Code": code},
+            f'/v2/Services/{service_sid}/VerificationCheck',
+            {'To': to, 'Code': code},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -277,17 +277,17 @@ class TwilioToolSet:
         ``url`` (TwiML over HTTP) or ``twiml`` (inline TwiML).
         """
         if not to or not from_:
-            raise ValueError("to and from_ are required")
+            raise ValueError('to and from_ are required')
         if (url is None) == (twiml is None):
-            raise ValueError("Provide exactly one of url or twiml")
-        payload: dict[str, Any] = {"To": to, "From": from_}
+            raise ValueError('Provide exactly one of url or twiml')
+        payload: dict[str, Any] = {'To': to, 'From': from_}
         if url is not None:
-            payload["Url"] = url
+            payload['Url'] = url
         if twiml is not None:
-            payload["Twiml"] = twiml
+            payload['Twiml'] = twiml
         return self._form_post(
             self._client,
-            f"/2010-04-01/Accounts/{self._account_sid}/Calls.json",
+            f'/2010-04-01/Accounts/{self._account_sid}/Calls.json',
             payload,
         )
 
@@ -304,11 +304,11 @@ class TwilioToolSet:
         Useful for validating a number before send_message or make_call.
         """
         if not phone_number:
-            raise ValueError("phone_number is required")
+            raise ValueError('phone_number is required')
         params: dict[str, Any] = {}
         if fields is not None:
-            params["Fields"] = ",".join(fields)
+            params['Fields'] = ','.join(fields)
         return self._lookup_client.get(
-            f"/v2/PhoneNumbers/{quote(phone_number, safe='+')}",
+            f'/v2/PhoneNumbers/{quote(phone_number, safe="+")}',
             params=params or None,
         ).json()

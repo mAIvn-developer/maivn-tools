@@ -1,22 +1,92 @@
-.venv/
-.pytest_cache/
-.ruff_cache/
+# --- inherited from the maivn-platform superproject at extraction ---
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# Python
 __pycache__/
-*.egg-info/
-build/
-dist/
-htmlcov/
+*.py[cod]
+*.pyo
+.Python
+.venv/
+venv/
+env/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.pyright/
 .coverage
-uv.lock
+coverage.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
 
-# Internal planning documents. Keep these out of public repository/docs pushes.
-private-docs/
-docs/OFFICIAL_TOOL_SET_OUTLINE.md
-docs/OFFICIAL_TOOL_SET_IMPLEMENTATION_TRACKER.md
+# Node / TypeScript
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+*.tsbuildinfo
+coverage/
+.next/
+.nuxt/
+.svelte-kit/
+out/
 
-# Local-only agent adapters that point agents at private planning documents.
-AGENTS.md
-CLAUDE.md
-CLAUDE.local.md
-.windsurf/
-.cursor/
+# Go
+bin/
+pkg/
+*.test
+*.out
+coverage.out
+.gocache/
+.tmp-gen-check-*/
+
+# Rust
+target/
+Cargo.lock
+
+# Build artifacts and caches
+.cache/
+.parcel-cache/
+.turbo/
+.vite/
+tmp/
+temp/
+logs/
+*.log
+
+# OS and editors
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Generated local outputs
+output/
+outputs/
+
+# Local task runner files
+.codex-task-*.md
+
+# Canonical prose belongs in the Obsidian vault. Do not ignore docs/; accidental repository prose must remain visible.
+.superpowers/
+
+# Local service runtime state
+.maivn-service-pids.json
+.maivn-run-state.json
+.maivn-logs/
+.maivn-runtime/
+.playwright-mcp/
+
+# Agent scratch output, never product source
+.scratch-codex/
+.impeccable/

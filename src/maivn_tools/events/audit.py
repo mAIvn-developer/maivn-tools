@@ -17,35 +17,35 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 # MARK: Enums
 
 
-class AuditEventKind(str, Enum):
+class AuditEventKind(StrEnum):
     """Normalized event types for connector activity."""
 
-    READ = "read"
-    WRITE = "write"
-    DELETE = "delete"
-    EXPORT = "export"
-    IMPORT = "import"
-    AUTH_SUCCESS = "auth.success"
-    AUTH_FAILURE = "auth.failure"
-    CREDENTIAL_ACCESS = "credential.access"
-    CREDENTIAL_ROTATE = "credential.rotate"
-    ADMIN = "admin"
-    DRY_RUN = "dry_run"
+    READ = 'read'
+    WRITE = 'write'
+    DELETE = 'delete'
+    EXPORT = 'export'
+    IMPORT = 'import'
+    AUTH_SUCCESS = 'auth.success'
+    AUTH_FAILURE = 'auth.failure'
+    CREDENTIAL_ACCESS = 'credential.access'
+    CREDENTIAL_ROTATE = 'credential.rotate'
+    ADMIN = 'admin'
+    DRY_RUN = 'dry_run'
 
 
-class AuditEventSeverity(str, Enum):
+class AuditEventSeverity(StrEnum):
     """Severity levels surfaced by audit events."""
 
-    INFO = "info"
-    NOTICE = "notice"
-    WARNING = "warning"
-    ERROR = "error"
+    INFO = 'info'
+    NOTICE = 'notice'
+    WARNING = 'warning'
+    ERROR = 'error'
 
 
 # MARK: Event model
@@ -80,22 +80,22 @@ class AuditEvent:
 
     def __post_init__(self) -> None:
         if not self.provider:
-            raise ValueError("AuditEvent.provider is required")
+            raise ValueError('AuditEvent.provider is required')
         if not self.tool:
-            raise ValueError("AuditEvent.tool is required")
+            raise ValueError('AuditEvent.tool is required')
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable representation of the event."""
         return {
-            "kind": self.kind.value,
-            "provider": self.provider,
-            "tool": self.tool,
-            "connection_id": self.connection_id,
-            "actor": self.actor,
-            "target": self.target,
-            "severity": self.severity.value,
-            "timestamp": self.timestamp.isoformat(),
-            "detail": dict(self.detail),
+            'kind': self.kind.value,
+            'provider': self.provider,
+            'tool': self.tool,
+            'connection_id': self.connection_id,
+            'actor': self.actor,
+            'target': self.target,
+            'severity': self.severity.value,
+            'timestamp': self.timestamp.isoformat(),
+            'detail': dict(self.detail),
         }
 
 

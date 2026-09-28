@@ -13,10 +13,13 @@ Releases use **MAJOR.MINOR.PATCH** semantics:
   existing imports.
 - **PATCH** — bug fixes and internal changes.
 
-## Stable surface
+## Public surface
 
-Anything reachable from `maivn_tools.*` is part of the stable surface.
-Specifically:
+The documented public surface includes the modules below. This excludes
+private identifiers described in the next section. The current package is
+experimental: the [Tools overview](index.md) warns that connector request
+shapes and public methods can change between releases. Treat the compatibility
+rules below as the intended policy, not a claim of live-provider validation.
 
 - `maivn_tools.core` — protocols, metadata, permissions, dry-run, registration.
 - `maivn_tools.auth` — auth strategies, secret resolvers, OAuth flow layer.
@@ -27,7 +30,7 @@ Specifically:
 - `maivn_tools.testing` — mock transport and helpers.
 - `maivn_tools.connectors.*` — every shipped connector and its tools.
 
-Stable means:
+For surfaces released as stable, the compatibility policy is:
 
 - Module paths do not move between minor releases.
 - Constructor argument names and types follow semver.
@@ -58,8 +61,9 @@ Deprecations are recorded in `CHANGELOG.md` under the affected version.
 
 ## Optional dependencies
 
-Connectors that need third-party drivers (e.g. `psycopg`, `pypdf`,
-`python-docx`) declare them through pip extras:
+Postgres and PDF extraction have optional drivers (`psycopg` and `pypdf`).
+Office and artifact rendering dependencies, including `python-docx`, are required
+by the current package. Compatibility extras remain available:
 
 ```bash
 pip install maivn-tools[postgres,pdf,docx]
@@ -70,8 +74,9 @@ major bump.
 
 ## Python support
 
-The package supports the three most recent CPython minor versions. The
-classifier list in `pyproject.toml` is authoritative.
+The current package requires Python 3.12 or newer, as declared by
+`requires-python` in `pyproject.toml`. That minimum is not evidence that every
+newer interpreter has been tested.
 
 ## Connector additions and removals
 

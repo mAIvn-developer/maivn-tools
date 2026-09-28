@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import AmazonSellerToolSet
 
-__all__ = ["AmazonSellerToolSet"]
+__all__ = ['AmazonSellerToolSet']

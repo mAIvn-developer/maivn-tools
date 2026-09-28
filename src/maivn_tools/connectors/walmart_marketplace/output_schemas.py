@@ -19,60 +19,60 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _ITEM_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "item_ref": {"type": "string"},
-        "sku": {"type": "string"},
-        "product_name": {"type": "string"},
-        "price": {"type": ["object", "number", "string", "null"]},
-        "publish_status": {"type": "string"},
-        "lifecycle_status": {"type": "string"},
-        "wpid": {"type": "string"},
-        "gtin": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'item_ref': {'type': 'string'},
+        'sku': {'type': 'string'},
+        'product_name': {'type': 'string'},
+        'price': {'type': ['object', 'number', 'string', 'null']},
+        'publish_status': {'type': 'string'},
+        'lifecycle_status': {'type': 'string'},
+        'wpid': {'type': 'string'},
+        'gtin': {'type': 'string'},
     },
-    "required": ["item_ref", "sku"],
+    'required': ['item_ref', 'sku'],
 }
 
 _ORDER_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "order_ref": {"type": "string"},
-        "purchase_order_id": {"type": "string"},
-        "customer_order_id": {"type": "string"},
-        "order_date": {"type": "string"},
-        "customer_name": {"type": "string"},
-        "customer_email_id": {"type": "string"},
-        "purchase_order_id_raw": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'order_ref': {'type': 'string'},
+        'purchase_order_id': {'type': 'string'},
+        'customer_order_id': {'type': 'string'},
+        'order_date': {'type': 'string'},
+        'customer_name': {'type': 'string'},
+        'customer_email_id': {'type': 'string'},
+        'purchase_order_id_raw': {'type': 'string'},
     },
-    "required": ["order_ref", "purchase_order_id"],
+    'required': ['order_ref', 'purchase_order_id'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_ITEMS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "items": {"type": "array", "items": _ITEM_SUMMARY},
-        "count": {"type": "integer"},
-        "total_items": {"type": ["integer", "null"]},
-        "next_cursor": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'items': {'type': 'array', 'items': _ITEM_SUMMARY},
+        'count': {'type': 'integer'},
+        'total_items': {'type': ['integer', 'null']},
+        'next_cursor': {'type': ['string', 'null']},
     },
-    "required": ["items", "count"],
+    'required': ['items', 'count'],
 }
 
 LIST_ORDERS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "orders": {"type": "array", "items": _ORDER_SUMMARY},
-        "count": {"type": "integer"},
-        "next_cursor": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'orders': {'type': 'array', 'items': _ORDER_SUMMARY},
+        'count': {'type': 'integer'},
+        'next_cursor': {'type': ['string', 'null']},
     },
-    "required": ["orders", "count"],
+    'required': ['orders', 'count'],
 }
 
 
 __all__ = [
-    "LIST_ITEMS_OUTPUT",
-    "LIST_ORDERS_OUTPUT",
+    'LIST_ITEMS_OUTPUT',
+    'LIST_ORDERS_OUTPUT',
 ]

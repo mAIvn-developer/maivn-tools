@@ -45,7 +45,7 @@ class SecretRef:
 
     def __post_init__(self) -> None:
         if not self.name:
-            raise ValueError("SecretRef.name is required")
+            raise ValueError('SecretRef.name is required')
 
 
 # MARK: - Resolver base
@@ -86,20 +86,20 @@ class EnvironmentSecretResolver(SecretResolver):
         self,
         env: Mapping[str, str] | None = None,
         *,
-        prefix: str = "",
+        prefix: str = '',
     ) -> None:
         self._env = env if env is not None else os.environ
         self._prefix = prefix
 
     def resolve(self, ref: SecretRef) -> str:
-        if ref.scheme not in (None, "env"):
+        if ref.scheme not in (None, 'env'):
             raise MissingSecretError(
-                f"EnvironmentSecretResolver cannot resolve scheme {ref.scheme!r}"
+                f'EnvironmentSecretResolver cannot resolve scheme {ref.scheme!r}'
             )
-        key = f"{self._prefix}{ref.name}"
+        key = f'{self._prefix}{ref.name}'
         value = self._env.get(key)
         if value is None:
-            raise MissingSecretError(f"Environment variable {key!r} is not set")
+            raise MissingSecretError(f'Environment variable {key!r} is not set')
         return value
 
 
@@ -114,12 +114,12 @@ class StaticSecretResolver(SecretResolver):
         self._secrets = dict(secrets)
 
     def resolve(self, ref: SecretRef) -> str:
-        if ref.scheme not in (None, "static"):
-            raise MissingSecretError(f"StaticSecretResolver cannot resolve scheme {ref.scheme!r}")
+        if ref.scheme not in (None, 'static'):
+            raise MissingSecretError(f'StaticSecretResolver cannot resolve scheme {ref.scheme!r}')
         try:
             return self._secrets[ref.name]
         except KeyError as exc:
-            raise MissingSecretError(f"Secret {ref.name!r} is not registered") from exc
+            raise MissingSecretError(f'Secret {ref.name!r} is not registered') from exc
 
 
 class ChainedSecretResolver(SecretResolver):
@@ -128,11 +128,11 @@ class ChainedSecretResolver(SecretResolver):
     def __init__(self, resolvers: Iterable[SecretResolver]) -> None:
         self._resolvers = list(resolvers)
         if not self._resolvers:
-            raise ValueError("ChainedSecretResolver requires at least one resolver")
+            raise ValueError('ChainedSecretResolver requires at least one resolver')
 
     def resolve(self, ref: SecretRef) -> str:
         for resolver in self._resolvers:
             value = resolver.try_resolve(ref)
             if value is not None:
                 return value
-        raise MissingSecretError(f"No resolver in chain could resolve secret {ref.name!r}")
+        raise MissingSecretError(f'No resolver in chain could resolve secret {ref.name!r}')

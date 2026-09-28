@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import StitchToolSet
 
-__all__ = ["StitchToolSet"]
+__all__ = ['StitchToolSet']

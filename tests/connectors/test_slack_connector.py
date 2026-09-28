@@ -5,43 +5,34 @@ from collections.abc import Mapping
 from typing import cast
 
 import pytest
-from maivn._internal.api.agent import Agent
-from maivn._internal.api.client import Client
-from maivn._internal.core.tool_specs.schema_builder import SchemaBuilder
-from maivn._internal.utils.configuration import MaivnConfiguration, ServerConfiguration
+from maivn import Agent
+from maivn import toolify_options as get_toolify_options
+from maivn import toolset_options as get_toolset_options
 
 from maivn_tools.connectors.slack import SlackApiError, SlackToolSet
+from maivn_tools.core.permissions import PermissionFlag, PermissionSet
 from maivn_tools.testing import MockTransport, json_response
 
 
 def _make_agent() -> Agent:
-    config = MaivnConfiguration(
-        server=ServerConfiguration(
-            base_url="http://example.com",
-            mock_base_url="http://example.com",
-        )
-    )
-    client = Client.from_configuration(api_key="key", configuration=config)
-    return Agent(name="t", client=client)
+    return Agent(name='t', api_key='key')
 
 
 def _connector() -> tuple[SlackToolSet, MockTransport]:
     transport = MockTransport()
-    connector = SlackToolSet(token="xoxb-secret", transport=transport)
+    connector = SlackToolSet(token='xoxb-secret', transport=transport)
     return connector, transport
 
 
 def test_slack_connector_validates_token() -> None:
     with pytest.raises(ValueError):
-        SlackToolSet(token="")
+        SlackToolSet(token='')
 
 
 def test_slack_connector_is_a_toolset() -> None:
-    from maivn._internal.utils.toolset import get_toolify_options, get_toolset_options
-
     opts = get_toolset_options(SlackToolSet)
     assert opts is not None
-    assert opts.prefix == "slack"
+    assert opts.prefix == 'slack'
     connector, _ = _connector()
     assert get_toolify_options(connector.auth_test) is not None
     assert get_toolify_options(connector.post_message) is not None
@@ -49,38 +40,37 @@ def test_slack_connector_is_a_toolset() -> None:
 
 def test_slack_channel_history_tool_schema_constrains_channel_input() -> None:
     connector, _ = _connector()
-    schema = cast(
-        "Mapping[str, object]",
-        SchemaBuilder().create_from_function(connector.channel_history, tool_id="slack-history"),
-    )
-    properties = cast("Mapping[str, object]", schema["properties"])
-    channel_schema = cast("Mapping[str, object]", properties["channel"])
-    any_of = channel_schema.get("anyOf")
+    agent = _make_agent()
+    tools = {tool.name: tool for tool in agent.add_toolset(connector)}
+    schema = cast('Mapping[str, object]', tools['SLACK_channel_history'].input_schema)
+    properties = cast('Mapping[str, object]', schema['properties'])
+    channel_schema = cast('Mapping[str, object]', properties['channel'])
+    any_of = channel_schema.get('anyOf')
 
     assert isinstance(any_of, list)
     variants = [
-        cast("Mapping[str, object]", variant)
-        for variant in cast("list[object]", any_of)
+        cast('Mapping[str, object]', variant)
+        for variant in cast('list[object]', any_of)
         if isinstance(variant, Mapping)
     ]
-    types = {variant.get("type") for variant in variants}
-    assert {"string", "object", "array"} <= types
-    assert "null" not in types
+    types = {variant.get('type') for variant in variants}
+    assert {'string', 'object', 'array'} <= types
+    assert 'null' not in types
 
-    object_variant = next(variant for variant in variants if variant.get("type") == "object")
-    object_any_of = object_variant.get("anyOf")
+    object_variant = next(variant for variant in variants if variant.get('type') == 'object')
+    object_any_of = object_variant.get('anyOf')
     assert isinstance(object_any_of, list)
     object_variants = [
-        cast("Mapping[str, object]", variant)
-        for variant in cast("list[object]", object_any_of)
+        cast('Mapping[str, object]', variant)
+        for variant in cast('list[object]', object_any_of)
         if isinstance(variant, Mapping)
     ]
     required_sets: set[tuple[object, ...]] = set()
     for variant in object_variants:
-        required = variant.get("required")
+        required = variant.get('required')
         if isinstance(required, list):
-            required_sets.add(tuple(cast("list[object]", required)))
-    assert {("channel_id",), ("id",), ("channel",), ("name",)} <= required_sets
+            required_sets.add(tuple(cast('list[object]', required)))
+    assert {('channel_id',), ('id',), ('channel',), ('name',)} <= required_sets
 
 
 def test_slack_compact_read_tools_register_first_class_output_schemas() -> None:
@@ -90,53 +80,51 @@ def test_slack_compact_read_tools_register_first_class_output_schemas() -> None:
 
     schemas_by_name = {tool.name: tool.output_schema for tool in tools}
 
-    list_channels_schema = schemas_by_name["SLACK_list_channels"]
+    list_channels_schema = schemas_by_name['SLACK_list_channels']
     assert isinstance(list_channels_schema, dict)
-    list_channels_properties = cast("dict[str, object]", list_channels_schema["properties"])
-    channels = cast("dict[str, object]", list_channels_properties["channels"])
-    assert channels["type"] == "array"
+    list_channels_properties = cast('dict[str, object]', list_channels_schema['properties'])
+    channels = cast('dict[str, object]', list_channels_properties['channels'])
+    assert channels['type'] == 'array'
 
-    channel_history_schema = schemas_by_name["SLACK_channel_history"]
+    channel_history_schema = schemas_by_name['SLACK_channel_history']
     assert isinstance(channel_history_schema, dict)
-    channel_history_properties = cast("dict[str, object]", channel_history_schema["properties"])
-    messages = cast("dict[str, object]", channel_history_properties["messages"])
-    assert messages["type"] == "array"
+    channel_history_properties = cast('dict[str, object]', channel_history_schema['properties'])
+    messages = cast('dict[str, object]', channel_history_properties['messages'])
+    assert messages['type'] == 'array'
 
-    search_messages_schema = schemas_by_name["SLACK_search_messages"]
+    search_messages_schema = schemas_by_name['SLACK_search_messages']
     assert isinstance(search_messages_schema, dict)
-    search_messages_properties = cast("dict[str, object]", search_messages_schema["properties"])
-    search_results = cast("dict[str, object]", search_messages_properties["messages"])
-    assert search_results["type"] == "array"
+    search_messages_properties = cast('dict[str, object]', search_messages_schema['properties'])
+    search_results = cast('dict[str, object]', search_messages_properties['messages'])
+    assert search_results['type'] == 'array'
 
 
 def test_slack_output_schemas_are_not_published_through_tool_metadata() -> None:
-    from maivn._internal.utils.toolset import get_toolify_options
-
     connector, _ = _connector()
     opts = get_toolify_options(connector.list_channels)
 
     assert opts is not None
-    assert "output_schema" not in opts.metadata
+    assert 'output_schema' not in opts.metadata
 
 
 def test_auth_test_attaches_bearer_header() -> None:
     connector, transport = _connector()
-    transport.enqueue(json_response({"ok": True, "user": "bot"}))
+    transport.enqueue(json_response({'ok': True, 'user': 'bot'}))
     result = connector.auth_test()
-    assert result["user"] == "bot"
-    assert transport.requests[0].headers["Authorization"] == "Bearer xoxb-secret"
+    assert result['user'] == 'bot'
+    assert transport.requests[0].headers['Authorization'] == 'Bearer xoxb-secret'
 
 
 def test_user_lookup_dispatches_to_correct_path() -> None:
     connector, transport = _connector()
-    transport.enqueue(json_response({"ok": True, "user": {"id": "U1"}}))
-    transport.enqueue(json_response({"ok": True, "user": {"id": "U2"}}))
-    connector.user_lookup(user_id="U1")
-    connector.user_lookup(email="user@example.test")
-    assert transport.requests[0].url.endswith("/users.info")
-    assert transport.requests[0].params == {"user": "U1"}
-    assert transport.requests[1].url.endswith("/users.lookupByEmail")
-    assert transport.requests[1].params == {"email": "user@example.test"}
+    transport.enqueue(json_response({'ok': True, 'user': {'id': 'U1'}}))
+    transport.enqueue(json_response({'ok': True, 'user': {'id': 'U2'}}))
+    connector.user_lookup(user_id='U1')
+    connector.user_lookup(email='user@example.test')
+    assert transport.requests[0].url.endswith('/users.info')
+    assert transport.requests[0].params == {'user': 'U1'}
+    assert transport.requests[1].url.endswith('/users.lookupByEmail')
+    assert transport.requests[1].params == {'email': 'user@example.test'}
 
 
 def test_user_lookup_requires_exactly_one_identifier() -> None:
@@ -144,199 +132,199 @@ def test_user_lookup_requires_exactly_one_identifier() -> None:
     with pytest.raises(ValueError):
         connector.user_lookup()
     with pytest.raises(ValueError):
-        connector.user_lookup(user_id="U1", email="x@x")
+        connector.user_lookup(user_id='U1', email='x@x')
 
 
 def test_slack_call_surface_raises_for_ok_false() -> None:
     connector, transport = _connector()
-    transport.enqueue(json_response({"ok": False, "error": "channel_not_found"}))
+    transport.enqueue(json_response({'ok': False, 'error': 'channel_not_found'}))
     with pytest.raises(SlackApiError) as exc:
-        connector.channel_history(channel="C404")
-    assert "channel_not_found" in str(exc.value)
+        connector.channel_history(channel='C404')
+    assert 'channel_not_found' in str(exc.value)
 
 
 def test_post_message_validates_and_serializes_body() -> None:
     connector, transport = _connector()
     with pytest.raises(ValueError):
-        connector.post_message(channel="")
+        connector.post_message(channel='')
     with pytest.raises(ValueError):
-        connector.post_message(channel="C1")
+        connector.post_message(channel='C1')
 
-    transport.enqueue(json_response({"ok": True, "ts": "1.0"}))
-    connector.post_message(channel="C1", text="hi", thread_ts="parent-1")
+    transport.enqueue(json_response({'ok': True, 'ts': '1.0'}))
+    connector.post_message(channel='C1', text='hi', thread_ts='parent-1')
     request = transport.requests[0]
-    assert request.method == "POST"
-    assert request.url.endswith("/chat.postMessage")
-    assert request.json_body == {"channel": "C1", "text": "hi", "thread_ts": "parent-1"}
+    assert request.method == 'POST'
+    assert request.url.endswith('/chat.postMessage')
+    assert request.json_body == {'channel': 'C1', 'text': 'hi', 'thread_ts': 'parent-1'}
 
 
 def test_search_and_history_validate_inputs() -> None:
     connector, transport = _connector()
     with pytest.raises(ValueError):
-        connector.search_messages("")
+        connector.search_messages('')
     with pytest.raises(ValueError):
-        connector.channel_history("")
-    transport.enqueue(json_response({"ok": True, "messages": {"matches": []}}))
-    connector.search_messages("needle")
-    assert transport.requests[0].params["query"] == "needle"
-    assert transport.requests[0].params["count"] == 20
+        connector.channel_history('')
+    transport.enqueue(json_response({'ok': True, 'messages': {'matches': []}}))
+    connector.search_messages('needle')
+    assert transport.requests[0].params['query'] == 'needle'
+    assert transport.requests[0].params['count'] == 20
 
 
 def test_list_channels_includes_optional_cursor() -> None:
     connector, transport = _connector()
-    transport.enqueue(json_response({"ok": True, "channels": []}))
-    transport.enqueue(json_response({"ok": True, "channels": []}))
+    transport.enqueue(json_response({'ok': True, 'channels': []}))
+    transport.enqueue(json_response({'ok': True, 'channels': []}))
     connector.list_channels()
-    connector.list_channels(cursor="next")
-    assert "cursor" not in transport.requests[0].params
-    assert transport.requests[1].params["cursor"] == "next"
+    connector.list_channels(cursor='next')
+    assert 'cursor' not in transport.requests[0].params
+    assert transport.requests[1].params['cursor'] == 'next'
 
 
 def test_slack_search_files_and_user_endpoints() -> None:
     connector, transport = _connector()
-    transport.enqueue(json_response({"ok": True, "files": {"matches": []}}))
-    transport.enqueue(json_response({"ok": True, "members": []}))
-    transport.enqueue(json_response({"ok": True, "profile": {}}))
-    transport.enqueue(json_response({"ok": True, "profile": {}}))
-    transport.enqueue(json_response({"ok": True, "presence": "active"}))
-    connector.search_files("needle")
-    connector.list_users(cursor="abc")
-    connector.get_user_profile(user_id="U1")
-    connector.set_user_status("OOO", ":palm_tree:", status_expiration=1234567890)
-    connector.get_user_presence(user_id="U1")
-    assert transport.requests[0].url.endswith("/search.files")
-    assert transport.requests[1].params["cursor"] == "abc"
-    assert transport.requests[2].params == {"user": "U1", "include_labels": "false"}
-    assert transport.requests[3].json_body["profile"]["status_text"] == "OOO"
-    assert transport.requests[4].params == {"user": "U1"}
+    transport.enqueue(json_response({'ok': True, 'files': {'matches': []}}))
+    transport.enqueue(json_response({'ok': True, 'members': []}))
+    transport.enqueue(json_response({'ok': True, 'profile': {}}))
+    transport.enqueue(json_response({'ok': True, 'profile': {}}))
+    transport.enqueue(json_response({'ok': True, 'presence': 'active'}))
+    connector.search_files('needle')
+    connector.list_users(cursor='abc')
+    connector.get_user_profile(user_id='U1')
+    connector.set_user_status('OOO', ':palm_tree:', status_expiration=1234567890)
+    connector.get_user_presence(user_id='U1')
+    assert transport.requests[0].url.endswith('/search.files')
+    assert transport.requests[1].params['cursor'] == 'abc'
+    assert transport.requests[2].params == {'user': 'U1', 'include_labels': 'false'}
+    assert transport.requests[3].json_body['profile']['status_text'] == 'OOO'
+    assert transport.requests[4].params == {'user': 'U1'}
     with pytest.raises(ValueError):
-        connector.search_files("")
+        connector.search_files('')
     with pytest.raises(ValueError):
-        connector.get_user_profile("")
+        connector.get_user_profile('')
     with pytest.raises(ValueError):
-        connector.get_user_presence("")
+        connector.get_user_presence('')
 
 
 def test_slack_channel_meta_and_membership() -> None:
     connector, transport = _connector()
-    transport.enqueue(json_response({"ok": True, "channel": {}}))
-    transport.enqueue(json_response({"ok": True, "members": []}))
-    transport.enqueue(json_response({"ok": True, "messages": []}))
-    connector.channel_info("C1", include_locale=True, include_num_members=True)
-    connector.channel_members("C1", cursor="next")
-    connector.thread_replies("C1", "1.0", cursor="next2")
-    assert transport.requests[0].params["include_locale"] == "true"
-    assert transport.requests[1].params["cursor"] == "next"
-    assert transport.requests[2].params["ts"] == "1.0"
+    transport.enqueue(json_response({'ok': True, 'channel': {}}))
+    transport.enqueue(json_response({'ok': True, 'members': []}))
+    transport.enqueue(json_response({'ok': True, 'messages': []}))
+    connector.channel_info('C1', include_locale=True, include_num_members=True)
+    connector.channel_members('C1', cursor='next')
+    connector.thread_replies('C1', '1.0', cursor='next2')
+    assert transport.requests[0].params['include_locale'] == 'true'
+    assert transport.requests[1].params['cursor'] == 'next'
+    assert transport.requests[2].params['ts'] == '1.0'
     with pytest.raises(ValueError):
-        connector.channel_info("")
+        connector.channel_info('')
     with pytest.raises(ValueError):
-        connector.channel_members("")
+        connector.channel_members('')
     with pytest.raises(ValueError):
-        connector.thread_replies("", "1.0")
+        connector.thread_replies('', '1.0')
     with pytest.raises(ValueError):
-        connector.thread_replies("C1", "")
+        connector.thread_replies('C1', '')
 
 
 def test_slack_channel_lifecycle() -> None:
     connector, transport = _connector()
     for _ in range(11):
-        transport.enqueue(json_response({"ok": True}))
-    connector.create_channel("project")
-    connector.rename_channel("C1", "renamed")
-    connector.set_channel_topic("C1", "topic")
-    connector.set_channel_purpose("C1", "purpose")
-    connector.join_channel("C1")
-    connector.leave_channel("C1")
-    connector.invite_to_channel("C1", users=["U1", "U2"])
-    connector.kick_from_channel("C1", "U1")
-    connector.archive_channel("C1")
-    connector.unarchive_channel("C1")
-    connector.open_im(["U1", "U2"])
-    assert transport.requests[0].json_body == {"name": "project", "is_private": False}
-    assert transport.requests[1].json_body == {"channel": "C1", "name": "renamed"}
-    assert transport.requests[6].json_body["users"] == "U1,U2"
-    assert transport.requests[10].url.endswith("/conversations.open")
+        transport.enqueue(json_response({'ok': True}))
+    connector.create_channel('project')
+    connector.rename_channel('C1', 'renamed')
+    connector.set_channel_topic('C1', 'topic')
+    connector.set_channel_purpose('C1', 'purpose')
+    connector.join_channel('C1')
+    connector.leave_channel('C1')
+    connector.invite_to_channel('C1', users=['U1', 'U2'])
+    connector.kick_from_channel('C1', 'U1')
+    connector.archive_channel('C1')
+    connector.unarchive_channel('C1')
+    connector.open_im(['U1', 'U2'])
+    assert transport.requests[0].json_body == {'name': 'project', 'is_private': False}
+    assert transport.requests[1].json_body == {'channel': 'C1', 'name': 'renamed'}
+    assert transport.requests[6].json_body['users'] == 'U1,U2'
+    assert transport.requests[10].url.endswith('/conversations.open')
     with pytest.raises(ValueError):
-        connector.create_channel("")
+        connector.create_channel('')
     with pytest.raises(ValueError):
-        connector.rename_channel("C", "")
+        connector.rename_channel('C', '')
     with pytest.raises(ValueError):
-        connector.invite_to_channel("C1", users=[])
+        connector.invite_to_channel('C1', users=[])
 
 
 def test_slack_message_mutations() -> None:
     connector, transport = _connector()
     for _ in range(7):
-        transport.enqueue(json_response({"ok": True}))
-    connector.post_ephemeral("C1", "U1", text="hi")
-    connector.update_message("C1", "1.0", text="new")
-    connector.delete_message("C1", "1.0")
-    connector.schedule_message("C1", post_at=1700000000, text="later")
-    connector.get_permalink("C1", "1.0")
-    connector.add_reaction("C1", "1.0", "thumbsup")
-    connector.remove_reaction("C1", "1.0", "thumbsup")
-    assert transport.requests[0].url.endswith("/chat.postEphemeral")
-    assert transport.requests[1].url.endswith("/chat.update")
-    assert transport.requests[2].url.endswith("/chat.delete")
-    assert transport.requests[3].json_body["post_at"] == 1700000000
-    assert transport.requests[4].params == {"channel": "C1", "message_ts": "1.0"}
+        transport.enqueue(json_response({'ok': True}))
+    connector.post_ephemeral('C1', 'U1', text='hi')
+    connector.update_message('C1', '1.0', text='new')
+    connector.delete_message('C1', '1.0')
+    connector.schedule_message('C1', post_at=1700000000, text='later')
+    connector.get_permalink('C1', '1.0')
+    connector.add_reaction('C1', '1.0', 'thumbsup')
+    connector.remove_reaction('C1', '1.0', 'thumbsup')
+    assert transport.requests[0].url.endswith('/chat.postEphemeral')
+    assert transport.requests[1].url.endswith('/chat.update')
+    assert transport.requests[2].url.endswith('/chat.delete')
+    assert transport.requests[3].json_body['post_at'] == 1700000000
+    assert transport.requests[4].params == {'channel': 'C1', 'message_ts': '1.0'}
     with pytest.raises(ValueError):
-        connector.post_ephemeral("", "U", text="x")
+        connector.post_ephemeral('', 'U', text='x')
     with pytest.raises(ValueError):
-        connector.update_message("C", "")
+        connector.update_message('C', '')
     with pytest.raises(ValueError):
-        connector.update_message("C", "1")
+        connector.update_message('C', '1')
     with pytest.raises(ValueError):
-        connector.delete_message("", "1")
+        connector.delete_message('', '1')
     with pytest.raises(ValueError):
-        connector.schedule_message("", post_at=1, text="x")
+        connector.schedule_message('', post_at=1, text='x')
     with pytest.raises(ValueError):
-        connector.schedule_message("C", post_at=0, text="x")
+        connector.schedule_message('C', post_at=0, text='x')
     with pytest.raises(ValueError):
-        connector.add_reaction("", "1", "thumbsup")
+        connector.add_reaction('', '1', 'thumbsup')
 
 
 def test_slack_pins_and_files_and_misc() -> None:
     connector, transport = _connector()
     for _ in range(9):
-        transport.enqueue(json_response({"ok": True}))
-    connector.pin_message("C1", "1.0")
-    connector.unpin_message("C1", "1.0")
-    connector.list_pins("C1")
-    connector.list_files(channel="C1", count=50)
-    connector.file_info("F1")
-    connector.delete_file("F1")
-    connector.add_reminder("write report", "in 1 hour", user="U1")
+        transport.enqueue(json_response({'ok': True}))
+    connector.pin_message('C1', '1.0')
+    connector.unpin_message('C1', '1.0')
+    connector.list_pins('C1')
+    connector.list_files(channel='C1', count=50)
+    connector.file_info('F1')
+    connector.delete_file('F1')
+    connector.add_reminder('write report', 'in 1 hour', user='U1')
     connector.list_reminders()
-    connector.delete_reminder("Rm1")
-    assert transport.requests[0].url.endswith("/pins.add")
-    assert transport.requests[2].params == {"channel": "C1"}
-    assert transport.requests[3].params["count"] == 50
-    assert transport.requests[6].json_body["text"] == "write report"
-    assert transport.requests[8].json_body == {"reminder": "Rm1"}
+    connector.delete_reminder('Rm1')
+    assert transport.requests[0].url.endswith('/pins.add')
+    assert transport.requests[2].params == {'channel': 'C1'}
+    assert transport.requests[3].params['count'] == 50
+    assert transport.requests[6].json_body['text'] == 'write report'
+    assert transport.requests[8].json_body == {'reminder': 'Rm1'}
     with pytest.raises(ValueError):
-        connector.pin_message("", "1")
+        connector.pin_message('', '1')
     with pytest.raises(ValueError):
-        connector.list_pins("")
+        connector.list_pins('')
     with pytest.raises(ValueError):
-        connector.file_info("")
+        connector.file_info('')
     with pytest.raises(ValueError):
-        connector.delete_file("")
+        connector.delete_file('')
     with pytest.raises(ValueError):
-        connector.add_reminder("", "")
+        connector.add_reminder('', '')
     with pytest.raises(ValueError):
-        connector.delete_reminder("")
+        connector.delete_reminder('')
 
 
 def test_slack_emoji_and_team_info() -> None:
     connector, transport = _connector()
-    transport.enqueue(json_response({"ok": True, "emoji": {}}))
-    transport.enqueue(json_response({"ok": True, "team": {}}))
+    transport.enqueue(json_response({'ok': True, 'emoji': {}}))
+    transport.enqueue(json_response({'ok': True, 'team': {}}))
     connector.emoji_list()
     connector.team_info()
-    assert transport.requests[0].url.endswith("/emoji.list")
-    assert transport.requests[1].url.endswith("/team.info")
+    assert transport.requests[0].url.endswith('/emoji.list')
+    assert transport.requests[1].url.endswith('/team.info')
 
 
 # MARK: - Agent-ready: Slack summaries / tolerant inputs
@@ -347,36 +335,36 @@ def test_slack_list_channels_summaries_hide_ids_by_default() -> None:
     transport.enqueue(
         json_response(
             {
-                "ok": True,
-                "channels": [
+                'ok': True,
+                'channels': [
                     {
-                        "id": "C111111111",
-                        "name": "general",
-                        "is_private": False,
-                        "is_member": True,
-                        "topic": {"value": "Company-wide"},
-                        "num_members": 42,
+                        'id': 'C111111111',
+                        'name': 'general',
+                        'is_private': False,
+                        'is_member': True,
+                        'topic': {'value': 'Company-wide'},
+                        'num_members': 42,
                     },
                     {
-                        "id": "C222222222",
-                        "name": "random",
-                        "is_private": False,
-                        "is_member": False,
-                        "topic": {"value": "Watercooler"},
-                        "num_members": 21,
+                        'id': 'C222222222',
+                        'name': 'random',
+                        'is_private': False,
+                        'is_member': False,
+                        'topic': {'value': 'Watercooler'},
+                        'num_members': 21,
                     },
                 ],
-                "response_metadata": {"next_cursor": "cur-next"},
+                'response_metadata': {'next_cursor': 'cur-next'},
             }
         )
     )
     result = connector.list_channels()
-    assert result["channels"][0]["channel_ref"] == "channel_1"
-    assert result["channels"][0]["name"] == "general"
-    assert result["channels"][0]["topic"] == "Company-wide"
-    assert "channel_id" not in result["channels"][0]
-    assert result["channels"][1]["channel_ref"] == "channel_2"
-    assert result["next_cursor"] == "cur-next"
+    assert result['channels'][0]['channel_ref'] == 'channel_1'
+    assert result['channels'][0]['name'] == 'general'
+    assert result['channels'][0]['topic'] == 'Company-wide'
+    assert 'channel_id' not in result['channels'][0]
+    assert result['channels'][1]['channel_ref'] == 'channel_2'
+    assert result['next_cursor'] == 'cur-next'
 
 
 def test_slack_list_channels_can_include_ids() -> None:
@@ -384,22 +372,22 @@ def test_slack_list_channels_can_include_ids() -> None:
     transport.enqueue(
         json_response(
             {
-                "ok": True,
-                "channels": [{"id": "C123", "name": "general"}],
-                "response_metadata": {"next_cursor": ""},
+                'ok': True,
+                'channels': [{'id': 'C123', 'name': 'general'}],
+                'response_metadata': {'next_cursor': ''},
             }
         )
     )
     result = connector.list_channels(include_ids=True)
-    assert result["channels"][0]["channel_id"] == "C123"
+    assert result['channels'][0]['channel_id'] == 'C123'
 
 
 def test_slack_list_channels_raw_mode_passthrough() -> None:
     connector, transport = _connector()
     raw_payload = {
-        "ok": True,
-        "channels": [{"id": "C123", "name": "general", "is_archived": False}],
-        "response_metadata": {"next_cursor": ""},
+        'ok': True,
+        'channels': [{'id': 'C123', 'name': 'general', 'is_archived': False}],
+        'response_metadata': {'next_cursor': ''},
     }
     transport.enqueue(json_response(raw_payload))
     result = connector.list_channels(include_metadata=False)
@@ -412,9 +400,9 @@ def test_slack_channel_history_summaries_hide_ids_and_support_dict_channel() -> 
     transport.enqueue(
         json_response(
             {
-                "ok": True,
-                "channels": [{"id": "C999999999", "name": "ops"}],
-                "response_metadata": {"next_cursor": ""},
+                'ok': True,
+                'channels': [{'id': 'C999999999', 'name': 'ops'}],
+                'response_metadata': {'next_cursor': ''},
             }
         )
     )
@@ -423,35 +411,73 @@ def test_slack_channel_history_summaries_hide_ids_and_support_dict_channel() -> 
     transport.enqueue(
         json_response(
             {
-                "ok": True,
-                "messages": [
+                'ok': True,
+                'messages': [
                     {
-                        "user": "U1",
-                        "text": "rollout looks good",
-                        "ts": "1700000000.000200",
-                        "thread_ts": None,
-                        "reply_count": 0,
+                        'user': 'U1',
+                        'text': 'rollout looks good',
+                        'ts': '1700000000.000200',
+                        'thread_ts': None,
+                        'reply_count': 0,
                     }
                 ],
-                "has_more": False,
-                "response_metadata": {"next_cursor": ""},
+                'has_more': False,
+                'response_metadata': {'next_cursor': ''},
             }
         )
     )
     # Call by friendly channel name -- should resolve to the cached id
-    result = connector.channel_history("ops")
-    assert transport.requests[1].params["channel"] == "C999999999"
-    assert result["messages"][0]["message_ref"] == "message_1"
-    assert result["messages"][0]["text"] == "rollout looks good"
-    assert result["messages"][0]["ts"] == "1700000000.000200"
-    assert "channel_id" not in result["messages"][0]
+    result = connector.channel_history('ops')
+    assert transport.requests[1].params['channel'] == 'C999999999'
+    assert result['messages'][0]['message_ref'] == 'message_1'
+    assert result['messages'][0]['text'] == 'rollout looks good'
+    assert result['messages'][0]['ts'] == '1700000000.000200'
+    assert 'channel_id' not in result['messages'][0]
 
 
 def test_slack_channel_history_accepts_channel_summary_dict() -> None:
     connector, transport = _connector()
-    transport.enqueue(json_response({"ok": True, "messages": []}))
-    connector.channel_history({"channel_id": "C0000000099"})
-    assert transport.requests[0].params["channel"] == "C0000000099"
+    transport.enqueue(json_response({'ok': True, 'messages': []}))
+    connector.channel_history({'channel_id': 'C0000000099'})
+    assert transport.requests[0].params['channel'] == 'C0000000099'
+
+
+def test_slack_history_preserves_channel_attribution_without_exposing_ids() -> None:
+    connector, transport = _connector()
+    transport.enqueue(
+        json_response(
+            {
+                'ok': True,
+                'channels': [
+                    {'id': 'C111111111', 'name': 'incidents'},
+                    {'id': 'C222222222', 'name': 'releases'},
+                ],
+            }
+        )
+    )
+    connector.list_channels()
+    for _ in range(2):
+        transport.enqueue(
+            json_response(
+                {
+                    'ok': True,
+                    'messages': [{'user': 'U1', 'text': 'Shared status update', 'ts': '1.0'}],
+                }
+            )
+        )
+    histories = [connector.channel_history(channel) for channel in ('incidents', 'releases')]
+    assert [history['channel_name'] for history in histories] == ['incidents', 'releases']
+    assert all(history['channel'] is None for history in histories)
+    assert all('channel_id' not in history['messages'][0] for history in histories)
+    assert len(transport.requests) == 3
+
+
+def test_slack_history_does_not_invent_a_name_for_an_unknown_channel_id() -> None:
+    connector, transport = _connector()
+    transport.enqueue(json_response({'ok': True, 'messages': []}))
+    history = connector.channel_history({'channel_id': 'C999999999', 'name': 'unverified'})
+    assert 'channel_name' not in history
+    assert history['channel'] is None
 
 
 def test_slack_search_messages_summaries_hide_ids() -> None:
@@ -459,32 +485,32 @@ def test_slack_search_messages_summaries_hide_ids() -> None:
     transport.enqueue(
         json_response(
             {
-                "ok": True,
-                "messages": {
-                    "matches": [
+                'ok': True,
+                'messages': {
+                    'matches': [
                         {
-                            "username": "alice",
-                            "text": "ship the migration",
-                            "ts": "1700000000.000200",
-                            "permalink": "https://x.slack.com/p1",
-                            "user": "U1",
-                            "channel": {"id": "C1", "name": "ops"},
+                            'username': 'alice',
+                            'text': 'ship the migration',
+                            'ts': '1700000000.000200',
+                            'permalink': 'https://x.slack.com/p1',
+                            'user': 'U1',
+                            'channel': {'id': 'C1', 'name': 'ops'},
                         }
                     ],
-                    "total": 1,
-                    "pagination": {"page_count": 1},
+                    'total': 1,
+                    'pagination': {'page_count': 1},
                 },
             }
         )
     )
-    result = connector.search_messages("rollout")
-    msg = result["messages"][0]
-    assert msg["message_ref"] == "message_1"
-    assert msg["username"] == "alice"
-    assert msg["channel_name"] == "ops"
-    assert msg["permalink"] == "https://x.slack.com/p1"
-    assert "user_id" not in msg
-    assert "channel_id" not in msg
+    result = connector.search_messages('rollout')
+    msg = result['messages'][0]
+    assert msg['message_ref'] == 'message_1'
+    assert msg['username'] == 'alice'
+    assert msg['channel_name'] == 'ops'
+    assert msg['permalink'] == 'https://x.slack.com/p1'
+    assert 'user_id' not in msg
+    assert 'channel_id' not in msg
 
 
 def test_slack_search_messages_can_return_ids() -> None:
@@ -492,26 +518,26 @@ def test_slack_search_messages_can_return_ids() -> None:
     transport.enqueue(
         json_response(
             {
-                "ok": True,
-                "messages": {
-                    "matches": [
+                'ok': True,
+                'messages': {
+                    'matches': [
                         {
-                            "username": "alice",
-                            "text": "x",
-                            "ts": "1.0",
-                            "user": "U42",
-                            "channel": {"id": "C7", "name": "ops"},
+                            'username': 'alice',
+                            'text': 'x',
+                            'ts': '1.0',
+                            'user': 'U42',
+                            'channel': {'id': 'C7', 'name': 'ops'},
                         }
                     ],
-                    "total": 1,
+                    'total': 1,
                 },
             }
         )
     )
-    result = connector.search_messages("anything", include_ids=True)
-    msg = result["messages"][0]
-    assert msg["user_id"] == "U42"
-    assert msg["channel_id"] == "C7"
+    result = connector.search_messages('anything', include_ids=True)
+    msg = result['messages'][0]
+    assert msg['user_id'] == 'U42'
+    assert msg['channel_id'] == 'C7'
 
 
 def test_slack_post_message_accepts_friendly_name_and_dict() -> None:
@@ -519,41 +545,39 @@ def test_slack_post_message_accepts_friendly_name_and_dict() -> None:
     transport.enqueue(
         json_response(
             {
-                "ok": True,
-                "channels": [{"id": "C111111111", "name": "alerts"}],
-                "response_metadata": {"next_cursor": ""},
+                'ok': True,
+                'channels': [{'id': 'C111111111', 'name': 'alerts'}],
+                'response_metadata': {'next_cursor': ''},
             }
         )
     )
     connector.list_channels()
 
     # Friendly name path
-    transport.enqueue(json_response({"ok": True, "ts": "1.0"}))
-    connector.post_message("alerts", text="hello world")
-    assert transport.requests[1].json_body["channel"] == "C111111111"
+    transport.enqueue(json_response({'ok': True, 'ts': '1.0'}))
+    connector.post_message('alerts', text='hello world')
+    assert transport.requests[1].json_body['channel'] == 'C111111111'
 
     # Dict path
-    transport.enqueue(json_response({"ok": True, "ts": "2.0"}))
-    connector.post_message({"channel_id": "C222222222"}, text="hi")
-    assert transport.requests[2].json_body["channel"] == "C222222222"
+    transport.enqueue(json_response({'ok': True, 'ts': '2.0'}))
+    connector.post_message({'channel_id': 'C222222222'}, text='hi')
+    assert transport.requests[2].json_body['channel'] == 'C222222222'
 
 
 def test_slack_update_and_delete_message_tolerate_message_dict() -> None:
     connector, transport = _connector()
-    transport.enqueue(json_response({"ok": True}))
-    message = {"ts": "1700000000.000200"}
-    connector.update_message("C1234567890", message, text="edited")
-    assert transport.requests[0].json_body["ts"] == "1700000000.000200"
+    transport.enqueue(json_response({'ok': True}))
+    message = {'ts': '1700000000.000200'}
+    connector.update_message('C1234567890', message, text='edited')
+    assert transport.requests[0].json_body['ts'] == '1700000000.000200'
 
-    transport.enqueue(json_response({"ok": True}))
-    connector.delete_message("C1234567890", message)
-    assert transport.requests[1].url.endswith("/chat.delete")
-    assert transport.requests[1].json_body["ts"] == "1700000000.000200"
+    transport.enqueue(json_response({'ok': True}))
+    connector.delete_message('C1234567890', message)
+    assert transport.requests[1].url.endswith('/chat.delete')
+    assert transport.requests[1].json_body['ts'] == '1700000000.000200'
 
 
 def test_slack_destructive_tools_tagged() -> None:
-    from maivn._internal.utils.toolset import get_toolify_options
-
     connector, _ = _connector()
     for method in (
         connector.delete_message,
@@ -565,10 +589,6 @@ def test_slack_destructive_tools_tagged() -> None:
 
 
 def test_slack_permissions_and_destructive_are_wired() -> None:
-    from maivn._internal.utils.toolset import get_toolify_options
-
-    from maivn_tools.core.permissions import PermissionFlag, PermissionSet
-
     connector, _ = _connector()
     # list_channels is READ; create_channel is WRITE; delete_message is
     # DELETE+destructive. Tags ("read"/"write"/"destructive") are

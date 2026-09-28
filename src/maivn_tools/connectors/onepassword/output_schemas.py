@@ -18,76 +18,76 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _VAULT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "vault_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "description": {"type": "string"},
-        "type": {"type": "string"},
-        "item_count": {"type": "integer"},
-        "vault_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'vault_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'description': {'type': 'string'},
+        'type': {'type': 'string'},
+        'item_count': {'type': 'integer'},
+        'vault_id': {'type': 'string'},
     },
-    "required": ["vault_ref", "name"],
+    'required': ['vault_ref', 'name'],
 }
 
 _ITEM_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "item_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "category": {"type": "string"},
-        "tags": {"type": "array", "items": {"type": "string"}},
-        "updated_at": {"type": "string"},
-        "primary_url": {"type": "string"},
-        "item_id": {"type": "string"},
-        "vault_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'item_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'category': {'type': 'string'},
+        'tags': {'type': 'array', 'items': {'type': 'string'}},
+        'updated_at': {'type': 'string'},
+        'primary_url': {'type': 'string'},
+        'item_id': {'type': 'string'},
+        'vault_id': {'type': 'string'},
     },
-    "required": ["item_ref", "title"],
+    'required': ['item_ref', 'title'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_VAULTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "vaults": {"type": "array", "items": _VAULT_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'vaults': {'type': 'array', 'items': _VAULT_SUMMARY},
     },
-    "required": ["vaults"],
+    'required': ['vaults'],
 }
 
 LIST_ITEMS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "items": {"type": "array", "items": _ITEM_SUMMARY},
-        "vault_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'items': {'type': 'array', 'items': _ITEM_SUMMARY},
+        'vault_id': {'type': 'string'},
     },
-    "required": ["items"],
+    'required': ['items'],
 }
 
 DELETE_ITEM_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "item_id": {"type": "string"},
-        "deleted": {"type": "boolean"},
-        "status": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'item_id': {'type': 'string'},
+        'deleted': {'type': 'boolean'},
+        'status': {'type': 'integer'},
     },
-    "required": ["item_id", "deleted"],
+    'required': ['item_id', 'deleted'],
 }
 
 HEARTBEAT_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "status": {"type": "integer"},
-        "alive": {"type": "boolean"},
+    'type': 'object',
+    'properties': {
+        'status': {'type': 'integer'},
+        'alive': {'type': 'boolean'},
     },
-    "required": ["status", "alive"],
+    'required': ['status', 'alive'],
 }
 
 
 __all__ = [
-    "DELETE_ITEM_OUTPUT",
-    "HEARTBEAT_OUTPUT",
-    "LIST_ITEMS_OUTPUT",
-    "LIST_VAULTS_OUTPUT",
+    'DELETE_ITEM_OUTPUT',
+    'HEARTBEAT_OUTPUT',
+    'LIST_ITEMS_OUTPUT',
+    'LIST_VAULTS_OUTPUT',
 ]

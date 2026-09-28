@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, ParamSpec, TypeVar
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -60,31 +60,27 @@ class DryRunOutcome:
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable representation of the outcome."""
         return {
-            "tool": self.tool,
-            "plans": [
+            'tool': self.tool,
+            'plans': [
                 {
-                    "operation": plan.operation,
-                    "target": plan.target,
-                    "before": plan.before,
-                    "after": plan.after,
-                    "notes": plan.notes,
+                    'operation': plan.operation,
+                    'target': plan.target,
+                    'before': plan.before,
+                    'after': plan.after,
+                    'notes': plan.notes,
                 }
                 for plan in self.plans
             ],
-            "warnings": list(self.warnings),
+            'warnings': list(self.warnings),
         }
 
 
-P = ParamSpec("P")
-R = TypeVar("R")
-
-
-def dry_run_capable(func: Callable[P, R]) -> Callable[P, R]:
+def dry_run_capable[**P, R](func: Callable[P, R]) -> Callable[P, R]:
     """Marker decorator declaring that a callable honors the dry-run contract.
 
     The decorator is a no-op at runtime; it only attaches a
     ``__maivn_dry_run_capable__`` attribute so hosts and tests can discover
     which tools support dry runs without executing them.
     """
-    setattr(func, "__maivn_dry_run_capable__", True)  # noqa: B010
+    setattr(func, '__maivn_dry_run_capable__', True)  # noqa: B010
     return func

@@ -19,10 +19,10 @@ from .output_schemas import LIST_PAGE_POSTS_OUTPUT, LIST_POST_COMMENTS_OUTPUT
 # currently-supported version. v24.0 gives headroom without being bleeding-edge
 # (latest is v25.0). See the changelog for active-version windows:
 # https://developers.facebook.com/docs/graph-api/changelog/versions/
-_API_VERSION = "v24.0"
+_API_VERSION = 'v24.0'
 
 
-@toolset(prefix="meta")
+@toolset(prefix='meta')
 class MetaToolSet:
     """A connector for the Meta Graph API (Facebook).
 
@@ -33,17 +33,17 @@ class MetaToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="meta",
-        display_name="Meta (Facebook)",
-        version="0.1.0",
-        description="Facebook Pages, posts, comments, insights, and user profile.",
+        name='meta',
+        display_name='Meta (Facebook)',
+        version='0.1.0',
+        description='Facebook Pages, posts, comments, insights, and user profile.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "pages_show_list": "List the pages a user manages.",
-            "pages_read_engagement": "Read page posts and comments.",
-            "pages_manage_posts": "Publish + delete page posts.",
-            "pages_manage_engagement": "Reply to comments.",
-            "read_insights": "Read page / post insights.",
+            'pages_show_list': 'List the pages a user manages.',
+            'pages_read_engagement': 'Read page posts and comments.',
+            'pages_manage_posts': 'Publish + delete page posts.',
+            'pages_manage_engagement': 'Reply to comments.',
+            'read_insights': 'Read page / post insights.',
         },
         capabilities=frozenset(
             {
@@ -52,9 +52,9 @@ class MetaToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://developers.facebook.com/docs/graph-api/",
-        homepage_url="https://www.facebook.com/",
-        tags=("social-media", "meta"),
+        documentation_url='https://developers.facebook.com/docs/graph-api/',
+        homepage_url='https://www.facebook.com/',
+        tags=('social-media', 'meta'),
     )
 
     def __init__(
@@ -62,19 +62,19 @@ class MetaToolSet:
         *,
         access_token: str,
         graph_version: str = _API_VERSION,
-        base_url: str = "https://graph.facebook.com",
+        base_url: str = 'https://graph.facebook.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._version = graph_version
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(access_token, query_param="access_token"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(access_token, query_param='access_token'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -82,7 +82,7 @@ class MetaToolSet:
         return self._client
 
     def _path(self, suffix: str) -> str:
-        return f"/{self._version}{suffix}"
+        return f'/{self._version}{suffix}'
 
     # MARK: - Internal helpers
 
@@ -91,17 +91,17 @@ class MetaToolSet:
         """Resolve a post ID from a string or a post dict returned by listings."""
         if isinstance(candidate, str):
             if not candidate:
-                raise ValueError("post_id must be a non-empty string")
+                raise ValueError('post_id must be a non-empty string')
             return candidate
         if isinstance(candidate, dict):
-            mapping = cast("dict[str, Any]", candidate)
-            for key in ("post_id", "id"):
+            mapping = cast('dict[str, Any]', candidate)
+            for key in ('post_id', 'id'):
                 value: Any = mapping.get(key)
                 if isinstance(value, str) and value:
                     return value
         if isinstance(candidate, list) and candidate:
             return MetaToolSet._select_post_id(candidate[0])
-        raise ValueError("could not resolve post_id from input")
+        raise ValueError('could not resolve post_id from input')
 
     @classmethod
     def _post_summary(
@@ -111,15 +111,15 @@ class MetaToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        post_id = post.get("id", "")
+        post_id = post.get('id', '')
         summary: dict[str, Any] = {
-            "post_ref": f"post_{index}",
-            "message": post.get("message", "") or post.get("story", ""),
-            "posted_at": post.get("created_time", ""),
-            "permalink_url": post.get("permalink_url", ""),
+            'post_ref': f'post_{index}',
+            'message': post.get('message', '') or post.get('story', ''),
+            'posted_at': post.get('created_time', ''),
+            'permalink_url': post.get('permalink_url', ''),
         }
         if include_ids:
-            summary["post_id"] = post_id
+            summary['post_id'] = post_id
         return summary
 
     @classmethod
@@ -130,21 +130,21 @@ class MetaToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        from_field: Any = comment.get("from") or {}
+        from_field: Any = comment.get('from') or {}
         author: Any = (
-            cast("dict[str, Any]", from_field).get("name", "")
+            cast('dict[str, Any]', from_field).get('name', '')
             if isinstance(from_field, dict)
-            else ""
+            else ''
         )
         summary: dict[str, Any] = {
-            "comment_ref": f"comment_{index}",
-            "author": author,
-            "message": comment.get("message", ""),
-            "posted_at": comment.get("created_time", ""),
-            "like_count": comment.get("like_count", 0),
+            'comment_ref': f'comment_{index}',
+            'author': author,
+            'message': comment.get('message', ''),
+            'posted_at': comment.get('created_time', ''),
+            'like_count': comment.get('like_count', 0),
         }
         if include_ids:
-            summary["comment_id"] = comment.get("id", "")
+            summary['comment_id'] = comment.get('id', '')
         return summary
 
     # MARK: - Tools
@@ -158,8 +158,8 @@ class MetaToolSet:
         """
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = ",".join(fields)
-        return self._client.get(self._path("/me"), params=params or None).json()
+            params['fields'] = ','.join(fields)
+        return self._client.get(self._path('/me'), params=params or None).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_accounts(self) -> dict[str, Any]:
@@ -168,7 +168,7 @@ class MetaToolSet:
         Returns ``{"data": [<page>, ...]}`` where each page carries the
         ``access_token`` you need for page-write operations.
         """
-        return self._client.get(self._path("/me/accounts")).json()
+        return self._client.get(self._path('/me/accounts')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_page(self, page_id: str, *, fields: list[str] | None = None) -> dict[str, Any]:
@@ -177,12 +177,12 @@ class MetaToolSet:
         Returns the Graph Page resource with the requested ``fields``.
         """
         if not page_id:
-            raise ValueError("page_id must be a non-empty string")
+            raise ValueError('page_id must be a non-empty string')
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = ",".join(fields)
+            params['fields'] = ','.join(fields)
         return self._client.get(
-            self._path(f"/{page_id}"),
+            self._path(f'/{page_id}'),
             params=params or None,
         ).json()
 
@@ -209,33 +209,33 @@ class MetaToolSet:
         response.
         """
         if not page_id:
-            raise ValueError("page_id must be a non-empty string")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('page_id must be a non-empty string')
+        params: dict[str, Any] = {'limit': limit}
         if after is not None:
-            params["after"] = after
+            params['after'] = after
         merged_fields = list(fields) if fields else []
         if include_metadata:
-            for needed in ("message", "story", "created_time", "permalink_url"):
+            for needed in ('message', 'story', 'created_time', 'permalink_url'):
                 if needed not in merged_fields:
                     merged_fields.append(needed)
         if merged_fields:
-            params["fields"] = ",".join(merged_fields)
+            params['fields'] = ','.join(merged_fields)
         payload: dict[str, Any] = self._client.get(
-            self._path(f"/{page_id}/posts"),
+            self._path(f'/{page_id}/posts'),
             params=params,
         ).json()
         if not include_metadata:
             return payload
         summaries: list[dict[str, Any]] = []
-        data: Any = payload.get("data", [])
+        data: Any = payload.get('data', [])
         for index, post in enumerate(data, start=1):
             if not isinstance(post, dict):
                 continue
-            post_dict = cast("dict[str, Any]", post)
+            post_dict = cast('dict[str, Any]', post)
             summaries.append(self._post_summary(post_dict, index=index, include_ids=include_ids))
         return {
-            "posts": summaries,
-            "paging": payload.get("paging"),
+            'posts': summaries,
+            'paging': payload.get('paging'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -255,19 +255,19 @@ class MetaToolSet:
         the call is automatically marked unpublished.
         """
         if not page_id:
-            raise ValueError("page_id must be a non-empty string")
+            raise ValueError('page_id must be a non-empty string')
         if not message and not link:
-            raise ValueError("provide message or link")
-        body: dict[str, Any] = {"published": published}
+            raise ValueError('provide message or link')
+        body: dict[str, Any] = {'published': published}
         if message is not None:
-            body["message"] = message
+            body['message'] = message
         if link is not None:
-            body["link"] = link
+            body['link'] = link
         if scheduled_publish_time is not None:
-            body["scheduled_publish_time"] = scheduled_publish_time
-            body["published"] = False
+            body['scheduled_publish_time'] = scheduled_publish_time
+            body['published'] = False
         return self._client.post(
-            self._path(f"/{page_id}/feed"),
+            self._path(f'/{page_id}/feed'),
             json=body,
         ).json()
 
@@ -280,7 +280,7 @@ class MetaToolSet:
         and not reversible — confirm with the user.
         """
         post_id = self._select_post_id(post)
-        return self._client.delete(self._path(f"/{post_id}")).json()
+        return self._client.delete(self._path(f'/{post_id}')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_POST_COMMENTS_OUTPUT)
@@ -301,30 +301,30 @@ class MetaToolSet:
         returns the raw Graph response.
         """
         if not post_id:
-            raise ValueError("post_id must be a non-empty string")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('post_id must be a non-empty string')
+        params: dict[str, Any] = {'limit': limit}
         if include_metadata:
-            params["fields"] = "from,message,created_time,like_count"
+            params['fields'] = 'from,message,created_time,like_count'
         if after is not None:
-            params["after"] = after
+            params['after'] = after
         payload: dict[str, Any] = self._client.get(
-            self._path(f"/{post_id}/comments"),
+            self._path(f'/{post_id}/comments'),
             params=params,
         ).json()
         if not include_metadata:
             return payload
         summaries: list[dict[str, Any]] = []
-        data: Any = payload.get("data", [])
+        data: Any = payload.get('data', [])
         for index, comment in enumerate(data, start=1):
             if not isinstance(comment, dict):
                 continue
-            comment_dict = cast("dict[str, Any]", comment)
+            comment_dict = cast('dict[str, Any]', comment)
             summaries.append(
                 self._comment_summary(comment_dict, index=index, include_ids=include_ids)
             )
         return {
-            "comments": summaries,
-            "paging": payload.get("paging"),
+            'comments': summaries,
+            'paging': payload.get('paging'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -335,10 +335,10 @@ class MetaToolSet:
         Graph internal ID returned by ``list_post_comments(include_ids=True)``.
         """
         if not comment_id or not message:
-            raise ValueError("comment_id and message must be non-empty")
+            raise ValueError('comment_id and message must be non-empty')
         return self._client.post(
-            self._path(f"/{comment_id}/comments"),
-            json={"message": message},
+            self._path(f'/{comment_id}/comments'),
+            json={'message': message},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -349,8 +349,8 @@ class MetaToolSet:
         calling.
         """
         if not comment_id:
-            raise ValueError("comment_id must be a non-empty string")
-        return self._client.delete(self._path(f"/{comment_id}")).json()
+            raise ValueError('comment_id must be a non-empty string')
+        return self._client.delete(self._path(f'/{comment_id}')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_page_insights(
@@ -358,7 +358,7 @@ class MetaToolSet:
         page_id: str,
         *,
         metric: list[str],
-        period: str = "day",
+        period: str = 'day',
         since: str | None = None,
         until: str | None = None,
     ) -> dict[str, Any]:
@@ -368,14 +368,14 @@ class MetaToolSet:
         insight names (e.g. ``["page_impressions", "page_engaged_users"]``).
         """
         if not page_id or not metric:
-            raise ValueError("page_id and metric must be non-empty")
-        params: dict[str, Any] = {"metric": ",".join(metric), "period": period}
+            raise ValueError('page_id and metric must be non-empty')
+        params: dict[str, Any] = {'metric': ','.join(metric), 'period': period}
         if since is not None:
-            params["since"] = since
+            params['since'] = since
         if until is not None:
-            params["until"] = until
+            params['until'] = until
         return self._client.get(
-            self._path(f"/{page_id}/insights"),
+            self._path(f'/{page_id}/insights'),
             params=params,
         ).json()
 
@@ -392,8 +392,8 @@ class MetaToolSet:
         post-level insight names (e.g. ``["post_impressions"]``).
         """
         if not post_id or not metric:
-            raise ValueError("post_id and metric must be non-empty")
+            raise ValueError('post_id and metric must be non-empty')
         return self._client.get(
-            self._path(f"/{post_id}/insights"),
-            params={"metric": ",".join(metric)},
+            self._path(f'/{post_id}/insights'),
+            params={'metric': ','.join(metric)},
         ).json()

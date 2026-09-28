@@ -25,7 +25,7 @@ def _coerce_id(candidate: Any, *, key: str) -> Any:
         return candidate
     if isinstance(candidate, dict):
         mapping = cast(dict[Any, Any], candidate)
-        for k in (key, "id", "campaign_id", "canvas_id", "segment_id"):
+        for k in (key, 'id', 'campaign_id', 'canvas_id', 'segment_id'):
             value: Any = mapping.get(k)
             if isinstance(value, int | str):
                 return value
@@ -42,7 +42,7 @@ def _coerce_id(candidate: Any, *, key: str) -> Any:
 # MARK: ToolSet
 
 
-@toolset(prefix="braze")
+@toolset(prefix='braze')
 class BrazeToolSet:
     """A connector for Braze's REST API.
 
@@ -53,15 +53,15 @@ class BrazeToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="braze",
-        display_name="Braze",
-        version="0.1.0",
-        description="Users, events, purchases, campaigns, canvases, and email lists.",
+        name='braze',
+        display_name='Braze',
+        version='0.1.0',
+        description='Users, events, purchases, campaigns, canvases, and email lists.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://www.braze.com/docs/api/basics/",
-        homepage_url="https://www.braze.com/",
-        tags=("marketing", "automation"),
+        documentation_url='https://www.braze.com/docs/api/basics/',
+        homepage_url='https://www.braze.com/',
+        tags=('marketing', 'automation'),
     )
 
     def __init__(
@@ -73,15 +73,15 @@ class BrazeToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not rest_endpoint or not api_key:
-            raise ValueError("rest_endpoint and api_key are required")
+            raise ValueError('rest_endpoint and api_key are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=rest_endpoint.rstrip("/"),
+            base_url=rest_endpoint.rstrip('/'),
             auth=BearerTokenAuth(api_key),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -105,15 +105,15 @@ class BrazeToolSet:
         response.
         """
         if not attributes and not events and not purchases:
-            raise ValueError("Provide attributes, events, or purchases")
+            raise ValueError('Provide attributes, events, or purchases')
         body: dict[str, Any] = {}
         if attributes is not None:
-            body["attributes"] = attributes
+            body['attributes'] = attributes
         if events is not None:
-            body["events"] = events
+            body['events'] = events
         if purchases is not None:
-            body["purchases"] = purchases
-        return self._client.post("/users/track", json=body).json()
+            body['purchases'] = purchases
+        return self._client.post('/users/track', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def export_user_ids(
@@ -134,17 +134,17 @@ class BrazeToolSet:
         "invalid_user_ids": [...], "message": ...}``.
         """
         if not external_ids and not email_address:
-            raise ValueError("external_ids or email_address is required")
+            raise ValueError('external_ids or email_address is required')
         if external_ids and email_address:
-            raise ValueError("Provide only one identifier type: external_ids or email_address")
+            raise ValueError('Provide only one identifier type: external_ids or email_address')
         body: dict[str, Any] = {}
         if external_ids is not None:
-            body["external_ids"] = external_ids
+            body['external_ids'] = external_ids
         if email_address is not None:
-            body["email_address"] = email_address
+            body['email_address'] = email_address
         if fields_to_export is not None:
-            body["fields_to_export"] = fields_to_export
-        return self._client.post("/users/export/ids", json=body).json()
+            body['fields_to_export'] = fields_to_export
+        return self._client.post('/users/export/ids', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_users(
@@ -161,15 +161,15 @@ class BrazeToolSet:
         per request.
         """
         if not external_ids and not braze_ids:
-            raise ValueError("external_ids or braze_ids is required")
+            raise ValueError('external_ids or braze_ids is required')
         if external_ids and braze_ids:
-            raise ValueError("Provide only one identifier type: external_ids or braze_ids")
+            raise ValueError('Provide only one identifier type: external_ids or braze_ids')
         body: dict[str, Any] = {}
         if external_ids is not None:
-            body["external_ids"] = external_ids
+            body['external_ids'] = external_ids
         if braze_ids is not None:
-            body["braze_ids"] = braze_ids
-        return self._client.post("/users/delete", json=body).json()
+            body['braze_ids'] = braze_ids
+        return self._client.post('/users/delete', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def send_messages(
@@ -189,21 +189,21 @@ class BrazeToolSet:
         and recipients before sending.
         """
         if not external_user_ids and not segment_id:
-            raise ValueError("external_user_ids or segment_id is required")
+            raise ValueError('external_user_ids or segment_id is required')
         if not messages and not campaign_id:
-            raise ValueError("messages or campaign_id is required")
+            raise ValueError('messages or campaign_id is required')
         body: dict[str, Any] = {}
         if external_user_ids is not None:
-            body["external_user_ids"] = external_user_ids
+            body['external_user_ids'] = external_user_ids
         if segment_id is not None:
-            body["segment_id"] = segment_id
+            body['segment_id'] = segment_id
         if messages is not None:
-            body["messages"] = messages
+            body['messages'] = messages
         if campaign_id is not None:
-            body["campaign_id"] = campaign_id
+            body['campaign_id'] = campaign_id
         if send_id is not None:
-            body["send_id"] = send_id
-        return self._client.post("/messages/send", json=body).json()
+            body['send_id'] = send_id
+        return self._client.post('/messages/send', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def trigger_campaign(
@@ -221,20 +221,20 @@ class BrazeToolSet:
         ``broadcast=True`` Braze sends to every eligible user in the
         target audience; only use that mode when explicitly intended.
         """
-        resolved_id = _coerce_id(campaign_id, key="campaign_id")
+        resolved_id = _coerce_id(campaign_id, key='campaign_id')
         if not resolved_id:
-            raise ValueError("campaign_id is required")
+            raise ValueError('campaign_id is required')
         if broadcast and recipients:
-            raise ValueError("broadcast=True cannot be combined with a recipients list")
+            raise ValueError('broadcast=True cannot be combined with a recipients list')
         body: dict[str, Any] = {
-            "campaign_id": resolved_id,
-            "broadcast": broadcast,
+            'campaign_id': resolved_id,
+            'broadcast': broadcast,
         }
         if recipients is not None:
-            body["recipients"] = recipients
+            body['recipients'] = recipients
         if trigger_properties is not None:
-            body["trigger_properties"] = trigger_properties
-        return self._client.post("/campaigns/trigger/send", json=body).json()
+            body['trigger_properties'] = trigger_properties
+        return self._client.post('/campaigns/trigger/send', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def trigger_canvas(
@@ -250,20 +250,20 @@ class BrazeToolSet:
         ``canvas_id`` may be a raw string ID or a canvas dict returned by
         :meth:`list_canvases` (with ``include_ids=True``).
         """
-        resolved_id = _coerce_id(canvas_id, key="canvas_id")
+        resolved_id = _coerce_id(canvas_id, key='canvas_id')
         if not resolved_id:
-            raise ValueError("canvas_id is required")
+            raise ValueError('canvas_id is required')
         if broadcast and recipients:
-            raise ValueError("broadcast=True cannot be combined with a recipients list")
+            raise ValueError('broadcast=True cannot be combined with a recipients list')
         body: dict[str, Any] = {
-            "canvas_id": resolved_id,
-            "broadcast": broadcast,
+            'canvas_id': resolved_id,
+            'broadcast': broadcast,
         }
         if recipients is not None:
-            body["recipients"] = recipients
+            body['recipients'] = recipients
         if canvas_entry_properties is not None:
-            body["canvas_entry_properties"] = canvas_entry_properties
-        return self._client.post("/canvas/trigger/send", json=body).json()
+            body['canvas_entry_properties'] = canvas_entry_properties
+        return self._client.post('/canvas/trigger/send', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_campaigns(
@@ -271,7 +271,7 @@ class BrazeToolSet:
         *,
         page: int = 0,
         include_archived: bool = False,
-        sort_direction: str = "desc",
+        sort_direction: str = 'desc',
         include_ids: bool = False,
     ) -> dict[str, Any]:
         """List campaigns.
@@ -284,35 +284,35 @@ class BrazeToolSet:
         :meth:`trigger_campaign`) needs the raw ``campaign_id``.
         """
         raw: Any = self._client.get(
-            "/campaigns/list",
+            '/campaigns/list',
             params={
-                "page": page,
-                "include_archived": str(include_archived).lower(),
-                "sort_direction": sort_direction,
+                'page': page,
+                'include_archived': str(include_archived).lower(),
+                'sort_direction': sort_direction,
             },
         ).json()
         payload: dict[str, Any] | None = (
             cast(dict[str, Any], raw) if isinstance(raw, dict) else None
         )
-        results: list[Any] = payload.get("campaigns", []) if payload is not None else []
+        results: list[Any] = payload.get('campaigns', []) if payload is not None else []
         summaries: list[dict[str, Any]] = []
         for index, campaign in enumerate(results, start=1):
             if not isinstance(campaign, dict):
                 continue
             campaign = cast(dict[str, Any], campaign)
             summary: dict[str, Any] = {
-                "campaign_ref": f"campaign_{index}",
-                "name": campaign.get("name", ""),
-                "is_api_campaign": campaign.get("is_api_campaign"),
-                "tags": campaign.get("tags", []),
-                "last_edited": campaign.get("last_edited", ""),
+                'campaign_ref': f'campaign_{index}',
+                'name': campaign.get('name', ''),
+                'is_api_campaign': campaign.get('is_api_campaign'),
+                'tags': campaign.get('tags', []),
+                'last_edited': campaign.get('last_edited', ''),
             }
             if include_ids:
-                summary["campaign_id"] = campaign.get("id")
+                summary['campaign_id'] = campaign.get('id')
             summaries.append(summary)
         return {
-            "campaigns": summaries,
-            "message": payload.get("message") if payload is not None else None,
+            'campaigns': summaries,
+            'message': payload.get('message') if payload is not None else None,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -321,7 +321,7 @@ class BrazeToolSet:
         *,
         page: int = 0,
         include_archived: bool = False,
-        sort_direction: str = "desc",
+        sort_direction: str = 'desc',
         include_ids: bool = False,
     ) -> dict[str, Any]:
         """List canvases (multi-step journeys).
@@ -331,34 +331,34 @@ class BrazeToolSet:
         ``include_ids=True`` when a follow-up tool needs ``canvas_id``.
         """
         raw: Any = self._client.get(
-            "/canvas/list",
+            '/canvas/list',
             params={
-                "page": page,
-                "include_archived": str(include_archived).lower(),
-                "sort_direction": sort_direction,
+                'page': page,
+                'include_archived': str(include_archived).lower(),
+                'sort_direction': sort_direction,
             },
         ).json()
         payload: dict[str, Any] | None = (
             cast(dict[str, Any], raw) if isinstance(raw, dict) else None
         )
-        results: list[Any] = payload.get("canvases", []) if payload is not None else []
+        results: list[Any] = payload.get('canvases', []) if payload is not None else []
         summaries: list[dict[str, Any]] = []
         for index, canvas in enumerate(results, start=1):
             if not isinstance(canvas, dict):
                 continue
             canvas = cast(dict[str, Any], canvas)
             summary: dict[str, Any] = {
-                "canvas_ref": f"canvas_{index}",
-                "name": canvas.get("name", ""),
-                "tags": canvas.get("tags", []),
-                "last_edited": canvas.get("last_edited", ""),
+                'canvas_ref': f'canvas_{index}',
+                'name': canvas.get('name', ''),
+                'tags': canvas.get('tags', []),
+                'last_edited': canvas.get('last_edited', ''),
             }
             if include_ids:
-                summary["canvas_id"] = canvas.get("id")
+                summary['canvas_id'] = canvas.get('id')
             summaries.append(summary)
         return {
-            "canvases": summaries,
-            "message": payload.get("message") if payload is not None else None,
+            'canvases': summaries,
+            'message': payload.get('message') if payload is not None else None,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -378,20 +378,20 @@ class BrazeToolSet:
         or ``phone`` should be provided.
         """
         if not subscription_group_id or not subscription_state:
-            raise ValueError("subscription_group_id and subscription_state are required")
-        if subscription_state not in {"subscribed", "unsubscribed"}:
-            raise ValueError("subscription_state must be subscribed or unsubscribed")
+            raise ValueError('subscription_group_id and subscription_state are required')
+        if subscription_state not in {'subscribed', 'unsubscribed'}:
+            raise ValueError('subscription_state must be subscribed or unsubscribed')
         body: dict[str, Any] = {
-            "subscription_group_id": subscription_group_id,
-            "subscription_state": subscription_state,
+            'subscription_group_id': subscription_group_id,
+            'subscription_state': subscription_state,
         }
         if external_ids is not None:
-            body["external_id"] = external_ids
+            body['external_id'] = external_ids
         if email is not None:
-            body["email"] = email
+            body['email'] = email
         if phone is not None:
-            body["phone"] = phone
-        return self._client.post("/subscription/status/set", json=body).json()
+            body['phone'] = phone
+        return self._client.post('/subscription/status/set', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def export_segment(
@@ -406,11 +406,11 @@ class BrazeToolSet:
         return an ``object_prefix`` to poll separately.
         """
         if not segment_id or not fields_to_export:
-            raise ValueError("segment_id and fields_to_export are required")
+            raise ValueError('segment_id and fields_to_export are required')
         return self._client.post(
-            "/users/export/segment",
+            '/users/export/segment',
             json={
-                "segment_id": segment_id,
-                "fields_to_export": fields_to_export,
+                'segment_id': segment_id,
+                'fields_to_export': fields_to_export,
             },
         ).json()

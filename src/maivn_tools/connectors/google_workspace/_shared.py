@@ -34,12 +34,12 @@ def normalize_token_provider(token: object) -> OAuth2TokenProvider:
         return lambda: static_token
     if isinstance(token, str):
         if not token:
-            raise ValueError("Token string must be non-empty")
+            raise ValueError('Token string must be non-empty')
         immutable_token = OAuth2Token(access_token=token)
         return lambda: immutable_token
     if callable(token):
         return cast(OAuth2TokenProvider, token)
-    raise TypeError("Token must be an OAuth2TokenProvider callable, OAuth2Token, or string")
+    raise TypeError('Token must be an OAuth2TokenProvider callable, OAuth2Token, or string')
 
 
 def make_bearer_auth(token: TokenSource) -> OAuth2BearerAuth:

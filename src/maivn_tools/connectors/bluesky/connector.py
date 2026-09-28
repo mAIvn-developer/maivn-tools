@@ -23,7 +23,7 @@ from .output_schemas import (
 )
 
 
-@toolset(prefix="bluesky")
+@toolset(prefix='bluesky')
 class BlueskyToolSet:
     """A connector for Bluesky's AT Protocol XRPC API.
 
@@ -35,10 +35,10 @@ class BlueskyToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="bluesky",
-        display_name="Bluesky",
-        version="0.1.0",
-        description="Posts, feeds, follows, likes, and reposts via AT Protocol XRPC.",
+        name='bluesky',
+        display_name='Bluesky',
+        version='0.1.0',
+        description='Posts, feeds, follows, likes, and reposts via AT Protocol XRPC.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset(
             {
@@ -47,9 +47,9 @@ class BlueskyToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://docs.bsky.app/",
-        homepage_url="https://bsky.app/",
-        tags=("social-media", "atproto"),
+        documentation_url='https://docs.bsky.app/',
+        homepage_url='https://bsky.app/',
+        tags=('social-media', 'atproto'),
     )
 
     def __init__(
@@ -57,21 +57,21 @@ class BlueskyToolSet:
         *,
         access_jwt: str,
         did: str,
-        service_url: str = "https://bsky.social",
+        service_url: str = 'https://bsky.social',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_jwt or not did:
-            raise ValueError("access_jwt and did are required")
+            raise ValueError('access_jwt and did are required')
         self.connection = connection
         self._did = did
         self._client = HttpClient(
-            base_url=service_url.rstrip("/"),
+            base_url=service_url.rstrip('/'),
             auth=BearerTokenAuth(access_jwt),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -94,54 +94,54 @@ class BlueskyToolSet:
         or top-level ``uri``/``cid``), or a list of such dicts.
         """
         if isinstance(candidate, dict):
-            candidate_dict = cast("dict[str, Any]", candidate)
-            post = candidate_dict.get("post")
+            candidate_dict = cast('dict[str, Any]', candidate)
+            post = candidate_dict.get('post')
             if isinstance(post, dict):
-                post_dict = cast("dict[str, Any]", post)
-                uri = post_dict.get("uri")
-                cid = post_dict.get("cid")
+                post_dict = cast('dict[str, Any]', post)
+                uri = post_dict.get('uri')
+                cid = post_dict.get('cid')
                 if isinstance(uri, str) and uri and isinstance(cid, str) and cid:
                     return uri, cid
-            uri = candidate_dict.get("uri")
-            cid = candidate_dict.get("cid")
+            uri = candidate_dict.get('uri')
+            cid = candidate_dict.get('cid')
             if isinstance(uri, str) and uri and isinstance(cid, str) and cid:
                 return uri, cid
         if isinstance(candidate, list) and candidate:
-            candidate_list = cast("list[Any]", candidate)
+            candidate_list = cast('list[Any]', candidate)
             return BlueskyToolSet._select_post_ref(candidate_list[0])
-        raise ValueError("could not resolve uri and cid from input")
+        raise ValueError('could not resolve uri and cid from input')
 
     @staticmethod
     def _at_uri_to_rkey(uri: object) -> str:
         """Extract the rkey from an at:// URI (``at://did/collection/rkey``)."""
-        if not isinstance(uri, str) or "/" not in uri:
-            raise ValueError("uri must be an at:// URI")
-        return uri.rsplit("/", 1)[-1]
+        if not isinstance(uri, str) or '/' not in uri:
+            raise ValueError('uri must be an at:// URI')
+        return uri.rsplit('/', 1)[-1]
 
     @staticmethod
     def _select_rkey(candidate: Any) -> str:
         """Resolve an rkey from a string, an at:// uri, or a post dict."""
         if isinstance(candidate, str):
             if not candidate:
-                raise ValueError("rkey must be a non-empty string")
-            if candidate.startswith("at://"):
+                raise ValueError('rkey must be a non-empty string')
+            if candidate.startswith('at://'):
                 return BlueskyToolSet._at_uri_to_rkey(candidate)
             return candidate
         if isinstance(candidate, dict):
-            candidate_dict = cast("dict[str, Any]", candidate)
-            for key in ("rkey",):
+            candidate_dict = cast('dict[str, Any]', candidate)
+            for key in ('rkey',):
                 value = candidate_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
-            post = candidate_dict.get("post")
-            post_uri = cast("dict[str, Any]", post).get("uri") if isinstance(post, dict) else None
-            uri = candidate_dict.get("uri") or post_uri
+            post = candidate_dict.get('post')
+            post_uri = cast('dict[str, Any]', post).get('uri') if isinstance(post, dict) else None
+            uri = candidate_dict.get('uri') or post_uri
             if isinstance(uri, str) and uri:
                 return BlueskyToolSet._at_uri_to_rkey(uri)
         if isinstance(candidate, list) and candidate:
-            candidate_list = cast("list[Any]", candidate)
+            candidate_list = cast('list[Any]', candidate)
             return BlueskyToolSet._select_rkey(candidate_list[0])
-        raise ValueError("could not resolve rkey from input")
+        raise ValueError('could not resolve rkey from input')
 
     @classmethod
     def _post_summary(
@@ -151,40 +151,40 @@ class BlueskyToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        raw_post = feed_view.get("post")
+        raw_post = feed_view.get('post')
         post: dict[str, Any] = (
-            cast("dict[str, Any]", raw_post) if isinstance(raw_post, dict) else feed_view
+            cast('dict[str, Any]', raw_post) if isinstance(raw_post, dict) else feed_view
         )
-        author_raw = post.get("author")
-        record_raw = post.get("record")
+        author_raw = post.get('author')
+        record_raw = post.get('record')
         author: dict[str, Any] = (
-            cast("dict[str, Any]", author_raw) if isinstance(author_raw, dict) else {}
+            cast('dict[str, Any]', author_raw) if isinstance(author_raw, dict) else {}
         )
         record: dict[str, Any] = (
-            cast("dict[str, Any]", record_raw) if isinstance(record_raw, dict) else {}
+            cast('dict[str, Any]', record_raw) if isinstance(record_raw, dict) else {}
         )
-        handle = author.get("handle", "")
-        uri = post.get("uri", "")
-        rkey = ""
-        if isinstance(uri, str) and uri.startswith("at://") and "/" in uri:
-            rkey = uri.rsplit("/", 1)[-1]
-        url = f"https://bsky.app/profile/{handle}/post/{rkey}" if handle and rkey else ""
-        text = record.get("text", "")
+        handle = author.get('handle', '')
+        uri = post.get('uri', '')
+        rkey = ''
+        if isinstance(uri, str) and uri.startswith('at://') and '/' in uri:
+            rkey = uri.rsplit('/', 1)[-1]
+        url = f'https://bsky.app/profile/{handle}/post/{rkey}' if handle and rkey else ''
+        text = record.get('text', '')
         summary: dict[str, Any] = {
-            "post_ref": f"post_{index}",
-            "author": handle,
-            "author_name": author.get("displayName", ""),
-            "text": text,
-            "posted_at": record.get("createdAt", ""),
-            "like_count": post.get("likeCount", 0),
-            "repost_count": post.get("repostCount", 0),
-            "reply_count": post.get("replyCount", 0),
-            "url": url,
+            'post_ref': f'post_{index}',
+            'author': handle,
+            'author_name': author.get('displayName', ''),
+            'text': text,
+            'posted_at': record.get('createdAt', ''),
+            'like_count': post.get('likeCount', 0),
+            'repost_count': post.get('repostCount', 0),
+            'reply_count': post.get('replyCount', 0),
+            'url': url,
         }
         if include_ids:
-            summary["uri"] = uri
-            summary["cid"] = post.get("cid", "")
-            summary["rkey"] = rkey
+            summary['uri'] = uri
+            summary['cid'] = post.get('cid', '')
+            summary['rkey'] = rkey
         return summary
 
     @classmethod
@@ -195,16 +195,16 @@ class BlueskyToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        handle = actor.get("handle", "")
+        handle = actor.get('handle', '')
         summary: dict[str, Any] = {
-            "user_ref": f"user_{index}",
-            "handle": handle,
-            "name": actor.get("displayName", ""),
-            "description": actor.get("description", ""),
-            "url": f"https://bsky.app/profile/{handle}" if handle else "",
+            'user_ref': f'user_{index}',
+            'handle': handle,
+            'name': actor.get('displayName', ''),
+            'description': actor.get('description', ''),
+            'url': f'https://bsky.app/profile/{handle}' if handle else '',
         }
         if include_ids:
-            summary["did"] = actor.get("did", "")
+            summary['did'] = actor.get('did', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -215,9 +215,9 @@ class BlueskyToolSet:
         ``displayName``, ``description``, follower/following counts).
         """
         if not actor:
-            raise ValueError("actor is required")
+            raise ValueError('actor is required')
         profile: dict[str, Any] = self._client.get(
-            "/xrpc/app.bsky.actor.getProfile", params={"actor": actor}
+            '/xrpc/app.bsky.actor.getProfile', params={'actor': actor}
         ).json()
         return profile
 
@@ -240,26 +240,26 @@ class BlueskyToolSet:
         a follow-up tool (``like``, ``repost``, ``delete_post``) needs them.
         Set ``include_metadata=False`` for the raw XRPC response.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if cursor is not None:
-            params["cursor"] = cursor
+            params['cursor'] = cursor
         payload: dict[str, Any] = self._client.get(
-            "/xrpc/app.bsky.feed.getTimeline", params=params
+            '/xrpc/app.bsky.feed.getTimeline', params=params
         ).json()
         if not include_metadata:
             return payload
-        feed: list[Any] = payload.get("feed", [])
+        feed: list[Any] = payload.get('feed', [])
         summaries: list[dict[str, Any]] = []
         for index, feed_view in enumerate(feed, start=1):
             if not isinstance(feed_view, dict):
                 continue
-            feed_view_dict = cast("dict[str, Any]", feed_view)
+            feed_view_dict = cast('dict[str, Any]', feed_view)
             summaries.append(
                 self._post_summary(feed_view_dict, index=index, include_ids=include_ids)
             )
         return {
-            "posts": summaries,
-            "cursor": payload.get("cursor"),
+            'posts': summaries,
+            'cursor': payload.get('cursor'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -279,27 +279,27 @@ class BlueskyToolSet:
         default, ``include_ids=True`` to expose raw URIs.
         """
         if not actor:
-            raise ValueError("actor is required")
-        params: dict[str, Any] = {"actor": actor, "limit": limit}
+            raise ValueError('actor is required')
+        params: dict[str, Any] = {'actor': actor, 'limit': limit}
         if cursor is not None:
-            params["cursor"] = cursor
+            params['cursor'] = cursor
         payload: dict[str, Any] = self._client.get(
-            "/xrpc/app.bsky.feed.getAuthorFeed", params=params
+            '/xrpc/app.bsky.feed.getAuthorFeed', params=params
         ).json()
         if not include_metadata:
             return payload
-        feed: list[Any] = payload.get("feed", [])
+        feed: list[Any] = payload.get('feed', [])
         summaries: list[dict[str, Any]] = []
         for index, feed_view in enumerate(feed, start=1):
             if not isinstance(feed_view, dict):
                 continue
-            feed_view_dict = cast("dict[str, Any]", feed_view)
+            feed_view_dict = cast('dict[str, Any]', feed_view)
             summaries.append(
                 self._post_summary(feed_view_dict, index=index, include_ids=include_ids)
             )
         return {
-            "posts": summaries,
-            "cursor": payload.get("cursor"),
+            'posts': summaries,
+            'cursor': payload.get('cursor'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -323,27 +323,27 @@ class BlueskyToolSet:
         XRPC response.
         """
         if not query:
-            raise ValueError("query is required")
-        params: dict[str, Any] = {"q": query, "limit": limit}
+            raise ValueError('query is required')
+        params: dict[str, Any] = {'q': query, 'limit': limit}
         if cursor is not None:
-            params["cursor"] = cursor
+            params['cursor'] = cursor
         if author is not None:
-            params["author"] = author
+            params['author'] = author
         payload: dict[str, Any] = self._client.get(
-            "/xrpc/app.bsky.feed.searchPosts", params=params
+            '/xrpc/app.bsky.feed.searchPosts', params=params
         ).json()
         if not include_metadata:
             return payload
-        posts: list[Any] = payload.get("posts", [])
+        posts: list[Any] = payload.get('posts', [])
         summaries: list[dict[str, Any]] = []
         for index, post in enumerate(posts, start=1):
             if not isinstance(post, dict):
                 continue
-            post_dict = cast("dict[str, Any]", post)
+            post_dict = cast('dict[str, Any]', post)
             summaries.append(self._post_summary(post_dict, index=index, include_ids=include_ids))
         return {
-            "posts": summaries,
-            "cursor": payload.get("cursor"),
+            'posts': summaries,
+            'cursor': payload.get('cursor'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -361,24 +361,24 @@ class BlueskyToolSet:
         with the user before calling.
         """
         if not text and not embed:
-            raise ValueError("text or embed is required")
+            raise ValueError('text or embed is required')
         record: dict[str, Any] = {
-            "$type": "app.bsky.feed.post",
-            "text": text,
-            "createdAt": datetime.now(timezone.utc).isoformat(),
+            '$type': 'app.bsky.feed.post',
+            'text': text,
+            'createdAt': datetime.now(timezone.utc).isoformat(),
         }
         if reply is not None:
-            record["reply"] = reply
+            record['reply'] = reply
         if embed is not None:
-            record["embed"] = embed
+            record['embed'] = embed
         if langs is not None:
-            record["langs"] = langs
+            record['langs'] = langs
         result: dict[str, Any] = self._client.post(
-            "/xrpc/com.atproto.repo.createRecord",
+            '/xrpc/com.atproto.repo.createRecord',
             json={
-                "repo": self._did,
-                "collection": "app.bsky.feed.post",
-                "record": record,
+                'repo': self._did,
+                'collection': 'app.bsky.feed.post',
+                'record': record,
             },
         ).json()
         return result
@@ -394,11 +394,11 @@ class BlueskyToolSet:
         """
         rkey = self._select_rkey(post)
         result: dict[str, Any] = self._client.post(
-            "/xrpc/com.atproto.repo.deleteRecord",
+            '/xrpc/com.atproto.repo.deleteRecord',
             json={
-                "repo": self._did,
-                "collection": "app.bsky.feed.post",
-                "rkey": rkey,
+                'repo': self._did,
+                'collection': 'app.bsky.feed.post',
+                'rkey': rkey,
             },
         ).json()
         return result
@@ -422,16 +422,16 @@ class BlueskyToolSet:
         elif uri and cid:
             resolved_uri, resolved_cid = uri, cid
         else:
-            raise ValueError("provide post dict or uri+cid")
+            raise ValueError('provide post dict or uri+cid')
         result: dict[str, Any] = self._client.post(
-            "/xrpc/com.atproto.repo.createRecord",
+            '/xrpc/com.atproto.repo.createRecord',
             json={
-                "repo": self._did,
-                "collection": "app.bsky.feed.like",
-                "record": {
-                    "$type": "app.bsky.feed.like",
-                    "subject": {"uri": resolved_uri, "cid": resolved_cid},
-                    "createdAt": datetime.now(timezone.utc).isoformat(),
+                'repo': self._did,
+                'collection': 'app.bsky.feed.like',
+                'record': {
+                    '$type': 'app.bsky.feed.like',
+                    'subject': {'uri': resolved_uri, 'cid': resolved_cid},
+                    'createdAt': datetime.now(timezone.utc).isoformat(),
                 },
             },
         ).json()
@@ -456,16 +456,16 @@ class BlueskyToolSet:
         elif uri and cid:
             resolved_uri, resolved_cid = uri, cid
         else:
-            raise ValueError("provide post dict or uri+cid")
+            raise ValueError('provide post dict or uri+cid')
         result: dict[str, Any] = self._client.post(
-            "/xrpc/com.atproto.repo.createRecord",
+            '/xrpc/com.atproto.repo.createRecord',
             json={
-                "repo": self._did,
-                "collection": "app.bsky.feed.repost",
-                "record": {
-                    "$type": "app.bsky.feed.repost",
-                    "subject": {"uri": resolved_uri, "cid": resolved_cid},
-                    "createdAt": datetime.now(timezone.utc).isoformat(),
+                'repo': self._did,
+                'collection': 'app.bsky.feed.repost',
+                'record': {
+                    '$type': 'app.bsky.feed.repost',
+                    'subject': {'uri': resolved_uri, 'cid': resolved_cid},
+                    'createdAt': datetime.now(timezone.utc).isoformat(),
                 },
             },
         ).json()
@@ -478,16 +478,16 @@ class BlueskyToolSet:
         Use ``get_profile`` to resolve a handle to its DID first.
         """
         if not subject_did:
-            raise ValueError("subject_did is required")
+            raise ValueError('subject_did is required')
         result: dict[str, Any] = self._client.post(
-            "/xrpc/com.atproto.repo.createRecord",
+            '/xrpc/com.atproto.repo.createRecord',
             json={
-                "repo": self._did,
-                "collection": "app.bsky.graph.follow",
-                "record": {
-                    "$type": "app.bsky.graph.follow",
-                    "subject": subject_did,
-                    "createdAt": datetime.now(timezone.utc).isoformat(),
+                'repo': self._did,
+                'collection': 'app.bsky.graph.follow',
+                'record': {
+                    '$type': 'app.bsky.graph.follow',
+                    'subject': subject_did,
+                    'createdAt': datetime.now(timezone.utc).isoformat(),
                 },
             },
         ).json()
@@ -512,27 +512,27 @@ class BlueskyToolSet:
         ``include_metadata=False`` for the raw XRPC response.
         """
         if not actor:
-            raise ValueError("actor is required")
-        params: dict[str, Any] = {"actor": actor, "limit": limit}
+            raise ValueError('actor is required')
+        params: dict[str, Any] = {'actor': actor, 'limit': limit}
         if cursor is not None:
-            params["cursor"] = cursor
+            params['cursor'] = cursor
         payload: dict[str, Any] = self._client.get(
-            "/xrpc/app.bsky.graph.getFollowers", params=params
+            '/xrpc/app.bsky.graph.getFollowers', params=params
         ).json()
         if not include_metadata:
             return payload
-        followers: list[Any] = payload.get("followers", [])
+        followers: list[Any] = payload.get('followers', [])
         summaries: list[dict[str, Any]] = []
         for index, follower in enumerate(followers, start=1):
             if not isinstance(follower, dict):
                 continue
-            follower_dict = cast("dict[str, Any]", follower)
+            follower_dict = cast('dict[str, Any]', follower)
             summaries.append(
                 self._actor_summary(follower_dict, index=index, include_ids=include_ids)
             )
         return {
-            "users": summaries,
-            "cursor": payload.get("cursor"),
+            'users': summaries,
+            'cursor': payload.get('cursor'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -552,23 +552,23 @@ class BlueskyToolSet:
         summaries by default).
         """
         if not actor:
-            raise ValueError("actor is required")
-        params: dict[str, Any] = {"actor": actor, "limit": limit}
+            raise ValueError('actor is required')
+        params: dict[str, Any] = {'actor': actor, 'limit': limit}
         if cursor is not None:
-            params["cursor"] = cursor
+            params['cursor'] = cursor
         payload: dict[str, Any] = self._client.get(
-            "/xrpc/app.bsky.graph.getFollows", params=params
+            '/xrpc/app.bsky.graph.getFollows', params=params
         ).json()
         if not include_metadata:
             return payload
-        follows: list[Any] = payload.get("follows", [])
+        follows: list[Any] = payload.get('follows', [])
         summaries: list[dict[str, Any]] = []
         for index, follow in enumerate(follows, start=1):
             if not isinstance(follow, dict):
                 continue
-            follow_dict = cast("dict[str, Any]", follow)
+            follow_dict = cast('dict[str, Any]', follow)
             summaries.append(self._actor_summary(follow_dict, index=index, include_ids=include_ids))
         return {
-            "users": summaries,
-            "cursor": payload.get("cursor"),
+            'users': summaries,
+            'cursor': payload.get('cursor'),
         }

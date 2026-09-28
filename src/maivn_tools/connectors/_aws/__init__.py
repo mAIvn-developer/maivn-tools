@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .sigv4 import SigV4Auth
 
-__all__ = ["SigV4Auth"]
+__all__ = ['SigV4Auth']

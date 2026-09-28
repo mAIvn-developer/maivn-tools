@@ -3,10 +3,8 @@ from __future__ import annotations
 
 from typing import cast
 
-from maivn._internal.api.agent import Agent
-from maivn._internal.api.client import Client
-from maivn._internal.utils.configuration import MaivnConfiguration, ServerConfiguration
-from maivn._internal.utils.toolset import get_toolify_options
+from maivn import Agent
+from maivn import toolify_options as get_toolify_options
 
 from maivn_tools.connectors.tableau import TableauToolSet
 from maivn_tools.testing import MockTransport
@@ -15,23 +13,16 @@ from maivn_tools.testing import MockTransport
 def _connector() -> tuple[TableauToolSet, MockTransport]:
     transport = MockTransport()
     connector = TableauToolSet(
-        server_url="https://us-east-1.online.tableau.com",
-        site_id="site-uuid",
-        auth_token="token_secret",
+        server_url='https://us-east-1.online.tableau.com',
+        site_id='site-uuid',
+        auth_token='token_secret',
         transport=transport,
     )
     return connector, transport
 
 
 def _make_agent() -> Agent:
-    config = MaivnConfiguration(
-        server=ServerConfiguration(
-            base_url="http://example.com",
-            mock_base_url="http://example.com",
-        )
-    )
-    client = Client.from_configuration(api_key="key", configuration=config)
-    return Agent(name="t", client=client)
+    return Agent(name='t', api_key='key')
 
 
 def test_tableau_list_tools_register_first_class_output_schemas() -> None:
@@ -42,17 +33,17 @@ def test_tableau_list_tools_register_first_class_output_schemas() -> None:
     schemas_by_name = {tool.name: tool.output_schema for tool in tools}
     # (tool name, expected array property key)
     expected: dict[str, str] = {
-        "TABLEAU_list_projects": "projects",
-        "TABLEAU_list_workbooks": "workbooks",
-        "TABLEAU_list_views_for_workbook": "views",
-        "TABLEAU_list_datasources": "datasources",
+        'TABLEAU_list_projects': 'projects',
+        'TABLEAU_list_workbooks': 'workbooks',
+        'TABLEAU_list_views_for_workbook': 'views',
+        'TABLEAU_list_datasources': 'datasources',
     }
     for name, array_key in expected.items():
         schema = schemas_by_name.get(name)
-        assert isinstance(schema, dict), f"{name} missing first-class output_schema"
-        properties = cast("dict[str, object]", schema["properties"])
-        array_prop = cast("dict[str, object]", properties[array_key])
-        assert array_prop["type"] == "array", f"{name}.{array_key} should be an array"
+        assert isinstance(schema, dict), f'{name} missing first-class output_schema'
+        properties = cast('dict[str, object]', schema['properties'])
+        array_prop = cast('dict[str, object]', properties[array_key])
+        assert array_prop['type'] == 'array', f'{name}.{array_key} should be an array'
 
 
 def test_tableau_output_schemas_not_published_through_metadata() -> None:
@@ -65,4 +56,4 @@ def test_tableau_output_schemas_not_published_through_metadata() -> None:
     ):
         opts = get_toolify_options(method)
         assert opts is not None
-        assert "output_schema" not in opts.metadata
+        assert 'output_schema' not in opts.metadata

@@ -237,7 +237,7 @@ connector = AirtableToolSet(access_token=secrets["AIRTABLE_PAT"])
 ### Agent-ready behavior
 
 - `list_records` returns compact summaries by default. Each summary
-  carries a stable `record_ref` (`record_1`, `record_2`, ...), the
+  carries a response-local `record_ref` (`record_1`, `record_2`, ...), the
   original Airtable `fields` dict for the row, and the
   `created_time`.
 - Default `page_size` is 25 on `list_records`. `list_comments` and

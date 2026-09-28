@@ -25,33 +25,33 @@ def _coerce_resource_id(candidate: Any, *, field: str) -> str | int:
     """Accept a dict from list/get or a raw ID and return the ID."""
     if isinstance(candidate, dict):
         candidate_dict = cast(dict[str, Any], candidate)
-        for key in (field, "id"):
+        for key in (field, 'id'):
             value: Any = candidate_dict.get(key)
             if isinstance(value, str | int) and value:
                 return value
     if isinstance(candidate, str | int) and candidate:
         return candidate
     type_name = type(cast(object, candidate)).__name__
-    raise ValueError(f"{field} is required (got: {type_name})")
+    raise ValueError(f'{field} is required (got: {type_name})')
 
 
 # MARK: Connector
 
 
-@toolset(prefix="bigcommerce")
+@toolset(prefix='bigcommerce')
 class BigCommerceToolSet:
     """A connector for the BigCommerce REST API."""
 
     metadata = ProviderMetadata(
-        name="bigcommerce",
-        display_name="BigCommerce",
-        version="0.1.0",
-        description="Catalog products, customers, orders, and carts.",
+        name='bigcommerce',
+        display_name='BigCommerce',
+        version='0.1.0',
+        description='Catalog products, customers, orders, and carts.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developer.bigcommerce.com/docs/rest",
-        homepage_url="https://www.bigcommerce.com/",
-        tags=("ecommerce",),
+        documentation_url='https://developer.bigcommerce.com/docs/rest',
+        homepage_url='https://www.bigcommerce.com/',
+        tags=('ecommerce',),
     )
 
     def __init__(
@@ -59,19 +59,19 @@ class BigCommerceToolSet:
         *,
         store_hash: str,
         access_token: str,
-        base_url: str = "https://api.bigcommerce.com",
+        base_url: str = 'https://api.bigcommerce.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not store_hash or not access_token:
-            raise ValueError("store_hash and access_token are required")
+            raise ValueError('store_hash and access_token are required')
         self.connection = connection
         self._store_hash = store_hash
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(access_token, header="X-Auth-Token"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(access_token, header='X-Auth-Token'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -79,10 +79,10 @@ class BigCommerceToolSet:
         return self._client
 
     def _v3(self, suffix: str) -> str:
-        return f"/stores/{self._store_hash}/v3{suffix}"
+        return f'/stores/{self._store_hash}/v3{suffix}'
 
     def _v2(self, suffix: str) -> str:
-        return f"/stores/{self._store_hash}/v2{suffix}"
+        return f'/stores/{self._store_hash}/v2{suffix}'
 
     @staticmethod
     def _product_summary(
@@ -92,15 +92,15 @@ class BigCommerceToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "product_ref": f"product_{index}",
-            "name": product.get("name", ""),
-            "sku": product.get("sku", ""),
-            "price": product.get("price", ""),
-            "is_visible": product.get("is_visible"),
-            "inventory_level": product.get("inventory_level"),
+            'product_ref': f'product_{index}',
+            'name': product.get('name', ''),
+            'sku': product.get('sku', ''),
+            'price': product.get('price', ''),
+            'is_visible': product.get('is_visible'),
+            'inventory_level': product.get('inventory_level'),
         }
         if include_ids:
-            summary["product_id"] = product.get("id")
+            summary['product_id'] = product.get('id')
         return summary
 
     @staticmethod
@@ -110,21 +110,21 @@ class BigCommerceToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        first = order.get("billing_address", {}).get("first_name") or ""
-        last = order.get("billing_address", {}).get("last_name") or ""
-        email = order.get("billing_address", {}).get("email") or ""
+        first = order.get('billing_address', {}).get('first_name') or ''
+        last = order.get('billing_address', {}).get('last_name') or ''
+        email = order.get('billing_address', {}).get('email') or ''
         summary: dict[str, Any] = {
-            "order_ref": f"order_{index}",
-            "order_number": order.get("id", ""),
-            "customer_name": f"{first} {last}".strip() or email,
-            "customer_email": email,
-            "total_inc_tax": order.get("total_inc_tax", ""),
-            "currency_code": order.get("currency_code", ""),
-            "status": order.get("status", ""),
-            "date_created": order.get("date_created", ""),
+            'order_ref': f'order_{index}',
+            'order_number': order.get('id', ''),
+            'customer_name': f'{first} {last}'.strip() or email,
+            'customer_email': email,
+            'total_inc_tax': order.get('total_inc_tax', ''),
+            'currency_code': order.get('currency_code', ''),
+            'status': order.get('status', ''),
+            'date_created': order.get('date_created', ''),
         }
         if include_ids:
-            summary["order_id"] = order.get("id")
+            summary['order_id'] = order.get('id')
         return summary
 
     @staticmethod
@@ -134,16 +134,16 @@ class BigCommerceToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        first = customer.get("first_name") or ""
-        last = customer.get("last_name") or ""
+        first = customer.get('first_name') or ''
+        last = customer.get('last_name') or ''
         summary: dict[str, Any] = {
-            "customer_ref": f"customer_{index}",
-            "name": f"{first} {last}".strip() or customer.get("email", ""),
-            "email": customer.get("email", ""),
-            "company": customer.get("company", ""),
+            'customer_ref': f'customer_{index}',
+            'name': f'{first} {last}'.strip() or customer.get('email', ''),
+            'email': customer.get('email', ''),
+            'company': customer.get('company', ''),
         }
         if include_ids:
-            summary["customer_id"] = customer.get("id")
+            summary['customer_id'] = customer.get('id')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -166,27 +166,27 @@ class BigCommerceToolSet:
         need them, or ``include_raw=True`` for the unmodified payload.
         """
         if limit < 1 or limit > 250:
-            raise ValueError("limit must be between 1 and 250")
-        params: dict[str, Any] = {"limit": limit, "page": page}
+            raise ValueError('limit must be between 1 and 250')
+        params: dict[str, Any] = {'limit': limit, 'page': page}
         if sku is not None:
-            params["sku"] = sku
+            params['sku'] = sku
         if keyword is not None:
-            params["keyword"] = keyword
+            params['keyword'] = keyword
         payload: dict[str, Any] = self._client.get(
-            self._v3("/catalog/products"), params=params
+            self._v3('/catalog/products'), params=params
         ).json()
         if include_raw:
             return payload
-        products: list[Any] = payload.get("data") or []
+        products: list[Any] = payload.get('data') or []
         summaries = [
             self._product_summary(cast(dict[str, Any], p), index=i, include_ids=include_ids)
             for i, p in enumerate(products, start=1)
             if isinstance(p, dict)
         ]
         return {
-            "products": summaries,
-            "count": len(summaries),
-            "meta": payload.get("meta"),
+            'products': summaries,
+            'count': len(summaries),
+            'meta': payload.get('meta'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -196,8 +196,8 @@ class BigCommerceToolSet:
         Returns the new product resource.
         """
         if not product:
-            raise ValueError("product must be non-empty")
-        return self._client.post(self._v3("/catalog/products"), json=product).json()
+            raise ValueError('product must be non-empty')
+        return self._client.post(self._v3('/catalog/products'), json=product).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_product(self, product_id: Any, fields: dict[str, Any]) -> dict[str, Any]:
@@ -207,10 +207,10 @@ class BigCommerceToolSet:
         returned by ``list_products(include_ids=True)``.
         """
         if not fields:
-            raise ValueError("fields must be non-empty")
-        resolved_id = _coerce_resource_id(product_id, field="product_id")
+            raise ValueError('fields must be non-empty')
+        resolved_id = _coerce_resource_id(product_id, field='product_id')
         return self._client.put(
-            self._v3(f"/catalog/products/{resolved_id}"),
+            self._v3(f'/catalog/products/{resolved_id}'),
             json=fields,
         ).json()
 
@@ -221,11 +221,11 @@ class BigCommerceToolSet:
         Tolerant inputs: ``product_id`` may be a raw ID or a dict returned by
         ``list_products(include_ids=True)``.
         """
-        if product_id in (None, "", 0):
-            raise ValueError("product_id is required")
-        resolved_id = _coerce_resource_id(product_id, field="product_id")
-        self._client.delete(self._v3(f"/catalog/products/{resolved_id}"))
-        return {"id": resolved_id, "deleted": True}
+        if product_id in (None, '', 0):
+            raise ValueError('product_id is required')
+        resolved_id = _coerce_resource_id(product_id, field='product_id')
+        self._client.delete(self._v3(f'/catalog/products/{resolved_id}'))
+        return {'id': resolved_id, 'deleted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_ORDERS_OUTPUT)
@@ -244,22 +244,22 @@ class BigCommerceToolSet:
         customer_name, total. Raw IDs omitted by default.
         """
         if limit < 1 or limit > 250:
-            raise ValueError("limit must be between 1 and 250")
-        params: dict[str, Any] = {"limit": limit, "page": page}
+            raise ValueError('limit must be between 1 and 250')
+        params: dict[str, Any] = {'limit': limit, 'page': page}
         if status_id is not None:
-            params["status_id"] = status_id
-        payload: Any = self._client.get(self._v2("/orders"), params=params).json()
+            params['status_id'] = status_id
+        payload: Any = self._client.get(self._v2('/orders'), params=params).json()
         if include_raw:
             return cast(dict[str, Any], payload)
         orders: list[Any] = (
-            cast(list[Any], payload) if isinstance(payload, list) else (payload.get("data") or [])
+            cast(list[Any], payload) if isinstance(payload, list) else (payload.get('data') or [])
         )
         summaries = [
             self._order_summary(cast(dict[str, Any], o), index=i, include_ids=include_ids)
             for i, o in enumerate(orders, start=1)
             if isinstance(o, dict)
         ]
-        return {"orders": summaries, "count": len(summaries)}
+        return {'orders': summaries, 'count': len(summaries)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_order(self, order_id: int) -> dict[str, Any]:
@@ -267,7 +267,7 @@ class BigCommerceToolSet:
 
         Use after ``list_orders(include_ids=True)``.
         """
-        return self._client.get(self._v2(f"/orders/{order_id}")).json()
+        return self._client.get(self._v2(f'/orders/{order_id}')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_CUSTOMERS_OUTPUT)
@@ -285,20 +285,20 @@ class BigCommerceToolSet:
         company. Raw IDs omitted by default.
         """
         if limit < 1 or limit > 250:
-            raise ValueError("limit must be between 1 and 250")
+            raise ValueError('limit must be between 1 and 250')
         payload: dict[str, Any] = self._client.get(
-            self._v3("/customers"),
-            params={"limit": limit, "page": page},
+            self._v3('/customers'),
+            params={'limit': limit, 'page': page},
         ).json()
         if include_raw:
             return payload
-        customers: list[Any] = payload.get("data") or []
+        customers: list[Any] = payload.get('data') or []
         summaries = [
             self._customer_summary(cast(dict[str, Any], c), index=i, include_ids=include_ids)
             for i, c in enumerate(customers, start=1)
             if isinstance(c, dict)
         ]
-        return {"customers": summaries, "count": len(summaries)}
+        return {'customers': summaries, 'count': len(summaries)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_customers(self, customers: list[dict[str, Any]]) -> dict[str, Any]:
@@ -308,8 +308,8 @@ class BigCommerceToolSet:
         ``email``. Returns the new customer resources.
         """
         if not customers:
-            raise ValueError("customers must be non-empty")
-        return self._client.post(self._v3("/customers"), json=customers).json()
+            raise ValueError('customers must be non-empty')
+        return self._client.post(self._v3('/customers'), json=customers).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_cart(self, cart_id: Any) -> dict[str, Any]:
@@ -321,5 +321,5 @@ class BigCommerceToolSet:
         Tolerant inputs: ``cart_id`` may be a raw ID string or a dict
         containing a ``cart_id``/``id`` key. Returns the raw provider payload.
         """
-        resolved_id = _coerce_resource_id(cart_id, field="cart_id")
-        return self._client.get(self._v3(f"/carts/{resolved_id}")).json()
+        resolved_id = _coerce_resource_id(cart_id, field='cart_id')
+        return self._client.get(self._v3(f'/carts/{resolved_id}')).json()

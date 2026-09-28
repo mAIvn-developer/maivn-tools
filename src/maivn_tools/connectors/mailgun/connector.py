@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import json as _json
 from typing import Any, cast
 
 from maivn import tool_output, toolify, toolset
@@ -16,20 +17,20 @@ from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_DOMAINS_OUTPUT, LIST_MAILING_LISTS_OUTPUT
 
 
-@toolset(prefix="mailgun")
+@toolset(prefix='mailgun')
 class MailgunToolSet:
     """A connector for the Mailgun v3 API."""
 
     metadata = ProviderMetadata(
-        name="mailgun",
-        display_name="Mailgun",
-        version="0.1.0",
-        description="Send transactional email, manage domains, mailing lists, and logs.",
+        name='mailgun',
+        display_name='Mailgun',
+        version='0.1.0',
+        description='Send transactional email, manage domains, mailing lists, and logs.',
         auth_modes=(AuthMode.BASIC,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://documentation.mailgun.com/docs/mailgun/api-reference/",
-        homepage_url="https://www.mailgun.com/",
-        tags=("email", "transactional"),
+        documentation_url='https://documentation.mailgun.com/docs/mailgun/api-reference/',
+        homepage_url='https://www.mailgun.com/',
+        tags=('email', 'transactional'),
     )
 
     def __init__(
@@ -37,19 +38,19 @@ class MailgunToolSet:
         *,
         api_key: str,
         domain: str | None = None,
-        base_url: str = "https://api.mailgun.net",
+        base_url: str = 'https://api.mailgun.net',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
         self._default_domain = domain
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=BasicAuth("api", api_key),
+            base_url=base_url.rstrip('/'),
+            auth=BasicAuth('api', api_key),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -59,7 +60,7 @@ class MailgunToolSet:
     def _domain(self, domain: str | None) -> str:
         d = domain or self._default_domain
         if not d:
-            raise ValueError("domain must be provided (constructor or method)")
+            raise ValueError('domain must be provided (constructor or method)')
         return d
 
     @staticmethod
@@ -70,14 +71,14 @@ class MailgunToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "domain_ref": f"domain_{index}",
-            "name": domain.get("name", ""),
-            "state": domain.get("state", ""),
-            "type": domain.get("type", ""),
-            "created_at": domain.get("created_at", ""),
+            'domain_ref': f'domain_{index}',
+            'name': domain.get('name', ''),
+            'state': domain.get('state', ''),
+            'type': domain.get('type', ''),
+            'created_at': domain.get('created_at', ''),
         }
         if include_ids:
-            summary["id"] = domain.get("id", "")
+            summary['id'] = domain.get('id', '')
         return summary
 
     @staticmethod
@@ -88,14 +89,14 @@ class MailgunToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "list_ref": f"list_{index}",
-            "address": mlist.get("address", ""),
-            "name": mlist.get("name", ""),
-            "members_count": mlist.get("members_count", 0),
-            "description": mlist.get("description", ""),
+            'list_ref': f'list_{index}',
+            'address': mlist.get('address', ''),
+            'name': mlist.get('name', ''),
+            'members_count': mlist.get('members_count', 0),
+            'description': mlist.get('description', ''),
         }
         if include_ids:
-            summary["address_raw"] = mlist.get("address", "")
+            summary['address_raw'] = mlist.get('address', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -123,34 +124,32 @@ class MailgunToolSet:
         Returns ``{"id": <queued message id>, "message": "Queued..."}``.
         """
         if not from_address or not subject:
-            raise ValueError("from_address and subject must be non-empty")
+            raise ValueError('from_address and subject must be non-empty')
         if text is None and html is None and template is None:
-            raise ValueError("provide text, html, or template")
+            raise ValueError('provide text, html, or template')
         params: dict[str, Any] = {
-            "from": from_address,
-            "to": to if isinstance(to, list) else [to],
-            "subject": subject,
+            'from': from_address,
+            'to': to if isinstance(to, list) else [to],
+            'subject': subject,
         }
         if text is not None:
-            params["text"] = text
+            params['text'] = text
         if html is not None:
-            params["html"] = html
+            params['html'] = html
         if cc is not None:
-            params["cc"] = cc
+            params['cc'] = cc
         if bcc is not None:
-            params["bcc"] = bcc
+            params['bcc'] = bcc
         if tag is not None:
-            params["o:tag"] = tag
+            params['o:tag'] = tag
         if template is not None:
-            params["template"] = template
+            params['template'] = template
         if template_variables is not None:
-            import json as _json
-
-            params["h:X-Mailgun-Variables"] = _json.dumps(template_variables)
+            params['h:X-Mailgun-Variables'] = _json.dumps(template_variables)
         if delivery_time is not None:
-            params["o:deliverytime"] = delivery_time
+            params['o:deliverytime'] = delivery_time
         return self._client.post(
-            f"/v3/{self._domain(domain)}/messages",
+            f'/v3/{self._domain(domain)}/messages',
             params=params,
         ).json()
 
@@ -171,23 +170,23 @@ class MailgunToolSet:
         omitted by default.
         """
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
+            raise ValueError('limit must be between 1 and 1000')
         payload: dict[str, Any] = self._client.get(
-            "/v4/domains",
-            params={"limit": limit, "skip": skip},
+            '/v4/domains',
+            params={'limit': limit, 'skip': skip},
         ).json()
         if include_raw:
             return payload
-        items: list[Any] = payload.get("items") or []
+        items: list[Any] = payload.get('items') or []
         summaries = [
-            self._domain_summary(cast("dict[str, Any]", d), index=i, include_ids=include_ids)
+            self._domain_summary(cast('dict[str, Any]', d), index=i, include_ids=include_ids)
             for i, d in enumerate(items, start=1)
             if isinstance(d, dict)
         ]
         return {
-            "domains": summaries,
-            "count": len(summaries),
-            "total_count": payload.get("total_count"),
+            'domains': summaries,
+            'count': len(summaries),
+            'total_count': payload.get('total_count'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -195,7 +194,7 @@ class MailgunToolSet:
         self,
         *,
         name: str,
-        spam_action: str = "disabled",
+        spam_action: str = 'disabled',
         wildcard: bool = False,
     ) -> dict[str, Any]:
         """Add a domain (DNS verification required).
@@ -203,13 +202,13 @@ class MailgunToolSet:
         Returns the new domain resource and DNS records to add.
         """
         if not name:
-            raise ValueError("name must be a non-empty string")
+            raise ValueError('name must be a non-empty string')
         return self._client.post(
-            "/v4/domains",
+            '/v4/domains',
             params={
-                "name": name,
-                "spam_action": spam_action,
-                "wildcard": str(wildcard).lower(),
+                'name': name,
+                'spam_action': spam_action,
+                'wildcard': str(wildcard).lower(),
             },
         ).json()
 
@@ -217,8 +216,8 @@ class MailgunToolSet:
     def delete_domain(self, domain_name: str) -> dict[str, Any]:
         """Permanently delete a domain. Destructive — confirm with the user first."""
         if not domain_name:
-            raise ValueError("domain_name must be a non-empty string")
-        return self._client.delete(f"/v4/domains/{domain_name}").json()
+            raise ValueError('domain_name must be a non-empty string')
+        return self._client.delete(f'/v4/domains/{domain_name}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_events(
@@ -236,15 +235,15 @@ class MailgunToolSet:
         ``bounced``, ``complained``). Returns the raw Mailgun events
         payload with pagination links.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if event is not None:
-            params["event"] = event
+            params['event'] = event
         if begin is not None:
-            params["begin"] = begin
+            params['begin'] = begin
         if end is not None:
-            params["end"] = end
+            params['end'] = end
         return self._client.get(
-            f"/v3/{self._domain(domain)}/events",
+            f'/v3/{self._domain(domain)}/events',
             params=params,
         ).json()
 
@@ -261,8 +260,8 @@ class MailgunToolSet:
         ``code``, ``error``, ``created_at``.
         """
         return self._client.get(
-            f"/v3/{self._domain(domain)}/bounces",
-            params={"limit": limit},
+            f'/v3/{self._domain(domain)}/bounces',
+            params={'limit': limit},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -277,9 +276,9 @@ class MailgunToolSet:
         Re-enables future sends to the address.
         """
         if not address:
-            raise ValueError("address must be a non-empty string")
+            raise ValueError('address must be a non-empty string')
         return self._client.delete(
-            f"/v3/{self._domain(domain)}/bounces/{address}",
+            f'/v3/{self._domain(domain)}/bounces/{address}',
         ).json()
 
     # MARK: - Mailing lists
@@ -299,19 +298,19 @@ class MailgunToolSet:
         user-facing list email), name, members_count.
         """
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
+            raise ValueError('limit must be between 1 and 1000')
         payload: dict[str, Any] = self._client.get(
-            "/v3/lists/pages", params={"limit": limit}
+            '/v3/lists/pages', params={'limit': limit}
         ).json()
         if include_raw:
             return payload
-        items: list[Any] = payload.get("items") or []
+        items: list[Any] = payload.get('items') or []
         summaries = [
-            self._list_summary(cast("dict[str, Any]", ml), index=i, include_ids=include_ids)
+            self._list_summary(cast('dict[str, Any]', ml), index=i, include_ids=include_ids)
             for i, ml in enumerate(items, start=1)
             if isinstance(ml, dict)
         ]
-        return {"lists": summaries, "count": len(summaries)}
+        return {'lists': summaries, 'count': len(summaries)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_mailing_list(
@@ -320,7 +319,7 @@ class MailgunToolSet:
         address: str,
         name: str | None = None,
         description: str | None = None,
-        access_level: str = "readonly",
+        access_level: str = 'readonly',
     ) -> dict[str, Any]:
         """Create a mailing list.
 
@@ -328,13 +327,13 @@ class MailgunToolSet:
         Returns the new list resource.
         """
         if not address:
-            raise ValueError("address must be a non-empty string")
-        params: dict[str, Any] = {"address": address, "access_level": access_level}
+            raise ValueError('address must be a non-empty string')
+        params: dict[str, Any] = {'address': address, 'access_level': access_level}
         if name is not None:
-            params["name"] = name
+            params['name'] = name
         if description is not None:
-            params["description"] = description
-        return self._client.post("/v3/lists", params=params).json()
+            params['description'] = description
+        return self._client.post('/v3/lists', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def add_list_member(
@@ -352,15 +351,15 @@ class MailgunToolSet:
         the new/updated member resource.
         """
         if not list_address or not address:
-            raise ValueError("list_address and address must be non-empty")
+            raise ValueError('list_address and address must be non-empty')
         params: dict[str, Any] = {
-            "address": address,
-            "subscribed": str(subscribed).lower(),
-            "upsert": str(upsert).lower(),
+            'address': address,
+            'subscribed': str(subscribed).lower(),
+            'upsert': str(upsert).lower(),
         }
         if name is not None:
-            params["name"] = name
+            params['name'] = name
         return self._client.post(
-            f"/v3/lists/{list_address}/members",
+            f'/v3/lists/{list_address}/members',
             params=params,
         ).json()

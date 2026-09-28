@@ -22,41 +22,41 @@ _MAX_SEARCH_RESULTS = 10
 # MARK: ToolSet
 
 
-@toolset(prefix="tavily")
+@toolset(prefix='tavily')
 class TavilyToolSet:
     """A connector for the Tavily API (search, extract, crawl)."""
 
     metadata = ProviderMetadata(
-        name="tavily",
-        display_name="Tavily",
-        version="0.1.0",
-        description="AI-optimized web search, extract, and crawl.",
+        name='tavily',
+        display_name='Tavily',
+        version='0.1.0',
+        description='AI-optimized web search, extract, and crawl.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.SEARCH}),
-        documentation_url="https://docs.tavily.com/",
-        homepage_url="https://www.tavily.com/",
-        tags=("search", "ai"),
+        documentation_url='https://docs.tavily.com/',
+        homepage_url='https://www.tavily.com/',
+        tags=('search', 'ai'),
     )
 
     def __init__(
         self,
         *,
         api_key: str,
-        base_url: str = "https://api.tavily.com",
+        base_url: str = 'https://api.tavily.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
         self._api_key = api_key
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(api_key),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -69,8 +69,8 @@ class TavilyToolSet:
         self,
         query: str,
         *,
-        search_depth: str = "basic",
-        topic: str = "general",
+        search_depth: str = 'basic',
+        topic: str = 'general',
         max_results: int = 5,
         include_answer: bool | str = False,
         include_raw_content: bool = False,
@@ -90,44 +90,44 @@ class TavilyToolSet:
         to also get an LLM-generated synthesis of the top hits.
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
-        if search_depth not in {"basic", "advanced"}:
+            raise ValueError('query must be a non-empty string')
+        if search_depth not in {'basic', 'advanced'}:
             raise ValueError("search_depth must be 'basic' or 'advanced'")
         if max_results < 1:
-            raise ValueError("max_results must be positive")
+            raise ValueError('max_results must be positive')
         capped_max_results = min(max_results, _MAX_SEARCH_RESULTS)
         body: dict[str, Any] = {
-            "query": query,
-            "search_depth": search_depth,
-            "topic": topic,
-            "max_results": capped_max_results,
-            "include_answer": include_answer,
-            "include_raw_content": include_raw_content,
-            "include_images": include_images,
+            'query': query,
+            'search_depth': search_depth,
+            'topic': topic,
+            'max_results': capped_max_results,
+            'include_answer': include_answer,
+            'include_raw_content': include_raw_content,
+            'include_images': include_images,
         }
         if include_domains is not None:
-            body["include_domains"] = include_domains
+            body['include_domains'] = include_domains
         if exclude_domains is not None:
-            body["exclude_domains"] = exclude_domains
+            body['exclude_domains'] = exclude_domains
         if days is not None:
-            body["days"] = days
+            body['days'] = days
         if time_range is not None:
-            body["time_range"] = time_range
+            body['time_range'] = time_range
         # ``.json()`` is untyped (Any) at the HTTP boundary; narrow via runtime guard.
-        result: object = cast("object", self._client.post("/search", json=body).json())
+        result: object = cast('object', self._client.post('/search', json=body).json())
         if isinstance(result, dict) and capped_max_results != max_results:
-            narrowed = cast("dict[str, Any]", result)
-            narrowed["requestedMaxResults"] = max_results
-            narrowed["maxResultsCap"] = _MAX_SEARCH_RESULTS
+            narrowed = cast('dict[str, Any]', result)
+            narrowed['requestedMaxResults'] = max_results
+            narrowed['maxResultsCap'] = _MAX_SEARCH_RESULTS
             return narrowed
-        return cast("dict[str, Any]", result)
+        return cast('dict[str, Any]', result)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def extract(
         self,
         urls: list[str],
         *,
-        extract_depth: str = "basic",
+        extract_depth: str = 'basic',
         include_images: bool = False,
     ) -> dict[str, Any]:
         """Extract clean text content from one or more URLs.
@@ -137,15 +137,15 @@ class TavilyToolSet:
         just snippets.
         """
         if not urls:
-            raise ValueError("urls must be non-empty")
+            raise ValueError('urls must be non-empty')
         return cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._client.post(
-                "/extract",
+                '/extract',
                 json={
-                    "urls": urls,
-                    "extract_depth": extract_depth,
-                    "include_images": include_images,
+                    'urls': urls,
+                    'extract_depth': extract_depth,
+                    'include_images': include_images,
                 },
             ).json(),
         )
@@ -167,13 +167,13 @@ class TavilyToolSet:
         pages"``). ``limit`` caps total pages returned.
         """
         if not url:
-            raise ValueError("url must be a non-empty string")
+            raise ValueError('url must be a non-empty string')
         body: dict[str, Any] = {
-            "url": url,
-            "max_depth": max_depth,
-            "max_breadth": max_breadth,
-            "limit": limit,
+            'url': url,
+            'max_depth': max_depth,
+            'max_breadth': max_breadth,
+            'limit': limit,
         }
         if instructions is not None:
-            body["instructions"] = instructions
-        return cast("dict[str, Any]", self._client.post("/crawl", json=body).json())
+            body['instructions'] = instructions
+        return cast('dict[str, Any]', self._client.post('/crawl', json=body).json())

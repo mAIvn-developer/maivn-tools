@@ -15,36 +15,36 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_message_summary`` builder)
 
 _MESSAGE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "message_ref": {"type": "string"},
-        "from": {"type": "string"},
-        "to": {"type": "string"},
-        "status": {"type": "string"},
-        "direction": {"type": "string"},
-        "body": {"type": "string"},
-        "date_sent": {"type": "string"},
-        "price": {"type": ["string", "null"]},
-        "message_sid": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'message_ref': {'type': 'string'},
+        'from': {'type': 'string'},
+        'to': {'type': 'string'},
+        'status': {'type': 'string'},
+        'direction': {'type': 'string'},
+        'body': {'type': 'string'},
+        'date_sent': {'type': 'string'},
+        'price': {'type': ['string', 'null']},
+        'message_sid': {'type': 'string'},
     },
-    "required": ["message_ref", "from", "to", "status"],
+    'required': ['message_ref', 'from', 'to', 'status'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_MESSAGES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "messages": {"type": "array", "items": _MESSAGE_SUMMARY},
-        "next_page_uri": {"type": ["string", "null"]},
-        "previous_page_uri": {"type": ["string", "null"]},
-        "page": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'messages': {'type': 'array', 'items': _MESSAGE_SUMMARY},
+        'next_page_uri': {'type': ['string', 'null']},
+        'previous_page_uri': {'type': ['string', 'null']},
+        'page': {'type': 'integer'},
     },
-    "required": ["messages"],
+    'required': ['messages'],
 }
 
 
 __all__ = [
-    "LIST_MESSAGES_OUTPUT",
+    'LIST_MESSAGES_OUTPUT',
 ]

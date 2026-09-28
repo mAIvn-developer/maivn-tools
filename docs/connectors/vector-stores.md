@@ -13,7 +13,7 @@ constructor and the headline tool surface.
 
 - **List tools** (`list_indexes` for Pinecone, `list_classes` for
   Weaviate, `list_collections` for Qdrant / Chroma / Milvus) return
-  compact summaries by default with a stable display ref (`index_ref`,
+  compact summaries by default with a response-local display ref (`index_ref`,
   `class_ref`, `collection_ref`). The user-facing **name** (Pinecone index name,
   Weaviate class name, Qdrant/Chroma/Milvus collection name) is kept
   in the summary because it is also the API identifier callers pass

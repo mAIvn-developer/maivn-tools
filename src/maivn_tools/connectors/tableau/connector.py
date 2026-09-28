@@ -20,10 +20,10 @@ from .output_schemas import (
     LIST_WORKBOOKS_OUTPUT,
 )
 
-_API_VERSION = "3.24"
+_API_VERSION = '3.24'
 
 
-@toolset(prefix="tableau")
+@toolset(prefix='tableau')
 class TableauToolSet:
     """A connector for Tableau Server / Cloud REST API.
 
@@ -39,15 +39,15 @@ class TableauToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="tableau",
-        display_name="Tableau",
-        version="0.1.0",
-        description="Workbooks, views, datasources, projects, and refresh jobs.",
+        name='tableau',
+        display_name='Tableau',
+        version='0.1.0',
+        description='Workbooks, views, datasources, projects, and refresh jobs.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url=("https://help.tableau.com/current/api/rest_api/en-us/REST/rest_api.htm"),
-        homepage_url="https://www.tableau.com/",
-        tags=("bi", "analytics"),
+        documentation_url=('https://help.tableau.com/current/api/rest_api/en-us/REST/rest_api.htm'),
+        homepage_url='https://www.tableau.com/',
+        tags=('bi', 'analytics'),
     )
 
     def __init__(
@@ -61,17 +61,17 @@ class TableauToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not server_url or not site_id or not auth_token:
-            raise ValueError("server_url, site_id, and auth_token are required")
+            raise ValueError('server_url, site_id, and auth_token are required')
         self.connection = connection
         self._site_id = site_id
         self._api_version = api_version
         self._client = HttpClient(
-            base_url=server_url.rstrip("/"),
-            auth=ApiKeyAuth(auth_token, header="X-Tableau-Auth"),
+            base_url=server_url.rstrip('/'),
+            auth=ApiKeyAuth(auth_token, header='X-Tableau-Auth'),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -80,7 +80,7 @@ class TableauToolSet:
         return self._client
 
     def _site_path(self, suffix: str) -> str:
-        return f"/api/{self._api_version}/sites/{self._site_id}{suffix}"
+        return f'/api/{self._api_version}/sites/{self._site_id}{suffix}'
 
     # MARK: - Internal helpers
 
@@ -92,13 +92,13 @@ class TableauToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "project_ref": f"project_{index}",
-            "name": project.get("name", ""),
-            "description": project.get("description", "") or "",
-            "content_permissions": project.get("contentPermissions", ""),
+            'project_ref': f'project_{index}',
+            'name': project.get('name', ''),
+            'description': project.get('description', '') or '',
+            'content_permissions': project.get('contentPermissions', ''),
         }
         if include_ids:
-            summary["project_id"] = project.get("id", "")
+            summary['project_id'] = project.get('id', '')
         return summary
 
     @staticmethod
@@ -106,9 +106,9 @@ class TableauToolSet:
         """Return ``record[field]["name"]`` when ``field`` is a dict, else ``""``."""
         nested: Any = record.get(field)
         if isinstance(nested, dict):
-            nested_dict = cast("dict[str, Any]", nested)
-            return nested_dict.get("name", "")
-        return ""
+            nested_dict = cast('dict[str, Any]', nested)
+            return nested_dict.get('name', '')
+        return ''
 
     @staticmethod
     def _workbook_summary(
@@ -118,15 +118,15 @@ class TableauToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "workbook_ref": f"workbook_{index}",
-            "name": workbook.get("name", ""),
-            "description": workbook.get("description", "") or "",
-            "owner_name": TableauToolSet._nested_name(workbook, "owner"),
-            "project_name": TableauToolSet._nested_name(workbook, "project"),
-            "updated_at": workbook.get("updatedAt", ""),
+            'workbook_ref': f'workbook_{index}',
+            'name': workbook.get('name', ''),
+            'description': workbook.get('description', '') or '',
+            'owner_name': TableauToolSet._nested_name(workbook, 'owner'),
+            'project_name': TableauToolSet._nested_name(workbook, 'project'),
+            'updated_at': workbook.get('updatedAt', ''),
         }
         if include_ids:
-            summary["workbook_id"] = workbook.get("id", "")
+            summary['workbook_id'] = workbook.get('id', '')
         return summary
 
     @staticmethod
@@ -137,13 +137,13 @@ class TableauToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "view_ref": f"view_{index}",
-            "name": view.get("name", ""),
-            "content_url": view.get("contentUrl", ""),
-            "view_url_name": view.get("viewUrlName", ""),
+            'view_ref': f'view_{index}',
+            'name': view.get('name', ''),
+            'content_url': view.get('contentUrl', ''),
+            'view_url_name': view.get('viewUrlName', ''),
         }
         if include_ids:
-            summary["view_id"] = view.get("id", "")
+            summary['view_id'] = view.get('id', '')
         return summary
 
     @staticmethod
@@ -154,15 +154,15 @@ class TableauToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "datasource_ref": f"datasource_{index}",
-            "name": datasource.get("name", ""),
-            "type": datasource.get("type", ""),
-            "owner_name": TableauToolSet._nested_name(datasource, "owner"),
-            "project_name": TableauToolSet._nested_name(datasource, "project"),
-            "updated_at": datasource.get("updatedAt", ""),
+            'datasource_ref': f'datasource_{index}',
+            'name': datasource.get('name', ''),
+            'type': datasource.get('type', ''),
+            'owner_name': TableauToolSet._nested_name(datasource, 'owner'),
+            'project_name': TableauToolSet._nested_name(datasource, 'project'),
+            'updated_at': datasource.get('updatedAt', ''),
         }
         if include_ids:
-            summary["datasource_id"] = datasource.get("id", "")
+            summary['datasource_id'] = datasource.get('id', '')
         return summary
 
     @staticmethod
@@ -180,11 +180,11 @@ class TableauToolSet:
         container: object = payload.get(container_key) or {}
         if not isinstance(container, dict):
             return []
-        container_dict = cast("dict[str, Any]", container)
+        container_dict = cast('dict[str, Any]', container)
         items: Any = container_dict.get(item_key, [])
         if not isinstance(items, list):
             return None
-        return cast("list[Any]", items)
+        return cast('list[Any]', items)
 
     @staticmethod
     def _select_id(
@@ -196,18 +196,18 @@ class TableauToolSet:
         if isinstance(candidate, str):
             return candidate
         if isinstance(candidate, dict):
-            mapping = cast("dict[str, Any]", candidate)
-            for prefer in (key, "id"):
+            mapping = cast('dict[str, Any]', candidate)
+            for prefer in (key, 'id'):
                 value: Any = mapping.get(prefer)
                 if isinstance(value, str) and value:
                     return value
         if isinstance(candidate, (list, tuple)):
-            items = cast("list[Any] | tuple[Any, ...]", candidate)
+            items = cast('list[Any] | tuple[Any, ...]', candidate)
             for item in items:
                 resolved = TableauToolSet._select_id(item, key=key)
                 if resolved:
                     return resolved
-        raise ValueError(f"could not resolve {key} from input")
+        raise ValueError(f'could not resolve {key} from input')
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_server_info(self) -> dict[str, Any]:
@@ -215,7 +215,7 @@ class TableauToolSet:
 
         Use to validate the connection and discover supported API version.
         """
-        result: dict[str, Any] = self._client.get(f"/api/{self._api_version}/serverinfo").json()
+        result: dict[str, Any] = self._client.get(f'/api/{self._api_version}/serverinfo').json()
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -230,8 +230,8 @@ class TableauToolSet:
         Returns the raw Tableau pagination payload.
         """
         result: dict[str, Any] = self._client.get(
-            f"/api/{self._api_version}/sites",
-            params={"pageSize": page_size, "pageNumber": page_number},
+            f'/api/{self._api_version}/sites',
+            params={'pageSize': page_size, 'pageNumber': page_number},
         ).json()
         return result
 
@@ -251,22 +251,22 @@ class TableauToolSet:
         unless ``include_ids=True``.
         """
         payload: dict[str, Any] = self._client.get(
-            self._site_path("/projects"),
-            params={"pageSize": page_size, "pageNumber": page_number},
+            self._site_path('/projects'),
+            params={'pageSize': page_size, 'pageNumber': page_number},
         ).json()
-        records = self._extract_records(payload, container_key="projects", item_key="project")
+        records = self._extract_records(payload, container_key='projects', item_key='project')
         if records is None:
             return payload
         summaries = [
             self._project_summary(
-                cast("dict[str, Any]", project), index=index, include_ids=include_ids
+                cast('dict[str, Any]', project), index=index, include_ids=include_ids
             )
             for index, project in enumerate(records, start=1)
             if isinstance(project, dict)
         ]
         return {
-            "projects": summaries,
-            "pagination": payload.get("pagination"),
+            'projects': summaries,
+            'pagination': payload.get('pagination'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -291,29 +291,29 @@ class TableauToolSet:
         ``page_number`` is preserved.
         """
         params: dict[str, Any] = {
-            "pageSize": page_size,
-            "pageNumber": page_number,
+            'pageSize': page_size,
+            'pageNumber': page_number,
         }
         if filter is not None:
-            params["filter"] = filter
+            params['filter'] = filter
         if sort is not None:
-            params["sort"] = sort
+            params['sort'] = sort
         payload: dict[str, Any] = self._client.get(
-            self._site_path("/workbooks"), params=params
+            self._site_path('/workbooks'), params=params
         ).json()
-        records = self._extract_records(payload, container_key="workbooks", item_key="workbook")
+        records = self._extract_records(payload, container_key='workbooks', item_key='workbook')
         if records is None:
             return payload
         summaries = [
             self._workbook_summary(
-                cast("dict[str, Any]", workbook), index=index, include_ids=include_ids
+                cast('dict[str, Any]', workbook), index=index, include_ids=include_ids
             )
             for index, workbook in enumerate(records, start=1)
             if isinstance(workbook, dict)
         ]
         return {
-            "workbooks": summaries,
-            "pagination": payload.get("pagination"),
+            'workbooks': summaries,
+            'pagination': payload.get('pagination'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -325,9 +325,9 @@ class TableauToolSet:
         handle and should not appear in final answers.
         """
         if not workbook_id:
-            raise ValueError("workbook_id is required")
+            raise ValueError('workbook_id is required')
         result: dict[str, Any] = self._client.get(
-            self._site_path(f"/workbooks/{workbook_id}")
+            self._site_path(f'/workbooks/{workbook_id}')
         ).json()
         return result
 
@@ -347,26 +347,26 @@ class TableauToolSet:
         :meth:`query_view_data` call needs the view ID.
         """
         if not workbook_id:
-            raise ValueError("workbook_id is required")
+            raise ValueError('workbook_id is required')
         payload: dict[str, Any] = self._client.get(
-            self._site_path(f"/workbooks/{workbook_id}/views")
+            self._site_path(f'/workbooks/{workbook_id}/views')
         ).json()
-        records = self._extract_records(payload, container_key="views", item_key="view")
+        records = self._extract_records(payload, container_key='views', item_key='view')
         if records is None:
             return payload
         summaries = [
-            self._view_summary(cast("dict[str, Any]", view), index=index, include_ids=include_ids)
+            self._view_summary(cast('dict[str, Any]', view), index=index, include_ids=include_ids)
             for index, view in enumerate(records, start=1)
             if isinstance(view, dict)
         ]
-        return {"views": summaries}
+        return {'views': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def query_view_data(
         self,
         view_id: str,
         *,
-        format: str = "csv",
+        format: str = 'csv',
         max_age: int | None = None,
     ) -> dict[str, Any]:
         """Query a view's data (CSV / Excel / PDF / Image).
@@ -375,23 +375,23 @@ class TableauToolSet:
         return cached results. Returns ``{"status", "format", "body"}``.
         """
         if not view_id:
-            raise ValueError("view_id is required")
-        if format not in {"csv", "data", "excel", "image", "pdf"}:
-            raise ValueError("invalid format")
+            raise ValueError('view_id is required')
+        if format not in {'csv', 'data', 'excel', 'image', 'pdf'}:
+            raise ValueError('invalid format')
         # Tableau's view-export path suffixes differ from the friendly format
         # names: CSV data is served at ``/data`` and Excel as ``/crosstab/excel``.
-        suffix = {"csv": "data", "data": "data", "excel": "crosstab/excel"}.get(format, format)
+        suffix = {'csv': 'data', 'data': 'data', 'excel': 'crosstab/excel'}.get(format, format)
         params: dict[str, Any] = {}
         if max_age is not None:
-            params["maxAge"] = max_age
+            params['maxAge'] = max_age
         response = self._client.get(
-            self._site_path(f"/views/{view_id}/{suffix}"),
+            self._site_path(f'/views/{view_id}/{suffix}'),
             params=params or None,
         )
         return {
-            "status": response.status,
-            "format": format,
-            "body": response.text(),
+            'status': response.status,
+            'format': format,
+            'body': response.text(),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -410,22 +410,22 @@ class TableauToolSet:
         are omitted unless ``include_ids=True``.
         """
         payload: dict[str, Any] = self._client.get(
-            self._site_path("/datasources"),
-            params={"pageSize": page_size, "pageNumber": page_number},
+            self._site_path('/datasources'),
+            params={'pageSize': page_size, 'pageNumber': page_number},
         ).json()
-        records = self._extract_records(payload, container_key="datasources", item_key="datasource")
+        records = self._extract_records(payload, container_key='datasources', item_key='datasource')
         if records is None:
             return payload
         summaries = [
             self._datasource_summary(
-                cast("dict[str, Any]", datasource), index=index, include_ids=include_ids
+                cast('dict[str, Any]', datasource), index=index, include_ids=include_ids
             )
             for index, datasource in enumerate(records, start=1)
             if isinstance(datasource, dict)
         ]
         return {
-            "datasources": summaries,
-            "pagination": payload.get("pagination"),
+            'datasources': summaries,
+            'pagination': payload.get('pagination'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -436,9 +436,9 @@ class TableauToolSet:
         to track completion.
         """
         if not datasource_id:
-            raise ValueError("datasource_id is required")
+            raise ValueError('datasource_id is required')
         result: dict[str, Any] = self._client.post(
-            self._site_path(f"/datasources/{datasource_id}/refresh"),
+            self._site_path(f'/datasources/{datasource_id}/refresh'),
             json={},
         ).json()
         return result
@@ -451,9 +451,9 @@ class TableauToolSet:
         track completion.
         """
         if not workbook_id:
-            raise ValueError("workbook_id is required")
+            raise ValueError('workbook_id is required')
         result: dict[str, Any] = self._client.post(
-            self._site_path(f"/workbooks/{workbook_id}/refresh"),
+            self._site_path(f'/workbooks/{workbook_id}/refresh'),
             json={},
         ).json()
         return result
@@ -466,8 +466,8 @@ class TableauToolSet:
         to track progress.
         """
         if not job_id:
-            raise ValueError("job_id is required")
-        result: dict[str, Any] = self._client.get(self._site_path(f"/jobs/{job_id}")).json()
+            raise ValueError('job_id is required')
+        result: dict[str, Any] = self._client.get(self._site_path(f'/jobs/{job_id}')).json()
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -479,12 +479,12 @@ class TableauToolSet:
         (include_ids=True)`` / ``get_workbook`` (the ``workbook_id``/``id``
         key is read).
         """
-        resolved = self._select_id(workbook_id, key="workbook_id")
+        resolved = self._select_id(workbook_id, key='workbook_id')
         if not resolved:
-            raise ValueError("workbook_id is required")
-        response = self._client.delete(self._site_path(f"/workbooks/{resolved}"))
+            raise ValueError('workbook_id is required')
+        response = self._client.delete(self._site_path(f'/workbooks/{resolved}'))
         return {
-            "workbook_id": resolved,
-            "deleted": True,
-            "status": response.status,
+            'workbook_id': resolved,
+            'deleted': True,
+            'status': response.status,
         }

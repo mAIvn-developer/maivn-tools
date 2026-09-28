@@ -33,16 +33,16 @@ class GraphQLOperation:
     name: str
     query: str
     operation_name: str | None = None
-    description: str = ""
+    description: str = ''
     permissions: PermissionSet = field(default_factory=lambda: PermissionSet(PermissionFlag.READ))
     destructive: bool = False
     variables_allowlist: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.name:
-            raise ValueError("GraphQLOperation.name is required")
+            raise ValueError('GraphQLOperation.name is required')
         if not self.query:
-            raise ValueError("GraphQLOperation.query is required")
+            raise ValueError('GraphQLOperation.query is required')
 
 
 # MARK: Connector
@@ -67,7 +67,7 @@ class GraphQLConnector:
         self._endpoint = endpoint
         self._operations = tuple(operations)
         if not self._operations:
-            raise ValueError("GraphQLConnector requires at least one operation")
+            raise ValueError('GraphQLConnector requires at least one operation')
         self._client = HttpClient(
             transport=transport,
             auth=auth or NoAuth(),
@@ -91,30 +91,30 @@ class GraphQLConnector:
                 unknown = set(vars_dict) - allowed
                 if unknown:
                     raise TypeError(
-                        f"{op.name}() received unexpected variables: {sorted(unknown)!r}"
+                        f'{op.name}() received unexpected variables: {sorted(unknown)!r}'
                     )
-            payload: dict[str, Any] = {"query": op.query, "variables": vars_dict}
+            payload: dict[str, Any] = {'query': op.query, 'variables': vars_dict}
             if op.operation_name is not None:
-                payload["operationName"] = op.operation_name
+                payload['operationName'] = op.operation_name
             response = self._client.post(self._endpoint, json=payload)
             result: Any = response.json()
             if isinstance(result, dict):
                 data_dict = cast(dict[str, Any], result)
-                if data_dict.get("errors"):
+                if data_dict.get('errors'):
                     raise ProviderError(
-                        f"GraphQL operation {op.name!r} failed",
-                        detail={"errors": data_dict["errors"]},
+                        f'GraphQL operation {op.name!r} failed',
+                        detail={'errors': data_dict['errors']},
                     )
-                if "data" in data_dict:
-                    return data_dict["data"]
+                if 'data' in data_dict:
+                    return data_dict['data']
             return cast(Any, result)
 
         tool.__name__ = op.name
         tool.__qualname__ = op.name
-        tool.__doc__ = op.description or f"Execute GraphQL operation {op.name!r}."
+        tool.__doc__ = op.description or f'Execute GraphQL operation {op.name!r}.'
         tool.permissions = op.permissions  # type: ignore[attr-defined]
         tool.destructive = op.destructive  # type: ignore[attr-defined]
         return tool
 
 
-__all__ = ["GraphQLConnector", "GraphQLOperation"]
+__all__ = ['GraphQLConnector', 'GraphQLOperation']

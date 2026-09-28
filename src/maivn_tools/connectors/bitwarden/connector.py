@@ -16,20 +16,20 @@ from .output_schemas import LIST_SECRETS_OUTPUT
 # MARK: - Constants
 
 # Path prefix the SDK-server mounts every secret route under.
-_API_PREFIX = "/rest/api/1"
+_API_PREFIX = '/rest/api/1'
 
 # Headers the SDK-server's Warden middleware reads to build the per-request
 # authenticated Bitwarden client. The access token is supplied here (NOT as a
 # raw bearer token to api.bitwarden.com): the SDK-server performs the OAuth2
 # client_credentials exchange against identity.bitwarden.com and the
 # client-side decryption, then returns plaintext over its local REST API.
-_HEADER_ACCESS_TOKEN = "Warden-Access-Token"
-_HEADER_API_URL = "Warden-Api-Url"
-_HEADER_IDENTITY_URL = "Warden-Identity-Url"
-_HEADER_STATE_PATH = "Warden-State-Path"
+_HEADER_ACCESS_TOKEN = 'Warden-Access-Token'
+_HEADER_API_URL = 'Warden-Api-Url'
+_HEADER_IDENTITY_URL = 'Warden-Identity-Url'
+_HEADER_STATE_PATH = 'Warden-State-Path'
 
 
-@toolset(prefix="bitwarden")
+@toolset(prefix='bitwarden')
 class BitwardenToolSet:
     """A connector for Bitwarden Secrets Manager via the Bitwarden SDK-server.
 
@@ -65,19 +65,19 @@ class BitwardenToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="bitwarden",
-        display_name="Bitwarden Secrets Manager",
-        version="0.2.0",
+        name='bitwarden',
+        display_name='Bitwarden Secrets Manager',
+        version='0.2.0',
         description=(
-            "Secrets in Bitwarden Secrets Manager via the Bitwarden SDK-server "
-            "(local REST wrapper around the Bitwarden Rust SDK). Requires a "
-            "running SDK-server; does not talk to api.bitwarden.com directly."
+            'Secrets in Bitwarden Secrets Manager via the Bitwarden SDK-server '
+            '(local REST wrapper around the Bitwarden Rust SDK). Requires a '
+            'running SDK-server; does not talk to api.bitwarden.com directly.'
         ),
         auth_modes=(AuthMode.SERVICE_ACCOUNT,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://github.com/external-secrets/bitwarden-sdk-server",
-        homepage_url="https://bitwarden.com/",
-        tags=("security", "secrets", "sdk-server"),
+        documentation_url='https://github.com/external-secrets/bitwarden-sdk-server',
+        homepage_url='https://bitwarden.com/',
+        tags=('security', 'secrets', 'sdk-server'),
     )
 
     def __init__(
@@ -85,7 +85,7 @@ class BitwardenToolSet:
         *,
         access_token: str,
         organization_id: str,
-        base_url: str = "http://localhost:9998",
+        base_url: str = 'http://localhost:9998',
         api_url: str | None = None,
         identity_url: str | None = None,
         state_path: str | None = None,
@@ -93,12 +93,12 @@ class BitwardenToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token or not organization_id:
-            raise ValueError("access_token and organization_id are required")
+            raise ValueError('access_token and organization_id are required')
         self.connection = connection
         self._org_id = organization_id
         headers: dict[str, str] = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
             _HEADER_ACCESS_TOKEN: access_token,
         }
         if api_url:
@@ -108,7 +108,7 @@ class BitwardenToolSet:
         if state_path:
             headers[_HEADER_STATE_PATH] = state_path
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             transport=transport,
             default_headers=headers,
         )
@@ -130,11 +130,11 @@ class BitwardenToolSet:
         # list route (SecretIdentifiersResponse) returns id/key/organizationId/
         # projectIds only -- no value, note, or timestamps.
         summary: dict[str, Any] = {
-            "secret_ref": f"secret_{index}",
-            "key": secret.get("key", ""),
+            'secret_ref': f'secret_{index}',
+            'key': secret.get('key', ''),
         }
         if include_ids:
-            summary["secret_id"] = secret.get("id", "")
+            summary['secret_id'] = secret.get('id', '')
         return summary
 
     @staticmethod
@@ -143,7 +143,7 @@ class BitwardenToolSet:
             return [secrets]
         if isinstance(secrets, dict):
             secret_dict = cast(dict[str, Any], secrets)
-            for key in ("secret_id", "id"):
+            for key in ('secret_id', 'id'):
                 value: Any = secret_dict.get(key)
                 if isinstance(value, str) and value:
                     return [value]
@@ -155,7 +155,7 @@ class BitwardenToolSet:
                     ids.append(entry)
                 elif isinstance(entry, dict):
                     entry_dict = cast(dict[str, Any], entry)
-                    for key in ("secret_id", "id"):
+                    for key in ('secret_id', 'id'):
                         entry_value: Any = entry_dict.get(key)
                         if isinstance(entry_value, str) and entry_value:
                             ids.append(entry_value)
@@ -168,7 +168,7 @@ class BitwardenToolSet:
     def _data_list(payload: Any) -> list[dict[str, Any]]:
         """Return the ``data`` list from an SDK-server list-style response."""
         if isinstance(payload, dict):
-            data_field: Any = cast(dict[str, Any], payload).get("data", [])
+            data_field: Any = cast(dict[str, Any], payload).get('data', [])
             if isinstance(data_field, list):
                 items = cast(list[Any], data_field)
                 return [cast(dict[str, Any], s) for s in items if isinstance(s, dict)]
@@ -193,15 +193,15 @@ class BitwardenToolSet:
         get_secret to read a specific secret's value.
         """
         payload: Any = self._client.get(
-            f"{_API_PREFIX}/secrets",
-            json={"organizationId": self._org_id},
+            f'{_API_PREFIX}/secrets',
+            json={'organizationId': self._org_id},
         ).json()
         raw_secrets = self._data_list(payload)
         summaries = [
             self._secret_summary(secret, index=index, include_ids=include_ids)
             for index, secret in enumerate(raw_secrets, start=1)
         ]
-        return {"secrets": summaries}
+        return {'secrets': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_secret(self, secret_id: Any) -> dict[str, Any]:
@@ -215,8 +215,8 @@ class BitwardenToolSet:
         """
         resolved = self._resolve_secret_ids(secret_id)
         return self._client.get(
-            f"{_API_PREFIX}/secret",
-            json={"id": resolved[0]},
+            f'{_API_PREFIX}/secret',
+            json={'id': resolved[0]},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -230,8 +230,8 @@ class BitwardenToolSet:
         """
         ids = self._resolve_secret_ids(secret_ids)
         return self._client.get(
-            f"{_API_PREFIX}/secrets-by-ids",
-            json={"ids": ids},
+            f'{_API_PREFIX}/secrets-by-ids',
+            json={'ids': ids},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -250,16 +250,16 @@ class BitwardenToolSet:
         access to live systems.
         """
         if not key or not value:
-            raise ValueError("key and value are required")
+            raise ValueError('key and value are required')
         body: dict[str, Any] = {
-            "key": key,
-            "value": value,
-            "note": note if note is not None else "",
-            "organizationId": self._org_id,
+            'key': key,
+            'value': value,
+            'note': note if note is not None else '',
+            'organizationId': self._org_id,
         }
         if project_ids is not None:
-            body["projectIds"] = project_ids
-        return self._client.post(f"{_API_PREFIX}/secret", json=body).json()
+            body['projectIds'] = project_ids
+        return self._client.post(f'{_API_PREFIX}/secret', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_secret(
@@ -280,17 +280,17 @@ class BitwardenToolSet:
         """
         resolved = self._resolve_secret_ids(secret_id)
         if key is None and value is None and note is None and project_ids is None:
-            raise ValueError("at least one update field is required")
+            raise ValueError('at least one update field is required')
         body: dict[str, Any] = {
-            "id": resolved[0],
-            "key": key if key is not None else "",
-            "value": value if value is not None else "",
-            "note": note if note is not None else "",
-            "organizationId": self._org_id,
+            'id': resolved[0],
+            'key': key if key is not None else '',
+            'value': value if value is not None else '',
+            'note': note if note is not None else '',
+            'organizationId': self._org_id,
         }
         if project_ids is not None:
-            body["projectIds"] = project_ids
-        return self._client.put(f"{_API_PREFIX}/secret", json=body).json()
+            body['projectIds'] = project_ids
+        return self._client.put(f'{_API_PREFIX}/secret', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_secrets(self, secret_ids: Any) -> dict[str, Any]:
@@ -301,4 +301,4 @@ class BitwardenToolSet:
         single id/dict. Destructive -- confirm with the user.
         """
         ids = self._resolve_secret_ids(secret_ids)
-        return self._client.delete(f"{_API_PREFIX}/secret", json={"ids": ids}).json()
+        return self._client.delete(f'{_API_PREFIX}/secret', json={'ids': ids}).json()

@@ -49,7 +49,7 @@ an `engagement_type` argument from: `notes`, `calls`, `emails`,
 ### Agent-ready behavior
 
 - `list_objects` and `search_objects` return compact summaries by
-  default. Each summary carries a stable `object_ref`
+  default. Each summary carries a response-local `object_ref`
   (`object_1`, `object_2`, ...), the `object_type`, an `updated_at`
   timestamp, and a small set of useful display properties chosen per
   object type (e.g. `email`/`firstname`/`lastname` for contacts,
@@ -145,7 +145,7 @@ connector = SalesforceToolSet(
 ### Agent-ready behavior
 
 - `soql_query` returns compact summaries by default. Each summary
-  carries a stable `record_ref` (`record_1`, `record_2`, ...), the
+  carries a response-local `record_ref` (`record_1`, `record_2`, ...), the
   `object_type` (taken from the record's `attributes.type`), and any
   of the common display fields that were actually selected (`Name`,
   `Subject`, `Title`, `FirstName`, `LastName`, `Email`, `Phone`,

@@ -19,19 +19,19 @@ def _extract_sheet_id(candidate: Any) -> str:
     """Pull a Google Sheets ``spreadsheetId`` out of a raw string or sheet dict."""
     if isinstance(candidate, str):
         if not candidate:
-            raise ValueError("spreadsheet_id must be a non-empty string")
+            raise ValueError('spreadsheet_id must be a non-empty string')
         return candidate
     if isinstance(candidate, dict):
-        candidate_dict = cast("dict[str, Any]", candidate)
-        for key in ("sheet_ref_id", "spreadsheet_id", "spreadsheetId", "file_id", "id"):
+        candidate_dict = cast('dict[str, Any]', candidate)
+        for key in ('sheet_ref_id', 'spreadsheet_id', 'spreadsheetId', 'file_id', 'id'):
             value: Any = candidate_dict.get(key)
             if isinstance(value, str) and value:
                 return value
-        raise ValueError("dict candidate has no spreadsheet id")
-    raise ValueError("spreadsheet_id must be a string or a spreadsheet dict")
+        raise ValueError('dict candidate has no spreadsheet id')
+    raise ValueError('spreadsheet_id must be a string or a spreadsheet dict')
 
 
-@toolset(prefix="google_sheets")
+@toolset(prefix='google_sheets')
 class GoogleSheetsToolSet:
     """A connector for the Google Sheets API v4.
 
@@ -42,35 +42,35 @@ class GoogleSheetsToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="google_sheets",
-        display_name="Google Sheets",
-        version="0.1.0",
-        description="Read and write ranges, append rows, manage spreadsheets.",
+        name='google_sheets',
+        display_name='Google Sheets',
+        version='0.1.0',
+        description='Read and write ranges, append rows, manage spreadsheets.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "https://www.googleapis.com/auth/spreadsheets": "Full Sheets access.",
-            "https://www.googleapis.com/auth/spreadsheets.readonly": "Read-only Sheets access.",
+            'https://www.googleapis.com/auth/spreadsheets': 'Full Sheets access.',
+            'https://www.googleapis.com/auth/spreadsheets.readonly': 'Read-only Sheets access.',
         },
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developers.google.com/sheets/api/reference/rest",
-        homepage_url="https://sheets.google.com/",
-        tags=("sheets", "google-workspace"),
+        documentation_url='https://developers.google.com/sheets/api/reference/rest',
+        homepage_url='https://sheets.google.com/',
+        tags=('sheets', 'google-workspace'),
     )
 
     def __init__(
         self,
         *,
         token: TokenSource,
-        base_url: str = "https://sheets.googleapis.com",
+        base_url: str = 'https://sheets.googleapis.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=make_bearer_auth(token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -96,11 +96,11 @@ class GoogleSheetsToolSet:
         spreadsheet_id = _extract_sheet_id(spreadsheet_id)
         params: dict[str, Any] = {}
         if include_grid_data:
-            params["includeGridData"] = "true"
+            params['includeGridData'] = 'true'
         if ranges is not None:
-            params["ranges"] = ranges
+            params['ranges'] = ranges
         return self._client.get(
-            f"/v4/spreadsheets/{spreadsheet_id}",
+            f'/v4/spreadsheets/{spreadsheet_id}',
             params=params or None,
         ).json()
 
@@ -117,11 +117,11 @@ class GoogleSheetsToolSet:
         the result to other tools.
         """
         if not title:
-            raise ValueError("title must be a non-empty string")
-        body: dict[str, Any] = {"properties": {"title": title}}
+            raise ValueError('title must be a non-empty string')
+        body: dict[str, Any] = {'properties': {'title': title}}
         if sheets is not None:
-            body["sheets"] = sheets
-        return self._client.post("/v4/spreadsheets", json=body).json()
+            body['sheets'] = sheets
+        return self._client.post('/v4/spreadsheets', json=body).json()
 
     # MARK: - Values
 
@@ -131,7 +131,7 @@ class GoogleSheetsToolSet:
         spreadsheet_id: Any,
         range: str,
         *,
-        major_dimension: str = "ROWS",
+        major_dimension: str = 'ROWS',
         value_render_option: str | None = None,
         date_time_render_option: str | None = None,
     ) -> dict[str, Any]:
@@ -143,14 +143,14 @@ class GoogleSheetsToolSet:
         """
         spreadsheet_id = _extract_sheet_id(spreadsheet_id)
         if not range:
-            raise ValueError("range must be non-empty")
-        params: dict[str, Any] = {"majorDimension": major_dimension}
+            raise ValueError('range must be non-empty')
+        params: dict[str, Any] = {'majorDimension': major_dimension}
         if value_render_option is not None:
-            params["valueRenderOption"] = value_render_option
+            params['valueRenderOption'] = value_render_option
         if date_time_render_option is not None:
-            params["dateTimeRenderOption"] = date_time_render_option
+            params['dateTimeRenderOption'] = date_time_render_option
         return self._client.get(
-            f"/v4/spreadsheets/{spreadsheet_id}/values/{range}",
+            f'/v4/spreadsheets/{spreadsheet_id}/values/{range}',
             params=params,
         ).json()
 
@@ -160,7 +160,7 @@ class GoogleSheetsToolSet:
         spreadsheet_id: Any,
         ranges: list[str],
         *,
-        major_dimension: str = "ROWS",
+        major_dimension: str = 'ROWS',
         value_render_option: str | None = None,
     ) -> dict[str, Any]:
         """Read multiple ranges at once.
@@ -170,15 +170,15 @@ class GoogleSheetsToolSet:
         """
         spreadsheet_id = _extract_sheet_id(spreadsheet_id)
         if not ranges:
-            raise ValueError("ranges must be non-empty")
+            raise ValueError('ranges must be non-empty')
         params: dict[str, Any] = {
-            "ranges": ranges,
-            "majorDimension": major_dimension,
+            'ranges': ranges,
+            'majorDimension': major_dimension,
         }
         if value_render_option is not None:
-            params["valueRenderOption"] = value_render_option
+            params['valueRenderOption'] = value_render_option
         return self._client.get(
-            f"/v4/spreadsheets/{spreadsheet_id}/values:batchGet",
+            f'/v4/spreadsheets/{spreadsheet_id}/values:batchGet',
             params=params,
         ).json()
 
@@ -189,7 +189,7 @@ class GoogleSheetsToolSet:
         range: str,
         *,
         values: list[list[Any]],
-        value_input_option: str = "USER_ENTERED",
+        value_input_option: str = 'USER_ENTERED',
     ) -> dict[str, Any]:
         """Overwrite a range of values.
 
@@ -199,13 +199,13 @@ class GoogleSheetsToolSet:
         """
         spreadsheet_id = _extract_sheet_id(spreadsheet_id)
         if not range:
-            raise ValueError("range must be non-empty")
-        if value_input_option not in {"RAW", "USER_ENTERED"}:
-            raise ValueError("value_input_option must be RAW or USER_ENTERED")
+            raise ValueError('range must be non-empty')
+        if value_input_option not in {'RAW', 'USER_ENTERED'}:
+            raise ValueError('value_input_option must be RAW or USER_ENTERED')
         return self._client.put(
-            f"/v4/spreadsheets/{spreadsheet_id}/values/{range}",
-            params={"valueInputOption": value_input_option},
-            json={"range": range, "values": values, "majorDimension": "ROWS"},
+            f'/v4/spreadsheets/{spreadsheet_id}/values/{range}',
+            params={'valueInputOption': value_input_option},
+            json={'range': range, 'values': values, 'majorDimension': 'ROWS'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -215,8 +215,8 @@ class GoogleSheetsToolSet:
         range: str,
         *,
         values: list[list[Any]],
-        value_input_option: str = "USER_ENTERED",
-        insert_data_option: str = "INSERT_ROWS",
+        value_input_option: str = 'USER_ENTERED',
+        insert_data_option: str = 'INSERT_ROWS',
     ) -> dict[str, Any]:
         """Append rows below the table that covers ``range``.
 
@@ -224,14 +224,14 @@ class GoogleSheetsToolSet:
         """
         spreadsheet_id = _extract_sheet_id(spreadsheet_id)
         if not range:
-            raise ValueError("range must be non-empty")
+            raise ValueError('range must be non-empty')
         return self._client.post(
-            f"/v4/spreadsheets/{spreadsheet_id}/values/{range}:append",
+            f'/v4/spreadsheets/{spreadsheet_id}/values/{range}:append',
             params={
-                "valueInputOption": value_input_option,
-                "insertDataOption": insert_data_option,
+                'valueInputOption': value_input_option,
+                'insertDataOption': insert_data_option,
             },
-            json={"values": values},
+            json={'values': values},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -246,9 +246,9 @@ class GoogleSheetsToolSet:
         """
         spreadsheet_id = _extract_sheet_id(spreadsheet_id)
         if not range:
-            raise ValueError("range must be non-empty")
+            raise ValueError('range must be non-empty')
         return self._client.post(
-            f"/v4/spreadsheets/{spreadsheet_id}/values/{range}:clear",
+            f'/v4/spreadsheets/{spreadsheet_id}/values/{range}:clear',
             json={},
         ).json()
 
@@ -268,10 +268,10 @@ class GoogleSheetsToolSet:
         """
         spreadsheet_id = _extract_sheet_id(spreadsheet_id)
         if not requests:
-            raise ValueError("requests must be non-empty")
+            raise ValueError('requests must be non-empty')
         return self._client.post(
-            f"/v4/spreadsheets/{spreadsheet_id}:batchUpdate",
-            json={"requests": requests},
+            f'/v4/spreadsheets/{spreadsheet_id}:batchUpdate',
+            json={'requests': requests},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -288,17 +288,17 @@ class GoogleSheetsToolSet:
         Accepts a raw spreadsheet ID or a sheet dict.
         """
         if not title:
-            raise ValueError("title must be a non-empty string")
+            raise ValueError('title must be a non-empty string')
         return self.batch_update(
             spreadsheet_id,
             [
                 {
-                    "addSheet": {
-                        "properties": {
-                            "title": title,
-                            "gridProperties": {
-                                "rowCount": row_count,
-                                "columnCount": column_count,
+                    'addSheet': {
+                        'properties': {
+                            'title': title,
+                            'gridProperties': {
+                                'rowCount': row_count,
+                                'columnCount': column_count,
                             },
                         }
                     }
@@ -314,5 +314,5 @@ class GoogleSheetsToolSet:
         """
         return self.batch_update(
             spreadsheet_id,
-            [{"deleteSheet": {"sheetId": sheet_id}}],
+            [{'deleteSheet': {'sheetId': sheet_id}}],
         )

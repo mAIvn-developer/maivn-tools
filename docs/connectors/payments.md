@@ -3,7 +3,7 @@
 Payment processors, accounting systems, and expense / spend management.
 
 All of these connectors follow the same agent-ready pattern: broad
-`list_*` tools return compact summaries by default with a stable
+`list_*` tools return compact summaries by default with a response-local
 ordinal ref (`customer_ref`, `payment_ref`, `invoice_ref`,
 `subscription_ref`, `transaction_ref`, etc.) plus user-facing fields
 (name / email / amount / status / dates), and raw provider IDs are
@@ -51,8 +51,7 @@ which is propagated to the request runtime.
 ### Agent-ready behavior
 
 - `list_customers`, `list_subscriptions`, `list_invoices`,
-  `list_charges`, `list_disputes` return compact summaries with stable
-  refs (`customer_ref`, `subscription_ref`, `invoice_ref`, `charge_ref`,
+  `list_charges`, `list_disputes` return compact summaries with response-local refs (`customer_ref`, `subscription_ref`, `invoice_ref`, `charge_ref`,
   `dispute_ref`). Amounts (`total`, `amount_due`, `amount_paid`,
   `balance`) are formatted as `"12.34 USD"` strings.
 - Raw Stripe IDs (`cus_...`, `sub_...`, `in_...`, `ch_...`,
@@ -69,7 +68,7 @@ which is propagated to the request runtime.
 Example:
 
 ```python
-customers = connector.list_customers(email="alice@example.com")
+customers = connector.list_customers(email="alice@example.com", include_ids=True)
 # {"customers": [{"customer_ref": "customer_1", "name": "Alice", "email": "alice@example.com", "balance": "0.00 USD", ...}], "has_more": False, "next_cursor": None}
 connector.update_customer(customers["customers"][0], description="VIP")  # needs include_ids=True or the customer dict via get_customer
 ```
@@ -97,7 +96,7 @@ Tools: `list_locations`,
 ### Agent-ready behavior
 
 - `list_customers` and `list_payments` return compact summaries with
-  stable refs (`customer_ref`, `payment_ref`). Money fields use Square's
+  display refs (`customer_ref`, `payment_ref`). Money fields use Square's
   minor-unit `Money` object formatted as `"12.34 USD"` strings.
 - Raw Square IDs hidden by default; pass `include_ids=True` to opt in.
 - Default `limit` is **25**.
@@ -147,7 +146,11 @@ handles that automatically.
 ```python
 from maivn_tools import PlaidToolSet
 
-connector = PlaidToolSet(client_id=..., secret=..., environment="production")
+connector = PlaidToolSet(
+    client_id="plaid-client-id",
+    secret="plaid-secret",
+    environment="production",
+)
 ```
 
 Tools: `create_link_token(...)`,
@@ -196,7 +199,7 @@ Tools: `query(query)` (QBO SQL-like), `get_entity(entity, entity_id)`,
 ### Agent-ready behavior
 
 - `list_customers`, `list_invoices`, `list_bills` return compact
-  summaries with stable refs (`customer_ref`, `invoice_ref`,
+  summaries with display refs (`customer_ref`, `invoice_ref`,
   `bill_ref`). Currency amounts (`balance`, `total`) are formatted as
   `"12.34 USD"`.
 - Raw QBO IDs and `SyncToken` are hidden by default; pass
@@ -232,7 +235,7 @@ Tools: `list_connections`,
 ### Agent-ready behavior
 
 - `list_contacts`, `list_invoices`, `list_payments` return compact
-  summaries with stable refs (`contact_ref`, `invoice_ref`,
+  summaries with display refs (`contact_ref`, `invoice_ref`,
   `payment_ref`). Currency amounts (`total`, `amount_due`,
   `amount_paid`, payment `amount`) are formatted as `"12.34 USD"`.
 - Raw Xero GUIDs (`ContactID`, `InvoiceID`, `PaymentID`) hidden by
@@ -318,7 +321,7 @@ Tools: `list_cash_accounts`, `list_card_accounts`,
 ### Agent-ready behavior
 
 - `list_transactions`, `list_expenses`, `list_cards` return compact
-  summaries with stable refs (`transaction_ref`, `expense_ref`,
+  summaries with display refs (`transaction_ref`, `expense_ref`,
   `card_ref`). Brex `Money` amounts are formatted as `"12.34 USD"`.
 - Raw IDs hidden by default; pass `include_ids=True` to opt in.
 - Default `limit` is **25** (max 100). Pagination via `cursor` with
@@ -349,7 +352,7 @@ Tools: `list_customers(limit, offset, first_name, email, include_ids)`,
 ### Agent-ready behavior
 
 - `list_customers`, `list_subscriptions`, `list_invoices` return
-  compact summaries with stable refs (`customer_ref`,
+  compact summaries with display refs (`customer_ref`,
   `subscription_ref`, `invoice_ref`). Currency amounts (`total_dues`,
   `total`, `amount_due`, `amount_paid`) are formatted as
   `"12.34 USD"`.
@@ -381,7 +384,7 @@ Tools: `list_accounts(limit, sort, order, cursor, include_ids)`,
 ### Agent-ready behavior
 
 - `list_accounts`, `list_subscriptions`, `list_invoices`,
-  `list_transactions` return compact summaries with stable refs
+  `list_transactions` return compact summaries with display refs
   (`account_ref`, `subscription_ref`, `invoice_ref`,
   `transaction_ref`). Currency amounts (`unit_amount`, `total`,
   `balance`, transaction `amount`) are formatted as `"12.34 USD"`.
@@ -401,7 +404,10 @@ Bill.com (Bill) v3 API.
 ```python
 from maivn_tools import BillToolSet
 
-connector = BillToolSet(api_key=secrets["BILL_SESSION"])
+connector = BillToolSet(
+    api_key=secrets["BILL_SESSION"],
+    dev_key=secrets["BILL_DEV_KEY"],
+)
 ```
 
 Tools: `list_vendors(max_results, include_ids)`,
@@ -416,7 +422,7 @@ Tools: `list_vendors(max_results, include_ids)`,
 ### Agent-ready behavior
 
 - `list_vendors`, `list_bills`, `list_invoices`, `list_payments`,
-  `list_customers` return compact summaries with stable refs
+  `list_customers` return compact summaries with display refs
   (`vendor_ref`, `bill_ref`, `invoice_ref`, `payment_ref`,
   `customer_ref`). Currency amounts are formatted as `"12.34 USD"`.
 - Raw Bill IDs hidden by default; pass `include_ids=True` to opt in.

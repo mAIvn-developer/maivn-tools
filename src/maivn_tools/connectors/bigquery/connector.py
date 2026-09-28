@@ -19,7 +19,7 @@ from .output_schemas import LIST_DATASETS_OUTPUT, LIST_TABLES_OUTPUT
 # MARK: - Constants
 
 _FORBIDDEN_KEYWORDS = re.compile(
-    r"\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|merge)\b",
+    r'\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|merge)\b',
     re.IGNORECASE,
 )
 
@@ -34,64 +34,64 @@ _DEFAULT_QUERY_LIMIT = 100
 
 def _validate_read_only_sql(sql: object) -> None:
     if not isinstance(sql, str) or not sql.strip():
-        raise ValueError("sql must be a non-empty string")
-    stripped = sql.strip().rstrip(";")
-    if ";" in stripped:
-        raise ValueError("Compound statements are not allowed")
+        raise ValueError('sql must be a non-empty string')
+    stripped = sql.strip().rstrip(';')
+    if ';' in stripped:
+        raise ValueError('Compound statements are not allowed')
     first_word = stripped.split(None, 1)[0].lower()
-    if first_word not in {"select", "with", "explain"}:
-        raise ValueError("Only SELECT, WITH, and EXPLAIN statements are allowed")
+    if first_word not in {'select', 'with', 'explain'}:
+        raise ValueError('Only SELECT, WITH, and EXPLAIN statements are allowed')
     if _FORBIDDEN_KEYWORDS.search(stripped):
-        raise ValueError("Query contains a forbidden mutation keyword")
+        raise ValueError('Query contains a forbidden mutation keyword')
 
 
-_VALID_ID = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*$")
+_VALID_ID = re.compile(r'^[A-Za-z_][A-Za-z0-9_-]*$')
 
 
 def _validate_id(value: str, kind: str) -> None:
     if not value:
-        raise ValueError(f"{kind} must be a non-empty string")
+        raise ValueError(f'{kind} must be a non-empty string')
     if not _VALID_ID.match(value):
-        raise ValueError(f"{kind} must match ^[A-Za-z_][A-Za-z0-9_-]*$")
+        raise ValueError(f'{kind} must match ^[A-Za-z_][A-Za-z0-9_-]*$')
 
 
 def _dataset_summary(item: dict[str, Any], *, index: int) -> dict[str, Any]:
     """Build a compact summary of a BigQuery dataset list entry."""
-    raw_reference = item.get("datasetReference")
+    raw_reference = item.get('datasetReference')
     reference: dict[str, Any] = (
-        cast("dict[str, Any]", raw_reference) if isinstance(raw_reference, dict) else {}
+        cast('dict[str, Any]', raw_reference) if isinstance(raw_reference, dict) else {}
     )
     return {
-        "dataset_ref": f"dataset_{index}",
-        "dataset_id": reference.get("datasetId", ""),
-        "project_id": reference.get("projectId", ""),
-        "location": item.get("location", ""),
-        "friendly_name": item.get("friendlyName", ""),
-        "labels": item.get("labels") or {},
+        'dataset_ref': f'dataset_{index}',
+        'dataset_id': reference.get('datasetId', ''),
+        'project_id': reference.get('projectId', ''),
+        'location': item.get('location', ''),
+        'friendly_name': item.get('friendlyName', ''),
+        'labels': item.get('labels') or {},
     }
 
 
 def _table_summary(item: dict[str, Any], *, index: int) -> dict[str, Any]:
     """Build a compact summary of a BigQuery table list entry."""
-    raw_reference = item.get("tableReference")
+    raw_reference = item.get('tableReference')
     reference: dict[str, Any] = (
-        cast("dict[str, Any]", raw_reference) if isinstance(raw_reference, dict) else {}
+        cast('dict[str, Any]', raw_reference) if isinstance(raw_reference, dict) else {}
     )
     return {
-        "table_ref": f"table_{index}",
-        "table_id": reference.get("tableId", ""),
-        "dataset_id": reference.get("datasetId", ""),
-        "project_id": reference.get("projectId", ""),
-        "type": item.get("type", ""),
-        "friendly_name": item.get("friendlyName", ""),
-        "labels": item.get("labels") or {},
+        'table_ref': f'table_{index}',
+        'table_id': reference.get('tableId', ''),
+        'dataset_id': reference.get('datasetId', ''),
+        'project_id': reference.get('projectId', ''),
+        'type': item.get('type', ''),
+        'friendly_name': item.get('friendlyName', ''),
+        'labels': item.get('labels') or {},
     }
 
 
 # MARK: - Class
 
 
-@toolset(prefix="bigquery")
+@toolset(prefix='bigquery')
 class BigQueryToolSet:
     """A connector for the BigQuery REST API v2.
 
@@ -104,14 +104,14 @@ class BigQueryToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="bigquery",
-        display_name="Google BigQuery",
-        version="0.1.0",
-        description="Run read-only BigQuery jobs and inspect datasets/tables.",
+        name='bigquery',
+        display_name='Google BigQuery',
+        version='0.1.0',
+        description='Run read-only BigQuery jobs and inspect datasets/tables.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE, AuthMode.SERVICE_ACCOUNT),
         scopes={
-            "https://www.googleapis.com/auth/bigquery": "Full BigQuery access.",
-            "https://www.googleapis.com/auth/bigquery.readonly": "Read-only access.",
+            'https://www.googleapis.com/auth/bigquery': 'Full BigQuery access.',
+            'https://www.googleapis.com/auth/bigquery.readonly': 'Read-only access.',
         },
         capabilities=frozenset(
             {
@@ -120,9 +120,9 @@ class BigQueryToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://cloud.google.com/bigquery/docs/reference/rest",
-        homepage_url="https://cloud.google.com/bigquery",
-        tags=("database", "warehouse", "google-cloud"),
+        documentation_url='https://cloud.google.com/bigquery/docs/reference/rest',
+        homepage_url='https://cloud.google.com/bigquery',
+        tags=('database', 'warehouse', 'google-cloud'),
     )
 
     def __init__(
@@ -130,18 +130,18 @@ class BigQueryToolSet:
         *,
         token: TokenSource,
         project_id: str,
-        base_url: str = "https://bigquery.googleapis.com",
+        base_url: str = 'https://bigquery.googleapis.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
-        _validate_id(project_id, "project_id")
+        _validate_id(project_id, 'project_id')
         self.connection = connection
         self._project_id = project_id
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=make_bearer_auth(token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -175,33 +175,33 @@ class BigQueryToolSet:
         ``nextPageToken``.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
-        params: dict[str, Any] = {"maxResults": max_results}
+            raise ValueError('max_results must be at least 1')
+        params: dict[str, Any] = {'maxResults': max_results}
         if all_datasets:
-            params["all"] = "true"
+            params['all'] = 'true'
         if page_token is not None:
-            params["pageToken"] = page_token
+            params['pageToken'] = page_token
         if filter is not None:
-            params["filter"] = filter
+            params['filter'] = filter
         payload: dict[str, Any] = self._client.get(
-            f"/bigquery/v2/projects/{self._project_id}/datasets",
+            f'/bigquery/v2/projects/{self._project_id}/datasets',
             params=params,
         ).json()
         if not include_metadata:
             return payload
-        raw_datasets = payload.get("datasets")
+        raw_datasets = payload.get('datasets')
         datasets: list[Any] = (
-            cast("list[Any]", raw_datasets) if isinstance(raw_datasets, list) else []
+            cast('list[Any]', raw_datasets) if isinstance(raw_datasets, list) else []
         )
         summaries = [
-            _dataset_summary(cast("dict[str, Any]", item), index=index)
+            _dataset_summary(cast('dict[str, Any]', item), index=index)
             for index, item in enumerate(datasets, start=1)
             if isinstance(item, dict)
         ]
-        result: dict[str, Any] = {"datasets": summaries}
-        next_page_token = payload.get("nextPageToken")
+        result: dict[str, Any] = {'datasets': summaries}
+        next_page_token = payload.get('nextPageToken')
         if next_page_token:
-            result["nextPageToken"] = next_page_token
+            result['nextPageToken'] = next_page_token
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -212,9 +212,9 @@ class BigQueryToolSet:
         ``access``, ``defaultTableExpirationMs``, ``labels``, ...). Use
         after :meth:`list_datasets` when you need the full metadata.
         """
-        _validate_id(dataset_id, "dataset_id")
+        _validate_id(dataset_id, 'dataset_id')
         return self._client.get(
-            f"/bigquery/v2/projects/{self._project_id}/datasets/{dataset_id}",
+            f'/bigquery/v2/projects/{self._project_id}/datasets/{dataset_id}',
         ).json()
 
     # MARK: - Tables
@@ -241,29 +241,29 @@ class BigQueryToolSet:
         Set ``include_metadata=False`` to receive the raw BigQuery
         response.
         """
-        _validate_id(dataset_id, "dataset_id")
+        _validate_id(dataset_id, 'dataset_id')
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
-        params: dict[str, Any] = {"maxResults": max_results}
+            raise ValueError('max_results must be at least 1')
+        params: dict[str, Any] = {'maxResults': max_results}
         if page_token is not None:
-            params["pageToken"] = page_token
+            params['pageToken'] = page_token
         payload: dict[str, Any] = self._client.get(
-            f"/bigquery/v2/projects/{self._project_id}/datasets/{dataset_id}/tables",
+            f'/bigquery/v2/projects/{self._project_id}/datasets/{dataset_id}/tables',
             params=params,
         ).json()
         if not include_metadata:
             return payload
-        raw_tables = payload.get("tables")
-        tables: list[Any] = cast("list[Any]", raw_tables) if isinstance(raw_tables, list) else []
+        raw_tables = payload.get('tables')
+        tables: list[Any] = cast('list[Any]', raw_tables) if isinstance(raw_tables, list) else []
         summaries = [
-            _table_summary(cast("dict[str, Any]", item), index=index)
+            _table_summary(cast('dict[str, Any]', item), index=index)
             for index, item in enumerate(tables, start=1)
             if isinstance(item, dict)
         ]
-        result: dict[str, Any] = {"tables": summaries}
-        next_page_token = payload.get("nextPageToken")
+        result: dict[str, Any] = {'tables': summaries}
+        next_page_token = payload.get('nextPageToken')
         if next_page_token:
-            result["nextPageToken"] = next_page_token
+            result['nextPageToken'] = next_page_token
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -275,10 +275,10 @@ class BigQueryToolSet:
         ``schema.fields`` carries the column definitions, ``numRows`` /
         ``numBytes`` describe size, ``type`` indicates table vs view.
         """
-        _validate_id(dataset_id, "dataset_id")
-        _validate_id(table_id, "table_id")
+        _validate_id(dataset_id, 'dataset_id')
+        _validate_id(table_id, 'table_id')
         return self._client.get(
-            f"/bigquery/v2/projects/{self._project_id}/datasets/{dataset_id}/tables/{table_id}",
+            f'/bigquery/v2/projects/{self._project_id}/datasets/{dataset_id}/tables/{table_id}',
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -300,20 +300,20 @@ class BigQueryToolSet:
         column names. For larger reads, use :meth:`run_query` with a
         ``SELECT ... LIMIT`` instead.
         """
-        _validate_id(dataset_id, "dataset_id")
-        _validate_id(table_id, "table_id")
+        _validate_id(dataset_id, 'dataset_id')
+        _validate_id(table_id, 'table_id')
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
-        params: dict[str, Any] = {"maxResults": max_results}
+            raise ValueError('max_results must be at least 1')
+        params: dict[str, Any] = {'maxResults': max_results}
         if start_index is not None:
-            params["startIndex"] = start_index
+            params['startIndex'] = start_index
         if page_token is not None:
-            params["pageToken"] = page_token
+            params['pageToken'] = page_token
         if selected_fields is not None:
-            params["selectedFields"] = ",".join(selected_fields)
+            params['selectedFields'] = ','.join(selected_fields)
         return self._client.get(
-            f"/bigquery/v2/projects/{self._project_id}"
-            f"/datasets/{dataset_id}/tables/{table_id}/data",
+            f'/bigquery/v2/projects/{self._project_id}'
+            f'/datasets/{dataset_id}/tables/{table_id}/data',
             params=params,
         ).json()
 
@@ -358,21 +358,21 @@ class BigQueryToolSet:
         """
         _validate_read_only_sql(sql)
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         body: dict[str, Any] = {
-            "query": sql,
-            "useLegacySql": use_legacy_sql,
-            "timeoutMs": timeout_ms,
-            "maxResults": max_results,
+            'query': sql,
+            'useLegacySql': use_legacy_sql,
+            'timeoutMs': timeout_ms,
+            'maxResults': max_results,
         }
         if location is not None:
-            body["location"] = location
+            body['location'] = location
         if dry_run:
-            body["dryRun"] = True
+            body['dryRun'] = True
         if parameters is not None:
-            body["queryParameters"] = parameters
+            body['queryParameters'] = parameters
         return self._client.post(
-            f"/bigquery/v2/projects/{self._project_id}/queries",
+            f'/bigquery/v2/projects/{self._project_id}/queries',
             json=body,
         ).json()
 
@@ -393,17 +393,17 @@ class BigQueryToolSet:
         large result sets.
         """
         if not job_id:
-            raise ValueError("job_id must be a non-empty string")
+            raise ValueError('job_id must be a non-empty string')
         params: dict[str, Any] = {
-            "maxResults": max_results,
-            "timeoutMs": timeout_ms,
+            'maxResults': max_results,
+            'timeoutMs': timeout_ms,
         }
         if location is not None:
-            params["location"] = location
+            params['location'] = location
         if page_token is not None:
-            params["pageToken"] = page_token
+            params['pageToken'] = page_token
         return self._client.get(
-            f"/bigquery/v2/projects/{self._project_id}/queries/{job_id}",
+            f'/bigquery/v2/projects/{self._project_id}/queries/{job_id}',
             params=params,
         ).json()
 
@@ -421,12 +421,12 @@ class BigQueryToolSet:
         need.
         """
         if not job_id:
-            raise ValueError("job_id must be a non-empty string")
+            raise ValueError('job_id must be a non-empty string')
         params: dict[str, Any] = {}
         if location is not None:
-            params["location"] = location
+            params['location'] = location
         return self._client.get(
-            f"/bigquery/v2/projects/{self._project_id}/jobs/{job_id}",
+            f'/bigquery/v2/projects/{self._project_id}/jobs/{job_id}',
             params=params or None,
         ).json()
 
@@ -448,18 +448,18 @@ class BigQueryToolSet:
         ``"running"``, ``"pending"``, ``"done"``.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
-        params: dict[str, Any] = {"maxResults": max_results}
+            raise ValueError('max_results must be at least 1')
+        params: dict[str, Any] = {'maxResults': max_results}
         if all_users:
-            params["allUsers"] = "true"
+            params['allUsers'] = 'true'
         if projection is not None:
-            params["projection"] = projection
+            params['projection'] = projection
         if state_filter is not None:
-            params["stateFilter"] = ",".join(state_filter)
+            params['stateFilter'] = ','.join(state_filter)
         if page_token is not None:
-            params["pageToken"] = page_token
+            params['pageToken'] = page_token
         return self._client.get(
-            f"/bigquery/v2/projects/{self._project_id}/jobs",
+            f'/bigquery/v2/projects/{self._project_id}/jobs',
             params=params,
         ).json()
 
@@ -472,12 +472,12 @@ class BigQueryToolSet:
         table from a long load) may be left behind.
         """
         if not job_id:
-            raise ValueError("job_id must be a non-empty string")
+            raise ValueError('job_id must be a non-empty string')
         params: dict[str, Any] = {}
         if location is not None:
-            params["location"] = location
+            params['location'] = location
         return self._client.post(
-            f"/bigquery/v2/projects/{self._project_id}/jobs/{job_id}/cancel",
+            f'/bigquery/v2/projects/{self._project_id}/jobs/{job_id}/cancel',
             params=params or None,
         ).json()
 
@@ -498,14 +498,14 @@ class BigQueryToolSet:
         ``routineReference``, ``routineType`` (``"SCALAR_FUNCTION"`` /
         ``"PROCEDURE"`` / etc.), and ``language``.
         """
-        _validate_id(dataset_id, "dataset_id")
+        _validate_id(dataset_id, 'dataset_id')
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
-        params: dict[str, Any] = {"maxResults": max_results}
+            raise ValueError('max_results must be at least 1')
+        params: dict[str, Any] = {'maxResults': max_results}
         if page_token is not None:
-            params["pageToken"] = page_token
+            params['pageToken'] = page_token
         return self._client.get(
-            f"/bigquery/v2/projects/{self._project_id}/datasets/{dataset_id}/routines",
+            f'/bigquery/v2/projects/{self._project_id}/datasets/{dataset_id}/routines',
             params=params,
         ).json()
 
@@ -523,13 +523,13 @@ class BigQueryToolSet:
         "nextPageToken": ...}``. Each model carries ``modelReference``
         and ``modelType``.
         """
-        _validate_id(dataset_id, "dataset_id")
+        _validate_id(dataset_id, 'dataset_id')
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
-        params: dict[str, Any] = {"maxResults": max_results}
+            raise ValueError('max_results must be at least 1')
+        params: dict[str, Any] = {'maxResults': max_results}
         if page_token is not None:
-            params["pageToken"] = page_token
+            params['pageToken'] = page_token
         return self._client.get(
-            f"/bigquery/v2/projects/{self._project_id}/datasets/{dataset_id}/models",
+            f'/bigquery/v2/projects/{self._project_id}/datasets/{dataset_id}/models',
             params=params,
         ).json()

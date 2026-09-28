@@ -16,47 +16,47 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _OPPORTUNITY_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "candidate_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "email": {"type": "string"},
-        "headline": {"type": "string"},
-        "stage": {"type": "string"},
-        "archived": {"type": "boolean"},
-        "created_at": {"type": ["integer", "string"]},
-        "opportunity_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'candidate_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'email': {'type': 'string'},
+        'headline': {'type': 'string'},
+        'stage': {'type': 'string'},
+        'archived': {'type': 'boolean'},
+        'created_at': {'type': ['integer', 'string']},
+        'opportunity_id': {'type': 'string'},
     },
-    "required": ["candidate_ref", "name"],
+    'required': ['candidate_ref', 'name'],
 }
 
 _POSTING_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "job_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "state": {"type": "string"},
-        "team": {"type": "string"},
-        "department": {"type": "string"},
-        "location": {"type": "string"},
-        "commitment": {"type": "string"},
-        "created_at": {"type": ["integer", "string"]},
-        "posting_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'job_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'state': {'type': 'string'},
+        'team': {'type': 'string'},
+        'department': {'type': 'string'},
+        'location': {'type': 'string'},
+        'commitment': {'type': 'string'},
+        'created_at': {'type': ['integer', 'string']},
+        'posting_id': {'type': 'string'},
     },
-    "required": ["job_ref", "title"],
+    'required': ['job_ref', 'title'],
 }
 
 _USER_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "user_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "email": {"type": "string"},
-        "access_role": {"type": "string"},
-        "deactivated_at": {"type": ["integer", "string"]},
-        "user_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'user_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'email': {'type': 'string'},
+        'access_role': {'type': 'string'},
+        'deactivated_at': {'type': ['integer', 'string']},
+        'user_id': {'type': 'string'},
     },
-    "required": ["user_ref", "name"],
+    'required': ['user_ref', 'name'],
 }
 
 
@@ -66,25 +66,25 @@ _USER_SUMMARY: dict[str, JsonValue] = {
 def _listing(item_key: str, item_schema: dict[str, JsonValue]) -> dict[str, JsonValue]:
     """Build a ``{<item_key>: [...], next: str|null, hasNext: bool}`` schema."""
     return {
-        "type": "object",
-        "properties": {
-            item_key: {"type": "array", "items": item_schema},
-            "next": {"type": ["string", "null"]},
-            "hasNext": {"type": "boolean"},
+        'type': 'object',
+        'properties': {
+            item_key: {'type': 'array', 'items': item_schema},
+            'next': {'type': ['string', 'null']},
+            'hasNext': {'type': 'boolean'},
         },
-        "required": [item_key],
+        'required': [item_key],
     }
 
 
 # MARK: - Tool output schemas
 
-LIST_OPPORTUNITIES_OUTPUT: dict[str, JsonValue] = _listing("candidates", _OPPORTUNITY_SUMMARY)
-LIST_POSTINGS_OUTPUT: dict[str, JsonValue] = _listing("jobs", _POSTING_SUMMARY)
-LIST_USERS_OUTPUT: dict[str, JsonValue] = _listing("users", _USER_SUMMARY)
+LIST_OPPORTUNITIES_OUTPUT: dict[str, JsonValue] = _listing('candidates', _OPPORTUNITY_SUMMARY)
+LIST_POSTINGS_OUTPUT: dict[str, JsonValue] = _listing('jobs', _POSTING_SUMMARY)
+LIST_USERS_OUTPUT: dict[str, JsonValue] = _listing('users', _USER_SUMMARY)
 
 
 __all__ = [
-    "LIST_OPPORTUNITIES_OUTPUT",
-    "LIST_POSTINGS_OUTPUT",
-    "LIST_USERS_OUTPUT",
+    'LIST_OPPORTUNITIES_OUTPUT',
+    'LIST_POSTINGS_OUTPUT',
+    'LIST_USERS_OUTPUT',
 ]

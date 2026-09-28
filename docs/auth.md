@@ -31,7 +31,7 @@ Every strategy implements `AuthStrategy` and provides two methods:
 
 ### Custom strategies
 
-Subclass `AuthStrategy` for providers with bespoke schemes — see the
+Subclass `AuthStrategy` for providers with custom schemes — see the
 [API policy](api-policy.md) for guarantees about the interface stability.
 
 ## OAuth 2.0 flow layer

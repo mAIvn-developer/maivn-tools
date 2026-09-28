@@ -33,7 +33,7 @@ connector = IMAPToolSet(
     port=993,
     use_ssl=True,
 )
-agent = Agent(model="auto")
+agent = Agent(name="mail-agent", model="auto")
 register_connector(agent, connector)
 ```
 
@@ -67,7 +67,7 @@ register_connector(agent, connector)
 ### Agent-ready behavior
 
 `search_messages` returns compact summaries by default: each match
-gets a stable `message_ref` (`message_1`, `message_2`, ...), `uid`,
+gets a response-local `message_ref` (`message_1`, `message_2`, ...), `uid`,
 `sender`, `subject`, `received_at` (Date header), and `flags`. Summary
 mode caps `limit` at 10 because each UID requires a per-message
 ENVELOPE fetch — for raw UID lists, pass `include_metadata=False` to
@@ -105,10 +105,10 @@ triage-only agents.
 
 ```python
 # Read-only IMAP for a summarization agent.
-agent.add_toolset(IMAPToolSet(...), include_tags=["read"])
+agent.add_toolset(connector, include_tags=["read"])
 
 # Read + write but never destructive.
-agent.add_toolset(IMAPToolSet(...), exclude_tags=["destructive"])
+agent.add_toolset(connector, exclude_tags=["destructive"])
 ```
 
 ## SMTPToolSet
@@ -125,7 +125,7 @@ sender = SMTPToolSet(
     password=secrets["SMTP_PASSWORD"],
     sender="ops@example.com",
 )
-agent = Agent(model="auto")
+agent = Agent(name="smtp-agent", model="auto")
 register_connector(agent, sender)
 ```
 

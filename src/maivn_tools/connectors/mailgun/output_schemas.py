@@ -18,55 +18,55 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _DOMAIN_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "domain_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "state": {"type": "string"},
-        "type": {"type": "string"},
-        "created_at": {"type": "string"},
-        "id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'domain_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'state': {'type': 'string'},
+        'type': {'type': 'string'},
+        'created_at': {'type': 'string'},
+        'id': {'type': 'string'},
     },
-    "required": ["domain_ref", "name"],
+    'required': ['domain_ref', 'name'],
 }
 
 _LIST_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "list_ref": {"type": "string"},
-        "address": {"type": "string"},
-        "name": {"type": "string"},
-        "members_count": {"type": "integer"},
-        "description": {"type": "string"},
-        "address_raw": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'list_ref': {'type': 'string'},
+        'address': {'type': 'string'},
+        'name': {'type': 'string'},
+        'members_count': {'type': 'integer'},
+        'description': {'type': 'string'},
+        'address_raw': {'type': 'string'},
     },
-    "required": ["list_ref", "address"],
+    'required': ['list_ref', 'address'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_DOMAINS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "domains": {"type": "array", "items": _DOMAIN_SUMMARY},
-        "count": {"type": "integer"},
-        "total_count": {"type": ["integer", "null"]},
+    'type': 'object',
+    'properties': {
+        'domains': {'type': 'array', 'items': _DOMAIN_SUMMARY},
+        'count': {'type': 'integer'},
+        'total_count': {'type': ['integer', 'null']},
     },
-    "required": ["domains", "count"],
+    'required': ['domains', 'count'],
 }
 
 LIST_MAILING_LISTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "lists": {"type": "array", "items": _LIST_SUMMARY},
-        "count": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'lists': {'type': 'array', 'items': _LIST_SUMMARY},
+        'count': {'type': 'integer'},
     },
-    "required": ["lists", "count"],
+    'required': ['lists', 'count'],
 }
 
 
 __all__ = [
-    "LIST_DOMAINS_OUTPUT",
-    "LIST_MAILING_LISTS_OUTPUT",
+    'LIST_DOMAINS_OUTPUT',
+    'LIST_MAILING_LISTS_OUTPUT',
 ]

@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import json as _json
 from typing import Any, cast
 
 from maivn import toolify, toolset
@@ -24,14 +25,14 @@ def _coerce_id(candidate: Any, *, key: str) -> Any:
     if isinstance(candidate, int | str):
         return candidate
     if isinstance(candidate, dict):
-        mapping = cast("dict[Any, Any]", candidate)
-        for k in (key, "id", "campaign_id", "ad_id", "adgroup_id", "advertiser_id"):
+        mapping = cast('dict[Any, Any]', candidate)
+        for k in (key, 'id', 'campaign_id', 'ad_id', 'adgroup_id', 'advertiser_id'):
             value: Any = mapping.get(k)
             if isinstance(value, int | str):
                 return value
         return None
     if isinstance(candidate, list | tuple):
-        items = cast("list[Any] | tuple[Any, ...]", candidate)
+        items = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in items:
             resolved: Any = _coerce_id(item, key=key)
             if resolved is not None:
@@ -42,7 +43,7 @@ def _coerce_id(candidate: Any, *, key: str) -> Any:
 # MARK: ToolSet
 
 
-@toolset(prefix="tiktok_ads")
+@toolset(prefix='tiktok_ads')
 class TikTokAdsToolSet:
     """A connector for the TikTok Business / Ads API v1.3.
 
@@ -52,35 +53,35 @@ class TikTokAdsToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="tiktok_ads",
-        display_name="TikTok Ads",
-        version="0.1.0",
-        description="Advertisers, campaigns, ad groups, ads, reporting, and audiences.",
+        name='tiktok_ads',
+        display_name='TikTok Ads',
+        version='0.1.0',
+        description='Advertisers, campaigns, ad groups, ads, reporting, and audiences.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://business-api.tiktok.com/portal/docs",
-        homepage_url="https://ads.tiktok.com/",
-        tags=("marketing", "ads", "social"),
+        documentation_url='https://business-api.tiktok.com/portal/docs',
+        homepage_url='https://ads.tiktok.com/',
+        tags=('marketing', 'ads', 'social'),
     )
 
     def __init__(
         self,
         *,
         access_token: str,
-        base_url: str = "https://business-api.tiktok.com",
+        base_url: str = 'https://business-api.tiktok.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(access_token, header="Access-Token"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(access_token, header='Access-Token'),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -102,12 +103,12 @@ class TikTokAdsToolSet:
         "message": ..., "data": {"list": [...]}}``.
         """
         if not app_id or not secret:
-            raise ValueError("app_id and secret are required")
+            raise ValueError('app_id and secret are required')
         return cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._client.get(
-                "/open_api/v1.3/oauth2/advertiser/get/",
-                params={"app_id": app_id, "secret": secret},
+                '/open_api/v1.3/oauth2/advertiser/get/',
+                params={'app_id': app_id, 'secret': secret},
             ).json(),
         )
 
@@ -122,14 +123,13 @@ class TikTokAdsToolSet:
         Returns the raw TikTok response with one entry per advertiser ID.
         """
         if not advertiser_ids:
-            raise ValueError("advertiser_ids is required")
-        import json as _json
+            raise ValueError('advertiser_ids is required')
 
         return cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._client.get(
-                "/open_api/v1.3/advertiser/info/",
-                params={"advertiser_ids": _json.dumps(advertiser_ids)},
+                '/open_api/v1.3/advertiser/info/',
+                params={'advertiser_ids': _json.dumps(advertiser_ids)},
             ).json(),
         )
 
@@ -155,47 +155,46 @@ class TikTokAdsToolSet:
         :meth:`update_campaign_status`) needs the raw ``campaign_id``.
         """
         if not advertiser_id:
-            raise ValueError("advertiser_id is required")
-        import json as _json
+            raise ValueError('advertiser_id is required')
 
         params: dict[str, Any] = {
-            "advertiser_id": advertiser_id,
-            "page": page,
-            "page_size": page_size,
+            'advertiser_id': advertiser_id,
+            'page': page,
+            'page_size': page_size,
         }
         if filtering is not None:
-            params["filtering"] = _json.dumps(filtering)
+            params['filtering'] = _json.dumps(filtering)
         payload: dict[str, Any] = cast(
-            "dict[str, Any]",
-            self._client.get("/open_api/v1.3/campaign/get/", params=params).json(),
+            'dict[str, Any]',
+            self._client.get('/open_api/v1.3/campaign/get/', params=params).json(),
         )
-        data: dict[str, Any] = payload.get("data", {})
-        results: list[Any] = data.get("list", [])
+        data: dict[str, Any] = payload.get('data', {})
+        results: list[Any] = data.get('list', [])
         summaries: list[dict[str, Any]] = []
         for index, entry in enumerate(results, start=1):
             if not isinstance(entry, dict):
                 continue
-            campaign: dict[str, Any] = cast("dict[str, Any]", entry)
+            campaign: dict[str, Any] = cast('dict[str, Any]', entry)
             summary: dict[str, Any] = {
-                "campaign_ref": f"campaign_{index}",
-                "campaign_name": campaign.get("campaign_name", ""),
-                "operation_status": campaign.get("operation_status", ""),
-                "status": campaign.get("status", ""),
-                "budget_mode": campaign.get("budget_mode", ""),
-                "budget": campaign.get("budget"),
-                "objective_type": campaign.get("objective_type", ""),
-                "create_time": campaign.get("create_time", ""),
-                "modify_time": campaign.get("modify_time", ""),
+                'campaign_ref': f'campaign_{index}',
+                'campaign_name': campaign.get('campaign_name', ''),
+                'operation_status': campaign.get('operation_status', ''),
+                'status': campaign.get('status', ''),
+                'budget_mode': campaign.get('budget_mode', ''),
+                'budget': campaign.get('budget'),
+                'objective_type': campaign.get('objective_type', ''),
+                'create_time': campaign.get('create_time', ''),
+                'modify_time': campaign.get('modify_time', ''),
             }
             if include_ids:
-                summary["campaign_id"] = campaign.get("campaign_id", "")
-                summary["advertiser_id"] = campaign.get("advertiser_id", "")
+                summary['campaign_id'] = campaign.get('campaign_id', '')
+                summary['advertiser_id'] = campaign.get('advertiser_id', '')
             summaries.append(summary)
         return {
-            "campaigns": summaries,
-            "page_info": data.get("page_info"),
-            "code": payload.get("code"),
-            "message": payload.get("message"),
+            'campaigns': summaries,
+            'page_info': data.get('page_info'),
+            'code': payload.get('code'),
+            'message': payload.get('message'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -205,7 +204,7 @@ class TikTokAdsToolSet:
         advertiser_id: str,
         campaign_name: str,
         objective_type: str,
-        budget_mode: str = "BUDGET_MODE_DAY",
+        budget_mode: str = 'BUDGET_MODE_DAY',
         budget: float | None = None,
     ) -> dict[str, Any]:
         """Create a campaign.
@@ -215,18 +214,18 @@ class TikTokAdsToolSet:
         target objective before calling.
         """
         if not advertiser_id or not campaign_name or not objective_type:
-            raise ValueError("advertiser_id, campaign_name, and objective_type are required")
+            raise ValueError('advertiser_id, campaign_name, and objective_type are required')
         body: dict[str, Any] = {
-            "advertiser_id": advertiser_id,
-            "campaign_name": campaign_name,
-            "objective_type": objective_type,
-            "budget_mode": budget_mode,
+            'advertiser_id': advertiser_id,
+            'campaign_name': campaign_name,
+            'objective_type': objective_type,
+            'budget_mode': budget_mode,
         }
         if budget is not None:
-            body["budget"] = budget
+            body['budget'] = budget
         return cast(
-            "dict[str, Any]",
-            self._client.post("/open_api/v1.3/campaign/create/", json=body).json(),
+            'dict[str, Any]',
+            self._client.post('/open_api/v1.3/campaign/create/', json=body).json(),
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -243,16 +242,16 @@ class TikTokAdsToolSet:
         by :meth:`list_campaigns` (with ``include_ids=True``). ``fields``
         is the partial-update dict (e.g. ``{"campaign_name": "New name"}``).
         """
-        resolved_id = _coerce_id(campaign_id, key="campaign_id")
+        resolved_id = _coerce_id(campaign_id, key='campaign_id')
         if not advertiser_id or not resolved_id or not fields:
-            raise ValueError("advertiser_id, campaign_id, and fields are required")
+            raise ValueError('advertiser_id, campaign_id, and fields are required')
         return cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._client.post(
-                "/open_api/v1.3/campaign/update/",
+                '/open_api/v1.3/campaign/update/',
                 json={
-                    "advertiser_id": advertiser_id,
-                    "campaign_id": resolved_id,
+                    'advertiser_id': advertiser_id,
+                    'campaign_id': resolved_id,
                     **fields,
                 },
             ).json(),
@@ -274,24 +273,24 @@ class TikTokAdsToolSet:
         Confirm with the user before calling, especially for ``DELETE``.
         """
         if not advertiser_id or not campaign_ids or not operation_status:
-            raise ValueError("advertiser_id, campaign_ids, and operation_status are required")
-        if operation_status not in {"ENABLE", "DISABLE", "DELETE"}:
-            raise ValueError("operation_status must be ENABLE/DISABLE/DELETE")
+            raise ValueError('advertiser_id, campaign_ids, and operation_status are required')
+        if operation_status not in {'ENABLE', 'DISABLE', 'DELETE'}:
+            raise ValueError('operation_status must be ENABLE/DISABLE/DELETE')
         resolved_ids: list[Any] = []
         for entry in campaign_ids:
-            value = _coerce_id(entry, key="campaign_id")
+            value = _coerce_id(entry, key='campaign_id')
             if value is not None:
                 resolved_ids.append(value)
         if not resolved_ids:
-            raise ValueError("campaign_ids must contain at least one valid id")
+            raise ValueError('campaign_ids must contain at least one valid id')
         return cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._client.post(
-                "/open_api/v1.3/campaign/status/update/",
+                '/open_api/v1.3/campaign/status/update/',
                 json={
-                    "advertiser_id": advertiser_id,
-                    "campaign_ids": resolved_ids,
-                    "operation_status": operation_status,
+                    'advertiser_id': advertiser_id,
+                    'campaign_ids': resolved_ids,
+                    'operation_status': operation_status,
                 },
             ).json(),
         )
@@ -315,49 +314,48 @@ class TikTokAdsToolSet:
         set ``include_ids=True`` when needed.
         """
         if not advertiser_id:
-            raise ValueError("advertiser_id is required")
-        import json as _json
+            raise ValueError('advertiser_id is required')
 
         params: dict[str, Any] = {
-            "advertiser_id": advertiser_id,
-            "page": page,
-            "page_size": page_size,
+            'advertiser_id': advertiser_id,
+            'page': page,
+            'page_size': page_size,
         }
         if filtering is not None:
-            params["filtering"] = _json.dumps(filtering)
+            params['filtering'] = _json.dumps(filtering)
         payload: dict[str, Any] = cast(
-            "dict[str, Any]",
-            self._client.get("/open_api/v1.3/adgroup/get/", params=params).json(),
+            'dict[str, Any]',
+            self._client.get('/open_api/v1.3/adgroup/get/', params=params).json(),
         )
-        data: dict[str, Any] = payload.get("data", {})
-        results: list[Any] = data.get("list", [])
+        data: dict[str, Any] = payload.get('data', {})
+        results: list[Any] = data.get('list', [])
         summaries: list[dict[str, Any]] = []
         for index, entry in enumerate(results, start=1):
             if not isinstance(entry, dict):
                 continue
-            ad_group: dict[str, Any] = cast("dict[str, Any]", entry)
+            ad_group: dict[str, Any] = cast('dict[str, Any]', entry)
             summary: dict[str, Any] = {
-                "ad_group_ref": f"ad_group_{index}",
-                "adgroup_name": ad_group.get("adgroup_name", ""),
-                "operation_status": ad_group.get("operation_status", ""),
-                "status": ad_group.get("status", ""),
-                "budget_mode": ad_group.get("budget_mode", ""),
-                "budget": ad_group.get("budget"),
-                "optimization_goal": ad_group.get("optimization_goal", ""),
-                "billing_event": ad_group.get("billing_event", ""),
-                "schedule_type": ad_group.get("schedule_type", ""),
-                "create_time": ad_group.get("create_time", ""),
-                "modify_time": ad_group.get("modify_time", ""),
+                'ad_group_ref': f'ad_group_{index}',
+                'adgroup_name': ad_group.get('adgroup_name', ''),
+                'operation_status': ad_group.get('operation_status', ''),
+                'status': ad_group.get('status', ''),
+                'budget_mode': ad_group.get('budget_mode', ''),
+                'budget': ad_group.get('budget'),
+                'optimization_goal': ad_group.get('optimization_goal', ''),
+                'billing_event': ad_group.get('billing_event', ''),
+                'schedule_type': ad_group.get('schedule_type', ''),
+                'create_time': ad_group.get('create_time', ''),
+                'modify_time': ad_group.get('modify_time', ''),
             }
             if include_ids:
-                summary["adgroup_id"] = ad_group.get("adgroup_id", "")
-                summary["campaign_id"] = ad_group.get("campaign_id", "")
+                summary['adgroup_id'] = ad_group.get('adgroup_id', '')
+                summary['campaign_id'] = ad_group.get('campaign_id', '')
             summaries.append(summary)
         return {
-            "ad_groups": summaries,
-            "page_info": data.get("page_info"),
-            "code": payload.get("code"),
-            "message": payload.get("message"),
+            'ad_groups': summaries,
+            'page_info': data.get('page_info'),
+            'code': payload.get('code'),
+            'message': payload.get('message'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -378,46 +376,45 @@ class TikTokAdsToolSet:
         ``include_ids=True`` when needed.
         """
         if not advertiser_id:
-            raise ValueError("advertiser_id is required")
-        import json as _json
+            raise ValueError('advertiser_id is required')
 
         params: dict[str, Any] = {
-            "advertiser_id": advertiser_id,
-            "page": page,
-            "page_size": page_size,
+            'advertiser_id': advertiser_id,
+            'page': page,
+            'page_size': page_size,
         }
         if filtering is not None:
-            params["filtering"] = _json.dumps(filtering)
+            params['filtering'] = _json.dumps(filtering)
         payload: dict[str, Any] = cast(
-            "dict[str, Any]",
-            self._client.get("/open_api/v1.3/ad/get/", params=params).json(),
+            'dict[str, Any]',
+            self._client.get('/open_api/v1.3/ad/get/', params=params).json(),
         )
-        data: dict[str, Any] = payload.get("data", {})
-        results: list[Any] = data.get("list", [])
+        data: dict[str, Any] = payload.get('data', {})
+        results: list[Any] = data.get('list', [])
         summaries: list[dict[str, Any]] = []
         for index, entry in enumerate(results, start=1):
             if not isinstance(entry, dict):
                 continue
-            ad: dict[str, Any] = cast("dict[str, Any]", entry)
+            ad: dict[str, Any] = cast('dict[str, Any]', entry)
             summary: dict[str, Any] = {
-                "ad_ref": f"ad_{index}",
-                "ad_name": ad.get("ad_name", ""),
-                "operation_status": ad.get("operation_status", ""),
-                "status": ad.get("status", ""),
-                "ad_format": ad.get("ad_format", ""),
-                "create_time": ad.get("create_time", ""),
-                "modify_time": ad.get("modify_time", ""),
+                'ad_ref': f'ad_{index}',
+                'ad_name': ad.get('ad_name', ''),
+                'operation_status': ad.get('operation_status', ''),
+                'status': ad.get('status', ''),
+                'ad_format': ad.get('ad_format', ''),
+                'create_time': ad.get('create_time', ''),
+                'modify_time': ad.get('modify_time', ''),
             }
             if include_ids:
-                summary["ad_id"] = ad.get("ad_id", "")
-                summary["adgroup_id"] = ad.get("adgroup_id", "")
-                summary["campaign_id"] = ad.get("campaign_id", "")
+                summary['ad_id'] = ad.get('ad_id', '')
+                summary['adgroup_id'] = ad.get('adgroup_id', '')
+                summary['campaign_id'] = ad.get('campaign_id', '')
             summaries.append(summary)
         return {
-            "ads": summaries,
-            "page_info": data.get("page_info"),
-            "code": payload.get("code"),
-            "message": payload.get("message"),
+            'ads': summaries,
+            'page_info': data.get('page_info'),
+            'code': payload.get('code'),
+            'message': payload.get('message'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -451,25 +448,24 @@ class TikTokAdsToolSet:
             or not end_date
         ):
             raise ValueError(
-                "advertiser_id, report_type, data_level, dimensions, "
-                "metrics, start_date, and end_date are required"
+                'advertiser_id, report_type, data_level, dimensions, '
+                'metrics, start_date, and end_date are required'
             )
-        import json as _json
 
         return cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._client.get(
-                "/open_api/v1.3/report/integrated/get/",
+                '/open_api/v1.3/report/integrated/get/',
                 params={
-                    "advertiser_id": advertiser_id,
-                    "report_type": report_type,
-                    "data_level": data_level,
-                    "dimensions": _json.dumps(dimensions),
-                    "metrics": _json.dumps(metrics),
-                    "start_date": start_date,
-                    "end_date": end_date,
-                    "page": page,
-                    "page_size": page_size,
+                    'advertiser_id': advertiser_id,
+                    'report_type': report_type,
+                    'data_level': data_level,
+                    'dimensions': _json.dumps(dimensions),
+                    'metrics': _json.dumps(metrics),
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'page': page,
+                    'page_size': page_size,
                 },
             ).json(),
         )
@@ -491,40 +487,40 @@ class TikTokAdsToolSet:
         default; set ``include_ids=True`` when needed.
         """
         if not advertiser_id:
-            raise ValueError("advertiser_id is required")
+            raise ValueError('advertiser_id is required')
         payload: dict[str, Any] = cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._client.get(
-                "/open_api/v1.3/dmp/custom_audience/list/",
+                '/open_api/v1.3/dmp/custom_audience/list/',
                 params={
-                    "advertiser_id": advertiser_id,
-                    "page": page,
-                    "page_size": page_size,
+                    'advertiser_id': advertiser_id,
+                    'page': page,
+                    'page_size': page_size,
                 },
             ).json(),
         )
-        data: dict[str, Any] = payload.get("data", {})
-        results: list[Any] = data.get("list", [])
+        data: dict[str, Any] = payload.get('data', {})
+        results: list[Any] = data.get('list', [])
         summaries: list[dict[str, Any]] = []
         for index, entry in enumerate(results, start=1):
             if not isinstance(entry, dict):
                 continue
-            audience: dict[str, Any] = cast("dict[str, Any]", entry)
+            audience: dict[str, Any] = cast('dict[str, Any]', entry)
             summary: dict[str, Any] = {
-                "audience_ref": f"audience_{index}",
-                "audience_name": audience.get("audience_name", ""),
-                "audience_type": audience.get("audience_type", ""),
-                "audience_subtype": audience.get("audience_subtype", ""),
-                "cover_num": audience.get("cover_num"),
-                "create_time": audience.get("create_time", ""),
-                "calculate_type": audience.get("calculate_type", ""),
+                'audience_ref': f'audience_{index}',
+                'audience_name': audience.get('audience_name', ''),
+                'audience_type': audience.get('audience_type', ''),
+                'audience_subtype': audience.get('audience_subtype', ''),
+                'cover_num': audience.get('cover_num'),
+                'create_time': audience.get('create_time', ''),
+                'calculate_type': audience.get('calculate_type', ''),
             }
             if include_ids:
-                summary["audience_id"] = audience.get("audience_id", "")
+                summary['audience_id'] = audience.get('audience_id', '')
             summaries.append(summary)
         return {
-            "audiences": summaries,
-            "page_info": data.get("page_info"),
-            "code": payload.get("code"),
-            "message": payload.get("message"),
+            'audiences': summaries,
+            'page_info': data.get('page_info'),
+            'code': payload.get('code'),
+            'message': payload.get('message'),
         }

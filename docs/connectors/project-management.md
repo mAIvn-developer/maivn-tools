@@ -21,7 +21,7 @@ connector = JiraToolSet(
     email="ops@acme.com",
     api_token=secrets["JIRA_API_TOKEN"],
 )
-agent = Agent(model="auto")
+agent = Agent(name="jira-agent", model="auto")
 register_connector(agent, connector)
 ```
 
@@ -115,9 +115,8 @@ connector.transition_issue(hits[0], transition_id="31")
 
 ### Live tests
 
-Set `MAIVN_TOOLS_JIRA_LIVE_BASE_URL`, `MAIVN_TOOLS_JIRA_LIVE_EMAIL`, and
-`MAIVN_TOOLS_JIRA_LIVE_TOKEN` to exercise the connector against a
-sandbox Jira Cloud site. See [testing.md](../testing.md).
+The bundled tests use mock transports. See [testing.md](../testing.md)
+for the distinction between offline checks and live provider validation.
 
 ## LinearToolSet
 
@@ -170,8 +169,10 @@ queries / mutations).
 `archive_issue` carries `destructive=True`. Archive is a soft-delete
 (recoverable through the Linear UI), but should still be confirmed
 with the user, or filtered out with `exclude_tags=["destructive"]`.
-`graphql` is gated with READ permission; if you need raw mutations,
-gate it behind a write permission in your own override.
+`graphql` is marked READ but forwards arbitrary queries and mutations.
+Exclude this method from read-only agents; use an explicit method allowlist
+and provider credentials restricted to reads. For fixed mutations, register
+a wrapper with the appropriate write permission.
 
 ### Example: summary-mode list
 

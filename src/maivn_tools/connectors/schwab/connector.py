@@ -50,7 +50,7 @@ def _select_id_from_value(
                     return resolved
         return None
     if isinstance(value, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", value)
+        sequence = cast('list[Any] | tuple[Any, ...]', value)
         for item in sequence:
             item_value: Any = item
             resolved = _select_id_from_value(item_value, keys)
@@ -62,38 +62,38 @@ def _select_id_from_value(
 # MARK: ToolSet
 
 
-@toolset(prefix="schwab")
+@toolset(prefix='schwab')
 class SchwabToolSet:
     """A connector for the Schwab Trader and Market Data APIs."""
 
     metadata = ProviderMetadata(
-        name="schwab",
-        display_name="Charles Schwab",
-        version="0.1.0",
-        description="Accounts, positions, orders, market data, option chains.",
+        name='schwab',
+        display_name='Charles Schwab',
+        version='0.1.0',
+        description='Accounts, positions, orders, market data, option chains.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developer.schwab.com/products",
-        homepage_url="https://www.schwab.com/",
-        tags=("trading", "brokerage"),
+        documentation_url='https://developer.schwab.com/products',
+        homepage_url='https://www.schwab.com/',
+        tags=('trading', 'brokerage'),
     )
 
     def __init__(
         self,
         *,
         access_token: str,
-        base_url: str = "https://api.schwabapi.com",
+        base_url: str = 'https://api.schwabapi.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(access_token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -123,39 +123,39 @@ class SchwabToolSet:
         """
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = ",".join(fields)
+            params['fields'] = ','.join(fields)
         payload: Any = self._client.get(
-            "/trader/v1/accounts",
+            '/trader/v1/accounts',
             params=params or None,
         ).json()
         if raw:
             return payload
-        items: list[Any] = cast("list[Any]", payload) if isinstance(payload, list) else []
+        items: list[Any] = cast('list[Any]', payload) if isinstance(payload, list) else []
         summaries: list[dict[str, Any]] = []
         for index, account in enumerate(items, start=1):
             if not isinstance(account, dict):
                 continue
             account_dict = cast(dict[str, Any], account)
-            securities_account: Any = account_dict.get("securitiesAccount")
+            securities_account: Any = account_dict.get('securitiesAccount')
             acct: dict[str, Any]
             if isinstance(securities_account, dict):
                 acct = cast(dict[str, Any], securities_account)
             else:
                 acct = account_dict
             summary: dict[str, Any] = {
-                "account_ref": f"account_{index}",
-                "account_number": acct.get("accountNumber", ""),
-                "type": acct.get("type", ""),
-                "round_trips": acct.get("roundTrips"),
-                "is_day_trader": acct.get("isDayTrader"),
-                "balances": acct.get("currentBalances"),
+                'account_ref': f'account_{index}',
+                'account_number': acct.get('accountNumber', ''),
+                'type': acct.get('type', ''),
+                'round_trips': acct.get('roundTrips'),
+                'is_day_trader': acct.get('isDayTrader'),
+                'balances': acct.get('currentBalances'),
             }
             if include_ids:
-                summary["account_hash"] = acct.get("hashValue") or acct.get("accountHash", "")
+                summary['account_hash'] = acct.get('hashValue') or acct.get('accountHash', '')
             summaries.append(summary)
         return {
-            "accounts": summaries,
-            "count": len(summaries),
+            'accounts': summaries,
+            'count': len(summaries),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -171,12 +171,12 @@ class SchwabToolSet:
         you need every field for a specific account.
         """
         if not account_hash:
-            raise ValueError("account_hash must be a non-empty string")
+            raise ValueError('account_hash must be a non-empty string')
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = ",".join(fields)
+            params['fields'] = ','.join(fields)
         return self._client.get(
-            f"/trader/v1/accounts/{account_hash}",
+            f'/trader/v1/accounts/{account_hash}',
             params=params or None,
         ).json()
 
@@ -208,58 +208,58 @@ class SchwabToolSet:
         response.
         """
         if not account_hash or not from_entered_time or not to_entered_time:
-            raise ValueError("account_hash + from/to times must be non-empty")
+            raise ValueError('account_hash + from/to times must be non-empty')
         if max_results < 1 or max_results > 3000:
-            raise ValueError("max_results must be between 1 and 3000")
+            raise ValueError('max_results must be between 1 and 3000')
         params: dict[str, Any] = {
-            "fromEnteredTime": from_entered_time,
-            "toEnteredTime": to_entered_time,
-            "maxResults": max_results,
+            'fromEnteredTime': from_entered_time,
+            'toEnteredTime': to_entered_time,
+            'maxResults': max_results,
         }
         if status is not None:
-            params["status"] = status
+            params['status'] = status
         payload: Any = self._client.get(
-            f"/trader/v1/accounts/{account_hash}/orders",
+            f'/trader/v1/accounts/{account_hash}/orders',
             params=params,
         ).json()
         if raw:
             return payload
-        items: list[Any] = cast("list[Any]", payload) if isinstance(payload, list) else []
+        items: list[Any] = cast('list[Any]', payload) if isinstance(payload, list) else []
         summaries: list[dict[str, Any]] = []
         for index, order in enumerate(items, start=1):
             if not isinstance(order, dict):
                 continue
             order_dict = cast(dict[str, Any], order)
-            legs: Any = order_dict.get("orderLegCollection") or []
-            symbol: Any = ""
+            legs: Any = order_dict.get('orderLegCollection') or []
+            symbol: Any = ''
             side: Any = None
             if isinstance(legs, list) and legs:
-                first_leg: Any = cast("list[Any]", legs)[0]
+                first_leg: Any = cast('list[Any]', legs)[0]
                 if isinstance(first_leg, dict):
                     first_leg_dict = cast(dict[str, Any], first_leg)
-                    instrument: Any = first_leg_dict.get("instrument") or {}
+                    instrument: Any = first_leg_dict.get('instrument') or {}
                     if isinstance(instrument, dict):
-                        symbol = cast(dict[str, Any], instrument).get("symbol", "")
-                    side = first_leg_dict.get("instruction")
+                        symbol = cast(dict[str, Any], instrument).get('symbol', '')
+                    side = first_leg_dict.get('instruction')
             summary: dict[str, Any] = {
-                "order_ref": f"order_{index}",
-                "symbol": symbol,
-                "side": side,
-                "quantity": order_dict.get("quantity"),
-                "filled_quantity": order_dict.get("filledQuantity"),
-                "order_type": order_dict.get("orderType"),
-                "status": order_dict.get("status"),
-                "price": order_dict.get("price"),
-                "duration": order_dict.get("duration"),
-                "entered_time": order_dict.get("enteredTime", ""),
+                'order_ref': f'order_{index}',
+                'symbol': symbol,
+                'side': side,
+                'quantity': order_dict.get('quantity'),
+                'filled_quantity': order_dict.get('filledQuantity'),
+                'order_type': order_dict.get('orderType'),
+                'status': order_dict.get('status'),
+                'price': order_dict.get('price'),
+                'duration': order_dict.get('duration'),
+                'entered_time': order_dict.get('enteredTime', ''),
             }
             if include_ids:
-                summary["order_id"] = order_dict.get("orderId")
+                summary['order_id'] = order_dict.get('orderId')
             summaries.append(summary)
         return {
-            "orders": summaries,
-            "count": len(summaries),
-            "account_hash_used": True,
+            'orders': summaries,
+            'count': len(summaries),
+            'account_hash_used': True,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -274,12 +274,12 @@ class SchwabToolSet:
         ``Location`` response header.
         """
         if not account_hash or not payload:
-            raise ValueError("account_hash and payload must be non-empty")
+            raise ValueError('account_hash and payload must be non-empty')
         response = self._client.post(
-            f"/trader/v1/accounts/{account_hash}/orders",
+            f'/trader/v1/accounts/{account_hash}/orders',
             json=payload,
         )
-        return {"status": response.status, "headers": dict(response.headers)}
+        return {'status': response.status, 'headers': dict(response.headers)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
     def cancel_order(self, account_hash: str, order: Any) -> dict[str, Any]:
@@ -291,14 +291,14 @@ class SchwabToolSet:
         "status": <http-status>}``.
         """
         if not account_hash:
-            raise ValueError("account_hash must be a non-empty string")
-        order_id = _select_id_from_value(order, ("order_id", "orderId", "id"))
+            raise ValueError('account_hash must be a non-empty string')
+        order_id = _select_id_from_value(order, ('order_id', 'orderId', 'id'))
         if not order_id:
-            raise ValueError("order must be an order id or order dict with an id")
+            raise ValueError('order must be an order id or order dict with an id')
         response = self._client.delete(
-            f"/trader/v1/accounts/{account_hash}/orders/{order_id}",
+            f'/trader/v1/accounts/{account_hash}/orders/{order_id}',
         )
-        return {"id": order_id, "cancelled": True, "status": response.status}
+        return {'id': order_id, 'cancelled': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_quotes(
@@ -314,18 +314,18 @@ class SchwabToolSet:
         and fundamental fields.
         """
         if not symbols:
-            raise ValueError("symbols must be non-empty")
-        params: dict[str, Any] = {"symbols": ",".join(symbols)}
+            raise ValueError('symbols must be non-empty')
+        params: dict[str, Any] = {'symbols': ','.join(symbols)}
         if fields is not None:
-            params["fields"] = ",".join(fields)
-        return self._client.get("/marketdata/v1/quotes", params=params).json()
+            params['fields'] = ','.join(fields)
+        return self._client.get('/marketdata/v1/quotes', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_option_chains(
         self,
         *,
         symbol: str,
-        contract_type: str = "ALL",
+        contract_type: str = 'ALL',
         strike_count: int | None = None,
         include_quotes: bool = True,
     ) -> dict[str, Any]:
@@ -336,18 +336,18 @@ class SchwabToolSet:
         return. Returns Schwab's full chain payload.
         """
         if not symbol:
-            raise ValueError("symbol must be a non-empty string")
-        if contract_type not in {"CALL", "PUT", "ALL"}:
-            raise ValueError("contract_type must be CALL/PUT/ALL")
+            raise ValueError('symbol must be a non-empty string')
+        if contract_type not in {'CALL', 'PUT', 'ALL'}:
+            raise ValueError('contract_type must be CALL/PUT/ALL')
         params: dict[str, Any] = {
-            "symbol": symbol,
-            "contractType": contract_type,
-            "includeQuotes": str(include_quotes).lower(),
+            'symbol': symbol,
+            'contractType': contract_type,
+            'includeQuotes': str(include_quotes).lower(),
         }
         if strike_count is not None:
-            params["strikeCount"] = strike_count
+            params['strikeCount'] = strike_count
         return self._client.get(
-            "/marketdata/v1/chains",
+            '/marketdata/v1/chains',
             params=params,
         ).json()
 
@@ -372,22 +372,22 @@ class SchwabToolSet:
         [...], "symbol": ..., "empty": ...}``.
         """
         if not symbol:
-            raise ValueError("symbol must be a non-empty string")
-        params: dict[str, Any] = {"symbol": symbol}
+            raise ValueError('symbol must be a non-empty string')
+        params: dict[str, Any] = {'symbol': symbol}
         if period_type is not None:
-            params["periodType"] = period_type
+            params['periodType'] = period_type
         if period is not None:
-            params["period"] = period
+            params['period'] = period
         if frequency_type is not None:
-            params["frequencyType"] = frequency_type
+            params['frequencyType'] = frequency_type
         if frequency is not None:
-            params["frequency"] = frequency
+            params['frequency'] = frequency
         if start_date is not None:
-            params["startDate"] = start_date
+            params['startDate'] = start_date
         if end_date is not None:
-            params["endDate"] = end_date
+            params['endDate'] = end_date
         return self._client.get(
-            "/marketdata/v1/pricehistory",
+            '/marketdata/v1/pricehistory',
             params=params,
         ).json()
 
@@ -404,11 +404,11 @@ class SchwabToolSet:
         ``"future"``, ``"forex"``. Returns a per-market hours payload.
         """
         if not markets:
-            raise ValueError("markets must be non-empty")
-        params: dict[str, Any] = {"markets": ",".join(markets)}
+            raise ValueError('markets must be non-empty')
+        params: dict[str, Any] = {'markets': ','.join(markets)}
         if date is not None:
-            params["date"] = date
+            params['date'] = date
         return self._client.get(
-            "/marketdata/v1/markets",
+            '/marketdata/v1/markets',
             params=params,
         ).json()

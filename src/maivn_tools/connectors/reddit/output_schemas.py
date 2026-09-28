@@ -18,34 +18,34 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_post_summary`` builder)
 
 _POST_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "post_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "author": {"type": "string"},
-        "subreddit": {"type": "string"},
-        "posted_at": {"type": "number"},
-        "score": {"type": "integer"},
-        "num_comments": {"type": "integer"},
-        "url": {"type": "string"},
-        "selftext": {"type": "string"},
-        "thing_id": {"type": "string"},
-        "post_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'post_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'author': {'type': 'string'},
+        'subreddit': {'type': 'string'},
+        'posted_at': {'type': 'number'},
+        'score': {'type': 'integer'},
+        'num_comments': {'type': 'integer'},
+        'url': {'type': 'string'},
+        'selftext': {'type': 'string'},
+        'thing_id': {'type': 'string'},
+        'post_id': {'type': 'string'},
     },
-    "required": ["post_ref", "title"],
+    'required': ['post_ref', 'title'],
 }
 
 
 # MARK: - Tool output schemas
 
 _POSTS_LISTING: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "posts": {"type": "array", "items": _POST_SUMMARY},
-        "after": {"type": ["string", "null"]},
-        "before": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'posts': {'type': 'array', 'items': _POST_SUMMARY},
+        'after': {'type': ['string', 'null']},
+        'before': {'type': ['string', 'null']},
     },
-    "required": ["posts"],
+    'required': ['posts'],
 }
 
 LIST_SUBREDDIT_POSTS_OUTPUT: dict[str, JsonValue] = _POSTS_LISTING
@@ -53,6 +53,6 @@ SEARCH_OUTPUT: dict[str, JsonValue] = _POSTS_LISTING
 
 
 __all__ = [
-    "LIST_SUBREDDIT_POSTS_OUTPUT",
-    "SEARCH_OUTPUT",
+    'LIST_SUBREDDIT_POSTS_OUTPUT',
+    'SEARCH_OUTPUT',
 ]

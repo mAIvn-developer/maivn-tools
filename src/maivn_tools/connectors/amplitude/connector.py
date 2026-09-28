@@ -4,7 +4,9 @@
 
 from __future__ import annotations
 
+import json as _json
 from typing import Any, cast
+from urllib.parse import urlencode
 
 from maivn import tool_output, toolify, toolset
 
@@ -20,14 +22,14 @@ from .output_schemas import (
 )
 
 # Dashboard / Cohort / Export REST hosts (Basic auth).
-_REST_HOST_US = "amplitude.com"
-_REST_HOST_EU = "analytics.eu.amplitude.com"
+_REST_HOST_US = 'amplitude.com'
+_REST_HOST_EU = 'analytics.eu.amplitude.com'
 # Event ingestion hosts for HTTP V2 (/2/httpapi) and Identify (/identify).
-_INGEST_HOST_US = "api2.amplitude.com"
-_INGEST_HOST_EU = "api.eu.amplitude.com"
+_INGEST_HOST_US = 'api2.amplitude.com'
+_INGEST_HOST_EU = 'api.eu.amplitude.com'
 
 
-@toolset(prefix="amplitude")
+@toolset(prefix='amplitude')
 class AmplitudeToolSet:
     """A connector for Amplitude.
 
@@ -39,15 +41,15 @@ class AmplitudeToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="amplitude",
-        display_name="Amplitude",
-        version="0.1.0",
-        description="Event ingest, dashboards, cohorts, and user lookups.",
+        name='amplitude',
+        display_name='Amplitude',
+        version='0.1.0',
+        description='Event ingest, dashboards, cohorts, and user lookups.',
         auth_modes=(AuthMode.BASIC, AuthMode.API_KEY),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://www.docs.developers.amplitude.com/",
-        homepage_url="https://amplitude.com/",
-        tags=("analytics", "product"),
+        documentation_url='https://www.docs.developers.amplitude.com/',
+        homepage_url='https://amplitude.com/',
+        tags=('analytics', 'product'),
     )
 
     def __init__(
@@ -55,33 +57,33 @@ class AmplitudeToolSet:
         *,
         api_key: str,
         secret_key: str,
-        region: str = "US",
+        region: str = 'US',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key or not secret_key:
-            raise ValueError("api_key and secret_key are required")
-        if region not in {"US", "EU"}:
-            raise ValueError("region must be US or EU")
+            raise ValueError('api_key and secret_key are required')
+        if region not in {'US', 'EU'}:
+            raise ValueError('region must be US or EU')
         self.connection = connection
         self._api_key = api_key
-        rest_host = _REST_HOST_US if region == "US" else _REST_HOST_EU
-        ingest_host = _INGEST_HOST_US if region == "US" else _INGEST_HOST_EU
+        rest_host = _REST_HOST_US if region == 'US' else _REST_HOST_EU
+        ingest_host = _INGEST_HOST_US if region == 'US' else _INGEST_HOST_EU
         self._client = HttpClient(
-            base_url=f"https://{rest_host}",
+            base_url=f'https://{rest_host}',
             auth=BasicAuth(api_key, secret_key),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
         # Event ingestion (HTTP V2 + Identify) lives on a separate host and
         # authenticates via the in-body/form api_key, not the Basic header.
         self._ingest_client = HttpClient(
-            base_url=f"https://{ingest_host}",
+            base_url=f'https://{ingest_host}',
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -102,15 +104,15 @@ class AmplitudeToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "cohort_ref": f"cohort_{index}",
-            "name": cohort.get("name", ""),
-            "description": cohort.get("description", ""),
-            "size": cohort.get("size", 0),
-            "owner": cohort.get("owner", ""),
-            "last_modified": cohort.get("last_mod", "") or cohort.get("lastMod", ""),
+            'cohort_ref': f'cohort_{index}',
+            'name': cohort.get('name', ''),
+            'description': cohort.get('description', ''),
+            'size': cohort.get('size', 0),
+            'owner': cohort.get('owner', ''),
+            'last_modified': cohort.get('last_mod', '') or cohort.get('lastMod', ''),
         }
         if include_ids:
-            summary["cohort_id"] = cohort.get("id", "")
+            summary['cohort_id'] = cohort.get('id', '')
         return summary
 
     @staticmethod
@@ -121,13 +123,13 @@ class AmplitudeToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "user_ref": f"user_{index}",
-            "user_id": user.get("user_id", ""),
-            "last_seen": user.get("last_seen", "") or user.get("last_used", ""),
+            'user_ref': f'user_{index}',
+            'user_id': user.get('user_id', ''),
+            'last_seen': user.get('last_seen', '') or user.get('last_used', ''),
         }
         if include_ids:
-            summary["amplitude_id"] = user.get("amplitude_id", "")
-            summary["device_id"] = user.get("device_id", "")
+            summary['amplitude_id'] = user.get('amplitude_id', '')
+            summary['device_id'] = user.get('device_id', '')
         return summary
 
     # MARK: - Tools
@@ -147,14 +149,14 @@ class AmplitudeToolSet:
         ``{"code": 200, "events_ingested": <n>, ...}``.
         """
         if not events:
-            raise ValueError("events must be non-empty")
-        body: dict[str, Any] = {"api_key": self._api_key, "events": events}
+            raise ValueError('events must be non-empty')
+        body: dict[str, Any] = {'api_key': self._api_key, 'events': events}
         if options is not None:
-            body["options"] = options
+            body['options'] = options
         return self._ingest_client.post(
-            "/2/httpapi",
+            '/2/httpapi',
             json=body,
-            headers={"Content-Type": "application/json"},
+            headers={'Content-Type': 'application/json'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -166,20 +168,18 @@ class AmplitudeToolSet:
         identification payload with the user before calling.
         """
         if not identifications:
-            raise ValueError("identifications must be non-empty")
-        import json as _json
-        from urllib.parse import urlencode
+            raise ValueError('identifications must be non-empty')
 
         form_body = urlencode(
             {
-                "api_key": self._api_key,
-                "identification": _json.dumps(identifications),
+                'api_key': self._api_key,
+                'identification': _json.dumps(identifications),
             }
-        ).encode("utf-8")
+        ).encode('utf-8')
         return self._ingest_client.post(
-            "/identify",
+            '/identify',
             data=form_body,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -201,20 +201,19 @@ class AmplitudeToolSet:
         ``data`` series.
         """
         if not event or not start or not end:
-            raise ValueError("event, start, and end are required")
-        import json as _json
+            raise ValueError('event, start, and end are required')
 
         params: dict[str, Any] = {
-            "e": _json.dumps(event),
-            "start": start,
-            "end": end,
-            "i": interval,
+            'e': _json.dumps(event),
+            'start': start,
+            'end': end,
+            'i': interval,
         }
         if segment_definitions is not None:
-            params["s"] = _json.dumps(segment_definitions)
+            params['s'] = _json.dumps(segment_definitions)
         if group_by is not None:
-            params["g"] = _json.dumps(group_by)
-        return self._client.get("/api/2/events/segmentation", params=params).json()
+            params['g'] = _json.dumps(group_by)
+        return self._client.get('/api/2/events/segmentation', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def funnel_analysis(
@@ -224,7 +223,7 @@ class AmplitudeToolSet:
         start: str,
         end: str,
         conversion_window: int | None = None,
-        mode: str = "ordered",
+        mode: str = 'ordered',
     ) -> dict[str, Any]:
         """Run a funnel analysis across an ordered list of events.
 
@@ -233,20 +232,19 @@ class AmplitudeToolSet:
         ``ordered``/``unordered``/``sequential``.
         """
         if not events or not start or not end:
-            raise ValueError("events, start, and end are required")
-        if mode not in {"ordered", "unordered", "sequential"}:
-            raise ValueError("mode must be ordered/unordered/sequential")
-        import json as _json
+            raise ValueError('events, start, and end are required')
+        if mode not in {'ordered', 'unordered', 'sequential'}:
+            raise ValueError('mode must be ordered/unordered/sequential')
 
         params: dict[str, Any] = {
-            "e": [_json.dumps(e) for e in events],
-            "start": start,
-            "end": end,
-            "mode": mode,
+            'e': [_json.dumps(e) for e in events],
+            'start': start,
+            'end': end,
+            'mode': mode,
         }
         if conversion_window is not None:
-            params["cs"] = conversion_window
-        return self._client.get("/api/2/funnels", params=params).json()
+            params['cs'] = conversion_window
+        return self._client.get('/api/2/funnels', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def retention_analysis(
@@ -256,7 +254,7 @@ class AmplitudeToolSet:
         returning_event: dict[str, Any],
         start: str,
         end: str,
-        retention_type: str = "n-day",
+        retention_type: str = 'n-day',
         interval: int = 1,
     ) -> dict[str, Any]:
         """Run a retention analysis.
@@ -267,20 +265,19 @@ class AmplitudeToolSet:
         ``rolling``, or ``n-day``. Returns the Amplitude retention payload.
         """
         if not start or not end:
-            raise ValueError("start and end are required")
-        if retention_type not in {"bracket", "rolling", "n-day"}:
-            raise ValueError("retention_type must be bracket/rolling/n-day")
-        import json as _json
+            raise ValueError('start and end are required')
+        if retention_type not in {'bracket', 'rolling', 'n-day'}:
+            raise ValueError('retention_type must be bracket/rolling/n-day')
 
         return self._client.get(
-            "/api/2/retention",
+            '/api/2/retention',
             params={
-                "se": _json.dumps(starting_event),
-                "re": _json.dumps(returning_event),
-                "start": start,
-                "end": end,
-                "rm": retention_type,
-                "i": interval,
+                'se': _json.dumps(starting_event),
+                're': _json.dumps(returning_event),
+                'start': start,
+                'end': end,
+                'rm': retention_type,
+                'i': interval,
             },
         ).json()
 
@@ -299,10 +296,10 @@ class AmplitudeToolSet:
         ``{"userData": {...}, "events": [...]}``.
         """
         if not user_id:
-            raise ValueError("user_id is required")
+            raise ValueError('user_id is required')
         return self._client.get(
-            "/api/2/useractivity",
-            params={"user": user_id, "offset": offset, "limit": limit},
+            '/api/2/useractivity',
+            params={'user': user_id, 'offset': offset, 'limit': limit},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -323,22 +320,22 @@ class AmplitudeToolSet:
         for the user's event stream.
         """
         if not search:
-            raise ValueError("search is required")
+            raise ValueError('search is required')
         payload: dict[str, Any] = self._client.get(
-            "/api/2/usersearch", params={"user": search}
+            '/api/2/usersearch', params={'user': search}
         ).json()
-        matches: object = payload.get("matches", [])
+        matches: object = payload.get('matches', [])
         if not isinstance(matches, list):
             return payload
-        matches_list = cast("list[Any]", matches)
+        matches_list = cast('list[Any]', matches)
         summaries = [
-            self._user_summary(cast("dict[str, Any]", user), index=index, include_ids=include_ids)
+            self._user_summary(cast('dict[str, Any]', user), index=index, include_ids=include_ids)
             for index, user in enumerate(matches_list, start=1)
             if isinstance(user, dict)
         ]
         return {
-            "users": summaries,
-            "type": payload.get("type", ""),
+            'users': summaries,
+            'type': payload.get('type', ''),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -357,24 +354,24 @@ class AmplitudeToolSet:
         unless ``include_ids=True``; set that flag only when a follow-up
         ``get_cohort`` call needs the raw ID.
         """
-        payload: dict[str, Any] = self._client.get("/api/3/cohorts").json()
-        cohorts: object = payload.get("cohorts", [])
+        payload: dict[str, Any] = self._client.get('/api/3/cohorts').json()
+        cohorts: object = payload.get('cohorts', [])
         if not isinstance(cohorts, list):
             return payload
-        cohorts_list = cast("list[Any]", cohorts)
+        cohorts_list = cast('list[Any]', cohorts)
         limited: list[Any] = (
             cohorts_list[:limit] if limit and len(cohorts_list) > limit else cohorts_list
         )
         summaries = [
             self._cohort_summary(
-                cast("dict[str, Any]", cohort), index=index, include_ids=include_ids
+                cast('dict[str, Any]', cohort), index=index, include_ids=include_ids
             )
             for index, cohort in enumerate(limited, start=1)
             if isinstance(cohort, dict)
         ]
         return {
-            "cohorts": summaries,
-            "totalAvailable": len(cohorts_list),
+            'cohorts': summaries,
+            'totalAvailable': len(cohorts_list),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -392,10 +389,10 @@ class AmplitudeToolSet:
         handle and should not appear in final answers.
         """
         if not cohort_id:
-            raise ValueError("cohort_id is required")
+            raise ValueError('cohort_id is required')
         return self._client.get(
-            f"/api/5/cohorts/request/{cohort_id}",
-            params={"props": "1" if props else "0"},
+            f'/api/5/cohorts/request/{cohort_id}',
+            params={'props': '1' if props else '0'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -413,9 +410,9 @@ class AmplitudeToolSet:
         to be available for download via the Amplitude UI.
         """
         if not start or not end:
-            raise ValueError("start and end are required")
+            raise ValueError('start and end are required')
         response = self._client.get(
-            "/api/2/export",
-            params={"start": start, "end": end},
+            '/api/2/export',
+            params={'start': start, 'end': end},
         )
-        return {"status": response.status}
+        return {'status': response.status}

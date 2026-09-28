@@ -25,7 +25,7 @@ def _coerce_int_id(candidate: Any, *keys: str) -> int:
         try:
             return int(candidate)
         except ValueError as exc:
-            raise ValueError(f"could not coerce {candidate!r} to int") from exc
+            raise ValueError(f'could not coerce {candidate!r} to int') from exc
     if isinstance(candidate, dict):
         mapping = cast(dict[Any, Any], candidate)
         for key in keys:
@@ -45,7 +45,7 @@ def _coerce_int_id(candidate: Any, *keys: str) -> int:
                 except ValueError:
                     continue
     if isinstance(candidate, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+        sequence = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in sequence:
             item_value: Any = item
             try:
@@ -53,18 +53,18 @@ def _coerce_int_id(candidate: Any, *keys: str) -> int:
             except ValueError:
                 continue
     type_name = type(cast(object, candidate)).__name__
-    raise ValueError(f"could not extract an int ID from {type_name}")
+    raise ValueError(f'could not extract an int ID from {type_name}')
 
 
 def _summarize_project(project: dict[str, Any], *, index: int, include_ids: bool) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "project_ref": f"project_{index}",
-        "name": project.get("name", ""),
-        "state": project.get("state", ""),
-        "created_at": project.get("created_at", ""),
+        'project_ref': f'project_{index}',
+        'name': project.get('name', ''),
+        'state': project.get('state', ''),
+        'created_at': project.get('created_at', ''),
     }
     if include_ids:
-        summary["project_id"] = project.get("id", "")
+        summary['project_id'] = project.get('id', '')
     return summary
 
 
@@ -72,36 +72,36 @@ def _summarize_environment(
     environment: dict[str, Any], *, index: int, include_ids: bool
 ) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "environment_ref": f"environment_{index}",
-        "name": environment.get("name", ""),
-        "type": environment.get("type", ""),
-        "dbt_version": environment.get("dbt_version", ""),
-        "deployment_type": environment.get("deployment_type", ""),
+        'environment_ref': f'environment_{index}',
+        'name': environment.get('name', ''),
+        'type': environment.get('type', ''),
+        'dbt_version': environment.get('dbt_version', ''),
+        'deployment_type': environment.get('deployment_type', ''),
     }
     if include_ids:
-        summary["environment_id"] = environment.get("id", "")
-        summary["project_id"] = environment.get("project_id", "")
+        summary['environment_id'] = environment.get('id', '')
+        summary['project_id'] = environment.get('project_id', '')
     return summary
 
 
 def _summarize_job(job: dict[str, Any], *, index: int, include_ids: bool) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "job_ref": f"job_{index}",
-        "name": job.get("name", ""),
-        "environment": job.get("environment_id") if include_ids else None,
-        "schedule": cast(dict[str, Any], job.get("schedule")).get("cron", "")
-        if isinstance(job.get("schedule"), dict)
-        else "",
-        "generate_docs": job.get("generate_docs"),
-        "triggers": job.get("triggers"),
-        "execute_steps": job.get("execute_steps") or [],
+        'job_ref': f'job_{index}',
+        'name': job.get('name', ''),
+        'environment': job.get('environment_id') if include_ids else None,
+        'schedule': cast(dict[str, Any], job.get('schedule')).get('cron', '')
+        if isinstance(job.get('schedule'), dict)
+        else '',
+        'generate_docs': job.get('generate_docs'),
+        'triggers': job.get('triggers'),
+        'execute_steps': job.get('execute_steps') or [],
     }
     if not include_ids:
-        summary.pop("environment", None)
+        summary.pop('environment', None)
     if include_ids:
-        summary["job_id"] = job.get("id", "")
-        summary["project_id"] = job.get("project_id", "")
-        summary["environment_id"] = job.get("environment_id", "")
+        summary['job_id'] = job.get('id', '')
+        summary['project_id'] = job.get('project_id', '')
+        summary['environment_id'] = job.get('environment_id', '')
     return summary
 
 
@@ -109,42 +109,42 @@ def _summarize_job(job: dict[str, Any], *, index: int, include_ids: bool) -> dic
 
 # Numeric dbt Cloud run status codes -> human strings.
 _RUN_STATUS: dict[int, str] = {
-    1: "queued",
-    2: "starting",
-    3: "running",
-    10: "success",
-    20: "error",
-    30: "cancelled",
+    1: 'queued',
+    2: 'starting',
+    3: 'running',
+    10: 'success',
+    20: 'error',
+    30: 'cancelled',
 }
 
 
 def _summarize_run(run: dict[str, Any], *, index: int, include_ids: bool) -> dict[str, Any]:
-    status_code = run.get("status")
+    status_code = run.get('status')
     status = (
         _RUN_STATUS.get(status_code, status_code) if isinstance(status_code, int) else status_code
     )
     summary: dict[str, Any] = {
-        "run_ref": f"run_{index}",
-        "status": status,
-        "status_message": run.get("status_message") or "",
-        "started_at": run.get("started_at", ""),
-        "finished_at": run.get("finished_at", ""),
-        "duration": run.get("duration_humanized") or run.get("duration", ""),
-        "trigger_cause": cast(dict[str, Any], run.get("trigger")).get("cause", "")
-        if isinstance(run.get("trigger"), dict)
-        else "",
+        'run_ref': f'run_{index}',
+        'status': status,
+        'status_message': run.get('status_message') or '',
+        'started_at': run.get('started_at', ''),
+        'finished_at': run.get('finished_at', ''),
+        'duration': run.get('duration_humanized') or run.get('duration', ''),
+        'trigger_cause': cast(dict[str, Any], run.get('trigger')).get('cause', '')
+        if isinstance(run.get('trigger'), dict)
+        else '',
     }
     if include_ids:
-        summary["run_id"] = run.get("id", "")
-        summary["job_id"] = run.get("job_id", "")
-        summary["project_id"] = run.get("project_id", "")
+        summary['run_id'] = run.get('id', '')
+        summary['job_id'] = run.get('job_id', '')
+        summary['project_id'] = run.get('project_id', '')
     return summary
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="dbt_cloud")
+@toolset(prefix='dbt_cloud')
 class DbtCloudToolSet:
     """A connector for the dbt Cloud Administrative API v2.
 
@@ -165,15 +165,15 @@ class DbtCloudToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="dbt_cloud",
-        display_name="dbt Cloud",
-        version="0.1.0",
-        description="Projects, jobs, runs, environments, and artifacts.",
+        name='dbt_cloud',
+        display_name='dbt Cloud',
+        version='0.1.0',
+        description='Projects, jobs, runs, environments, and artifacts.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://docs.getdbt.com/dbt-cloud/api-v2",
-        homepage_url="https://www.getdbt.com/",
-        tags=("etl", "analytics-engineering"),
+        documentation_url='https://docs.getdbt.com/dbt-cloud/api-v2',
+        homepage_url='https://www.getdbt.com/',
+        tags=('etl', 'analytics-engineering'),
     )
 
     def __init__(
@@ -181,21 +181,21 @@ class DbtCloudToolSet:
         *,
         account_id: int,
         api_token: str,
-        host: str = "cloud.getdbt.com",
+        host: str = 'cloud.getdbt.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not account_id or not api_token:
-            raise ValueError("account_id and api_token are required")
+            raise ValueError('account_id and api_token are required')
         self.connection = connection
         self._account_id = account_id
         self._client = HttpClient(
-            base_url=f"https://{host}",
-            auth=ApiKeyAuth(api_token, header="Authorization", prefix="Token"),
+            base_url=f'https://{host}',
+            auth=ApiKeyAuth(api_token, header='Authorization', prefix='Token'),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -221,14 +221,14 @@ class DbtCloudToolSet:
         ``project_id``. Pass ``raw=True`` for the unfiltered API response.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
+            raise ValueError('limit must be between 1 and 100')
         payload: dict[str, Any] = self._client.get(
-            f"/api/v2/accounts/{self._account_id}/projects/",
-            params={"limit": limit, "offset": offset},
+            f'/api/v2/accounts/{self._account_id}/projects/',
+            params={'limit': limit, 'offset': offset},
         ).json()
         if raw:
             return payload
-        items: list[Any] = payload.get("data") or []
+        items: list[Any] = payload.get('data') or []
         summaries: list[dict[str, Any]] = []
         for index, project in enumerate(items, start=1):
             if isinstance(project, dict):
@@ -236,7 +236,7 @@ class DbtCloudToolSet:
                 summaries.append(
                     _summarize_project(project_dict, index=index, include_ids=include_ids)
                 )
-        return {"projects": summaries, "extra": payload.get("extra")}
+        return {'projects': summaries, 'extra': payload.get('extra')}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_project(self, project_id: Any) -> dict[str, Any]:
@@ -246,11 +246,11 @@ class DbtCloudToolSet:
         raw integer ID or a project dict from :meth:`list_projects`
         (``include_ids=True``).
         """
-        resolved_id = _coerce_int_id(project_id, "project_id", "id")
+        resolved_id = _coerce_int_id(project_id, 'project_id', 'id')
         if not resolved_id:
-            raise ValueError("project_id is required")
+            raise ValueError('project_id is required')
         project: dict[str, Any] = self._client.get(
-            f"/api/v2/accounts/{self._account_id}/projects/{resolved_id}/"
+            f'/api/v2/accounts/{self._account_id}/projects/{resolved_id}/'
         ).json()
         return project
 
@@ -273,17 +273,17 @@ class DbtCloudToolSet:
         ``raw=True`` for the unfiltered API response.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit, "offset": offset}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit, 'offset': offset}
         if project_id is not None:
-            params["project_id"] = project_id
+            params['project_id'] = project_id
         payload: dict[str, Any] = self._client.get(
-            f"/api/v2/accounts/{self._account_id}/environments/",
+            f'/api/v2/accounts/{self._account_id}/environments/',
             params=params,
         ).json()
         if raw:
             return payload
-        items: list[Any] = payload.get("data") or []
+        items: list[Any] = payload.get('data') or []
         summaries: list[dict[str, Any]] = []
         for index, environment in enumerate(items, start=1):
             if isinstance(environment, dict):
@@ -291,7 +291,7 @@ class DbtCloudToolSet:
                 summaries.append(
                     _summarize_environment(environment_dict, index=index, include_ids=include_ids)
                 )
-        return {"environments": summaries, "extra": payload.get("extra")}
+        return {'environments': summaries, 'extra': payload.get('extra')}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_jobs(
@@ -312,22 +312,22 @@ class DbtCloudToolSet:
         ``job_id``. Pass ``raw=True`` for the unfiltered API response.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit, "offset": offset}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit, 'offset': offset}
         if project_id is not None:
-            params["project_id"] = project_id
+            params['project_id'] = project_id
         payload: dict[str, Any] = self._client.get(
-            f"/api/v2/accounts/{self._account_id}/jobs/", params=params
+            f'/api/v2/accounts/{self._account_id}/jobs/', params=params
         ).json()
         if raw:
             return payload
-        items: list[Any] = payload.get("data") or []
+        items: list[Any] = payload.get('data') or []
         summaries: list[dict[str, Any]] = []
         for index, job in enumerate(items, start=1):
             if isinstance(job, dict):
                 job_dict = cast(dict[str, Any], job)
                 summaries.append(_summarize_job(job_dict, index=index, include_ids=include_ids))
-        return {"jobs": summaries, "extra": payload.get("extra")}
+        return {'jobs': summaries, 'extra': payload.get('extra')}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_job(self, job_id: Any) -> dict[str, Any]:
@@ -337,11 +337,11 @@ class DbtCloudToolSet:
         integer ID or a job dict from :meth:`list_jobs`
         (``include_ids=True``).
         """
-        resolved_id = _coerce_int_id(job_id, "job_id", "id")
+        resolved_id = _coerce_int_id(job_id, 'job_id', 'id')
         if not resolved_id:
-            raise ValueError("job_id is required")
+            raise ValueError('job_id is required')
         job: dict[str, Any] = self._client.get(
-            f"/api/v2/accounts/{self._account_id}/jobs/{resolved_id}/"
+            f'/api/v2/accounts/{self._account_id}/jobs/{resolved_id}/'
         ).json()
         return job
 
@@ -363,20 +363,20 @@ class DbtCloudToolSet:
         :meth:`list_jobs` (``include_ids=True``). ``cause`` is required and
         is shown in the dbt Cloud UI run history.
         """
-        resolved_id = _coerce_int_id(job_id, "job_id", "id")
+        resolved_id = _coerce_int_id(job_id, 'job_id', 'id')
         if not resolved_id or not cause:
-            raise ValueError("job_id and cause are required")
-        body: dict[str, Any] = {"cause": cause}
+            raise ValueError('job_id and cause are required')
+        body: dict[str, Any] = {'cause': cause}
         if git_branch is not None:
-            body["git_branch"] = git_branch
+            body['git_branch'] = git_branch
         if git_sha is not None:
-            body["git_sha"] = git_sha
+            body['git_sha'] = git_sha
         if schema_override is not None:
-            body["schema_override"] = schema_override
+            body['schema_override'] = schema_override
         if steps_override is not None:
-            body["steps_override"] = steps_override
+            body['steps_override'] = steps_override
         run: dict[str, Any] = self._client.post(
-            f"/api/v2/accounts/{self._account_id}/jobs/{resolved_id}/run/",
+            f'/api/v2/accounts/{self._account_id}/jobs/{resolved_id}/run/',
             json=body,
         ).json()
         return run
@@ -387,7 +387,7 @@ class DbtCloudToolSet:
         *,
         job_definition_id: int | None = None,
         status: int | None = None,
-        order_by: str = "-id",
+        order_by: str = '-id',
         limit: int = 25,
         offset: int = 0,
         include_ids: bool = False,
@@ -404,28 +404,28 @@ class DbtCloudToolSet:
         response.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
+            raise ValueError('limit must be between 1 and 100')
         params: dict[str, Any] = {
-            "order_by": order_by,
-            "limit": limit,
-            "offset": offset,
+            'order_by': order_by,
+            'limit': limit,
+            'offset': offset,
         }
         if job_definition_id is not None:
-            params["job_definition_id"] = job_definition_id
+            params['job_definition_id'] = job_definition_id
         if status is not None:
-            params["status"] = status
+            params['status'] = status
         payload: dict[str, Any] = self._client.get(
-            f"/api/v2/accounts/{self._account_id}/runs/", params=params
+            f'/api/v2/accounts/{self._account_id}/runs/', params=params
         ).json()
         if raw:
             return payload
-        items: list[Any] = payload.get("data") or []
+        items: list[Any] = payload.get('data') or []
         summaries: list[dict[str, Any]] = []
         for index, run in enumerate(items, start=1):
             if isinstance(run, dict):
                 run_dict = cast(dict[str, Any], run)
                 summaries.append(_summarize_run(run_dict, index=index, include_ids=include_ids))
-        return {"runs": summaries, "extra": payload.get("extra")}
+        return {'runs': summaries, 'extra': payload.get('extra')}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_run(
@@ -441,14 +441,14 @@ class DbtCloudToolSet:
         (``include_ids=True``). ``include_related`` may carry e.g.
         ``["job"]`` to embed associated resources.
         """
-        resolved_id = _coerce_int_id(run_id, "run_id", "id")
+        resolved_id = _coerce_int_id(run_id, 'run_id', 'id')
         if not resolved_id:
-            raise ValueError("run_id is required")
+            raise ValueError('run_id is required')
         params: dict[str, Any] = {}
         if include_related is not None:
-            params["include_related"] = ",".join(include_related)
+            params['include_related'] = ','.join(include_related)
         run: dict[str, Any] = self._client.get(
-            f"/api/v2/accounts/{self._account_id}/runs/{resolved_id}/",
+            f'/api/v2/accounts/{self._account_id}/runs/{resolved_id}/',
             params=params or None,
         ).json()
         return run
@@ -462,11 +462,11 @@ class DbtCloudToolSet:
         Confirm with the user before calling — any partial materializations
         may remain in the warehouse.
         """
-        resolved_id = _coerce_int_id(run_id, "run_id", "id")
+        resolved_id = _coerce_int_id(run_id, 'run_id', 'id')
         if not resolved_id:
-            raise ValueError("run_id is required")
+            raise ValueError('run_id is required')
         run: dict[str, Any] = self._client.post(
-            f"/api/v2/accounts/{self._account_id}/runs/{resolved_id}/cancel/"
+            f'/api/v2/accounts/{self._account_id}/runs/{resolved_id}/cancel/'
         ).json()
         return run
 
@@ -477,11 +477,11 @@ class DbtCloudToolSet:
         Returns ``{"data": [<path>, ...]}``. Use :meth:`get_run_artifact` to
         fetch one. ``run_id`` accepts the same formats as :meth:`get_run`.
         """
-        resolved_id = _coerce_int_id(run_id, "run_id", "id")
+        resolved_id = _coerce_int_id(run_id, 'run_id', 'id')
         if not resolved_id:
-            raise ValueError("run_id is required")
+            raise ValueError('run_id is required')
         artifacts: dict[str, Any] = self._client.get(
-            f"/api/v2/accounts/{self._account_id}/runs/{resolved_id}/artifacts/"
+            f'/api/v2/accounts/{self._account_id}/runs/{resolved_id}/artifacts/'
         ).json()
         return artifacts
 
@@ -494,14 +494,14 @@ class DbtCloudToolSet:
         raw integer or run dict; ``path`` is the artifact path from
         :meth:`list_run_artifacts`.
         """
-        resolved_id = _coerce_int_id(run_id, "run_id", "id")
+        resolved_id = _coerce_int_id(run_id, 'run_id', 'id')
         if not resolved_id or not path:
-            raise ValueError("run_id and path are required")
+            raise ValueError('run_id and path are required')
         response = self._client.get(
-            f"/api/v2/accounts/{self._account_id}/runs/{resolved_id}/artifacts/{path}"
+            f'/api/v2/accounts/{self._account_id}/runs/{resolved_id}/artifacts/{path}'
         )
         try:
             content: dict[str, Any] = response.json()
             return content
         except ValueError:
-            return {"status": response.status, "content": response.text()}
+            return {'status': response.status, 'content': response.text()}

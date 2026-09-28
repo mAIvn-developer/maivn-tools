@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import SnykToolSet
 
-__all__ = ["SnykToolSet"]
+__all__ = ['SnykToolSet']

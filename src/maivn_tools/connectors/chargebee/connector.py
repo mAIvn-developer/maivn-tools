@@ -20,16 +20,16 @@ from ...runtime.http import HttpClient, HttpTransport
 def _format_amount(amount_minor: Any, currency: Any) -> str:
     """Format a Chargebee minor-unit amount as ``"12.34 USD"``."""
     if amount_minor is None:
-        return ""
+        return ''
     try:
         amount_int = int(amount_minor)
     except (TypeError, ValueError):
-        return ""
-    code = str(currency or "").upper()
-    return f"{amount_int / 100:.2f} {code}".strip()
+        return ''
+    code = str(currency or '').upper()
+    return f'{amount_int / 100:.2f} {code}'.strip()
 
 
-def _coerce_id(candidate: Any, *, keys: tuple[str, ...] = ("id",)) -> str:
+def _coerce_id(candidate: Any, *, keys: tuple[str, ...] = ('id',)) -> str:
     """Resolve a raw Chargebee ID from a dict/string/list."""
     if isinstance(candidate, str) and candidate:
         return candidate
@@ -46,19 +46,19 @@ def _coerce_id(candidate: Any, *, keys: tuple[str, ...] = ("id",)) -> str:
                 except ValueError:
                     continue
     if isinstance(candidate, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+        sequence = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in sequence:
             try:
                 return _coerce_id(item, keys=keys)
             except ValueError:
                 continue
-    raise ValueError("could not resolve a Chargebee ID from the given input")
+    raise ValueError('could not resolve a Chargebee ID from the given input')
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="chargebee")
+@toolset(prefix='chargebee')
 class ChargebeeToolSet:
     """A connector for the Chargebee API v2.
 
@@ -68,15 +68,15 @@ class ChargebeeToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="chargebee",
-        display_name="Chargebee",
-        version="0.1.0",
-        description="Subscriptions, customers, invoices, plans, and credit notes.",
+        name='chargebee',
+        display_name='Chargebee',
+        version='0.1.0',
+        description='Subscriptions, customers, invoices, plans, and credit notes.',
         auth_modes=(AuthMode.BASIC,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://apidocs.chargebee.com/docs/api",
-        homepage_url="https://www.chargebee.com/",
-        tags=("billing", "subscriptions"),
+        documentation_url='https://apidocs.chargebee.com/docs/api',
+        homepage_url='https://www.chargebee.com/',
+        tags=('billing', 'subscriptions'),
     )
 
     def __init__(
@@ -88,13 +88,13 @@ class ChargebeeToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not site or not api_key:
-            raise ValueError("site and api_key are required")
+            raise ValueError('site and api_key are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=f"https://{site}.chargebee.com",
-            auth=BasicAuth(api_key, ""),
+            base_url=f'https://{site}.chargebee.com',
+            auth=BasicAuth(api_key, ''),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -118,57 +118,57 @@ class ChargebeeToolSet:
         ``include_ids=True``.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit}
         if offset is not None:
-            params["offset"] = offset
+            params['offset'] = offset
         if first_name is not None:
-            params["first_name[is]"] = first_name
+            params['first_name[is]'] = first_name
         if email is not None:
-            params["email[is]"] = email
+            params['email[is]'] = email
         payload: Any = self._client.get(
-            "/api/v2/customers",
+            '/api/v2/customers',
             params=params,
         ).json()
         body: dict[str, Any] = cast(dict[str, Any], payload) if isinstance(payload, dict) else {}
-        rows: list[Any] = body.get("list", [])
+        rows: list[Any] = body.get('list', [])
         summaries: list[dict[str, Any]] = []
         for index, entry in enumerate(rows, start=1):
             entry_dict: dict[str, Any] = (
                 cast(dict[str, Any], entry) if isinstance(entry, dict) else {}
             )
-            customer = entry_dict.get("customer", {})
+            customer = entry_dict.get('customer', {})
             if not isinstance(customer, dict):
                 continue
             customer = cast(dict[str, Any], customer)
             name = (
-                f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip()
-                or customer.get("company", "")
+                f'{customer.get("first_name", "")} {customer.get("last_name", "")}'.strip()
+                or customer.get('company', '')
             )
             summary: dict[str, Any] = {
-                "customer_ref": f"customer_{index}",
-                "name": name,
-                "company": customer.get("company", ""),
-                "email": customer.get("email", ""),
-                "phone": customer.get("phone", ""),
-                "status": customer.get("card_status", ""),
-                "auto_collection": customer.get("auto_collection", ""),
-                "currency": (customer.get("preferred_currency_code") or "").upper(),
+                'customer_ref': f'customer_{index}',
+                'name': name,
+                'company': customer.get('company', ''),
+                'email': customer.get('email', ''),
+                'phone': customer.get('phone', ''),
+                'status': customer.get('card_status', ''),
+                'auto_collection': customer.get('auto_collection', ''),
+                'currency': (customer.get('preferred_currency_code') or '').upper(),
             }
             if include_ids:
-                summary["customer_id"] = customer.get("id", "")
+                summary['customer_id'] = customer.get('id', '')
             summaries.append(summary)
         return {
-            "customers": summaries,
-            "next_offset": body.get("next_offset"),
+            'customers': summaries,
+            'next_offset': body.get('next_offset'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_customer(self, customer_id: str) -> dict[str, Any]:
         """Return one Chargebee customer by ID."""
         if not customer_id:
-            raise ValueError("customer_id must be a non-empty string")
-        return self._client.get(f"/api/v2/customers/{customer_id}").json()
+            raise ValueError('customer_id must be a non-empty string')
+        return self._client.get(f'/api/v2/customers/{customer_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_customer(self, params: dict[str, Any]) -> dict[str, Any]:
@@ -179,8 +179,8 @@ class ChargebeeToolSet:
         as a dict.
         """
         if not params:
-            raise ValueError("params must be non-empty")
-        return self._client.post("/api/v2/customers", params=params).json()
+            raise ValueError('params must be non-empty')
+        return self._client.post('/api/v2/customers', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_subscriptions(
@@ -199,54 +199,54 @@ class ChargebeeToolSet:
         ``include_ids=True``.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit}
         if status is not None:
-            params["status[is]"] = status
+            params['status[is]'] = status
         if customer_id is not None:
-            params["customer_id[is]"] = customer_id
-        payload: Any = self._client.get("/api/v2/subscriptions", params=params).json()
+            params['customer_id[is]'] = customer_id
+        payload: Any = self._client.get('/api/v2/subscriptions', params=params).json()
         body: dict[str, Any] = cast(dict[str, Any], payload) if isinstance(payload, dict) else {}
-        rows: list[Any] = body.get("list", [])
+        rows: list[Any] = body.get('list', [])
         summaries: list[dict[str, Any]] = []
         for index, entry in enumerate(rows, start=1):
             entry_dict: dict[str, Any] = (
                 cast(dict[str, Any], entry) if isinstance(entry, dict) else {}
             )
-            subscription = entry_dict.get("subscription", {})
+            subscription = entry_dict.get('subscription', {})
             if not isinstance(subscription, dict):
                 continue
             subscription = cast(dict[str, Any], subscription)
-            items: Any = subscription.get("subscription_items", [])
-            currency: Any = subscription.get("currency_code") or ""
+            items: Any = subscription.get('subscription_items', [])
+            currency: Any = subscription.get('currency_code') or ''
             item_names: list[str] = []
             item_list: list[Any] = cast(list[Any], items) if isinstance(items, list) else []
             for item in item_list:
                 if isinstance(item, dict):
                     item_dict = cast(dict[str, Any], item)
-                    if item_dict.get("item_price_id"):
-                        qty: Any = item_dict.get("quantity")
-                        qty_str = f" x{qty}" if isinstance(qty, int) and qty != 1 else ""
-                        item_names.append(f"{item_dict['item_price_id']}{qty_str}")
+                    if item_dict.get('item_price_id'):
+                        qty: Any = item_dict.get('quantity')
+                        qty_str = f' x{qty}' if isinstance(qty, int) and qty != 1 else ''
+                        item_names.append(f'{item_dict["item_price_id"]}{qty_str}')
             summary: dict[str, Any] = {
-                "subscription_ref": f"subscription_{index}",
-                "status": subscription.get("status", ""),
-                "currency": str(currency).upper(),
-                "items": "; ".join(item_names),
-                "due_invoices_count": subscription.get("due_invoices_count"),
-                "total_dues": _format_amount(subscription.get("total_dues"), currency),
-                "current_term_start": subscription.get("current_term_start"),
-                "current_term_end": subscription.get("current_term_end"),
-                "cancel_at_term_end": bool(subscription.get("cancelled_at"))
-                or bool(subscription.get("cancel_at_term_end")),
+                'subscription_ref': f'subscription_{index}',
+                'status': subscription.get('status', ''),
+                'currency': str(currency).upper(),
+                'items': '; '.join(item_names),
+                'due_invoices_count': subscription.get('due_invoices_count'),
+                'total_dues': _format_amount(subscription.get('total_dues'), currency),
+                'current_term_start': subscription.get('current_term_start'),
+                'current_term_end': subscription.get('current_term_end'),
+                'cancel_at_term_end': bool(subscription.get('cancelled_at'))
+                or bool(subscription.get('cancel_at_term_end')),
             }
             if include_ids:
-                summary["subscription_id"] = subscription.get("id", "")
-                summary["customer_id"] = subscription.get("customer_id", "")
+                summary['subscription_id'] = subscription.get('id', '')
+                summary['customer_id'] = subscription.get('customer_id', '')
             summaries.append(summary)
         return {
-            "subscriptions": summaries,
-            "next_offset": body.get("next_offset"),
+            'subscriptions': summaries,
+            'next_offset': body.get('next_offset'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -262,9 +262,9 @@ class ChargebeeToolSet:
         ``subscription_for_items`` form-style schema.
         """
         if not customer_id or not params:
-            raise ValueError("customer_id and params must be non-empty")
+            raise ValueError('customer_id and params must be non-empty')
         return self._client.post(
-            f"/api/v2/customers/{customer_id}/subscription_for_items",
+            f'/api/v2/customers/{customer_id}/subscription_for_items',
             params=params,
         ).json()
 
@@ -281,10 +281,10 @@ class ChargebeeToolSet:
         :meth:`list_subscriptions` (with ``include_ids=True``). Confirm
         with the user before calling.
         """
-        resolved = _coerce_id(subscription_id, keys=("subscription_id", "id"))
+        resolved = _coerce_id(subscription_id, keys=('subscription_id', 'id'))
         return self._client.post(
-            f"/api/v2/subscriptions/{resolved}/cancel_for_items",
-            params={"end_of_term": str(end_of_term).lower()},
+            f'/api/v2/subscriptions/{resolved}/cancel_for_items',
+            params={'end_of_term': str(end_of_term).lower()},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -303,50 +303,50 @@ class ChargebeeToolSet:
         Raw IDs are omitted unless ``include_ids=True``.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit}
         if status is not None:
-            params["status[is]"] = status
+            params['status[is]'] = status
         if customer_id is not None:
-            params["customer_id[is]"] = customer_id
-        payload: Any = self._client.get("/api/v2/invoices", params=params).json()
+            params['customer_id[is]'] = customer_id
+        payload: Any = self._client.get('/api/v2/invoices', params=params).json()
         body: dict[str, Any] = cast(dict[str, Any], payload) if isinstance(payload, dict) else {}
-        rows: list[Any] = body.get("list", [])
+        rows: list[Any] = body.get('list', [])
         summaries: list[dict[str, Any]] = []
         for index, entry in enumerate(rows, start=1):
             entry_dict: dict[str, Any] = (
                 cast(dict[str, Any], entry) if isinstance(entry, dict) else {}
             )
-            invoice = entry_dict.get("invoice", {})
+            invoice = entry_dict.get('invoice', {})
             if not isinstance(invoice, dict):
                 continue
             invoice = cast(dict[str, Any], invoice)
-            currency: Any = invoice.get("currency_code") or ""
+            currency: Any = invoice.get('currency_code') or ''
             summary: dict[str, Any] = {
-                "invoice_ref": f"invoice_{index}",
-                "status": invoice.get("status", ""),
-                "total": _format_amount(invoice.get("total"), currency),
-                "amount_due": _format_amount(invoice.get("amount_due"), currency),
-                "amount_paid": _format_amount(invoice.get("amount_paid"), currency),
-                "currency": str(currency).upper(),
-                "date": invoice.get("date"),
-                "due_date": invoice.get("due_date"),
+                'invoice_ref': f'invoice_{index}',
+                'status': invoice.get('status', ''),
+                'total': _format_amount(invoice.get('total'), currency),
+                'amount_due': _format_amount(invoice.get('amount_due'), currency),
+                'amount_paid': _format_amount(invoice.get('amount_paid'), currency),
+                'currency': str(currency).upper(),
+                'date': invoice.get('date'),
+                'due_date': invoice.get('due_date'),
             }
             if include_ids:
-                summary["invoice_id"] = invoice.get("id", "")
-                summary["customer_id"] = invoice.get("customer_id", "")
+                summary['invoice_id'] = invoice.get('id', '')
+                summary['customer_id'] = invoice.get('customer_id', '')
             summaries.append(summary)
         return {
-            "invoices": summaries,
-            "next_offset": body.get("next_offset"),
+            'invoices': summaries,
+            'next_offset': body.get('next_offset'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_plans(self, *, limit: int = 10) -> dict[str, Any]:
         """List item prices (plans). Returns the raw Chargebee response."""
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
+            raise ValueError('limit must be between 1 and 100')
         return self._client.get(
-            "/api/v2/item_prices",
-            params={"limit": limit},
+            '/api/v2/item_prices',
+            params={'limit': limit},
         ).json()

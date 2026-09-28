@@ -16,13 +16,13 @@ from ...runtime.http import HttpClient, HttpTransport
 # MARK: Constants
 
 _DEFAULT_LIST_LIMIT = 25
-_API_VERSION = "2024-10-21"
+_API_VERSION = '2024-10-21'
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="azure_openai")
+@toolset(prefix='azure_openai')
 class AzureOpenAIToolSet:
     """A connector for Azure OpenAI Service.
 
@@ -33,15 +33,15 @@ class AzureOpenAIToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="azure_openai",
-        display_name="Azure OpenAI",
-        version="0.1.0",
-        description="Chat completions, embeddings, and image generation via Azure deployments.",
+        name='azure_openai',
+        display_name='Azure OpenAI',
+        version='0.1.0',
+        description='Chat completions, embeddings, and image generation via Azure deployments.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://learn.microsoft.com/en-us/azure/ai-services/openai/reference",
-        homepage_url="https://azure.microsoft.com/en-us/products/ai-services/openai-service",
-        tags=("ai", "llm", "microsoft", "azure"),
+        documentation_url='https://learn.microsoft.com/en-us/azure/ai-services/openai/reference',
+        homepage_url='https://azure.microsoft.com/en-us/products/ai-services/openai-service',
+        tags=('ai', 'llm', 'microsoft', 'azure'),
     )
 
     def __init__(
@@ -54,14 +54,14 @@ class AzureOpenAIToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not endpoint or not api_key:
-            raise ValueError("endpoint and api_key are required")
+            raise ValueError('endpoint and api_key are required')
         self.connection = connection
         self._api_version = api_version
         self._client = HttpClient(
-            base_url=endpoint.rstrip("/"),
-            auth=ApiKeyAuth(api_key, header="api-key"),
+            base_url=endpoint.rstrip('/'),
+            auth=ApiKeyAuth(api_key, header='api-key'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -88,23 +88,23 @@ class AzureOpenAIToolSet:
         via :meth:`list_models`.
         """
         if not deployment or not messages:
-            raise ValueError("deployment and messages must be non-empty")
-        body: dict[str, Any] = {"messages": messages}
+            raise ValueError('deployment and messages must be non-empty')
+        body: dict[str, Any] = {'messages': messages}
         if temperature is not None:
-            body["temperature"] = temperature
+            body['temperature'] = temperature
         if max_tokens is not None:
-            body["max_tokens"] = max_tokens
+            body['max_tokens'] = max_tokens
         if tools is not None:
-            body["tools"] = tools
+            body['tools'] = tools
         if tool_choice is not None:
-            body["tool_choice"] = tool_choice
+            body['tool_choice'] = tool_choice
         if response_format is not None:
-            body["response_format"] = response_format
+            body['response_format'] = response_format
         if seed is not None:
-            body["seed"] = seed
+            body['seed'] = seed
         return self._client.post(
-            f"/openai/deployments/{deployment}/chat/completions",
-            params={"api-version": self._api_version},
+            f'/openai/deployments/{deployment}/chat/completions',
+            params={'api-version': self._api_version},
             json=body,
         ).json()
 
@@ -121,13 +121,13 @@ class AzureOpenAIToolSet:
         Returns ``{"data": [{"embedding": [...], "index": n}, ...]}``.
         """
         if not deployment:
-            raise ValueError("deployment must be a non-empty string")
-        body: dict[str, Any] = {"input": input}
+            raise ValueError('deployment must be a non-empty string')
+        body: dict[str, Any] = {'input': input}
         if dimensions is not None:
-            body["dimensions"] = dimensions
+            body['dimensions'] = dimensions
         return self._client.post(
-            f"/openai/deployments/{deployment}/embeddings",
-            params={"api-version": self._api_version},
+            f'/openai/deployments/{deployment}/embeddings',
+            params={'api-version': self._api_version},
             json=body,
         ).json()
 
@@ -148,21 +148,21 @@ class AzureOpenAIToolSet:
         Returns ``{"data": [{"url" or "b64_json": ...}, ...]}``.
         """
         if not deployment or not prompt:
-            raise ValueError("deployment and prompt must be non-empty")
-        body: dict[str, Any] = {"prompt": prompt}
+            raise ValueError('deployment and prompt must be non-empty')
+        body: dict[str, Any] = {'prompt': prompt}
         if n is not None:
-            body["n"] = n
+            body['n'] = n
         if size is not None:
-            body["size"] = size
+            body['size'] = size
         if quality is not None:
-            body["quality"] = quality
+            body['quality'] = quality
         if style is not None:
-            body["style"] = style
+            body['style'] = style
         if response_format is not None:
-            body["response_format"] = response_format
+            body['response_format'] = response_format
         return self._client.post(
-            f"/openai/deployments/{deployment}/images/generations",
-            params={"api-version": self._api_version},
+            f'/openai/deployments/{deployment}/images/generations',
+            params={'api-version': self._api_version},
             json=body,
         ).json()
 
@@ -183,13 +183,13 @@ class AzureOpenAIToolSet:
         ``include_ids=True`` for the raw ``id`` field. Default limit: 25.
         """
         if max_results < 1:
-            raise ValueError("max_results must be positive")
+            raise ValueError('max_results must be positive')
         payload: object = self._client.get(
-            "/openai/models",
-            params={"api-version": self._api_version},
+            '/openai/models',
+            params={'api-version': self._api_version},
         ).json()
         models: list[object] = (
-            cast(list[object], cast(dict[str, Any], payload).get("data", []))
+            cast(list[object], cast(dict[str, Any], payload).get('data', []))
             if isinstance(payload, dict)
             else []
         )
@@ -199,12 +199,12 @@ class AzureOpenAIToolSet:
                 continue
             model = cast(dict[str, Any], model)
             summary: dict[str, Any] = {
-                "model_ref": f"model_{index}",
-                "model_name": model.get("id", ""),
-                "capabilities": model.get("capabilities", {}),
-                "lifecycle_status": model.get("lifecycle_status", ""),
+                'model_ref': f'model_{index}',
+                'model_name': model.get('id', ''),
+                'capabilities': model.get('capabilities', {}),
+                'lifecycle_status': model.get('lifecycle_status', ''),
             }
             if include_ids:
-                summary["id"] = model.get("id", "")
+                summary['id'] = model.get('id', '')
             summaries.append(summary)
-        return {"models": summaries, "total": len(models)}
+        return {'models': summaries, 'total': len(models)}

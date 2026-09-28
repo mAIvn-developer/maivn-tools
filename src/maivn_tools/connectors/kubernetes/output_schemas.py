@@ -20,112 +20,112 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _NAMESPACE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "namespace_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "phase": {"type": "string"},
-        "created_at": {"type": "string"},
-        "uid": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'namespace_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'phase': {'type': 'string'},
+        'created_at': {'type': 'string'},
+        'uid': {'type': 'string'},
     },
-    "required": ["namespace_ref", "name"],
+    'required': ['namespace_ref', 'name'],
 }
 
 _POD_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "pod_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "namespace": {"type": "string"},
-        "phase": {"type": "string"},
-        "ready": {"type": "string"},
-        "node": {"type": "string"},
-        "start_time": {"type": "string"},
-        "uid": {"type": "string"},
-        "resource_version": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'pod_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'namespace': {'type': 'string'},
+        'phase': {'type': 'string'},
+        'ready': {'type': 'string'},
+        'node': {'type': 'string'},
+        'start_time': {'type': 'string'},
+        'uid': {'type': 'string'},
+        'resource_version': {'type': 'string'},
     },
-    "required": ["pod_ref", "name", "namespace"],
+    'required': ['pod_ref', 'name', 'namespace'],
 }
 
 _DEPLOYMENT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "deployment_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "namespace": {"type": "string"},
-        "replicas": {"type": "integer"},
-        "ready_replicas": {"type": "integer"},
-        "available_replicas": {"type": "integer"},
-        "uid": {"type": "string"},
-        "resource_version": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'deployment_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'namespace': {'type': 'string'},
+        'replicas': {'type': 'integer'},
+        'ready_replicas': {'type': 'integer'},
+        'available_replicas': {'type': 'integer'},
+        'uid': {'type': 'string'},
+        'resource_version': {'type': 'string'},
     },
-    "required": ["deployment_ref", "name", "namespace"],
+    'required': ['deployment_ref', 'name', 'namespace'],
 }
 
 _SERVICE_PORT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "name": {"type": "string"},
-        "port": {"type": "integer"},
-        "target_port": {"type": ["integer", "string"]},
-        "protocol": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'name': {'type': 'string'},
+        'port': {'type': 'integer'},
+        'target_port': {'type': ['integer', 'string']},
+        'protocol': {'type': 'string'},
     },
 }
 
 _SERVICE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "service_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "namespace": {"type": "string"},
-        "type": {"type": "string"},
-        "cluster_ip": {"type": "string"},
-        "ports": {"type": "array", "items": _SERVICE_PORT},
-        "uid": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'service_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'namespace': {'type': 'string'},
+        'type': {'type': 'string'},
+        'cluster_ip': {'type': 'string'},
+        'ports': {'type': 'array', 'items': _SERVICE_PORT},
+        'uid': {'type': 'string'},
     },
-    "required": ["service_ref", "name", "namespace"],
+    'required': ['service_ref', 'name', 'namespace'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_NAMESPACES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "namespaces": {"type": "array", "items": _NAMESPACE_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'namespaces': {'type': 'array', 'items': _NAMESPACE_SUMMARY},
     },
-    "required": ["namespaces"],
+    'required': ['namespaces'],
 }
 
 LIST_PODS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "pods": {"type": "array", "items": _POD_SUMMARY},
-        "continue": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'pods': {'type': 'array', 'items': _POD_SUMMARY},
+        'continue': {'type': 'string'},
     },
-    "required": ["pods"],
+    'required': ['pods'],
 }
 
 LIST_DEPLOYMENTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "deployments": {"type": "array", "items": _DEPLOYMENT_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'deployments': {'type': 'array', 'items': _DEPLOYMENT_SUMMARY},
     },
-    "required": ["deployments"],
+    'required': ['deployments'],
 }
 
 LIST_SERVICES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "services": {"type": "array", "items": _SERVICE_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'services': {'type': 'array', 'items': _SERVICE_SUMMARY},
     },
-    "required": ["services"],
+    'required': ['services'],
 }
 
 
 __all__ = [
-    "LIST_DEPLOYMENTS_OUTPUT",
-    "LIST_NAMESPACES_OUTPUT",
-    "LIST_PODS_OUTPUT",
-    "LIST_SERVICES_OUTPUT",
+    'LIST_DEPLOYMENTS_OUTPUT',
+    'LIST_NAMESPACES_OUTPUT',
+    'LIST_PODS_OUTPUT',
+    'LIST_SERVICES_OUTPUT',
 ]

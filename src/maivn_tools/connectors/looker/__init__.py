@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import LookerToolSet
 
-__all__ = ["LookerToolSet"]
+__all__ = ['LookerToolSet']

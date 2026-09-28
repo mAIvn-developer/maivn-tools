@@ -43,8 +43,8 @@ from .oauth import OAuth2Token
 class OAuth2EndpointConfig:
     """URLs for an OAuth 2.0 authorization server."""
 
-    authorize_url: str = ""
-    token_url: str = ""
+    authorize_url: str = ''
+    token_url: str = ''
     device_authorization_url: str | None = None
 
 
@@ -54,7 +54,7 @@ class PKCEChallenge:
 
     verifier: str
     challenge: str
-    method: str = "S256"
+    method: str = 'S256'
 
 
 @dataclass(frozen=True)
@@ -69,13 +69,21 @@ class DeviceCodeGrant:
     interval: int
 
 
+class OAuth2ProviderError(ValueError):
+    """A token-endpoint rejection with an optional value-free error code."""
+
+    def __init__(self, *, code: str | None = None) -> None:
+        super().__init__('OAuth token endpoint rejected the grant')
+        self.code = code
+
+
 def generate_pkce_challenge(length: int = 64) -> PKCEChallenge:
     """Return a fresh PKCE verifier / S256 challenge pair."""
     if length < 43 or length > 128:
-        raise ValueError("PKCE verifier length must be between 43 and 128")
+        raise ValueError('PKCE verifier length must be between 43 and 128')
     verifier = secrets.token_urlsafe(length)[:length]
-    digest = hashlib.sha256(verifier.encode("ascii")).digest()
-    challenge = base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
+    digest = hashlib.sha256(verifier.encode('ascii')).digest()
+    challenge = base64.urlsafe_b64encode(digest).rstrip(b'=').decode('ascii')
     return PKCEChallenge(verifier=verifier, challenge=challenge)
 
 
@@ -104,13 +112,13 @@ class OAuth2Flow:
         endpoints: OAuth2EndpointConfig,
         client_secret: str | None = None,
         transport: HttpTransport | None = None,
-        token_auth_style: str = "basic",
+        token_auth_style: str = 'basic',
     ) -> None:
         if not client_id:
-            raise ValueError("client_id is required")
+            raise ValueError('client_id is required')
         if not endpoints.token_url:
-            raise ValueError("OAuth2EndpointConfig.token_url is required")
-        if token_auth_style not in {"basic", "body"}:
+            raise ValueError('OAuth2EndpointConfig.token_url is required')
+        if token_auth_style not in {'basic', 'body'}:
             raise ValueError("token_auth_style must be 'basic' or 'body'")
         self._client_id = client_id
         self._client_secret = client_secret
@@ -135,23 +143,23 @@ class OAuth2Flow:
     ) -> str:
         """Return the URL the user agent must visit to grant authorization."""
         if not self._endpoints.authorize_url:
-            raise ValueError("OAuth2EndpointConfig.authorize_url is required for this flow")
+            raise ValueError('OAuth2EndpointConfig.authorize_url is required for this flow')
         params: dict[str, str] = {
-            "response_type": "code",
-            "client_id": self._client_id,
-            "redirect_uri": redirect_uri,
+            'response_type': 'code',
+            'client_id': self._client_id,
+            'redirect_uri': redirect_uri,
         }
         if scope is not None:
-            params["scope"] = scope
+            params['scope'] = scope
         if state is not None:
-            params["state"] = state
+            params['state'] = state
         if pkce is not None:
-            params["code_challenge"] = pkce.challenge
-            params["code_challenge_method"] = pkce.method
+            params['code_challenge'] = pkce.challenge
+            params['code_challenge_method'] = pkce.method
         if extra:
             params.update(extra)
-        sep = "&" if "?" in self._endpoints.authorize_url else "?"
-        return f"{self._endpoints.authorize_url}{sep}{urlencode(params)}"
+        sep = '&' if '?' in self._endpoints.authorize_url else '?'
+        return f'{self._endpoints.authorize_url}{sep}{urlencode(params)}'
 
     # MARK: - Token exchanges
 
@@ -164,33 +172,33 @@ class OAuth2Flow:
     ) -> OAuth2Token:
         """Exchange an authorization code for an access token."""
         if not code:
-            raise ValueError("code must be a non-empty string")
+            raise ValueError('code must be a non-empty string')
         body: dict[str, str] = {
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": redirect_uri,
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': redirect_uri,
         }
         if pkce_verifier is not None:
-            body["code_verifier"] = pkce_verifier
+            body['code_verifier'] = pkce_verifier
         return self._token_request(body)
 
     def refresh(self, refresh_token: str, *, scope: str | None = None) -> OAuth2Token:
         """Refresh an access token using a refresh token."""
         if not refresh_token:
-            raise ValueError("refresh_token must be a non-empty string")
+            raise ValueError('refresh_token must be a non-empty string')
         body: dict[str, str] = {
-            "grant_type": "refresh_token",
-            "refresh_token": refresh_token,
+            'grant_type': 'refresh_token',
+            'refresh_token': refresh_token,
         }
         if scope is not None:
-            body["scope"] = scope
+            body['scope'] = scope
         return self._token_request(body)
 
     def client_credentials(self, *, scope: str | None = None) -> OAuth2Token:
         """Obtain a token using the client-credentials grant."""
-        body: dict[str, str] = {"grant_type": "client_credentials"}
+        body: dict[str, str] = {'grant_type': 'client_credentials'}
         if scope is not None:
-            body["scope"] = scope
+            body['scope'] = scope
         return self._token_request(body)
 
     def request_device_code(self, *, scope: str | None = None) -> DeviceCodeGrant:
@@ -202,25 +210,25 @@ class OAuth2Flow:
         """
         if not self._endpoints.device_authorization_url:
             raise ValueError(
-                "OAuth2EndpointConfig.device_authorization_url is required for device flow"
+                'OAuth2EndpointConfig.device_authorization_url is required for device flow'
             )
-        body: dict[str, str] = {"client_id": self._client_id}
+        body: dict[str, str] = {'client_id': self._client_id}
         if scope is not None:
-            body["scope"] = scope
+            body['scope'] = scope
         headers, form = self._build_request(body)
         response = self._http.post(
             self._endpoints.device_authorization_url,
-            data=form.encode("utf-8"),
+            data=form.encode('utf-8'),
             headers=headers,
         )
         payload: dict[str, Any] = response.json()
         return DeviceCodeGrant(
-            device_code=payload["device_code"],
-            user_code=payload["user_code"],
-            verification_uri=payload["verification_uri"],
-            verification_uri_complete=payload.get("verification_uri_complete"),
-            expires_in=int(payload.get("expires_in", 600)),
-            interval=int(payload.get("interval", 5)),
+            device_code=payload['device_code'],
+            user_code=payload['user_code'],
+            verification_uri=payload['verification_uri'],
+            verification_uri_complete=payload.get('verification_uri_complete'),
+            expires_in=int(payload.get('expires_in', 600)),
+            interval=int(payload.get('interval', 5)),
         )
 
     def poll_device_code(self, device_code: str) -> OAuth2Token:
@@ -230,9 +238,9 @@ class OAuth2Flow:
         returned by :meth:`request_device_code`.
         """
         body: dict[str, str] = {
-            "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
-            "device_code": device_code,
-            "client_id": self._client_id,
+            'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
+            'device_code': device_code,
+            'client_id': self._client_id,
         }
         return self._token_request(body)
 
@@ -261,46 +269,52 @@ class OAuth2Flow:
 
     def _build_request(self, body: dict[str, str]) -> tuple[dict[str, str], str]:
         headers: dict[str, str] = {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json",
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
         }
         merged = dict(body)
-        if self._token_auth_style == "basic":
+        if self._token_auth_style == 'basic':
             token = base64.b64encode(
-                f"{self._client_id}:{self._client_secret or ''}".encode()
-            ).decode("ascii")
-            headers["Authorization"] = f"Basic {token}"
+                f'{self._client_id}:{self._client_secret or ""}'.encode()
+            ).decode('ascii')
+            headers['Authorization'] = f'Basic {token}'
         else:
-            merged["client_id"] = self._client_id
+            merged['client_id'] = self._client_id
             if self._client_secret is not None:
-                merged["client_secret"] = self._client_secret
+                merged['client_secret'] = self._client_secret
         return headers, urlencode(merged)
 
     def _token_request(self, body: dict[str, str]) -> OAuth2Token:
         headers, form = self._build_request(body)
         response = self._http.post(
             self._endpoints.token_url,
-            data=form.encode("utf-8"),
+            data=form.encode('utf-8'),
             headers=headers,
         )
         raw: object = response.json()
-        if not isinstance(raw, dict) or "access_token" not in raw:
-            raise ValueError("Token endpoint did not return an access_token")
+        if not isinstance(raw, dict):
+            raise OAuth2ProviderError
         payload: dict[str, Any] = cast(dict[str, Any], raw)
+        if 'access_token' not in payload:
+            code: str | None = None
+            raw_code: object = payload.get('error')
+            if isinstance(raw_code, str) and raw_code.strip():
+                code = raw_code.strip()
+            raise OAuth2ProviderError(code=code)
         expires_at: datetime | None = None
-        if "expires_in" in payload:
+        if 'expires_in' in payload:
             expires_at = datetime.now(tz=timezone.utc) + timedelta(
-                seconds=int(payload["expires_in"])
+                seconds=int(payload['expires_in'])
             )
         scopes: tuple[str, ...] = ()
-        scope_value = payload.get("scope")
+        scope_value = payload.get('scope')
         if isinstance(scope_value, str):
             scopes = tuple(scope_value.split())
-        refresh_token: str | None = payload.get("refresh_token")
+        refresh_token: str | None = payload.get('refresh_token')
         if not isinstance(refresh_token, str) or not refresh_token:
             refresh_token = None
         return OAuth2Token(
-            access_token=payload["access_token"],
+            access_token=payload['access_token'],
             expires_at=expires_at,
             scopes=scopes,
             refresh_token=refresh_token,
@@ -354,10 +368,11 @@ def _is_expired(token: OAuth2Token, leeway: timedelta) -> bool:
 
 
 __all__: list[str] = [
-    "DeviceCodeGrant",
-    "OAuth2EndpointConfig",
-    "OAuth2Flow",
-    "PKCEChallenge",
-    "TokenCache",
-    "generate_pkce_challenge",
+    'DeviceCodeGrant',
+    'OAuth2EndpointConfig',
+    'OAuth2Flow',
+    'OAuth2ProviderError',
+    'PKCEChallenge',
+    'TokenCache',
+    'generate_pkce_challenge',
 ]

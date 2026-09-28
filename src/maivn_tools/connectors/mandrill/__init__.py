@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import MandrillToolSet
 
-__all__ = ["MandrillToolSet"]
+__all__ = ['MandrillToolSet']

@@ -24,24 +24,24 @@ def _coerce_collection_name(candidate: Any) -> str:
         return candidate
     if isinstance(candidate, dict):
         mapping = cast(dict[str, Any], candidate)
-        for key in ("collection", "collection_name", "name"):
+        for key in ('collection', 'collection_name', 'name'):
             value = mapping.get(key)
             if isinstance(value, str):
                 return value
-        return ""
+        return ''
     if isinstance(candidate, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+        sequence = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in sequence:
             value = _coerce_collection_name(item)
             if value:
                 return value
-    return ""
+    return ''
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="qdrant")
+@toolset(prefix='qdrant')
 class QdrantToolSet:
     """A connector for the Qdrant REST API.
 
@@ -51,10 +51,10 @@ class QdrantToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="qdrant",
-        display_name="Qdrant",
-        version="0.1.0",
-        description="Collections, points, search, scrolling, and filters.",
+        name='qdrant',
+        display_name='Qdrant',
+        version='0.1.0',
+        description='Collections, points, search, scrolling, and filters.',
         auth_modes=(AuthMode.API_KEY, AuthMode.NONE),
         capabilities=frozenset(
             {
@@ -63,30 +63,30 @@ class QdrantToolSet:
                 ProviderCapability.SEARCH,
             }
         ),
-        documentation_url="https://qdrant.tech/documentation/concepts/",
-        homepage_url="https://qdrant.tech/",
-        tags=("vector-store", "ai"),
+        documentation_url='https://qdrant.tech/documentation/concepts/',
+        homepage_url='https://qdrant.tech/',
+        tags=('vector-store', 'ai'),
     )
 
     def __init__(
         self,
         *,
-        base_url: str = "http://localhost:6333",
+        base_url: str = 'http://localhost:6333',
         api_key: str | None = None,
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not base_url:
-            raise ValueError("base_url is required")
+            raise ValueError('base_url is required')
         self.connection = connection
-        auth = ApiKeyAuth(api_key, header="api-key") if api_key else NoAuth()
+        auth = ApiKeyAuth(api_key, header='api-key') if api_key else NoAuth()
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=auth,
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -104,14 +104,14 @@ class QdrantToolSet:
         kept because it is both human-readable and the API identifier.
         Set ``include_ids=True`` to include the raw record.
         """
-        payload: dict[str, Any] = cast(dict[str, Any], self._client.get("/collections").json())
-        result_obj = payload.get("result", {})
+        payload: dict[str, Any] = cast(dict[str, Any], self._client.get('/collections').json())
+        result_obj = payload.get('result', {})
         result: dict[str, Any] = (
             cast(dict[str, Any], result_obj) if isinstance(result_obj, dict) else {}
         )
-        collections_obj = result.get("collections", [])
+        collections_obj = result.get('collections', [])
         collections: list[Any] = (
-            cast("list[Any]", collections_obj) if isinstance(collections_obj, list) else []
+            cast('list[Any]', collections_obj) if isinstance(collections_obj, list) else []
         )
         summaries: list[dict[str, Any]] = []
         for index, item in enumerate(collections, start=1):
@@ -119,13 +119,13 @@ class QdrantToolSet:
                 continue
             item_dict = cast(dict[str, Any], item)
             summary: dict[str, Any] = {
-                "collection_ref": f"collection_{index}",
-                "name": item_dict.get("name", ""),
+                'collection_ref': f'collection_{index}',
+                'name': item_dict.get('name', ''),
             }
             if include_ids:
-                summary["raw"] = item_dict
+                summary['raw'] = item_dict
             summaries.append(summary)
-        return {"collections": summaries}
+        return {'collections': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_collection(self, name: Any) -> dict[str, Any]:
@@ -138,8 +138,8 @@ class QdrantToolSet:
         """
         resolved = _coerce_collection_name(name)
         if not resolved:
-            raise ValueError("name is required")
-        return self._client.get(f"/collections/{resolved}").json()
+            raise ValueError('name is required')
+        return self._client.get(f'/collections/{resolved}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_collection(
@@ -147,7 +147,7 @@ class QdrantToolSet:
         *,
         name: str,
         vector_size: int,
-        distance: str = "Cosine",
+        distance: str = 'Cosine',
         hnsw_config: dict[str, Any] | None = None,
         on_disk_payload: bool = False,
     ) -> dict[str, Any]:
@@ -158,16 +158,16 @@ class QdrantToolSet:
         metadata.
         """
         if not name or vector_size < 1:
-            raise ValueError("name and a positive vector_size are required")
-        if distance not in {"Cosine", "Dot", "Euclid", "Manhattan"}:
-            raise ValueError("distance must be Cosine/Dot/Euclid/Manhattan")
+            raise ValueError('name and a positive vector_size are required')
+        if distance not in {'Cosine', 'Dot', 'Euclid', 'Manhattan'}:
+            raise ValueError('distance must be Cosine/Dot/Euclid/Manhattan')
         body: dict[str, Any] = {
-            "vectors": {"size": vector_size, "distance": distance},
-            "on_disk_payload": on_disk_payload,
+            'vectors': {'size': vector_size, 'distance': distance},
+            'on_disk_payload': on_disk_payload,
         }
         if hnsw_config is not None:
-            body["hnsw_config"] = hnsw_config
-        return self._client.put(f"/collections/{name}", json=body).json()
+            body['hnsw_config'] = hnsw_config
+        return self._client.put(f'/collections/{name}', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_collection(self, name: Any) -> dict[str, Any]:
@@ -179,8 +179,8 @@ class QdrantToolSet:
         """
         resolved = _coerce_collection_name(name)
         if not resolved:
-            raise ValueError("name is required")
-        return self._client.delete(f"/collections/{resolved}").json()
+            raise ValueError('name is required')
+        return self._client.delete(f'/collections/{resolved}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def upsert_points(
@@ -196,11 +196,11 @@ class QdrantToolSet:
         "payload": {...}}``. ``wait=True`` blocks until indexed.
         """
         if not collection or not points:
-            raise ValueError("collection and points are required")
+            raise ValueError('collection and points are required')
         return self._client.put(
-            f"/collections/{collection}/points",
-            params={"wait": str(wait).lower()},
-            json={"points": points},
+            f'/collections/{collection}/points',
+            params={'wait': str(wait).lower()},
+            json={'points': points},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -225,20 +225,20 @@ class QdrantToolSet:
         :meth:`retrieve_points`.
         """
         if not collection or not vector:
-            raise ValueError("collection and vector are required")
+            raise ValueError('collection and vector are required')
         body: dict[str, Any] = {
-            "vector": vector,
-            "limit": limit,
-            "with_payload": with_payload,
-            "with_vector": with_vector,
+            'vector': vector,
+            'limit': limit,
+            'with_payload': with_payload,
+            'with_vector': with_vector,
         }
         if filter is not None:
-            body["filter"] = filter
+            body['filter'] = filter
         if score_threshold is not None:
-            body["score_threshold"] = score_threshold
+            body['score_threshold'] = score_threshold
         if offset is not None:
-            body["offset"] = offset
-        return self._client.post(f"/collections/{collection}/points/search", json=body).json()
+            body['offset'] = offset
+        return self._client.post(f'/collections/{collection}/points/search', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def retrieve_points(
@@ -255,13 +255,13 @@ class QdrantToolSet:
         ``id`` field).
         """
         if not collection or not ids:
-            raise ValueError("collection and ids are required")
+            raise ValueError('collection and ids are required')
         return self._client.post(
-            f"/collections/{collection}/points",
+            f'/collections/{collection}/points',
             json={
-                "ids": ids,
-                "with_payload": with_payload,
-                "with_vector": with_vector,
+                'ids': ids,
+                'with_payload': with_payload,
+                'with_vector': with_vector,
             },
         ).json()
 
@@ -282,13 +282,13 @@ class QdrantToolSet:
         continue.
         """
         if not collection:
-            raise ValueError("collection is required")
-        body: dict[str, Any] = {"limit": limit, "with_payload": with_payload}
+            raise ValueError('collection is required')
+        body: dict[str, Any] = {'limit': limit, 'with_payload': with_payload}
         if offset is not None:
-            body["offset"] = offset
+            body['offset'] = offset
         if filter is not None:
-            body["filter"] = filter
-        return self._client.post(f"/collections/{collection}/points/scroll", json=body).json()
+            body['filter'] = filter
+        return self._client.post(f'/collections/{collection}/points/scroll', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_points(
@@ -305,17 +305,17 @@ class QdrantToolSet:
         ``filter``. Confirm with the user before any bulk deletion.
         """
         if not collection:
-            raise ValueError("collection is required")
+            raise ValueError('collection is required')
         if not ids and not filter:
-            raise ValueError("Provide ids or filter")
+            raise ValueError('Provide ids or filter')
         body: dict[str, Any] = {}
         if ids is not None:
-            body["points"] = ids
+            body['points'] = ids
         if filter is not None:
-            body["filter"] = filter
+            body['filter'] = filter
         return self._client.post(
-            f"/collections/{collection}/points/delete",
-            params={"wait": str(wait).lower()},
+            f'/collections/{collection}/points/delete',
+            params={'wait': str(wait).lower()},
             json=body,
         ).json()
 
@@ -334,8 +334,8 @@ class QdrantToolSet:
         ``"integer"``, ``"float"``, ``"geo"``).
         """
         if not collection or not field_name or not field_schema:
-            raise ValueError("collection, field_name, and field_schema are required")
+            raise ValueError('collection, field_name, and field_schema are required')
         return self._client.put(
-            f"/collections/{collection}/index",
-            json={"field_name": field_name, "field_schema": field_schema},
+            f'/collections/{collection}/index',
+            json={'field_name': field_name, 'field_schema': field_schema},
         ).json()

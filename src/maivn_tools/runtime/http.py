@@ -27,7 +27,7 @@ import uuid
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, override
 
 from ..auth.base import AuthStrategy, NoAuth
 from .errors import (
@@ -43,7 +43,7 @@ from .retries import RetryPolicy
 # MARK: Constants
 
 DEFAULT_TIMEOUT_SECONDS = 30.0
-DEFAULT_USER_AGENT = "maivn-tools/0.1"
+DEFAULT_USER_AGENT = 'maivn-tools/0.1'
 
 # MARK: Request / response models
 
@@ -66,13 +66,13 @@ class HttpRequest:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "method": self.method,
-            "url": self.url,
-            "headers": dict(self.headers),
-            "params": dict(self.params),
-            "json": self.json,
-            "data": self.data,
-            "timeout": self.timeout,
+            'method': self.method,
+            'url': self.url,
+            'headers': dict(self.headers),
+            'params': dict(self.params),
+            'json': self.json,
+            'data': self.data,
+            'timeout': self.timeout,
         }
 
 
@@ -85,7 +85,7 @@ class HttpResponse:
     body: bytes
     url: str
 
-    def text(self, *, encoding: str = "utf-8", errors: str = "replace") -> str:
+    def text(self, *, encoding: str = 'utf-8', errors: str = 'replace') -> str:
         """Return the response body decoded as text."""
         return self.body.decode(encoding, errors=errors)
 
@@ -95,8 +95,8 @@ class HttpResponse:
         Raises :class:`ValueError` when the body is empty or not JSON.
         """
         if not self.body:
-            raise ValueError("Response body is empty; cannot decode JSON")
-        return _json.loads(self.body.decode("utf-8"))
+            raise ValueError('Response body is empty; cannot decode JSON')
+        return _json.loads(self.body.decode('utf-8'))
 
     def header(self, name: str) -> str | None:
         """Return the value of ``name`` using case-insensitive lookup."""
@@ -124,8 +124,43 @@ class HttpTransport(ABC):
         """Send ``request`` and return the response."""
 
 
+class _SameOriginRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Keep connector credentials within the original HTTP origin."""
+
+    @override
+    def redirect_request(
+        self,
+        req: urllib.request.Request,
+        fp: Any,
+        code: int,
+        msg: str,
+        headers: Any,
+        newurl: str,
+    ) -> urllib.request.Request | None:
+        source = urllib.parse.urlsplit(req.full_url)
+        target = urllib.parse.urlsplit(newurl)
+        source_origin = (
+            source.scheme,
+            source.hostname,
+            source.port or (443 if source.scheme == 'https' else 80),
+        )
+        target_origin = (
+            target.scheme,
+            target.hostname,
+            target.port or (443 if target.scheme == 'https' else 80),
+        )
+        if source_origin != target_origin or target.username is not None:
+            # A policy refusal is permanent; retrying could repeat the first request's effect.
+            raise ConnectorError('Cross-origin or credential-bearing HTTP redirect refused')
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 class UrllibTransport(HttpTransport):
-    """Default :class:`HttpTransport` backed by :mod:`urllib.request`."""
+    """Default transport with same-origin redirects and reusable HTTP handlers."""
+
+    def __init__(self) -> None:
+        """Build handlers once per transport, including the redirect boundary."""
+        self._opener = urllib.request.build_opener(_SameOriginRedirectHandler())
 
     def send(self, request: HttpRequest) -> HttpResponse:
         url = request.url
@@ -134,19 +169,19 @@ class UrllibTransport(HttpTransport):
         # pointing at ``file:///etc/passwd`` would otherwise read local files,
         # so reject anything that is not plain HTTP(S) before opening it.
         scheme = urllib.parse.urlparse(url).scheme.lower()
-        if scheme not in ("http", "https"):
+        if scheme not in ('http', 'https'):
             raise ValueError(
                 f"Unsupported URL scheme {scheme!r}: only 'http' and 'https' are allowed"
             )
         if request.params:
-            sep = "&" if urllib.parse.urlparse(url).query else "?"
-            url = f"{url}{sep}{urllib.parse.urlencode(request.params, doseq=True)}"
+            sep = '&' if urllib.parse.urlparse(url).query else '?'
+            url = f'{url}{sep}{urllib.parse.urlencode(request.params, doseq=True)}'
 
         body: bytes | None = None
         headers = dict(request.headers)
         if request.json is not None:
-            body = _json.dumps(request.json).encode("utf-8")
-            headers.setdefault("Content-Type", "application/json")
+            body = _json.dumps(request.json).encode('utf-8')
+            headers.setdefault('Content-Type', 'application/json')
         elif request.data is not None:
             body = request.data
 
@@ -159,7 +194,7 @@ class UrllibTransport(HttpTransport):
         timeout = request.timeout if request.timeout is not None else DEFAULT_TIMEOUT_SECONDS
 
         try:
-            with urllib.request.urlopen(urllib_request, timeout=timeout) as resp:
+            with self._opener.open(urllib_request, timeout=timeout) as resp:
                 return HttpResponse(
                     status=resp.getcode(),
                     headers={k: v for k, v in resp.headers.items()},
@@ -170,18 +205,18 @@ class UrllibTransport(HttpTransport):
             return HttpResponse(
                 status=exc.code,
                 headers={k: v for k, v in exc.headers.items()} if exc.headers else {},
-                body=exc.read() if hasattr(exc, "read") else b"",
+                body=exc.read() if hasattr(exc, 'read') else b'',
                 url=url,
             )
         except urllib.error.URLError as exc:
-            reason = getattr(exc, "reason", exc)
-            if "timed out" in str(reason).lower():
-                raise TimeoutError(f"Request to {url} timed out") from exc
-            raise TransportError(f"Request to {url} failed: {reason}") from exc
+            reason = getattr(exc, 'reason', exc)
+            if 'timed out' in str(reason).lower():
+                raise TimeoutError(f'Request to {url} timed out') from exc
+            raise TransportError(f'Request to {url} failed: {reason}') from exc
         except TimeoutError:
             raise
         except OSError as exc:
-            raise TransportError(f"Request to {url} failed: {exc}") from exc
+            raise TransportError(f'Request to {url} failed: {exc}') from exc
 
 
 # MARK: Client
@@ -217,13 +252,13 @@ class HttpClient:
         user_agent: str = DEFAULT_USER_AGENT,
         sleep: Callable[[float], object] = time.sleep,
     ) -> None:
-        self._base_url = base_url.rstrip("/") if base_url else None
+        self._base_url = base_url.rstrip('/') if base_url else None
         self._transport = transport or UrllibTransport()
         self._auth = auth or NoAuth()
         self._retry = retry or RetryPolicy()
         self._rate_limit = rate_limit
         self._default_headers = dict(default_headers or {})
-        self._default_headers.setdefault("User-Agent", user_agent)
+        self._default_headers.setdefault('User-Agent', user_agent)
         self._timeout = timeout
         self._sleep = sleep
 
@@ -255,9 +290,9 @@ class HttpClient:
         url = self._resolve_url(path)
         merged_headers: dict[str, str] = dict(self._default_headers)
         merged_headers.update(headers or {})
-        merged_headers.setdefault("X-Request-ID", correlation_id or uuid.uuid4().hex)
+        merged_headers.setdefault('X-Request-ID', correlation_id or uuid.uuid4().hex)
         if idempotency_key is not None:
-            merged_headers.setdefault("Idempotency-Key", idempotency_key)
+            merged_headers.setdefault('Idempotency-Key', idempotency_key)
         request = HttpRequest(
             method=method.upper(),
             url=url,
@@ -268,35 +303,35 @@ class HttpClient:
             timeout=timeout if timeout is not None else self._timeout,
         )
         applied = self._auth.apply(request.to_dict())
-        request.headers = dict(applied.get("headers") or {})
-        request.params = dict(applied.get("params") or {})
+        request.headers = dict(applied.get('headers') or {})
+        request.params = dict(applied.get('params') or {})
         return self._send_with_retry(request)
 
     def get(self, path: str, **kwargs: Any) -> HttpResponse:
-        return self.request("GET", path, **kwargs)
+        return self.request('GET', path, **kwargs)
 
     def post(self, path: str, **kwargs: Any) -> HttpResponse:
-        return self.request("POST", path, **kwargs)
+        return self.request('POST', path, **kwargs)
 
     def put(self, path: str, **kwargs: Any) -> HttpResponse:
-        return self.request("PUT", path, **kwargs)
+        return self.request('PUT', path, **kwargs)
 
     def patch(self, path: str, **kwargs: Any) -> HttpResponse:
-        return self.request("PATCH", path, **kwargs)
+        return self.request('PATCH', path, **kwargs)
 
     def delete(self, path: str, **kwargs: Any) -> HttpResponse:
-        return self.request("DELETE", path, **kwargs)
+        return self.request('DELETE', path, **kwargs)
 
     def _resolve_url(self, path: str) -> str:
-        if path.startswith(("http://", "https://")):
+        if path.startswith(('http://', 'https://')):
             return path
         if self._base_url is None:
             raise ValueError(
-                f"Relative path supplied to HttpClient without a base_url. path={path!r}"
+                f'Relative path supplied to HttpClient without a base_url. path={path!r}'
             )
-        if path.startswith("/"):
-            return f"{self._base_url}{path}"
-        return f"{self._base_url}/{path}"
+        if path.startswith('/'):
+            return f'{self._base_url}{path}'
+        return f'{self._base_url}/{path}'
 
     def _send_with_retry(self, request: HttpRequest) -> HttpResponse:
         attempt = 1
@@ -332,7 +367,7 @@ class HttpClient:
 
     @staticmethod
     def _build_error(response: HttpResponse) -> ConnectorError:
-        retry_after_header = response.header("Retry-After")
+        retry_after_header = response.header('Retry-After')
         retry_after_seconds: float | None = None
         if retry_after_header:
             try:
@@ -343,7 +378,7 @@ class HttpClient:
         return normalize_status_error(
             response.status,
             message,
-            detail={"url": response.url, "headers": dict(response.headers)},
+            detail={'url': response.url, 'headers': dict(response.headers)},
             retry_after_seconds=retry_after_seconds,
         )
 
@@ -356,8 +391,8 @@ def _summarize_body(response: HttpResponse) -> str:
     try:
         body = response.text()
     except UnicodeDecodeError:
-        body = "<binary body>"
+        body = '<binary body>'
     snippet = body.strip()
     if len(snippet) > 200:
-        snippet = snippet[:200] + "..."
-    return f"HTTP {response.status} for {response.url}: {snippet or '<empty body>'}"
+        snippet = snippet[:200] + '...'
+    return f'HTTP {response.status} for {response.url}: {snippet or "<empty body>"}'

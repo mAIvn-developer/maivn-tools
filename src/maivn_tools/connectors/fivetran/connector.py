@@ -27,7 +27,7 @@ def _coerce_id(candidate: Any, *keys: str) -> str:
     if isinstance(candidate, str):
         return candidate
     if isinstance(candidate, dict):
-        mapping = cast("dict[Any, Any]", candidate)
+        mapping = cast('dict[Any, Any]', candidate)
         for key in keys:
             value = mapping.get(key)
             if isinstance(value, str) and value:
@@ -41,48 +41,48 @@ def _coerce_id(candidate: Any, *keys: str) -> str:
                 except ValueError:
                     continue
     if isinstance(candidate, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+        sequence = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in sequence:
             try:
                 return _coerce_id(item, *keys)
             except ValueError:
                 continue
-    raise ValueError(f"could not extract an ID from {type(cast('object', candidate)).__name__}")
+    raise ValueError(f'could not extract an ID from {type(cast("object", candidate)).__name__}')
 
 
 def _summarize_group(group: dict[str, Any], *, index: int, include_ids: bool) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "group_ref": f"group_{index}",
-        "name": group.get("name", ""),
-        "created_at": group.get("created_at", ""),
+        'group_ref': f'group_{index}',
+        'name': group.get('name', ''),
+        'created_at': group.get('created_at', ''),
     }
     if include_ids:
-        summary["group_id"] = group.get("id", "")
+        summary['group_id'] = group.get('id', '')
     return summary
 
 
 def _summarize_connector(
     connector: dict[str, Any], *, index: int, include_ids: bool
 ) -> dict[str, Any]:
-    status: Any = connector.get("status") or {}
-    status_dict = cast("dict[str, Any]", status) if isinstance(status, dict) else None
-    setup_state: Any = status_dict.get("setup_state") if status_dict is not None else None
-    sync_state: Any = status_dict.get("sync_state") if status_dict is not None else None
+    status: Any = connector.get('status') or {}
+    status_dict = cast('dict[str, Any]', status) if isinstance(status, dict) else None
+    setup_state: Any = status_dict.get('setup_state') if status_dict is not None else None
+    sync_state: Any = status_dict.get('sync_state') if status_dict is not None else None
     summary: dict[str, Any] = {
-        "connector_ref": f"connector_{index}",
-        "name": connector.get("schema") or connector.get("name", ""),
-        "service": connector.get("service", ""),
-        "destination_group": connector.get("group_id", ""),
-        "schedule_type": connector.get("schedule_type", ""),
-        "sync_frequency": connector.get("sync_frequency"),
-        "paused": connector.get("paused"),
-        "setup_state": setup_state,
-        "sync_state": sync_state,
-        "succeeded_at": connector.get("succeeded_at", ""),
-        "failed_at": connector.get("failed_at", ""),
+        'connector_ref': f'connector_{index}',
+        'name': connector.get('schema') or connector.get('name', ''),
+        'service': connector.get('service', ''),
+        'destination_group': connector.get('group_id', ''),
+        'schedule_type': connector.get('schedule_type', ''),
+        'sync_frequency': connector.get('sync_frequency'),
+        'paused': connector.get('paused'),
+        'setup_state': setup_state,
+        'sync_state': sync_state,
+        'succeeded_at': connector.get('succeeded_at', ''),
+        'failed_at': connector.get('failed_at', ''),
     }
     if include_ids:
-        summary["connector_id"] = connector.get("id", "")
+        summary['connector_id'] = connector.get('id', '')
     return summary
 
 
@@ -90,36 +90,36 @@ def _summarize_destination(
     destination: dict[str, Any], *, index: int, include_ids: bool
 ) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "destination_ref": f"destination_{index}",
-        "name": destination.get("name") or destination.get("group_id", ""),
-        "service": destination.get("service", ""),
-        "region": destination.get("region", ""),
-        "setup_status": destination.get("setup_status", ""),
+        'destination_ref': f'destination_{index}',
+        'name': destination.get('name') or destination.get('group_id', ''),
+        'service': destination.get('service', ''),
+        'region': destination.get('region', ''),
+        'setup_status': destination.get('setup_status', ''),
     }
     if include_ids:
-        summary["destination_id"] = destination.get("id", "")
-        summary["group_id"] = destination.get("group_id", "")
+        summary['destination_id'] = destination.get('id', '')
+        summary['group_id'] = destination.get('group_id', '')
     return summary
 
 
 def _summarize_user(user: dict[str, Any], *, index: int, include_ids: bool) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "user_ref": f"user_{index}",
-        "email": user.get("email", ""),
-        "given_name": user.get("given_name", ""),
-        "family_name": user.get("family_name", ""),
-        "role": user.get("role", ""),
-        "verified": user.get("verified"),
+        'user_ref': f'user_{index}',
+        'email': user.get('email', ''),
+        'given_name': user.get('given_name', ''),
+        'family_name': user.get('family_name', ''),
+        'role': user.get('role', ''),
+        'verified': user.get('verified'),
     }
     if include_ids:
-        summary["user_id"] = user.get("id", "")
+        summary['user_id'] = user.get('id', '')
     return summary
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="fivetran")
+@toolset(prefix='fivetran')
 class FivetranToolSet:
     """A connector for the Fivetran v1 REST API.
 
@@ -129,15 +129,15 @@ class FivetranToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="fivetran",
-        display_name="Fivetran",
-        version="0.1.0",
-        description="Connectors, destinations, groups, users, and syncs.",
+        name='fivetran',
+        display_name='Fivetran',
+        version='0.1.0',
+        description='Connectors, destinations, groups, users, and syncs.',
         auth_modes=(AuthMode.BASIC,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://fivetran.com/docs/rest-api",
-        homepage_url="https://www.fivetran.com/",
-        tags=("etl", "data-movement"),
+        documentation_url='https://fivetran.com/docs/rest-api',
+        homepage_url='https://www.fivetran.com/',
+        tags=('etl', 'data-movement'),
     )
 
     def __init__(
@@ -145,20 +145,20 @@ class FivetranToolSet:
         *,
         api_key: str,
         api_secret: str,
-        base_url: str = "https://api.fivetran.com",
+        base_url: str = 'https://api.fivetran.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key or not api_secret:
-            raise ValueError("api_key and api_secret are required")
+            raise ValueError('api_key and api_secret are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BasicAuth(api_key, api_secret),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -187,26 +187,26 @@ class FivetranToolSet:
         Use ``cursor`` from a prior response to page forward.
         """
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 1000')
+        params: dict[str, Any] = {'limit': limit}
         if cursor is not None:
-            params["cursor"] = cursor
-        payload: dict[str, Any] = self._client.get("/v1/groups", params=params).json()
+            params['cursor'] = cursor
+        payload: dict[str, Any] = self._client.get('/v1/groups', params=params).json()
         if raw:
             return payload
-        data: dict[str, Any] = payload.get("data") or {}
-        items: list[Any] = data.get("items") or []
+        data: dict[str, Any] = payload.get('data') or {}
+        items: list[Any] = data.get('items') or []
         summaries: list[dict[str, Any]] = []
         for index, group in enumerate(items, start=1):
             if isinstance(group, dict):
                 summaries.append(
                     _summarize_group(
-                        cast("dict[str, Any]", group), index=index, include_ids=include_ids
+                        cast('dict[str, Any]', group), index=index, include_ids=include_ids
                     )
                 )
         return {
-            "groups": summaries,
-            "next_cursor": data.get("next_cursor"),
+            'groups': summaries,
+            'next_cursor': data.get('next_cursor'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -231,31 +231,31 @@ class FivetranToolSet:
         ``raw=True`` for the unfiltered API response.
         """
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
-        resolved_group_id = _coerce_id(group_id, "group_id", "id")
+            raise ValueError('limit must be between 1 and 1000')
+        resolved_group_id = _coerce_id(group_id, 'group_id', 'id')
         if not resolved_group_id:
-            raise ValueError("group_id is required")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('group_id is required')
+        params: dict[str, Any] = {'limit': limit}
         if cursor is not None:
-            params["cursor"] = cursor
+            params['cursor'] = cursor
         payload: dict[str, Any] = self._client.get(
-            f"/v1/groups/{resolved_group_id}/connectors", params=params
+            f'/v1/groups/{resolved_group_id}/connectors', params=params
         ).json()
         if raw:
             return payload
-        data: dict[str, Any] = payload.get("data") or {}
-        items: list[Any] = data.get("items") or []
+        data: dict[str, Any] = payload.get('data') or {}
+        items: list[Any] = data.get('items') or []
         summaries: list[dict[str, Any]] = []
         for index, connector in enumerate(items, start=1):
             if isinstance(connector, dict):
                 summaries.append(
                     _summarize_connector(
-                        cast("dict[str, Any]", connector), index=index, include_ids=include_ids
+                        cast('dict[str, Any]', connector), index=index, include_ids=include_ids
                     )
                 )
         return {
-            "connectors": summaries,
-            "next_cursor": data.get("next_cursor"),
+            'connectors': summaries,
+            'next_cursor': data.get('next_cursor'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -269,10 +269,10 @@ class FivetranToolSet:
         ``connector_id`` may be a raw ID string or a connector dict from
         :meth:`list_connectors` (``include_ids=True``).
         """
-        resolved_id = _coerce_id(connector_id, "connector_id", "id")
+        resolved_id = _coerce_id(connector_id, 'connector_id', 'id')
         if not resolved_id:
-            raise ValueError("connector_id is required")
-        return self._client.get(f"/v1/connectors/{resolved_id}").json()
+            raise ValueError('connector_id is required')
+        return self._client.get(f'/v1/connectors/{resolved_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_connector(
@@ -292,21 +292,21 @@ class FivetranToolSet:
         is the interval in minutes; ``schedule_type`` is typically ``auto``
         or ``manual``. At least one of the keyword args is required.
         """
-        resolved_id = _coerce_id(connector_id, "connector_id", "id")
+        resolved_id = _coerce_id(connector_id, 'connector_id', 'id')
         if not resolved_id:
-            raise ValueError("connector_id is required")
+            raise ValueError('connector_id is required')
         body: dict[str, Any] = {}
         if paused is not None:
-            body["paused"] = paused
+            body['paused'] = paused
         if sync_frequency is not None:
-            body["sync_frequency"] = sync_frequency
+            body['sync_frequency'] = sync_frequency
         if schedule_type is not None:
-            body["schedule_type"] = schedule_type
+            body['schedule_type'] = schedule_type
         if config is not None:
-            body["config"] = config
+            body['config'] = config
         if not body:
-            raise ValueError("at least one update field is required")
-        return self._client.patch(f"/v1/connectors/{resolved_id}", json=body).json()
+            raise ValueError('at least one update field is required')
+        return self._client.patch(f'/v1/connectors/{resolved_id}', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def trigger_sync(
@@ -322,12 +322,12 @@ class FivetranToolSet:
         (``include_ids=True``) / :meth:`get_connector`. ``force=True`` runs
         even if a sync is currently in progress.
         """
-        resolved_id = _coerce_id(connector_id, "connector_id", "id")
+        resolved_id = _coerce_id(connector_id, 'connector_id', 'id')
         if not resolved_id:
-            raise ValueError("connector_id is required")
+            raise ValueError('connector_id is required')
         return self._client.post(
-            f"/v1/connectors/{resolved_id}/sync",
-            json={"force": force},
+            f'/v1/connectors/{resolved_id}/sync',
+            json={'force': force},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -344,14 +344,14 @@ class FivetranToolSet:
         list of table names to re-sync; omit it to re-sync everything. This
         is heavier than a normal sync — confirm with the user first.
         """
-        resolved_id = _coerce_id(connector_id, "connector_id", "id")
+        resolved_id = _coerce_id(connector_id, 'connector_id', 'id')
         if not resolved_id:
-            raise ValueError("connector_id is required")
+            raise ValueError('connector_id is required')
         body: dict[str, Any] = {}
         if scope is not None:
-            body["scope"] = scope
+            body['scope'] = scope
         return self._client.post(
-            f"/v1/connectors/{resolved_id}/resync",
+            f'/v1/connectors/{resolved_id}/resync',
             json=body or None,
         ).json()
 
@@ -363,10 +363,10 @@ class FivetranToolSet:
         connector dict. Always confirm with the user before calling — the
         pipeline definition is removed and historical schema state is lost.
         """
-        resolved_id = _coerce_id(connector_id, "connector_id", "id")
+        resolved_id = _coerce_id(connector_id, 'connector_id', 'id')
         if not resolved_id:
-            raise ValueError("connector_id is required")
-        return self._client.delete(f"/v1/connectors/{resolved_id}").json()
+            raise ValueError('connector_id is required')
+        return self._client.delete(f'/v1/connectors/{resolved_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_connector_schemas(self, connector_id: Any) -> dict[str, Any]:
@@ -377,10 +377,10 @@ class FivetranToolSet:
         Use this to understand which tables a connector replicates and
         their per-column enabled state.
         """
-        resolved_id = _coerce_id(connector_id, "connector_id", "id")
+        resolved_id = _coerce_id(connector_id, 'connector_id', 'id')
         if not resolved_id:
-            raise ValueError("connector_id is required")
-        return self._client.get(f"/v1/connectors/{resolved_id}/schemas").json()
+            raise ValueError('connector_id is required')
+        return self._client.get(f'/v1/connectors/{resolved_id}/schemas').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_destinations(
@@ -400,26 +400,26 @@ class FivetranToolSet:
         response. Use ``cursor`` to page forward.
         """
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 1000')
+        params: dict[str, Any] = {'limit': limit}
         if cursor is not None:
-            params["cursor"] = cursor
-        payload: dict[str, Any] = self._client.get("/v1/destinations", params=params).json()
+            params['cursor'] = cursor
+        payload: dict[str, Any] = self._client.get('/v1/destinations', params=params).json()
         if raw:
             return payload
-        data: dict[str, Any] = payload.get("data") or {}
-        items: list[Any] = data.get("items") or []
+        data: dict[str, Any] = payload.get('data') or {}
+        items: list[Any] = data.get('items') or []
         summaries: list[dict[str, Any]] = []
         for index, destination in enumerate(items, start=1):
             if isinstance(destination, dict):
                 summaries.append(
                     _summarize_destination(
-                        cast("dict[str, Any]", destination), index=index, include_ids=include_ids
+                        cast('dict[str, Any]', destination), index=index, include_ids=include_ids
                     )
                 )
         return {
-            "destinations": summaries,
-            "next_cursor": data.get("next_cursor"),
+            'destinations': summaries,
+            'next_cursor': data.get('next_cursor'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -430,10 +430,10 @@ class FivetranToolSet:
         accepts a raw ID or a destination dict from :meth:`list_destinations`
         (``include_ids=True``).
         """
-        resolved_id = _coerce_id(destination_id, "destination_id", "id")
+        resolved_id = _coerce_id(destination_id, 'destination_id', 'id')
         if not resolved_id:
-            raise ValueError("destination_id is required")
-        return self._client.get(f"/v1/destinations/{resolved_id}").json()
+            raise ValueError('destination_id is required')
+        return self._client.get(f'/v1/destinations/{resolved_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_users(
@@ -453,24 +453,24 @@ class FivetranToolSet:
         response.
         """
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 1000')
+        params: dict[str, Any] = {'limit': limit}
         if cursor is not None:
-            params["cursor"] = cursor
-        payload: dict[str, Any] = self._client.get("/v1/users", params=params).json()
+            params['cursor'] = cursor
+        payload: dict[str, Any] = self._client.get('/v1/users', params=params).json()
         if raw:
             return payload
-        data: dict[str, Any] = payload.get("data") or {}
-        items: list[Any] = data.get("items") or []
+        data: dict[str, Any] = payload.get('data') or {}
+        items: list[Any] = data.get('items') or []
         summaries: list[dict[str, Any]] = []
         for index, user in enumerate(items, start=1):
             if isinstance(user, dict):
                 summaries.append(
                     _summarize_user(
-                        cast("dict[str, Any]", user), index=index, include_ids=include_ids
+                        cast('dict[str, Any]', user), index=index, include_ids=include_ids
                     )
                 )
         return {
-            "users": summaries,
-            "next_cursor": data.get("next_cursor"),
+            'users': summaries,
+            'next_cursor': data.get('next_cursor'),
         }

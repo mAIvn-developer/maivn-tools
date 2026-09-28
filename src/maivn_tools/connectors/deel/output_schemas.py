@@ -19,59 +19,59 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _PERSON_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "employee_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "email": {"type": "string"},
-        "title": {"type": "string"},
-        "department": {"type": "string"},
-        "hiring_status": {"type": "string"},
-        "hiring_type": {"type": "string"},
-        "start_date": {"type": "string"},
-        "person_id": {"type": ["string", "integer"]},
+    'type': 'object',
+    'properties': {
+        'employee_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'email': {'type': 'string'},
+        'title': {'type': 'string'},
+        'department': {'type': 'string'},
+        'hiring_status': {'type': 'string'},
+        'hiring_type': {'type': 'string'},
+        'start_date': {'type': 'string'},
+        'person_id': {'type': ['string', 'integer']},
     },
-    "required": ["employee_ref", "name"],
+    'required': ['employee_ref', 'name'],
 }
 
 _CONTRACT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "contract_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "type": {"type": "string"},
-        "status": {"type": "string"},
-        "worker_name": {"type": "string"},
-        "country": {"type": "string"},
-        "start_date": {"type": "string"},
-        "contract_id": {"type": ["string", "integer"]},
+    'type': 'object',
+    'properties': {
+        'contract_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'type': {'type': 'string'},
+        'status': {'type': 'string'},
+        'worker_name': {'type': 'string'},
+        'country': {'type': 'string'},
+        'start_date': {'type': 'string'},
+        'contract_id': {'type': ['string', 'integer']},
     },
-    "required": ["contract_ref"],
+    'required': ['contract_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_PEOPLE_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "employees": {"type": "array", "items": _PERSON_SUMMARY},
-        "page": {"type": ["integer", "null"]},
+    'type': 'object',
+    'properties': {
+        'employees': {'type': 'array', 'items': _PERSON_SUMMARY},
+        'page': {'type': ['integer', 'null']},
     },
-    "required": ["employees"],
+    'required': ['employees'],
 }
 
 LIST_CONTRACTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "contracts": {"type": "array", "items": _CONTRACT_SUMMARY},
-        "page": {"type": ["integer", "null"]},
+    'type': 'object',
+    'properties': {
+        'contracts': {'type': 'array', 'items': _CONTRACT_SUMMARY},
+        'page': {'type': ['integer', 'null']},
     },
-    "required": ["contracts"],
+    'required': ['contracts'],
 }
 
 
 __all__ = [
-    "LIST_CONTRACTS_OUTPUT",
-    "LIST_PEOPLE_OUTPUT",
+    'LIST_CONTRACTS_OUTPUT',
+    'LIST_PEOPLE_OUTPUT',
 ]

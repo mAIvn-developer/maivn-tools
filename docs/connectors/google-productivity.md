@@ -43,7 +43,7 @@ connector = GoogleDocsToolSet(token=token_cache)
 
 ```python
 # Find then edit, without unwrapping IDs by hand.
-file = drive.search_files("Launch plan", include_ids=True)["files"][0]
+file = drive.search_files("name = 'Launch plan'", include_ids=True)["files"][0]
 docs.insert_text(file, text="Status update\n")
 ```
 
@@ -51,7 +51,7 @@ docs.insert_text(file, text="Status update\n")
 
 `delete_content_range` is tagged `destructive` and requires
 `PermissionFlag.DELETE`. Filter it off the toolset with
-`exclude_tags=["destructive"]` for read-only / safe-edit agents.
+`exclude_tags=["destructive"]` to exclude tagged destructive methods.
 
 ## GoogleSheetsToolSet
 
@@ -88,7 +88,7 @@ connector = GoogleSheetsToolSet(token=token_cache)
   tools.
 
 ```python
-file = drive.search_files("Q4 forecast", include_ids=True)["files"][0]
+file = drive.search_files("name = 'Q4 forecast'", include_ids=True)["files"][0]
 sheets.get_values(file, range="Plan!A1:D20")
 ```
 
@@ -97,8 +97,7 @@ sheets.get_values(file, range="Plan!A1:D20")
 `clear_values` and `delete_sheet` are tagged `destructive` and require
 `PermissionFlag.DELETE`. `clear_values` removes cell contents but
 leaves formatting; `delete_sheet` removes an entire tab. Filter them
-off the toolset with `exclude_tags=["destructive"]` for read-only /
-safe-edit agents.
+off the toolset with `exclude_tags=["destructive"]` to exclude tagged destructive methods.
 
 ## GoogleSlidesToolSet
 
@@ -136,7 +135,7 @@ connector = GoogleSlidesToolSet(token=token_cache)
   `presentationId` (or the whole dict) to the edit tools.
 
 ```python
-file = drive.search_files("All-hands deck", include_ids=True)["files"][0]
+file = drive.search_files("name = 'All-hands deck'", include_ids=True)["files"][0]
 deck = slides.get_presentation(file)
 slides.replace_all_text(file, find="{{date}}", replace="2026-05-16")
 ```
@@ -146,4 +145,4 @@ slides.replace_all_text(file, find="{{date}}", replace="2026-05-16")
 `delete_object` is tagged `destructive` and requires
 `PermissionFlag.DELETE`. It removes a slide, shape, or other page
 object permanently. Filter it off the toolset with
-`exclude_tags=["destructive"]` for read-only / safe-edit agents.
+`exclude_tags=["destructive"]` to exclude tagged destructive methods.

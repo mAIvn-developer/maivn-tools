@@ -16,7 +16,7 @@ from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_CONTENT_OUTPUT, SEARCH_CONTENT_OUTPUT, SEARCH_OUTPUT
 
 
-@toolset(prefix="confluence")
+@toolset(prefix='confluence')
 class ConfluenceToolSet:
     """A connector for Confluence Cloud REST API v1.
 
@@ -29,15 +29,15 @@ class ConfluenceToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="confluence",
-        display_name="Confluence",
-        version="0.1.0",
-        description="Search and manage Confluence spaces, pages, comments, and labels.",
+        name='confluence',
+        display_name='Confluence',
+        version='0.1.0',
+        description='Search and manage Confluence spaces, pages, comments, and labels.',
         auth_modes=(AuthMode.BASIC,),
         scopes={
-            "read:confluence-content.all": "Read pages, blogposts, and attachments.",
-            "write:confluence-content": "Create and update content.",
-            "write:confluence-space": "Create and update spaces.",
+            'read:confluence-content.all': 'Read pages, blogposts, and attachments.',
+            'write:confluence-content': 'Create and update content.',
+            'write:confluence-space': 'Create and update spaces.',
         },
         capabilities=frozenset(
             {
@@ -47,9 +47,9 @@ class ConfluenceToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://developer.atlassian.com/cloud/confluence/rest/v1/intro/",
-        homepage_url="https://www.atlassian.com/software/confluence",
-        tags=("wiki", "atlassian"),
+        documentation_url='https://developer.atlassian.com/cloud/confluence/rest/v1/intro/',
+        homepage_url='https://www.atlassian.com/software/confluence',
+        tags=('wiki', 'atlassian'),
     )
 
     def __init__(
@@ -62,20 +62,20 @@ class ConfluenceToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not base_url:
-            raise ValueError("base_url is required")
+            raise ValueError('base_url is required')
         if not email:
-            raise ValueError("email is required")
+            raise ValueError('email is required')
         if not api_token:
-            raise ValueError("api_token is required")
+            raise ValueError('api_token is required')
         self.connection = connection
-        site = base_url.rstrip("/")
-        if not site.endswith("/wiki"):
-            site = f"{site}/wiki"
+        site = base_url.rstrip('/')
+        if not site.endswith('/wiki'):
+            site = f'{site}/wiki'
         self._client = HttpClient(
             base_url=site,
             auth=BasicAuth(email, api_token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -87,16 +87,16 @@ class ConfluenceToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_current_user(self) -> dict[str, Any]:
         """Return the authenticated user."""
-        return self._client.get("/rest/api/user/current").json()
+        return self._client.get('/rest/api/user/current').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_user(self, account_id: str) -> dict[str, Any]:
         """Return a user by ``accountId``."""
         if not account_id:
-            raise ValueError("account_id must be a non-empty string")
+            raise ValueError('account_id must be a non-empty string')
         return self._client.get(
-            "/rest/api/user",
-            params={"accountId": account_id},
+            '/rest/api/user',
+            params={'accountId': account_id},
         ).json()
 
     # MARK: - Spaces
@@ -118,22 +118,22 @@ class ConfluenceToolSet:
         canonical handle to pass to :meth:`get_space` and content tools.
         """
         if limit < 1 or limit > 250:
-            raise ValueError("limit must be between 1 and 250")
-        params: dict[str, Any] = {"start": start, "limit": limit}
+            raise ValueError('limit must be between 1 and 250')
+        params: dict[str, Any] = {'start': start, 'limit': limit}
         if space_key is not None:
-            params["spaceKey"] = space_key
+            params['spaceKey'] = space_key
         if type is not None:
-            params["type"] = type
+            params['type'] = type
         if status is not None:
-            params["status"] = status
-        return self._client.get("/rest/api/space", params=params).json()
+            params['status'] = status
+        return self._client.get('/rest/api/space', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_space(self, space_key: str) -> dict[str, Any]:
         """Return one space by key."""
         if not space_key:
-            raise ValueError("space_key must be a non-empty string")
-        return self._client.get(f"/rest/api/space/{space_key}").json()
+            raise ValueError('space_key must be a non-empty string')
+        return self._client.get(f'/rest/api/space/{space_key}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_space(
@@ -146,11 +146,11 @@ class ConfluenceToolSet:
     ) -> dict[str, Any]:
         """Create a new space."""
         if not key or not name:
-            raise ValueError("key and name are required")
-        payload: dict[str, Any] = {"key": key, "name": name}
+            raise ValueError('key and name are required')
+        payload: dict[str, Any] = {'key': key, 'name': name}
         if description is not None:
-            payload["description"] = {"plain": {"value": description, "representation": "plain"}}
-        path = "/rest/api/space/_private" if private else "/rest/api/space"
+            payload['description'] = {'plain': {'value': description, 'representation': 'plain'}}
+        path = '/rest/api/space/_private' if private else '/rest/api/space'
         return self._client.post(path, json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -162,8 +162,8 @@ class ConfluenceToolSet:
         first.
         """
         if not space_key:
-            raise ValueError("space_key must be a non-empty string")
-        return self._client.delete(f"/rest/api/space/{space_key}").json()
+            raise ValueError('space_key must be a non-empty string')
+        return self._client.delete(f'/rest/api/space/{space_key}').json()
 
     # MARK: - Content (pages and blog posts)
 
@@ -172,7 +172,7 @@ class ConfluenceToolSet:
     def list_content(
         self,
         *,
-        type: str = "page",
+        type: str = 'page',
         space_key: str | None = None,
         title: str | None = None,
         status: str | None = None,
@@ -191,18 +191,18 @@ class ConfluenceToolSet:
         ``include_metadata=False`` to receive the raw Confluence response
         including pagination cursors.
         """
-        if type not in {"page", "blogpost", "comment", "attachment"}:
-            raise ValueError("type must be page/blogpost/comment/attachment")
-        params: dict[str, Any] = {"type": type, "start": start, "limit": limit}
+        if type not in {'page', 'blogpost', 'comment', 'attachment'}:
+            raise ValueError('type must be page/blogpost/comment/attachment')
+        params: dict[str, Any] = {'type': type, 'start': start, 'limit': limit}
         if space_key is not None:
-            params["spaceKey"] = space_key
+            params['spaceKey'] = space_key
         if title is not None:
-            params["title"] = title
+            params['title'] = title
         if status is not None:
-            params["status"] = status
+            params['status'] = status
         if expand is not None:
-            params["expand"] = expand
-        response = self._client.get("/rest/api/content", params=params).json()
+            params['expand'] = expand
+        response = self._client.get('/rest/api/content', params=params).json()
         if not include_metadata:
             return response
         return self._summarize_content(response, include_ids=include_ids)
@@ -224,11 +224,11 @@ class ConfluenceToolSet:
         resolved = self._extract_content_id(content_id)
         params: dict[str, Any] = {}
         if expand is not None:
-            params["expand"] = expand
+            params['expand'] = expand
         if version is not None:
-            params["version"] = version
+            params['version'] = version
         return self._client.get(
-            f"/rest/api/content/{resolved}",
+            f'/rest/api/content/{resolved}',
             params=params or None,
         ).json()
 
@@ -240,27 +240,27 @@ class ConfluenceToolSet:
         title: str,
         body: str,
         parent_id: str | None = None,
-        representation: str = "storage",
+        representation: str = 'storage',
     ) -> dict[str, Any]:
         """Create a Confluence page.
 
         Returns the new page resource (``id``, ``title``, ``_links.webui``).
         """
         if not space_key or not title or not body:
-            raise ValueError("space_key, title, and body are required")
-        if representation not in {"storage", "wiki", "view"}:
-            raise ValueError("representation must be storage/wiki/view")
+            raise ValueError('space_key, title, and body are required')
+        if representation not in {'storage', 'wiki', 'view'}:
+            raise ValueError('representation must be storage/wiki/view')
         payload: dict[str, Any] = {
-            "type": "page",
-            "title": title,
-            "space": {"key": space_key},
-            "body": {
-                representation: {"value": body, "representation": representation},
+            'type': 'page',
+            'title': title,
+            'space': {'key': space_key},
+            'body': {
+                representation: {'value': body, 'representation': representation},
             },
         }
         if parent_id is not None:
-            payload["ancestors"] = [{"id": parent_id}]
-        return self._client.post("/rest/api/content", json=payload).json()
+            payload['ancestors'] = [{'id': parent_id}]
+        return self._client.post('/rest/api/content', json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_page(
@@ -270,7 +270,7 @@ class ConfluenceToolSet:
         title: str,
         body: str,
         version: int,
-        representation: str = "storage",
+        representation: str = 'storage',
     ) -> dict[str, Any]:
         """Update a page.
 
@@ -280,17 +280,17 @@ class ConfluenceToolSet:
         """
         resolved = self._extract_content_id(content_id)
         if not title or not body:
-            raise ValueError("title and body are required")
+            raise ValueError('title and body are required')
         payload: dict[str, Any] = {
-            "id": resolved,
-            "type": "page",
-            "title": title,
-            "version": {"number": version},
-            "body": {
-                representation: {"value": body, "representation": representation},
+            'id': resolved,
+            'type': 'page',
+            'title': title,
+            'version': {'number': version},
+            'body': {
+                representation: {'value': body, 'representation': representation},
             },
         }
-        return self._client.put(f"/rest/api/content/{resolved}", json=payload).json()
+        return self._client.put(f'/rest/api/content/{resolved}', json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_content(self, content_id: Any) -> dict[str, Any]:
@@ -301,8 +301,8 @@ class ConfluenceToolSet:
         from :meth:`list_content`/:meth:`search`/:meth:`get_content`.
         """
         resolved = self._extract_content_id(content_id)
-        response = self._client.delete(f"/rest/api/content/{resolved}")
-        return {"id": resolved, "deleted": True, "status": response.status}
+        response = self._client.delete(f'/rest/api/content/{resolved}')
+        return {'id': resolved, 'deleted': True, 'status': response.status}
 
     # MARK: - Children, versions, labels
 
@@ -311,7 +311,7 @@ class ConfluenceToolSet:
         self,
         content_id: Any,
         *,
-        type: str = "page",
+        type: str = 'page',
         start: int = 0,
         limit: int = 25,
         expand: str | None = None,
@@ -322,11 +322,11 @@ class ConfluenceToolSet:
         from :meth:`list_content`/:meth:`search`.
         """
         resolved = self._extract_content_id(content_id)
-        params: dict[str, Any] = {"start": start, "limit": limit}
+        params: dict[str, Any] = {'start': start, 'limit': limit}
         if expand is not None:
-            params["expand"] = expand
+            params['expand'] = expand
         return self._client.get(
-            f"/rest/api/content/{resolved}/child/{type}",
+            f'/rest/api/content/{resolved}/child/{type}',
             params=params,
         ).json()
 
@@ -345,8 +345,8 @@ class ConfluenceToolSet:
         """
         resolved = self._extract_content_id(content_id)
         return self._client.get(
-            f"/rest/api/content/{resolved}/version",
-            params={"start": start, "limit": limit},
+            f'/rest/api/content/{resolved}/version',
+            params={'start': start, 'limit': limit},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -364,12 +364,12 @@ class ConfluenceToolSet:
         """
         resolved = self._extract_content_id(content_id)
         return self._client.get(
-            f"/rest/api/content/{resolved}/label",
-            params={"start": start, "limit": limit},
+            f'/rest/api/content/{resolved}/label',
+            params={'start': start, 'limit': limit},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def add_label(self, content_id: Any, label: str, *, prefix: str = "global") -> dict[str, Any]:
+    def add_label(self, content_id: Any, label: str, *, prefix: str = 'global') -> dict[str, Any]:
         """Add a label to a content item.
 
         ``content_id`` accepts the raw numeric ID string or a dict/list
@@ -377,10 +377,10 @@ class ConfluenceToolSet:
         """
         resolved = self._extract_content_id(content_id)
         if not label:
-            raise ValueError("label must be a non-empty string")
+            raise ValueError('label must be a non-empty string')
         return self._client.post(
-            f"/rest/api/content/{resolved}/label",
-            json=[{"prefix": prefix, "name": label}],
+            f'/rest/api/content/{resolved}/label',
+            json=[{'prefix': prefix, 'name': label}],
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -391,12 +391,12 @@ class ConfluenceToolSet:
         """
         resolved = self._extract_content_id(content_id)
         if not label:
-            raise ValueError("label must be a non-empty string")
+            raise ValueError('label must be a non-empty string')
         self._client.delete(
-            f"/rest/api/content/{resolved}/label",
-            params={"name": label},
+            f'/rest/api/content/{resolved}/label',
+            params={'name': label},
         )
-        return {"id": resolved, "label": label, "removed": True}
+        return {'id': resolved, 'label': label, 'removed': True}
 
     # MARK: - Comments
 
@@ -416,13 +416,13 @@ class ConfluenceToolSet:
         from :meth:`list_content`/:meth:`search`.
         """
         resolved = self._extract_content_id(content_id)
-        params: dict[str, Any] = {"start": start, "limit": limit}
+        params: dict[str, Any] = {'start': start, 'limit': limit}
         if location is not None:
-            params["location"] = location
+            params['location'] = location
         if depth is not None:
-            params["depth"] = depth
+            params['depth'] = depth
         return self._client.get(
-            f"/rest/api/content/{resolved}/child/comment",
+            f'/rest/api/content/{resolved}/child/comment',
             params=params,
         ).json()
 
@@ -432,19 +432,19 @@ class ConfluenceToolSet:
         *,
         container_id: str,
         body: str,
-        representation: str = "storage",
+        representation: str = 'storage',
     ) -> dict[str, Any]:
         """Create a comment on a page or blog post."""
         if not container_id or not body:
-            raise ValueError("container_id and body must be non-empty")
+            raise ValueError('container_id and body must be non-empty')
         payload = {
-            "type": "comment",
-            "container": {"id": container_id, "type": "page"},
-            "body": {
-                representation: {"value": body, "representation": representation},
+            'type': 'comment',
+            'container': {'id': container_id, 'type': 'page'},
+            'body': {
+                representation: {'value': body, 'representation': representation},
             },
         }
-        return self._client.post("/rest/api/content", json=payload).json()
+        return self._client.post('/rest/api/content', json=payload).json()
 
     # MARK: - Search
 
@@ -470,11 +470,11 @@ class ConfluenceToolSet:
         raw Confluence search response.
         """
         if not cql:
-            raise ValueError("cql must be a non-empty string")
-        params: dict[str, Any] = {"cql": cql, "start": start, "limit": limit}
+            raise ValueError('cql must be a non-empty string')
+        params: dict[str, Any] = {'cql': cql, 'start': start, 'limit': limit}
         if expand is not None:
-            params["expand"] = expand
-        response = self._client.get("/rest/api/search", params=params).json()
+            params['expand'] = expand
+        response = self._client.get('/rest/api/search', params=params).json()
         if not include_metadata:
             return response
         return self._summarize_search(response, include_ids=include_ids)
@@ -497,11 +497,11 @@ class ConfluenceToolSet:
         ``include_metadata=False`` to receive the raw Confluence response.
         """
         if not cql:
-            raise ValueError("cql must be a non-empty string")
-        params: dict[str, Any] = {"cql": cql, "start": start, "limit": limit}
+            raise ValueError('cql must be a non-empty string')
+        params: dict[str, Any] = {'cql': cql, 'start': start, 'limit': limit}
         if expand is not None:
-            params["expand"] = expand
-        response = self._client.get("/rest/api/content/search", params=params).json()
+            params['expand'] = expand
+        response = self._client.get('/rest/api/content/search', params=params).json()
         if not include_metadata:
             return response
         return self._summarize_content(response, include_ids=include_ids)
@@ -524,13 +524,13 @@ class ConfluenceToolSet:
         from :meth:`list_content`/:meth:`search`.
         """
         resolved = self._extract_content_id(content_id)
-        params: dict[str, Any] = {"start": start, "limit": limit}
+        params: dict[str, Any] = {'start': start, 'limit': limit}
         if media_type is not None:
-            params["mediaType"] = media_type
+            params['mediaType'] = media_type
         if filename is not None:
-            params["filename"] = filename
+            params['filename'] = filename
         return self._client.get(
-            f"/rest/api/content/{resolved}/child/attachment",
+            f'/rest/api/content/{resolved}/child/attachment',
             params=params,
         ).json()
 
@@ -543,14 +543,14 @@ class ConfluenceToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summaries: list[dict[str, Any]] = []
-        results: list[Any] = payload.get("results", []) or []
+        results: list[Any] = payload.get('results', []) or []
         for index, item in enumerate(results, start=1):
             if not isinstance(item, dict):
                 continue
-            item_dict = cast("dict[str, Any]", item)
+            item_dict = cast('dict[str, Any]', item)
             summaries.append(_content_item_summary(item_dict, index=index, include_ids=include_ids))
-        result: dict[str, Any] = {"results": summaries}
-        for key in ("start", "limit", "size", "_links"):
+        result: dict[str, Any] = {'results': summaries}
+        for key in ('start', 'limit', 'size', '_links'):
             if key in payload:
                 result[key] = payload[key]
         return result
@@ -562,29 +562,29 @@ class ConfluenceToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summaries: list[dict[str, Any]] = []
-        results: list[Any] = payload.get("results", []) or []
+        results: list[Any] = payload.get('results', []) or []
         for index, item in enumerate(results, start=1):
             if not isinstance(item, dict):
                 continue
-            item_dict = cast("dict[str, Any]", item)
-            content: Any = item_dict.get("content")
+            item_dict = cast('dict[str, Any]', item)
+            content: Any = item_dict.get('content')
             summary: dict[str, Any]
             if isinstance(content, dict):
-                content_dict = cast("dict[str, Any]", content)
+                content_dict = cast('dict[str, Any]', content)
                 summary = _content_item_summary(content_dict, index=index, include_ids=include_ids)
-                summary["excerpt"] = item_dict.get("excerpt", "")
-                summary["resultGlobalContainer"] = item_dict.get("resultGlobalContainer", "")
+                summary['excerpt'] = item_dict.get('excerpt', '')
+                summary['resultGlobalContainer'] = item_dict.get('resultGlobalContainer', '')
             else:
                 summary = {
-                    "page_ref": f"page_{index}",
-                    "title": item_dict.get("title", ""),
-                    "type": item_dict.get("entityType", item_dict.get("type", "")),
-                    "url": item_dict.get("url", ""),
-                    "excerpt": item_dict.get("excerpt", ""),
+                    'page_ref': f'page_{index}',
+                    'title': item_dict.get('title', ''),
+                    'type': item_dict.get('entityType', item_dict.get('type', '')),
+                    'url': item_dict.get('url', ''),
+                    'excerpt': item_dict.get('excerpt', ''),
                 }
             summaries.append(summary)
-        result: dict[str, Any] = {"results": summaries}
-        for key in ("start", "limit", "size", "totalSize", "cqlQuery"):
+        result: dict[str, Any] = {'results': summaries}
+        for key in ('start', 'limit', 'size', 'totalSize', 'cqlQuery'):
             if key in payload:
                 result[key] = payload[key]
         return result
@@ -599,26 +599,26 @@ class ConfluenceToolSet:
         """
         if isinstance(candidate, str):
             if not candidate:
-                raise ValueError("content_id must be a non-empty string")
+                raise ValueError('content_id must be a non-empty string')
             return candidate
         if isinstance(candidate, int) and not isinstance(candidate, bool):
             return str(candidate)
         if isinstance(candidate, dict):
-            candidate_dict = cast("dict[Any, Any]", candidate)
-            for key in ("content_id", "page_id", "id"):
+            candidate_dict = cast('dict[Any, Any]', candidate)
+            for key in ('content_id', 'page_id', 'id'):
                 value: Any = candidate_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
                 if isinstance(value, int) and not isinstance(value, bool):
                     return str(value)
         if isinstance(candidate, list | tuple):
-            candidate_seq = cast("list[Any] | tuple[Any, ...]", candidate)
+            candidate_seq = cast('list[Any] | tuple[Any, ...]', candidate)
             for item in candidate_seq:
                 try:
                     return ConfluenceToolSet._extract_content_id(item)
                 except ValueError:
                     continue
-        raise ValueError(f"could not extract Confluence content id from: {candidate!r}")
+        raise ValueError(f'could not extract Confluence content id from: {candidate!r}')
 
 
 def _content_item_summary(
@@ -627,31 +627,31 @@ def _content_item_summary(
     index: int,
     include_ids: bool,
 ) -> dict[str, Any]:
-    space_block: Any = item.get("space")
-    version_block: Any = item.get("version")
-    links_block: Any = item.get("_links")
+    space_block: Any = item.get('space')
+    version_block: Any = item.get('version')
+    links_block: Any = item.get('_links')
     space_key: Any = (
-        cast("dict[str, Any]", space_block).get("key", "") if isinstance(space_block, dict) else ""
+        cast('dict[str, Any]', space_block).get('key', '') if isinstance(space_block, dict) else ''
     )
     version_number: Any = (
-        cast("dict[str, Any]", version_block).get("number", 0)
+        cast('dict[str, Any]', version_block).get('number', 0)
         if isinstance(version_block, dict)
         else 0
     )
     url: Any = (
-        cast("dict[str, Any]", links_block).get("webui", "")
+        cast('dict[str, Any]', links_block).get('webui', '')
         if isinstance(links_block, dict)
-        else ""
+        else ''
     )
     summary: dict[str, Any] = {
-        "page_ref": f"page_{index}",
-        "title": item.get("title", ""),
-        "type": item.get("type", ""),
-        "status": item.get("status", ""),
-        "space_key": space_key,
-        "version": version_number,
-        "url": url,
+        'page_ref': f'page_{index}',
+        'title': item.get('title', ''),
+        'type': item.get('type', ''),
+        'status': item.get('status', ''),
+        'space_key': space_key,
+        'version': version_number,
+        'url': url,
     }
     if include_ids:
-        summary["content_id"] = item.get("id", "")
+        summary['content_id'] = item.get('id', '')
     return summary

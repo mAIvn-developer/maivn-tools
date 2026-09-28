@@ -24,13 +24,13 @@ from .output_schemas import (
 
 def _dict_entries(entries: list[object]) -> list[dict[str, Any]]:
     """Keep only the mapping entries from a Sigma list payload."""
-    return [cast("dict[str, Any]", item) for item in entries if isinstance(item, dict)]
+    return [cast('dict[str, Any]', item) for item in entries if isinstance(item, dict)]
 
 
 # MARK: - Tool set
 
 
-@toolset(prefix="sigma")
+@toolset(prefix='sigma')
 class SigmaToolSet:
     """A connector for the Sigma Computing v2 REST API.
 
@@ -42,35 +42,35 @@ class SigmaToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="sigma",
-        display_name="Sigma Computing",
-        version="0.1.0",
-        description="Workbooks, datasets, members, schedules, and embeds.",
+        name='sigma',
+        display_name='Sigma Computing',
+        version='0.1.0',
+        description='Workbooks, datasets, members, schedules, and embeds.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://help.sigmacomputing.com/reference/get-started-sigma-api",
-        homepage_url="https://www.sigmacomputing.com/",
-        tags=("bi", "analytics"),
+        documentation_url='https://help.sigmacomputing.com/reference/get-started-sigma-api',
+        homepage_url='https://www.sigmacomputing.com/',
+        tags=('bi', 'analytics'),
     )
 
     def __init__(
         self,
         *,
         access_token: str,
-        base_url: str = "https://aws-api.sigmacomputing.com",
+        base_url: str = 'https://aws-api.sigmacomputing.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(access_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -88,14 +88,14 @@ class SigmaToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "workbook_ref": f"workbook_{index}",
-            "name": workbook.get("name", ""),
-            "description": workbook.get("description", "") or "",
-            "owner_email": workbook.get("ownerEmail", "") or workbook.get("createdByEmail", ""),
-            "updated_at": workbook.get("updatedAt", ""),
+            'workbook_ref': f'workbook_{index}',
+            'name': workbook.get('name', ''),
+            'description': workbook.get('description', '') or '',
+            'owner_email': workbook.get('ownerEmail', '') or workbook.get('createdByEmail', ''),
+            'updated_at': workbook.get('updatedAt', ''),
         }
         if include_ids:
-            summary["workbook_id"] = workbook.get("workbookId", "") or workbook.get("id", "")
+            summary['workbook_id'] = workbook.get('workbookId', '') or workbook.get('id', '')
         return summary
 
     @staticmethod
@@ -106,14 +106,14 @@ class SigmaToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "dataset_ref": f"dataset_{index}",
-            "name": dataset.get("name", ""),
-            "description": dataset.get("description", "") or "",
-            "owner_email": dataset.get("ownerEmail", "") or dataset.get("createdByEmail", ""),
-            "updated_at": dataset.get("updatedAt", ""),
+            'dataset_ref': f'dataset_{index}',
+            'name': dataset.get('name', ''),
+            'description': dataset.get('description', '') or '',
+            'owner_email': dataset.get('ownerEmail', '') or dataset.get('createdByEmail', ''),
+            'updated_at': dataset.get('updatedAt', ''),
         }
         if include_ids:
-            summary["dataset_id"] = dataset.get("datasetId", "") or dataset.get("id", "")
+            summary['dataset_id'] = dataset.get('datasetId', '') or dataset.get('id', '')
         return summary
 
     @staticmethod
@@ -124,15 +124,15 @@ class SigmaToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "member_ref": f"member_{index}",
-            "name": (member.get("firstName", "") + " " + member.get("lastName", "")).strip()
-            or member.get("displayName", ""),
-            "email": member.get("email", ""),
-            "member_type": member.get("memberType", "") or member.get("type", ""),
-            "is_archived": member.get("isArchived", False),
+            'member_ref': f'member_{index}',
+            'name': (member.get('firstName', '') + ' ' + member.get('lastName', '')).strip()
+            or member.get('displayName', ''),
+            'email': member.get('email', ''),
+            'member_type': member.get('memberType', '') or member.get('type', ''),
+            'is_archived': member.get('isArchived', False),
         }
         if include_ids:
-            summary["member_id"] = member.get("memberId", "") or member.get("id", "")
+            summary['member_id'] = member.get('memberId', '') or member.get('id', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -157,21 +157,21 @@ class SigmaToolSet:
         must be the ``nextPage`` token string returned by the previous call
         (leave unset for the first page). Iterate until ``nextPage`` is null.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if page is not None:
-            params["page"] = page
-        payload: dict[str, Any] = self._client.get("/v2/workbooks", params=params).json()
-        entries: object = payload.get("entries")
+            params['page'] = page
+        payload: dict[str, Any] = self._client.get('/v2/workbooks', params=params).json()
+        entries: object = payload.get('entries')
         if not isinstance(entries, list):
             return payload
-        rows: list[object] = cast("list[object]", entries)
+        rows: list[object] = cast('list[object]', entries)
         summaries: list[dict[str, Any]] = [
             self._workbook_summary(workbook, index=index, include_ids=include_ids)
             for index, workbook in enumerate(_dict_entries(rows), start=1)
         ]
         return {
-            "workbooks": summaries,
-            "nextPage": payload.get("nextPage"),
+            'workbooks': summaries,
+            'nextPage': payload.get('nextPage'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -183,8 +183,8 @@ class SigmaToolSet:
         and should not appear in final answers.
         """
         if not workbook_id:
-            raise ValueError("workbook_id is required")
-        result: dict[str, Any] = self._client.get(f"/v2/workbooks/{workbook_id}").json()
+            raise ValueError('workbook_id is required')
+        result: dict[str, Any] = self._client.get(f'/v2/workbooks/{workbook_id}').json()
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -211,22 +211,22 @@ class SigmaToolSet:
         for. These optional body fields are only sent when provided.
         """
         if not workbook_id or not format:
-            raise ValueError("workbook_id and format are required")
-        if format not in {"csv", "json", "jsonl", "pdf", "png", "xlsx"}:
-            raise ValueError("format must be csv/json/jsonl/pdf/png/xlsx")
-        body: dict[str, Any] = {"format": format}
+            raise ValueError('workbook_id and format are required')
+        if format not in {'csv', 'json', 'jsonl', 'pdf', 'png', 'xlsx'}:
+            raise ValueError('format must be csv/json/jsonl/pdf/png/xlsx')
+        body: dict[str, Any] = {'format': format}
         if element_id is not None:
-            body["elementId"] = element_id
+            body['elementId'] = element_id
         if parameters is not None:
-            body["parameters"] = parameters
+            body['parameters'] = parameters
         if row_limit is not None:
-            body["rowLimit"] = row_limit
+            body['rowLimit'] = row_limit
         if offset is not None:
-            body["offset"] = offset
+            body['offset'] = offset
         if export_as is not None:
-            body["exportAs"] = export_as
+            body['exportAs'] = export_as
         result: dict[str, Any] = self._client.post(
-            f"/v2/workbooks/{workbook_id}/export", json=body
+            f'/v2/workbooks/{workbook_id}/export', json=body
         ).json()
         return result
 
@@ -253,21 +253,21 @@ class SigmaToolSet:
         no longer be created/edited after 2026-06-02 and stop returning
         usable results after the 2026-09-15 sunset; use data models instead.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if page is not None:
-            params["page"] = page
-        payload: dict[str, Any] = self._client.get("/v2/datasets", params=params).json()
-        entries: object = payload.get("entries")
+            params['page'] = page
+        payload: dict[str, Any] = self._client.get('/v2/datasets', params=params).json()
+        entries: object = payload.get('entries')
         if not isinstance(entries, list):
             return payload
-        rows: list[object] = cast("list[object]", entries)
+        rows: list[object] = cast('list[object]', entries)
         summaries: list[dict[str, Any]] = [
             self._dataset_summary(dataset, index=index, include_ids=include_ids)
             for index, dataset in enumerate(_dict_entries(rows), start=1)
         ]
         return {
-            "datasets": summaries,
-            "nextPage": payload.get("nextPage"),
+            'datasets': summaries,
+            'nextPage': payload.get('nextPage'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -278,8 +278,8 @@ class SigmaToolSet:
         handle and should not appear in final answers.
         """
         if not dataset_id:
-            raise ValueError("dataset_id is required")
-        result: dict[str, Any] = self._client.get(f"/v2/datasets/{dataset_id}").json()
+            raise ValueError('dataset_id is required')
+        result: dict[str, Any] = self._client.get(f'/v2/datasets/{dataset_id}').json()
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -301,21 +301,21 @@ class SigmaToolSet:
         must be the ``nextPage`` token string from the previous call (leave
         unset for the first page).
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if page is not None:
-            params["page"] = page
-        payload: dict[str, Any] = self._client.get("/v2/members", params=params).json()
-        entries: object = payload.get("entries")
+            params['page'] = page
+        payload: dict[str, Any] = self._client.get('/v2/members', params=params).json()
+        entries: object = payload.get('entries')
         if not isinstance(entries, list):
             return payload
-        rows: list[object] = cast("list[object]", entries)
+        rows: list[object] = cast('list[object]', entries)
         summaries: list[dict[str, Any]] = [
             self._member_summary(member, index=index, include_ids=include_ids)
             for index, member in enumerate(_dict_entries(rows), start=1)
         ]
         return {
-            "members": summaries,
-            "nextPage": payload.get("nextPage"),
+            'members': summaries,
+            'nextPage': payload.get('nextPage'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -331,10 +331,10 @@ class SigmaToolSet:
         ``limit`` sets the page size, and ``page`` must be the ``nextPage``
         token string from the previous call (leave unset for the first page).
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if page is not None:
-            params["page"] = page
-        result: dict[str, Any] = self._client.get("/v2/schedules", params=params).json()
+            params['page'] = page
+        result: dict[str, Any] = self._client.get('/v2/schedules', params=params).json()
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -342,8 +342,8 @@ class SigmaToolSet:
         self,
         *,
         workbook_id: str,
-        embed_type: str = "secure",
-        source_type: str = "workbook",
+        embed_type: str = 'secure',
+        source_type: str = 'workbook',
         source_id: str | None = None,
     ) -> dict[str, Any]:
         """Create an embed for a workbook.
@@ -359,16 +359,16 @@ class SigmaToolSet:
         flow rather than the deprecated v1 secure Embed-API.
         """
         if not workbook_id:
-            raise ValueError("workbook_id is required")
-        if source_type not in {"workbook", "page", "element"}:
-            raise ValueError("source_type must be workbook/page/element")
+            raise ValueError('workbook_id is required')
+        if source_type not in {'workbook', 'page', 'element'}:
+            raise ValueError('source_type must be workbook/page/element')
         body: dict[str, Any] = {
-            "embedType": embed_type,
-            "sourceType": source_type,
+            'embedType': embed_type,
+            'sourceType': source_type,
         }
         if source_id is not None:
-            body["sourceId"] = source_id
+            body['sourceId'] = source_id
         result: dict[str, Any] = self._client.post(
-            f"/v2/workbooks/{workbook_id}/embeds", json=body
+            f'/v2/workbooks/{workbook_id}/embeds', json=body
         ).json()
         return result

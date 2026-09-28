@@ -20,7 +20,7 @@ from ...runtime.http import HttpClient, HttpTransport
 # each major version ~12 months after release, keeping ~4 versions live at a
 # time. v17 was sunset on 2025-06-04; v24 is the latest supported release as of
 # 2026-05-31. Callers should track the release/sunset cadence and bump this.
-_API_VERSION = "v24"
+_API_VERSION = 'v24'
 
 
 # MARK: Helpers
@@ -35,24 +35,24 @@ def _coerce_customer_id(candidate: Any) -> str:
     dashes stripped.
     """
     if isinstance(candidate, str):
-        return candidate.replace("-", "")
+        return candidate.replace('-', '')
     if isinstance(candidate, dict):
-        mapping = cast("dict[str, Any]", candidate)
-        for key in ("customer_id", "id"):
+        mapping = cast('dict[str, Any]', candidate)
+        for key in ('customer_id', 'id'):
             value: Any = mapping.get(key)
             if isinstance(value, str):
-                return value.replace("-", "")
-        resource: Any = mapping.get("resourceName")
-        if isinstance(resource, str) and resource.startswith("customers/"):
-            return resource.split("/", 1)[1].split("/", 1)[0]
-        return ""
+                return value.replace('-', '')
+        resource: Any = mapping.get('resourceName')
+        if isinstance(resource, str) and resource.startswith('customers/'):
+            return resource.split('/', 1)[1].split('/', 1)[0]
+        return ''
     if isinstance(candidate, list | tuple):
-        items = cast("list[Any] | tuple[Any, ...]", candidate)
+        items = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in items:
             result = _coerce_customer_id(item)
             if result:
                 return result
-    return ""
+    return ''
 
 
 # MARK: Auth strategy
@@ -74,22 +74,22 @@ class _GoogleAdsAuth(AuthStrategy):
         self._login_customer_id = login_customer_id
 
     def apply(self, request: dict[str, Any]) -> dict[str, Any]:
-        headers = dict(request.get("headers") or {})
-        headers["Authorization"] = f"Bearer {self._access_token}"
-        headers["developer-token"] = self._developer_token
+        headers = dict(request.get('headers') or {})
+        headers['Authorization'] = f'Bearer {self._access_token}'
+        headers['developer-token'] = self._developer_token
         if self._login_customer_id:
-            headers["login-customer-id"] = self._login_customer_id
-        request["headers"] = headers
+            headers['login-customer-id'] = self._login_customer_id
+        request['headers'] = headers
         return request
 
     def describe(self) -> dict[str, Any]:
-        return {"mode": self.mode.value, "scheme": "google-ads-oauth"}
+        return {'mode': self.mode.value, 'scheme': 'google-ads-oauth'}
 
 
 # MARK: Tool set
 
 
-@toolset(prefix="google_ads")
+@toolset(prefix='google_ads')
 class GoogleAdsToolSet:
     """A connector for the Google Ads REST API.
 
@@ -101,15 +101,15 @@ class GoogleAdsToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="google_ads",
-        display_name="Google Ads",
-        version="0.1.0",
-        description="Customers, campaigns, ad groups, ads, GAQL queries, and budgets.",
+        name='google_ads',
+        display_name='Google Ads',
+        version='0.1.0',
+        description='Customers, campaigns, ad groups, ads, GAQL queries, and budgets.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developers.google.com/google-ads/api/rest",
-        homepage_url="https://ads.google.com/",
-        tags=("marketing", "ads"),
+        documentation_url='https://developers.google.com/google-ads/api/rest',
+        homepage_url='https://ads.google.com/',
+        tags=('marketing', 'ads'),
     )
 
     def __init__(
@@ -123,16 +123,16 @@ class GoogleAdsToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token or not developer_token:
-            raise ValueError("access_token and developer_token are required")
+            raise ValueError('access_token and developer_token are required')
         self.connection = connection
         self._version = api_version
         self._client = HttpClient(
-            base_url="https://googleads.googleapis.com",
+            base_url='https://googleads.googleapis.com',
             auth=_GoogleAdsAuth(access_token, developer_token, login_customer_id),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -141,7 +141,7 @@ class GoogleAdsToolSet:
         return self._client
 
     def _path(self, suffix: str) -> str:
-        return f"/{self._version}{suffix}"
+        return f'/{self._version}{suffix}'
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_accessible_customers(self) -> dict[str, Any]:
@@ -152,7 +152,7 @@ class GoogleAdsToolSet:
         ...]}``. The trailing numeric ID is what subsequent tools take as
         ``customer_id``.
         """
-        return self._client.get(self._path("/customers:listAccessibleCustomers")).json()
+        return self._client.get(self._path('/customers:listAccessibleCustomers')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def search(
@@ -175,12 +175,12 @@ class GoogleAdsToolSet:
         """
         cid = _coerce_customer_id(customer_id)
         if not cid or not query:
-            raise ValueError("customer_id and query are required")
-        body: dict[str, Any] = {"query": query, "pageSize": page_size}
+            raise ValueError('customer_id and query are required')
+        body: dict[str, Any] = {'query': query, 'pageSize': page_size}
         if page_token is not None:
-            body["pageToken"] = page_token
+            body['pageToken'] = page_token
         return self._client.post(
-            self._path(f"/customers/{cid}/googleAds:search"),
+            self._path(f'/customers/{cid}/googleAds:search'),
             json=body,
         ).json()
 
@@ -199,10 +199,10 @@ class GoogleAdsToolSet:
         """
         cid = _coerce_customer_id(customer_id)
         if not cid or not query:
-            raise ValueError("customer_id and query are required")
+            raise ValueError('customer_id and query are required')
         return self._client.post(
-            self._path(f"/customers/{cid}/googleAds:searchStream"),
-            json={"query": query},
+            self._path(f'/customers/{cid}/googleAds:searchStream'),
+            json={'query': query},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -223,13 +223,13 @@ class GoogleAdsToolSet:
         """
         cid = _coerce_customer_id(customer_id)
         if not cid or not operations:
-            raise ValueError("customer_id and operations are required")
+            raise ValueError('customer_id and operations are required')
         return self._client.post(
-            self._path(f"/customers/{cid}/campaigns:mutate"),
+            self._path(f'/customers/{cid}/campaigns:mutate'),
             json={
-                "operations": operations,
-                "partialFailure": partial_failure,
-                "validateOnly": validate_only,
+                'operations': operations,
+                'partialFailure': partial_failure,
+                'validateOnly': validate_only,
             },
         ).json()
 
@@ -247,12 +247,12 @@ class GoogleAdsToolSet:
         """
         cid = _coerce_customer_id(customer_id)
         if not cid or not operations:
-            raise ValueError("customer_id and operations are required")
+            raise ValueError('customer_id and operations are required')
         return self._client.post(
-            self._path(f"/customers/{cid}/adGroups:mutate"),
+            self._path(f'/customers/{cid}/adGroups:mutate'),
             json={
-                "operations": operations,
-                "partialFailure": partial_failure,
+                'operations': operations,
+                'partialFailure': partial_failure,
             },
         ).json()
 
@@ -270,12 +270,12 @@ class GoogleAdsToolSet:
         """
         cid = _coerce_customer_id(customer_id)
         if not cid or not operations:
-            raise ValueError("customer_id and operations are required")
+            raise ValueError('customer_id and operations are required')
         return self._client.post(
-            self._path(f"/customers/{cid}/adGroupAds:mutate"),
+            self._path(f'/customers/{cid}/adGroupAds:mutate'),
             json={
-                "operations": operations,
-                "partialFailure": partial_failure,
+                'operations': operations,
+                'partialFailure': partial_failure,
             },
         ).json()
 
@@ -294,10 +294,10 @@ class GoogleAdsToolSet:
         """
         cid = _coerce_customer_id(customer_id)
         if not cid or not operations:
-            raise ValueError("customer_id and operations are required")
+            raise ValueError('customer_id and operations are required')
         return self._client.post(
-            self._path(f"/customers/{cid}/campaignBudgets:mutate"),
-            json={"operations": operations},
+            self._path(f'/customers/{cid}/campaignBudgets:mutate'),
+            json={'operations': operations},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -316,12 +316,12 @@ class GoogleAdsToolSet:
         """
         cid = _coerce_customer_id(customer_id)
         if not cid or not conversions:
-            raise ValueError("customer_id and conversions are required")
+            raise ValueError('customer_id and conversions are required')
         return self._client.post(
-            self._path(f"/customers/{cid}:uploadClickConversions"),
+            self._path(f'/customers/{cid}:uploadClickConversions'),
             json={
-                "conversions": conversions,
-                "partialFailure": partial_failure,
+                'conversions': conversions,
+                'partialFailure': partial_failure,
             },
         ).json()
 
@@ -340,11 +340,11 @@ class GoogleAdsToolSet:
         """
         cid = _coerce_customer_id(customer_id)
         if not cid or not operations:
-            raise ValueError("customer_id and operations are required")
+            raise ValueError('customer_id and operations are required')
         return self._client.post(
-            self._path(f"/customers/{cid}:uploadUserData"),
+            self._path(f'/customers/{cid}:uploadUserData'),
             json={
-                "operations": operations,
-                "enablePartialFailure": enable_partial_failure,
+                'operations': operations,
+                'enablePartialFailure': enable_partial_failure,
             },
         ).json()

@@ -16,13 +16,13 @@ from ...runtime.http import HttpClient, HttpTransport
 from ._shared import TokenSource, make_bearer_auth
 from .output_schemas import SEARCH_FILES_OUTPUT
 
-DRIVE_API_URL = "https://www.googleapis.com/drive/v3"
-_DEFAULT_LIST_FIELDS = "files(id,name,mimeType,modifiedTime,size,owners,parents),nextPageToken"
+DRIVE_API_URL = 'https://www.googleapis.com/drive/v3'
+_DEFAULT_LIST_FIELDS = 'files(id,name,mimeType,modifiedTime,size,owners,parents),nextPageToken'
 
 # Drive v3 requires supportsAllDrives=true so per-file operations resolve files
 # that live in shared (Team) drives; supportsTeamDrives is deprecated. Without it,
 # requests targeting shared-drive file IDs can 404 or be rejected.
-_SUPPORTS_ALL_DRIVES = "true"
+_SUPPORTS_ALL_DRIVES = 'true'
 
 
 def _extract_file_id(candidate: Any) -> str:
@@ -34,27 +34,27 @@ def _extract_file_id(candidate: Any) -> str:
     """
     if isinstance(candidate, str):
         if not candidate:
-            raise ValueError("file_id must be a non-empty string")
+            raise ValueError('file_id must be a non-empty string')
         return candidate
     if isinstance(candidate, dict):
         mapping = cast(dict[Any, Any], candidate)
-        for key in ("file_id", "folder_id", "id"):
+        for key in ('file_id', 'folder_id', 'id'):
             value: Any = mapping.get(key)
             if isinstance(value, str) and value:
                 return value
-        raise ValueError("dict candidate has no file_id/folder_id/id")
+        raise ValueError('dict candidate has no file_id/folder_id/id')
     if isinstance(candidate, (list, tuple)):
-        sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+        sequence = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in sequence:
             try:
                 return _extract_file_id(item)
             except ValueError:
                 continue
-        raise ValueError("no usable file id in candidate sequence")
-    raise ValueError("file_id must be a string or a file/folder dict")
+        raise ValueError('no usable file id in candidate sequence')
+    raise ValueError('file_id must be a string or a file/folder dict')
 
 
-@toolset(prefix="google_drive")
+@toolset(prefix='google_drive')
 class GoogleDriveToolSet:
     """A connector for Google Drive.
 
@@ -66,17 +66,17 @@ class GoogleDriveToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="google_drive",
-        display_name="Google Drive",
-        version="0.1.0",
-        description="Search, fetch metadata, download, and upload Google Drive files.",
+        name='google_drive',
+        display_name='Google Drive',
+        version='0.1.0',
+        description='Search, fetch metadata, download, and upload Google Drive files.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "https://www.googleapis.com/auth/drive.readonly": "Read-only access.",
-            "https://www.googleapis.com/auth/drive.file": (
-                "Per-file access to files created or opened."
+            'https://www.googleapis.com/auth/drive.readonly': 'Read-only access.',
+            'https://www.googleapis.com/auth/drive.file': (
+                'Per-file access to files created or opened.'
             ),
-            "https://www.googleapis.com/auth/drive": "Full access to all files.",
+            'https://www.googleapis.com/auth/drive': 'Full access to all files.',
         },
         capabilities=frozenset(
             {
@@ -86,9 +86,9 @@ class GoogleDriveToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://developers.google.com/drive/api",
-        homepage_url="https://drive.google.com",
-        tags=("files", "google"),
+        documentation_url='https://developers.google.com/drive/api',
+        homepage_url='https://drive.google.com',
+        tags=('files', 'google'),
     )
 
     def __init__(
@@ -104,7 +104,7 @@ class GoogleDriveToolSet:
             base_url=base_url,
             auth=make_bearer_auth(token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -118,26 +118,26 @@ class GoogleDriveToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        mime_type: Any = file.get("mimeType", "")
-        ref_prefix = "folder" if mime_type == "application/vnd.google-apps.folder" else "file"
-        owners: Any = file.get("owners", []) or []
-        owner = ""
+        mime_type: Any = file.get('mimeType', '')
+        ref_prefix = 'folder' if mime_type == 'application/vnd.google-apps.folder' else 'file'
+        owners: Any = file.get('owners', []) or []
+        owner = ''
         if owners and isinstance(owners[0], dict):
             first_owner = cast(dict[Any, Any], owners[0])
-            owner = first_owner.get("displayName") or first_owner.get("emailAddress") or ""
+            owner = first_owner.get('displayName') or first_owner.get('emailAddress') or ''
         summary: dict[str, Any] = {
-            f"{ref_prefix}_ref": f"{ref_prefix}_{index}",
-            "name": file.get("name", ""),
-            "mime_type": mime_type,
-            "modified_time": file.get("modifiedTime", ""),
-            "size": file.get("size", ""),
-            "owner": owner,
+            f'{ref_prefix}_ref': f'{ref_prefix}_{index}',
+            'name': file.get('name', ''),
+            'mime_type': mime_type,
+            'modified_time': file.get('modifiedTime', ''),
+            'size': file.get('size', ''),
+            'owner': owner,
         }
         if include_ids:
-            summary["file_id"] = file.get("id", "")
-            parents = file.get("parents")
+            summary['file_id'] = file.get('id', '')
+            parents = file.get('parents')
             if parents:
-                summary["parents"] = parents
+                summary['parents'] = parents
         return summary
 
     # MARK: - Tools
@@ -146,11 +146,11 @@ class GoogleDriveToolSet:
     @tool_output(SEARCH_FILES_OUTPUT)
     def search_files(
         self,
-        query: str = "",
+        query: str = '',
         *,
         page_size: int = 25,
         page_token: str | None = None,
-        order_by: str | None = "modifiedTime desc",
+        order_by: str | None = 'modifiedTime desc',
         include_metadata: bool = True,
         include_ids: bool = False,
         fields: str | None = None,
@@ -168,35 +168,35 @@ class GoogleDriveToolSet:
         unchanged. Preserves ``nextPageToken`` for pagination.
         """
         if page_size < 1 or page_size > 1000:
-            raise ValueError("page_size must be between 1 and 1000")
+            raise ValueError('page_size must be between 1 and 1000')
         if not include_metadata and fields is None:
-            fields = "files(id,name,mimeType,modifiedTime,size,owners),nextPageToken"
+            fields = 'files(id,name,mimeType,modifiedTime,size,owners),nextPageToken'
         params: dict[str, Any] = {
-            "pageSize": page_size,
-            "fields": fields or _DEFAULT_LIST_FIELDS,
-            "includeItemsFromAllDrives": "true",
-            "supportsAllDrives": _SUPPORTS_ALL_DRIVES,
-            "corpora": "allDrives",
+            'pageSize': page_size,
+            'fields': fields or _DEFAULT_LIST_FIELDS,
+            'includeItemsFromAllDrives': 'true',
+            'supportsAllDrives': _SUPPORTS_ALL_DRIVES,
+            'corpora': 'allDrives',
         }
         if query:
-            params["q"] = query
+            params['q'] = query
         if order_by is not None:
-            params["orderBy"] = order_by
+            params['orderBy'] = order_by
         if page_token is not None:
-            params["pageToken"] = page_token
-        payload: dict[str, Any] = self._client.get("/files", params=params).json()
+            params['pageToken'] = page_token
+        payload: dict[str, Any] = self._client.get('/files', params=params).json()
         if not include_metadata:
             return payload
         summaries: list[dict[str, Any]] = []
-        files: Any = payload.get("files", [])
+        files: Any = payload.get('files', [])
         for index, item in enumerate(files, start=1):
             if not isinstance(item, dict):
                 continue
             file_item = cast(dict[str, Any], item)
             summaries.append(self._file_summary(file_item, index=index, include_ids=include_ids))
         return {
-            "files": summaries,
-            "nextPageToken": payload.get("nextPageToken"),
+            'files': summaries,
+            'nextPageToken': payload.get('nextPageToken'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -204,7 +204,7 @@ class GoogleDriveToolSet:
         self,
         file_id: Any,
         *,
-        fields: str = "id,name,mimeType,parents,modifiedTime,size,owners",
+        fields: str = 'id,name,mimeType,parents,modifiedTime,size,owners',
     ) -> dict[str, Any]:
         """Return metadata for a single Drive file.
 
@@ -215,8 +215,8 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         return self._client.get(
-            f"/files/{file_id}",
-            params={"fields": fields, "supportsAllDrives": _SUPPORTS_ALL_DRIVES},
+            f'/files/{file_id}',
+            params={'fields': fields, 'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -231,14 +231,14 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         response = self._client.get(
-            f"/files/{file_id}",
-            params={"alt": "media", "supportsAllDrives": _SUPPORTS_ALL_DRIVES},
+            f'/files/{file_id}',
+            params={'alt': 'media', 'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
         )
         return {
-            "file_id": file_id,
-            "content_base64": base64.b64encode(response.body).decode("ascii"),
-            "size": len(response.body),
-            "content_type": response.header("Content-Type"),
+            'file_id': file_id,
+            'content_base64': base64.b64encode(response.body).decode('ascii'),
+            'size': len(response.body),
+            'content_type': response.header('Content-Type'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.EXPORT))
@@ -252,16 +252,16 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         if not mime_type:
-            raise ValueError("mime_type must be a non-empty string")
+            raise ValueError('mime_type must be a non-empty string')
         response = self._client.get(
-            f"/files/{file_id}/export",
-            params={"mimeType": mime_type, "supportsAllDrives": _SUPPORTS_ALL_DRIVES},
+            f'/files/{file_id}/export',
+            params={'mimeType': mime_type, 'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
         )
         return {
-            "file_id": file_id,
-            "mime_type": mime_type,
-            "content_base64": base64.b64encode(response.body).decode("ascii"),
-            "size": len(response.body),
+            'file_id': file_id,
+            'mime_type': mime_type,
+            'content_base64': base64.b64encode(response.body).decode('ascii'),
+            'size': len(response.body),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -277,16 +277,16 @@ class GoogleDriveToolSet:
         ``id``. Pass ``id`` as ``parent_id`` to other create/move tools.
         """
         if not name:
-            raise ValueError("name must be a non-empty string")
+            raise ValueError('name must be a non-empty string')
         payload: dict[str, Any] = {
-            "name": name,
-            "mimeType": "application/vnd.google-apps.folder",
+            'name': name,
+            'mimeType': 'application/vnd.google-apps.folder',
         }
         if parent_id is not None:
-            payload["parents"] = [parent_id]
+            payload['parents'] = [parent_id]
         return self._client.post(
-            "/files",
-            params={"supportsAllDrives": _SUPPORTS_ALL_DRIVES},
+            '/files',
+            params={'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
             json=payload,
         ).json()
 
@@ -301,10 +301,10 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         response = self._client.delete(
-            f"/files/{file_id}",
-            params={"supportsAllDrives": _SUPPORTS_ALL_DRIVES},
+            f'/files/{file_id}',
+            params={'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
         )
-        return {"deleted": True, "status": response.status}
+        return {'deleted': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def trash_file(self, file_id: Any) -> dict[str, Any]:
@@ -315,9 +315,9 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         return self._client.patch(
-            f"/files/{file_id}",
-            params={"supportsAllDrives": _SUPPORTS_ALL_DRIVES},
-            json={"trashed": True},
+            f'/files/{file_id}',
+            params={'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
+            json={'trashed': True},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -328,9 +328,9 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         return self._client.patch(
-            f"/files/{file_id}",
-            params={"supportsAllDrives": _SUPPORTS_ALL_DRIVES},
-            json={"trashed": False},
+            f'/files/{file_id}',
+            params={'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
+            json={'trashed': False},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -341,11 +341,11 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         if not new_name:
-            raise ValueError("new_name must be non-empty")
+            raise ValueError('new_name must be non-empty')
         return self._client.patch(
-            f"/files/{file_id}",
-            params={"supportsAllDrives": _SUPPORTS_ALL_DRIVES},
-            json={"name": new_name},
+            f'/files/{file_id}',
+            params={'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
+            json={'name': new_name},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -362,10 +362,10 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         if not patch:
-            raise ValueError("patch must contain at least one field")
+            raise ValueError('patch must contain at least one field')
         return self._client.patch(
-            f"/files/{file_id}",
-            params={"supportsAllDrives": _SUPPORTS_ALL_DRIVES},
+            f'/files/{file_id}',
+            params={'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
             json=patch,
         ).json()
 
@@ -385,12 +385,12 @@ class GoogleDriveToolSet:
         file_id = _extract_file_id(file_id)
         payload: dict[str, Any] = {}
         if name is not None:
-            payload["name"] = name
+            payload['name'] = name
         if parent_id is not None:
-            payload["parents"] = [parent_id]
+            payload['parents'] = [parent_id]
         return self._client.post(
-            f"/files/{file_id}/copy",
-            params={"supportsAllDrives": _SUPPORTS_ALL_DRIVES},
+            f'/files/{file_id}/copy',
+            params={'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
             json=payload,
         ).json()
 
@@ -411,15 +411,15 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         if not add_parent_id:
-            raise ValueError("add_parent_id must be non-empty")
+            raise ValueError('add_parent_id must be non-empty')
         params: dict[str, Any] = {
-            "addParents": add_parent_id,
-            "supportsAllDrives": _SUPPORTS_ALL_DRIVES,
+            'addParents': add_parent_id,
+            'supportsAllDrives': _SUPPORTS_ALL_DRIVES,
         }
         if remove_parent_id is not None:
-            params["removeParents"] = remove_parent_id
+            params['removeParents'] = remove_parent_id
         return self._client.patch(
-            f"/files/{file_id}",
+            f'/files/{file_id}',
             params=params,
             json={},
         ).json()
@@ -431,8 +431,8 @@ class GoogleDriveToolSet:
         Destructive and irreversible — confirm with the user before calling.
         Returns ``{"emptied": True, "status": ...}``.
         """
-        response = self._client.delete("/files/trash")
-        return {"emptied": True, "status": response.status}
+        response = self._client.delete('/files/trash')
+        return {'emptied': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_shortcut(
@@ -448,17 +448,17 @@ class GoogleDriveToolSet:
         Drive ID of the file being pointed at.
         """
         if not target_id or not name:
-            raise ValueError("target_id and name must be non-empty")
+            raise ValueError('target_id and name must be non-empty')
         payload: dict[str, Any] = {
-            "name": name,
-            "mimeType": "application/vnd.google-apps.shortcut",
-            "shortcutDetails": {"targetId": target_id},
+            'name': name,
+            'mimeType': 'application/vnd.google-apps.shortcut',
+            'shortcutDetails': {'targetId': target_id},
         }
         if parent_id is not None:
-            payload["parents"] = [parent_id]
+            payload['parents'] = [parent_id]
         return self._client.post(
-            "/files",
-            params={"supportsAllDrives": _SUPPORTS_ALL_DRIVES},
+            '/files',
+            params={'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
             json=payload,
         ).json()
 
@@ -479,11 +479,11 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         if page_size < 1 or page_size > 1000:
-            raise ValueError("page_size must be between 1 and 1000")
-        params: dict[str, Any] = {"pageSize": page_size}
+            raise ValueError('page_size must be between 1 and 1000')
+        params: dict[str, Any] = {'pageSize': page_size}
         if page_token is not None:
-            params["pageToken"] = page_token
-        return self._client.get(f"/files/{file_id}/revisions", params=params).json()
+            params['pageToken'] = page_token
+        return self._client.get(f'/files/{file_id}/revisions', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_revision(self, file_id: Any, revision_id: str) -> dict[str, Any]:
@@ -493,8 +493,8 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         if not revision_id:
-            raise ValueError("revision_id must be non-empty")
-        return self._client.get(f"/files/{file_id}/revisions/{revision_id}").json()
+            raise ValueError('revision_id must be non-empty')
+        return self._client.get(f'/files/{file_id}/revisions/{revision_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_revision(self, file_id: Any, revision_id: str) -> dict[str, Any]:
@@ -504,9 +504,9 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         if not revision_id:
-            raise ValueError("revision_id must be non-empty")
-        self._client.delete(f"/files/{file_id}/revisions/{revision_id}")
-        return {"file_id": file_id, "revision_id": revision_id, "deleted": True}
+            raise ValueError('revision_id must be non-empty')
+        self._client.delete(f'/files/{file_id}/revisions/{revision_id}')
+        return {'file_id': file_id, 'revision_id': revision_id, 'deleted': True}
 
     # MARK: - Permissions
 
@@ -519,8 +519,8 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         return self._client.get(
-            f"/files/{file_id}/permissions",
-            params={"supportsAllDrives": _SUPPORTS_ALL_DRIVES},
+            f'/files/{file_id}/permissions',
+            params={'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -542,22 +542,22 @@ class GoogleDriveToolSet:
         the new permission resource.
         """
         file_id = _extract_file_id(file_id)
-        if permission_type not in {"user", "group", "domain", "anyone"}:
-            raise ValueError("permission_type must be one of: user, group, domain, anyone")
-        if role not in {"owner", "organizer", "fileOrganizer", "writer", "commenter", "reader"}:
+        if permission_type not in {'user', 'group', 'domain', 'anyone'}:
+            raise ValueError('permission_type must be one of: user, group, domain, anyone')
+        if role not in {'owner', 'organizer', 'fileOrganizer', 'writer', 'commenter', 'reader'}:
             raise ValueError(
-                "role must be one of: owner, organizer, fileOrganizer, writer, commenter, reader"
+                'role must be one of: owner, organizer, fileOrganizer, writer, commenter, reader'
             )
-        payload: dict[str, Any] = {"type": permission_type, "role": role}
+        payload: dict[str, Any] = {'type': permission_type, 'role': role}
         if email_address is not None:
-            payload["emailAddress"] = email_address
+            payload['emailAddress'] = email_address
         if domain is not None:
-            payload["domain"] = domain
+            payload['domain'] = domain
         return self._client.post(
-            f"/files/{file_id}/permissions",
+            f'/files/{file_id}/permissions',
             params={
-                "sendNotificationEmail": str(send_notification_email).lower(),
-                "supportsAllDrives": _SUPPORTS_ALL_DRIVES,
+                'sendNotificationEmail': str(send_notification_email).lower(),
+                'supportsAllDrives': _SUPPORTS_ALL_DRIVES,
             },
             json=payload,
         ).json()
@@ -572,12 +572,12 @@ class GoogleDriveToolSet:
         """Patch a permission (typically to change the ``role``)."""
         file_id = _extract_file_id(file_id)
         if not permission_id:
-            raise ValueError("permission_id must be non-empty")
+            raise ValueError('permission_id must be non-empty')
         if not patch:
-            raise ValueError("patch must contain at least one field")
+            raise ValueError('patch must contain at least one field')
         return self._client.patch(
-            f"/files/{file_id}/permissions/{permission_id}",
-            params={"supportsAllDrives": _SUPPORTS_ALL_DRIVES},
+            f'/files/{file_id}/permissions/{permission_id}',
+            params={'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
             json=patch,
         ).json()
 
@@ -589,12 +589,12 @@ class GoogleDriveToolSet:
         """
         file_id = _extract_file_id(file_id)
         if not permission_id:
-            raise ValueError("permission_id must be non-empty")
+            raise ValueError('permission_id must be non-empty')
         self._client.delete(
-            f"/files/{file_id}/permissions/{permission_id}",
-            params={"supportsAllDrives": _SUPPORTS_ALL_DRIVES},
+            f'/files/{file_id}/permissions/{permission_id}',
+            params={'supportsAllDrives': _SUPPORTS_ALL_DRIVES},
         )
-        return {"file_id": file_id, "permission_id": permission_id, "deleted": True}
+        return {'file_id': file_id, 'permission_id': permission_id, 'deleted': True}
 
     # MARK: - Drives and changes
 
@@ -611,11 +611,11 @@ class GoogleDriveToolSet:
         ``nextPageToken``.
         """
         if page_size < 1 or page_size > 100:
-            raise ValueError("page_size must be between 1 and 100")
-        params: dict[str, Any] = {"pageSize": page_size}
+            raise ValueError('page_size must be between 1 and 100')
+        params: dict[str, Any] = {'pageSize': page_size}
         if page_token is not None:
-            params["pageToken"] = page_token
-        return self._client.get("/drives", params=params).json()
+            params['pageToken'] = page_token
+        return self._client.get('/drives', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_changes(
@@ -632,17 +632,17 @@ class GoogleDriveToolSet:
         "newStartPageToken": ...}``.
         """
         if not page_token:
-            raise ValueError("page_token must be a non-empty string")
+            raise ValueError('page_token must be a non-empty string')
         if page_size < 1 or page_size > 1000:
-            raise ValueError("page_size must be between 1 and 1000")
+            raise ValueError('page_size must be between 1 and 1000')
         return self._client.get(
-            "/changes",
+            '/changes',
             params={
-                "pageToken": page_token,
-                "pageSize": page_size,
-                "includeRemoved": str(include_removed).lower(),
-                "includeItemsFromAllDrives": "true",
-                "supportsAllDrives": _SUPPORTS_ALL_DRIVES,
+                'pageToken': page_token,
+                'pageSize': page_size,
+                'includeRemoved': str(include_removed).lower(),
+                'includeItemsFromAllDrives': 'true',
+                'supportsAllDrives': _SUPPORTS_ALL_DRIVES,
             },
         ).json()
 
@@ -653,9 +653,9 @@ class GoogleDriveToolSet:
         Returns ``{"startPageToken": "..."}`` — pass that string to
         ``list_changes`` to begin tracking incremental changes.
         """
-        return self._client.get("/changes/startPageToken").json()
+        return self._client.get('/changes/startPageToken').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
-    def get_about(self, fields: str = "user,storageQuota,maxUploadSize") -> dict[str, Any]:
+    def get_about(self, fields: str = 'user,storageQuota,maxUploadSize') -> dict[str, Any]:
         """Return Drive ``about`` info (user, quota, upload limits)."""
-        return self._client.get("/about", params={"fields": fields}).json()
+        return self._client.get('/about', params={'fields': fields}).json()

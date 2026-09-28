@@ -50,7 +50,7 @@ from ...runtime.http import HttpClient, HttpTransport
 
 # MARK: Constants
 
-_PATH_PARAM = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
+_PATH_PARAM = re.compile(r'\{([a-zA-Z_][a-zA-Z0-9_]*)\}')
 
 
 # MARK: Endpoint definition
@@ -80,7 +80,7 @@ class HttpEndpoint:
     name: str
     method: str
     path: str
-    description: str = ""
+    description: str = ''
     permissions: PermissionSet = field(default_factory=lambda: PermissionSet(PermissionFlag.READ))
     destructive: bool = False
     query_params: tuple[str, ...] = ()
@@ -90,15 +90,15 @@ class HttpEndpoint:
 
     def __post_init__(self) -> None:
         if not self.name:
-            raise ValueError("HttpEndpoint.name is required")
+            raise ValueError('HttpEndpoint.name is required')
         if not self.method:
-            raise ValueError("HttpEndpoint.method is required")
+            raise ValueError('HttpEndpoint.method is required')
         if not self.path:
-            raise ValueError("HttpEndpoint.path is required")
+            raise ValueError('HttpEndpoint.path is required')
         # Ensure body params are only allowed on bodied verbs.
-        if self.body_params and self.method.upper() in {"GET", "DELETE", "HEAD"}:
+        if self.body_params and self.method.upper() in {'GET', 'DELETE', 'HEAD'}:
             raise ValueError(
-                f"HttpEndpoint {self.name!r}: body_params not allowed on {self.method}"
+                f'HttpEndpoint {self.name!r}: body_params not allowed on {self.method}'
             )
 
     @property
@@ -128,7 +128,7 @@ class GenericHttpConnector:
         self.connection = connection
         self._endpoints = tuple(endpoints)
         if not self._endpoints:
-            raise ValueError("GenericHttpConnector requires at least one endpoint")
+            raise ValueError('GenericHttpConnector requires at least one endpoint')
         self._client = HttpClient(
             base_url=base_url,
             transport=transport,
@@ -156,13 +156,13 @@ class GenericHttpConnector:
         def tool(**kwargs: Any) -> Any:
             unknown = set(kwargs) - allowed
             if unknown:
-                raise TypeError(f"{endpoint.name}() got unexpected arguments: {sorted(unknown)!r}")
+                raise TypeError(f'{endpoint.name}() got unexpected arguments: {sorted(unknown)!r}')
 
             path_values: dict[str, Any] = {}
             for placeholder in endpoint.path_params:
                 if placeholder not in kwargs:
                     raise TypeError(
-                        f"{endpoint.name}() missing required path argument: {placeholder!r}"
+                        f'{endpoint.name}() missing required path argument: {placeholder!r}'
                     )
                 path_values[placeholder] = kwargs[placeholder]
             rendered_path = endpoint.path.format(**path_values)
@@ -191,7 +191,7 @@ class GenericHttpConnector:
         tool.__name__ = endpoint.name
         tool.__qualname__ = endpoint.name
         tool.__doc__ = endpoint.description or (
-            f"{endpoint.method} {endpoint.path} on {self.metadata.display_name}"
+            f'{endpoint.method} {endpoint.path} on {self.metadata.display_name}'
         )
         tool.permissions = endpoint.permissions  # type: ignore[attr-defined]
         tool.destructive = endpoint.destructive  # type: ignore[attr-defined]

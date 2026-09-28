@@ -49,7 +49,7 @@ class AuthStrategy(ABC):
         The returned dictionary must be JSON-serializable and must not
         include any secret material.
         """
-        return {"mode": self.mode.value}
+        return {'mode': self.mode.value}
 
 
 # MARK: - No-op strategy

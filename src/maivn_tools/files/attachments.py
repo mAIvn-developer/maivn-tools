@@ -16,7 +16,7 @@ Three sources are supported:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from hashlib import sha256
 from typing import Any
 
@@ -25,12 +25,12 @@ from .mime import DEFAULT_MIME_TYPE, classify_kind, detect_mime_type, guess_mime
 # MARK: Source enum
 
 
-class AttachmentSource(str, Enum):
+class AttachmentSource(StrEnum):
     """Where the attachment payload lives."""
 
-    INLINE = "inline"
-    URL = "url"
-    PATH = "path"
+    INLINE = 'inline'
+    URL = 'url'
+    PATH = 'path'
 
 
 # MARK: Attachment model
@@ -69,7 +69,7 @@ class Attachment:
 
     def __post_init__(self) -> None:
         if not self.name:
-            raise ValueError("Attachment.name is required")
+            raise ValueError('Attachment.name is required')
         provided = [
             self.content is not None,
             self.url is not None,
@@ -79,27 +79,27 @@ class Attachment:
             raise ValueError("Attachment requires exactly one of 'content', 'url', or 'path'")
 
         if self.content is not None:
-            object.__setattr__(self, "source", AttachmentSource.INLINE)
+            object.__setattr__(self, 'source', AttachmentSource.INLINE)
             if self.mime_type == DEFAULT_MIME_TYPE:
                 object.__setattr__(
-                    self, "mime_type", detect_mime_type(self.content, filename=self.name)
+                    self, 'mime_type', detect_mime_type(self.content, filename=self.name)
                 )
             if self.size is None:
-                object.__setattr__(self, "size", len(self.content))
+                object.__setattr__(self, 'size', len(self.content))
             if self.checksum is None:
-                object.__setattr__(self, "checksum", sha256(self.content).hexdigest())
+                object.__setattr__(self, 'checksum', sha256(self.content).hexdigest())
         elif self.url is not None:
-            object.__setattr__(self, "source", AttachmentSource.URL)
+            object.__setattr__(self, 'source', AttachmentSource.URL)
             if self.mime_type == DEFAULT_MIME_TYPE:
                 guess = guess_mime_type(self.name)
                 if guess is not None:
-                    object.__setattr__(self, "mime_type", guess)
+                    object.__setattr__(self, 'mime_type', guess)
         else:
-            object.__setattr__(self, "source", AttachmentSource.PATH)
+            object.__setattr__(self, 'source', AttachmentSource.PATH)
             if self.mime_type == DEFAULT_MIME_TYPE:
                 guess = guess_mime_type(self.name)
                 if guess is not None:
-                    object.__setattr__(self, "mime_type", guess)
+                    object.__setattr__(self, 'mime_type', guess)
 
     @property
     def kind(self) -> str:
@@ -113,13 +113,13 @@ class Attachment:
         Consumers that need the bytes should read :attr:`content` directly.
         """
         return {
-            "name": self.name,
-            "mime_type": self.mime_type,
-            "source": self.source.value,
-            "url": self.url,
-            "path": self.path,
-            "size": self.size,
-            "checksum": self.checksum,
-            "kind": self.kind,
-            "extras": dict(self.extras),
+            'name': self.name,
+            'mime_type': self.mime_type,
+            'source': self.source.value,
+            'url': self.url,
+            'path': self.path,
+            'size': self.size,
+            'checksum': self.checksum,
+            'kind': self.kind,
+            'extras': dict(self.extras),
         }

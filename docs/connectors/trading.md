@@ -2,21 +2,17 @@
 
 Brokerage, exchange, and market-data providers. **All order-placement
 and cancellation tools are explicitly marked destructive -- they move
-real money on a live account.** Defaults favor paper/sandbox endpoints
-where the provider supports them (Alpaca `paper=True`, Tradier
-`sandbox=True`, Binance `base_url` switchable to testnet). Live trading
-requires explicit opt-in (`paper=False`, `sandbox=False`, live base URL).
-Coinbase, Kraken, Interactive Brokers, and Schwab have no separate
-provider sandbox host -- every order tool on those connectors targets the
-authenticated live account and must be guarded with explicit user
-confirmation.
+real money on a live account.** Alpaca defaults to `paper=True` and Tradier to `sandbox=True`. Binance
+defaults to its live API URL; select a testnet URL explicitly when testing.
+Other connectors use their configured endpoint and authenticated account.
+Verify that account and endpoint before enabling order tools.
 
 > When integrating these into an agent, prefer
 > `add_toolset(..., exclude_tags=["destructive"])` or
 > `include_tags=["read"]` for analyst-style agents.
 
 All connectors follow the same agent-ready pattern: list/search tools
-return compact summaries with a stable ordinal ref (`position_ref`,
+return compact summaries with a response-local ordinal ref (`position_ref`,
 `order_ref`, `account_ref`, `asset_ref`, `product_ref`, `ticker_ref`,
 `contract_ref`, etc.) plus user-facing fields (symbol / pair, side,
 quantity, price, status, timestamps). Raw provider order IDs / txids /
@@ -60,7 +56,7 @@ Tools: `get_account`,
   explicit user confirmation; list tools echo the active mode
   (`"paper"` / `"live"`) in a `mode` field on the response.
 - `list_positions`, `list_assets`, `list_orders` return compact
-  summaries with stable refs (`position_ref`, `asset_ref`,
+  summaries with display refs (`position_ref`, `asset_ref`,
   `order_ref`) plus user-facing fields (`symbol`, `qty`, `side`,
   `market_value`, `unrealized_pl`, order `status`, `filled_qty`,
   `filled_avg_price`).
@@ -77,7 +73,7 @@ Tools: `get_account`,
 Example:
 
 ```python
-orders = connector.list_orders(status="open")
+orders = connector.list_orders(status="open", include_ids=True)
 # {"orders": [{"order_ref": "order_1", "symbol": "AAPL", "side": "buy", ...}], "count": 5}
 connector.cancel_order(orders["orders"][0])  # accepts the dict if include_ids=True was used
 ```
@@ -104,7 +100,7 @@ Tools:
 ### Agent-ready behavior
 
 - `list_tickers`, `list_news`, `list_option_contracts` return compact
-  summaries with stable refs (`ticker_ref`, `article_ref`,
+  summaries with display refs (`ticker_ref`, `article_ref`,
   `contract_ref`) plus user-facing fields (`ticker`, `name`, `market`,
   article `title` / `author` / `published_utc`, contract `expiration_date`
   / `strike_price` / `contract_type`).
@@ -143,8 +139,7 @@ Tools: `get_profile`, `get_balances(account_id)`,
   explicit user confirmation. `place_equity_order` also accepts a
   per-call `preview=True` flag that validates the order without
   submitting it (recommended for testing intent on the live host).
-- `list_positions`, `list_orders` return compact summaries with stable
-  refs (`position_ref`, `order_ref`) plus user-facing fields
+- `list_positions`, `list_orders` return compact summaries with response-local refs (`position_ref`, `order_ref`) plus user-facing fields
   (`symbol`, `quantity`, `cost_basis`, order `side`, `status`,
   `quantity`, `price`).
 - Raw Tradier numeric IDs hidden by default; pass `include_ids=True` to
@@ -178,12 +173,11 @@ Tools: `authentication_status`, `reauthenticate`, `list_accounts`,
 
 ### Agent-ready behavior
 
-- IBKR has no public sandbox via the Client Portal Web API -- order
+- The IBKR connector uses the configured Client Portal Gateway; order
   tools target whichever account is logged into the local gateway. Use
   a paper-trading account when testing; the connector reports the
   account `type` (e.g. `"DEMO"`) via `list_accounts`.
-- `list_positions`, `list_orders` return compact summaries with stable
-  refs (`position_ref`, `order_ref`) plus user-facing fields
+- `list_positions`, `list_orders` return compact summaries with response-local refs (`position_ref`, `order_ref`) plus user-facing fields
   (`symbol` / `ticker`, `position`, `mkt_price`, `mkt_value`, `avg_cost`,
   order `side`, `status`, `quantity`, `order_type`).
 - Raw IBKR `orderId` and contract `conid` hidden by default; pass
@@ -221,11 +215,10 @@ Tools: `list_accounts(limit, cursor, include_ids, raw)`,
 
 ### Agent-ready behavior
 
-- Coinbase Advanced Trade has no separate sandbox host -- orders go to
-  the live account. Confirm with the user before calling `create_order`
+- The Coinbase connector defaults to the production API. Confirm with the user before calling `create_order`
   or `cancel_orders`.
 - `list_accounts`, `list_products`, `list_orders` return compact
-  summaries with stable refs (`account_ref`, `product_ref`,
+  summaries with display refs (`account_ref`, `product_ref`,
   `order_ref`) plus user-facing fields (`name`, `currency`,
   `available_balance`, `product_id` like `"BTC-USD"`, `base_currency`,
   `quote_currency`, `price`, order `side`, `status`, `filled_size`,
@@ -255,7 +248,7 @@ Tools: `server_time`, `system_status`, `get_assets`, `get_asset_pairs`,
 
 ### Agent-ready behavior
 
-- Kraken has no separate sandbox host -- orders go to the live account.
+- The Kraken connector defaults to the production API.
   Confirm with the user before calling `add_order` or `cancel_order`.
   `add_order` accepts a per-call `validate=True` flag that runs the
   order as a dry-run without submitting it (recommended for testing).
@@ -322,11 +315,10 @@ Tools: `list_accounts(fields, include_ids, raw)`,
 
 ### Agent-ready behavior
 
-- Schwab does not provide a separate sandbox endpoint -- every order
+- The Schwab connector defaults to the production API -- every order
   tool places real orders on the linked account. Confirm with the
   user before calling `place_order` or `cancel_order`.
-- `list_accounts`, `list_orders` return compact summaries with stable
-  refs (`account_ref`, `order_ref`) plus user-facing fields
+- `list_accounts`, `list_orders` return compact summaries with response-local refs (`account_ref`, `order_ref`) plus user-facing fields
   (`account_number`, `type`, `current_balance`, order `symbol`,
   `side`, `quantity`, `filled_quantity`, `order_type`, `status`,
   `price`, `duration`, `entered_time`).

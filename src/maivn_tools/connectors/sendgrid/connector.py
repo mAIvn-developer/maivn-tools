@@ -16,38 +16,38 @@ from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_LISTS_OUTPUT, LIST_TEMPLATES_OUTPUT
 
 
-@toolset(prefix="sendgrid")
+@toolset(prefix='sendgrid')
 class SendGridToolSet:
     """A connector for the SendGrid Web API v3."""
 
     metadata = ProviderMetadata(
-        name="sendgrid",
-        display_name="SendGrid",
-        version="0.1.0",
-        description="Send email, manage templates, contacts, lists, and suppressions.",
+        name='sendgrid',
+        display_name='SendGrid',
+        version='0.1.0',
+        description='Send email, manage templates, contacts, lists, and suppressions.',
         auth_modes=(AuthMode.BEARER, AuthMode.API_KEY),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://docs.sendgrid.com/api-reference/",
-        homepage_url="https://sendgrid.com/",
-        tags=("email", "transactional", "marketing"),
+        documentation_url='https://docs.sendgrid.com/api-reference/',
+        homepage_url='https://sendgrid.com/',
+        tags=('email', 'transactional', 'marketing'),
     )
 
     def __init__(
         self,
         *,
         api_key: str,
-        base_url: str = "https://api.sendgrid.com",
+        base_url: str = 'https://api.sendgrid.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(api_key),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -62,12 +62,12 @@ class SendGridToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "list_ref": f"list_{index}",
-            "name": list_obj.get("name", ""),
-            "contact_count": list_obj.get("contact_count", 0),
+            'list_ref': f'list_{index}',
+            'name': list_obj.get('name', ''),
+            'contact_count': list_obj.get('contact_count', 0),
         }
         if include_ids:
-            summary["list_id"] = list_obj.get("id", "")
+            summary['list_id'] = list_obj.get('id', '')
         return summary
 
     @staticmethod
@@ -79,13 +79,13 @@ class SendGridToolSet:
         Returns the next-page token / URL, or ``None`` when there are no more
         pages.
         """
-        token = payload.get("next_page_token")
+        token = payload.get('next_page_token')
         if isinstance(token, str) and token:
             return token
-        metadata = payload.get("_metadata")
+        metadata = payload.get('_metadata')
         if isinstance(metadata, dict):
-            metadata_dict = cast("dict[str, Any]", metadata)
-            next_url = metadata_dict.get("next")
+            metadata_dict = cast('dict[str, Any]', metadata)
+            next_url = metadata_dict.get('next')
             if isinstance(next_url, str) and next_url:
                 return next_url
         return None
@@ -98,13 +98,13 @@ class SendGridToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "template_ref": f"template_{index}",
-            "name": template.get("name", ""),
-            "generation": template.get("generation", ""),
-            "updated_at": template.get("updated_at", ""),
+            'template_ref': f'template_{index}',
+            'name': template.get('name', ''),
+            'generation': template.get('generation', ''),
+            'updated_at': template.get('updated_at', ''),
         }
         if include_ids:
-            summary["template_id"] = template.get("id", "")
+            summary['template_id'] = template.get('id', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -133,38 +133,38 @@ class SendGridToolSet:
         with ``X-Message-Id`` header).
         """
         if not from_address or not subject:
-            raise ValueError("from_address and subject must be non-empty")
-        recipients = [{"email": addr} for addr in (to if isinstance(to, list) else [to])]
+            raise ValueError('from_address and subject must be non-empty')
+        recipients = [{'email': addr} for addr in (to if isinstance(to, list) else [to])]
         if not recipients:
-            raise ValueError("to must contain at least one recipient")
-        personalizations: dict[str, Any] = {"to": recipients, "subject": subject}
+            raise ValueError('to must contain at least one recipient')
+        personalizations: dict[str, Any] = {'to': recipients, 'subject': subject}
         if cc is not None:
-            personalizations["cc"] = [{"email": a} for a in cc]
+            personalizations['cc'] = [{'email': a} for a in cc]
         if bcc is not None:
-            personalizations["bcc"] = [{"email": a} for a in bcc]
+            personalizations['bcc'] = [{'email': a} for a in bcc]
         if dynamic_template_data is not None:
-            personalizations["dynamic_template_data"] = dynamic_template_data
+            personalizations['dynamic_template_data'] = dynamic_template_data
         body: dict[str, Any] = {
-            "personalizations": [personalizations],
-            "from": {"email": from_address},
+            'personalizations': [personalizations],
+            'from': {'email': from_address},
         }
         contents: list[dict[str, str]] = []
         if text is not None:
-            contents.append({"type": "text/plain", "value": text})
+            contents.append({'type': 'text/plain', 'value': text})
         if html is not None:
-            contents.append({"type": "text/html", "value": html})
+            contents.append({'type': 'text/html', 'value': html})
         if contents:
-            body["content"] = contents
+            body['content'] = contents
         if template_id is not None:
-            body["template_id"] = template_id
+            body['template_id'] = template_id
         if attachments is not None:
-            body["attachments"] = attachments
+            body['attachments'] = attachments
         if categories is not None:
-            body["categories"] = categories
+            body['categories'] = categories
         if send_at is not None:
-            body["send_at"] = send_at
-        response = self._client.post("/v3/mail/send", json=body)
-        return {"status": response.status, "headers": dict(response.headers)}
+            body['send_at'] = send_at
+        response = self._client.post('/v3/mail/send', json=body)
+        return {'status': response.status, 'headers': dict(response.headers)}
 
     # MARK: - Templates
 
@@ -173,7 +173,7 @@ class SendGridToolSet:
     def list_templates(
         self,
         *,
-        generations: str = "dynamic",
+        generations: str = 'dynamic',
         page_size: int = 200,
         page_token: str | None = None,
         include_ids: bool = False,
@@ -192,20 +192,20 @@ class SendGridToolSet:
         next page.
         """
         if page_size < 1 or page_size > 200:
-            raise ValueError("page_size must be between 1 and 200")
+            raise ValueError('page_size must be between 1 and 200')
         params: dict[str, Any] = {
-            "generations": generations,
-            "page_size": page_size,
+            'generations': generations,
+            'page_size': page_size,
         }
         if page_token is not None:
-            params["page_token"] = page_token
+            params['page_token'] = page_token
         payload: dict[str, Any] = self._client.get(
-            "/v3/templates",
+            '/v3/templates',
             params=params,
         ).json()
         if include_raw:
             return payload
-        raw_templates: list[Any] = payload.get("templates") or payload.get("result") or []
+        raw_templates: list[Any] = payload.get('templates') or payload.get('result') or []
         templates: list[dict[str, Any]] = [t for t in raw_templates if isinstance(t, dict)]
         summaries = [
             self._template_summary(t, index=i, include_ids=include_ids)
@@ -213,9 +213,9 @@ class SendGridToolSet:
         ]
         next_page_token = self._next_page_token(payload)
         return {
-            "templates": summaries,
-            "count": len(summaries),
-            "next_page_token": next_page_token,
+            'templates': summaries,
+            'count': len(summaries),
+            'next_page_token': next_page_token,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -225,30 +225,30 @@ class SendGridToolSet:
         Use after ``list_templates(include_ids=True)``.
         """
         if not template_id:
-            raise ValueError("template_id must be a non-empty string")
-        return self._client.get(f"/v3/templates/{template_id}").json()
+            raise ValueError('template_id must be a non-empty string')
+        return self._client.get(f'/v3/templates/{template_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
-    def create_template(self, *, name: str, generation: str = "dynamic") -> dict[str, Any]:
+    def create_template(self, *, name: str, generation: str = 'dynamic') -> dict[str, Any]:
         """Create a new template container.
 
         Returns the new template resource. Add a version with the version
         endpoints (not in this surface).
         """
         if not name:
-            raise ValueError("name must be a non-empty string")
+            raise ValueError('name must be a non-empty string')
         return self._client.post(
-            "/v3/templates",
-            json={"name": name, "generation": generation},
+            '/v3/templates',
+            json={'name': name, 'generation': generation},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_template(self, template_id: str) -> dict[str, Any]:
         """Permanently delete a template. Destructive — confirm with the user first."""
         if not template_id:
-            raise ValueError("template_id must be a non-empty string")
-        self._client.delete(f"/v3/templates/{template_id}")
-        return {"id": template_id, "deleted": True}
+            raise ValueError('template_id must be a non-empty string')
+        self._client.delete(f'/v3/templates/{template_id}')
+        return {'id': template_id, 'deleted': True}
 
     # MARK: - Marketing contacts and lists
 
@@ -258,7 +258,7 @@ class SendGridToolSet:
 
         Returns ``{"contact_count": ..., "billable_count": ...}``.
         """
-        return self._client.get("/v3/marketing/contacts/count").json()
+        return self._client.get('/v3/marketing/contacts/count').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def upsert_marketing_contacts(
@@ -272,11 +272,11 @@ class SendGridToolSet:
         Returns ``{"job_id": ...}``. Each contact needs at least ``email``.
         """
         if not contacts:
-            raise ValueError("contacts must be non-empty")
-        body: dict[str, Any] = {"contacts": contacts}
+            raise ValueError('contacts must be non-empty')
+        body: dict[str, Any] = {'contacts': contacts}
         if list_ids is not None:
-            body["list_ids"] = list_ids
-        return self._client.put("/v3/marketing/contacts", json=body).json()
+            body['list_ids'] = list_ids
+        return self._client.put('/v3/marketing/contacts', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_LISTS_OUTPUT)
@@ -300,17 +300,17 @@ class SendGridToolSet:
         the next page.
         """
         if page_size < 1 or page_size > 1000:
-            raise ValueError("page_size must be between 1 and 1000")
-        params: dict[str, Any] = {"page_size": page_size}
+            raise ValueError('page_size must be between 1 and 1000')
+        params: dict[str, Any] = {'page_size': page_size}
         if page_token is not None:
-            params["page_token"] = page_token
+            params['page_token'] = page_token
         payload: dict[str, Any] = self._client.get(
-            "/v3/marketing/lists",
+            '/v3/marketing/lists',
             params=params,
         ).json()
         if include_raw:
             return payload
-        raw_lists: list[Any] = payload.get("result") or []
+        raw_lists: list[Any] = payload.get('result') or []
         lists: list[dict[str, Any]] = [lst for lst in raw_lists if isinstance(lst, dict)]
         summaries = [
             self._list_summary(lst, index=i, include_ids=include_ids)
@@ -318,9 +318,9 @@ class SendGridToolSet:
         ]
         next_page_token = self._next_page_token(payload)
         return {
-            "lists": summaries,
-            "count": len(summaries),
-            "next_page_token": next_page_token,
+            'lists': summaries,
+            'count': len(summaries),
+            'next_page_token': next_page_token,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -330,8 +330,8 @@ class SendGridToolSet:
         Returns the new list resource.
         """
         if not name:
-            raise ValueError("name must be a non-empty string")
-        return self._client.post("/v3/marketing/lists", json={"name": name}).json()
+            raise ValueError('name must be a non-empty string')
+        return self._client.post('/v3/marketing/lists', json={'name': name}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_list(self, list_id: str, *, delete_contacts: bool = False) -> dict[str, Any]:
@@ -341,12 +341,12 @@ class SendGridToolSet:
         the account (not just the list).
         """
         if not list_id:
-            raise ValueError("list_id must be a non-empty string")
+            raise ValueError('list_id must be a non-empty string')
         self._client.delete(
-            f"/v3/marketing/lists/{list_id}",
-            params={"delete_contacts": str(delete_contacts).lower()},
+            f'/v3/marketing/lists/{list_id}',
+            params={'delete_contacts': str(delete_contacts).lower()},
         )
-        return {"id": list_id, "deleted": True}
+        return {'id': list_id, 'deleted': True}
 
     # MARK: - Suppressions
 
@@ -363,11 +363,11 @@ class SendGridToolSet:
         """
         params: dict[str, Any] = {}
         if start_time is not None:
-            params["start_time"] = start_time
+            params['start_time'] = start_time
         if end_time is not None:
-            params["end_time"] = end_time
+            params['end_time'] = end_time
         return self._client.get(
-            "/v3/suppression/bounces",
+            '/v3/suppression/bounces',
             params=params or None,
         ).json()
 
@@ -378,7 +378,7 @@ class SendGridToolSet:
         Returns the raw SendGrid payload. Each entry has ``email``,
         ``status``, ``reason``, ``created``.
         """
-        return self._client.get("/v3/suppression/blocks").json()
+        return self._client.get('/v3/suppression/blocks').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_bounce(self, email: str) -> dict[str, Any]:
@@ -387,9 +387,9 @@ class SendGridToolSet:
         This re-enables future sends to the address.
         """
         if not email:
-            raise ValueError("email must be a non-empty string")
-        self._client.delete(f"/v3/suppression/bounces/{email}")
-        return {"email": email, "deleted": True}
+            raise ValueError('email must be a non-empty string')
+        self._client.delete(f'/v3/suppression/bounces/{email}')
+        return {'email': email, 'deleted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_account_scopes(self) -> dict[str, Any]:
@@ -397,4 +397,4 @@ class SendGridToolSet:
 
         Useful for debugging permission issues.
         """
-        return self._client.get("/v3/scopes").json()
+        return self._client.get('/v3/scopes').json()

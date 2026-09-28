@@ -7,7 +7,7 @@ from .files import MicrosoftFilesToolSet
 from .outlook_mail import OutlookMailToolSet
 
 __all__ = [
-    "MicrosoftFilesToolSet",
-    "OutlookCalendarToolSet",
-    "OutlookMailToolSet",
+    'MicrosoftFilesToolSet',
+    'OutlookCalendarToolSet',
+    'OutlookMailToolSet',
 ]

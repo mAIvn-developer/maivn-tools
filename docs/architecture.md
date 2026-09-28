@@ -106,12 +106,11 @@ Concrete connectors built on the kernel:
 
 - **Public stability before breadth.** A new provider must reuse the kernel
   rather than fork it.
-- **Secrets never leak.** Strategies, metadata, and audit events all surface
-  redacted or hashed material only.
+- **Keep secrets out of public metadata.** Auth `describe()` omits credential
+  values. Application audit detail and provider errors need their own review.
 - **Read-only by default.** Destructive operations must declare themselves
   through permission flags and the `destructive` marker.
-- **No required heavyweight dependencies.** The kernel uses only the
-  standard library; extra dependencies live in optional extras or external
-  packages.
+- **No required heavyweight dependencies.** The HTTP transport uses the standard library. The package also requires
+  the SDK, contracts, Pydantic, and artifact rendering libraries.
 - **Composable with the SDK.** Tools register through `Agent.add_tool` /
   `Swarm.add_tool` like any other callable; no custom runtime is required.

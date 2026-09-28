@@ -6,8 +6,9 @@ guarantees, what it does not, and what connector authors must do.
 
 ## Credential handling
 
-- Secrets are never stored on dataclasses, in metadata, in connection
-  metadata, in audit events, or in exception messages.
+- Auth objects and webhook verifiers retain credentials in process memory.
+  Do not serialize their attributes or include secrets in metadata or audit events.
+  Provider errors and transport URLs can contain sensitive data; scrub them before logging.
 - `AuthStrategy.describe()` returns a JSON-safe view that omits all secret
   material. Connector authors must verify their custom strategies follow
   the same rule.
@@ -47,9 +48,9 @@ helper checks the granted set against the tool's declared set and raises
 
 - HMAC over the raw request body (not a stringified copy).
 - Constant-time digest comparison via `hmac.compare_digest`.
-- Optional timestamp tolerance to mitigate replay attacks. Connectors that
-  carry a timestamp header should always configure `timestamp_header` and
-  `tolerance_seconds`.
+- Optional numeric timestamp tolerance. This separate header is not included in
+  the body HMAC and is not authenticated replay protection by itself. Use the
+  provider's exact signed-message format and durable delivery deduplication.
 
 The default tolerance of 300 seconds matches the most common provider
 defaults. Reduce it where the provider permits.

@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import HightouchToolSet
 
-__all__ = ["HightouchToolSet"]
+__all__ = ['HightouchToolSet']

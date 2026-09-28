@@ -27,23 +27,23 @@ def _coerce_function_name(candidate: Any) -> str:
     """Accept a function name string, a function dict, or a list of such."""
     if isinstance(candidate, str):
         if not candidate:
-            raise ValueError("function_name is required")
+            raise ValueError('function_name is required')
         return candidate
     if isinstance(candidate, dict):
         candidate_dict = cast(dict[str, Any], candidate)
-        for key in ("FunctionName", "function_name", "name", "FunctionArn"):
+        for key in ('FunctionName', 'function_name', 'name', 'FunctionArn'):
             value = candidate_dict.get(key)
             if isinstance(value, str) and value:
                 return value
     if isinstance(candidate, list) and candidate:
         return _coerce_function_name(candidate[0])
-    raise ValueError("function_name must be a non-empty string (or a function dict)")
+    raise ValueError('function_name must be a non-empty string (or a function dict)')
 
 
 # MARK: Tool set
 
 
-@toolset(prefix="aws_lambda")
+@toolset(prefix='aws_lambda')
 class AmazonLambdaToolSet:
     """A connector for AWS Lambda.
 
@@ -55,15 +55,15 @@ class AmazonLambdaToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="aws_lambda",
-        display_name="AWS Lambda",
-        version="0.1.0",
-        description="Functions, invocations, aliases, versions, and concurrency.",
+        name='aws_lambda',
+        display_name='AWS Lambda',
+        version='0.1.0',
+        description='Functions, invocations, aliases, versions, and concurrency.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://docs.aws.amazon.com/lambda/latest/api/welcome.html",
-        homepage_url="https://aws.amazon.com/lambda/",
-        tags=("cloud", "compute", "aws"),
+        documentation_url='https://docs.aws.amazon.com/lambda/latest/api/welcome.html',
+        homepage_url='https://aws.amazon.com/lambda/',
+        tags=('cloud', 'compute', 'aws'),
     )
 
     def __init__(
@@ -71,27 +71,27 @@ class AmazonLambdaToolSet:
         *,
         access_key: str,
         secret_key: str,
-        region: str = "us-east-1",
+        region: str = 'us-east-1',
         session_token: str | None = None,
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_key or not secret_key:
-            raise ValueError("access_key and secret_key are required")
+            raise ValueError('access_key and secret_key are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=f"https://lambda.{region}.amazonaws.com",
+            base_url=f'https://lambda.{region}.amazonaws.com',
             auth=SigV4Auth(
                 access_key=access_key,
                 secret_key=secret_key,
                 region=region,
-                service="lambda",
+                service='lambda',
                 session_token=session_token,
             ),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -120,36 +120,36 @@ class AmazonLambdaToolSet:
         directly).
         """
         if max_items < 1 or max_items > 10000:
-            raise ValueError("max_items must be between 1 and 10000")
+            raise ValueError('max_items must be between 1 and 10000')
         if include_metadata:
             max_items = min(max_items, _SUMMARY_MAX)
-        params: dict[str, Any] = {"MaxItems": max_items}
+        params: dict[str, Any] = {'MaxItems': max_items}
         if marker is not None:
-            params["Marker"] = marker
+            params['Marker'] = marker
         if function_version is not None:
-            params["FunctionVersion"] = function_version
-        payload: dict[str, Any] = self._client.get("/2015-03-31/functions/", params=params).json()
+            params['FunctionVersion'] = function_version
+        payload: dict[str, Any] = self._client.get('/2015-03-31/functions/', params=params).json()
         if not include_metadata:
             return payload
-        items: list[Any] = payload.get("Functions") or []
+        items: list[Any] = payload.get('Functions') or []
         summaries: list[dict[str, Any]] = []
         for index, raw_function in enumerate(items, start=1):
             if not isinstance(raw_function, dict):
                 continue
             function = cast(dict[str, Any], raw_function)
             summary: dict[str, Any] = {
-                "function_ref": f"function_{index}",
-                "name": function.get("FunctionName", ""),
-                "runtime": function.get("Runtime", ""),
-                "memory_size": function.get("MemorySize", 0),
-                "timeout": function.get("Timeout", 0),
-                "last_modified": function.get("LastModified", ""),
-                "handler": function.get("Handler", ""),
+                'function_ref': f'function_{index}',
+                'name': function.get('FunctionName', ''),
+                'runtime': function.get('Runtime', ''),
+                'memory_size': function.get('MemorySize', 0),
+                'timeout': function.get('Timeout', 0),
+                'last_modified': function.get('LastModified', ''),
+                'handler': function.get('Handler', ''),
             }
             if include_ids:
-                summary["function_arn"] = function.get("FunctionArn", "")
+                summary['function_arn'] = function.get('FunctionArn', '')
             summaries.append(summary)
-        return {"functions": summaries, "next_marker": payload.get("NextMarker", "")}
+        return {'functions': summaries, 'next_marker': payload.get('NextMarker', '')}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_function(
@@ -166,9 +166,9 @@ class AmazonLambdaToolSet:
         name = _coerce_function_name(function_name)
         params: dict[str, Any] = {}
         if qualifier is not None:
-            params["Qualifier"] = qualifier
+            params['Qualifier'] = qualifier
         return self._client.get(
-            f"/2015-03-31/functions/{name}",
+            f'/2015-03-31/functions/{name}',
             params=params or None,
         ).json()
 
@@ -178,8 +178,8 @@ class AmazonLambdaToolSet:
         function_name: Any,
         *,
         payload: dict[str, Any] | None = None,
-        invocation_type: str = "RequestResponse",
-        log_type: str = "None",
+        invocation_type: str = 'RequestResponse',
+        log_type: str = 'None',
         qualifier: str | None = None,
     ) -> dict[str, Any]:
         """Invoke a function.
@@ -191,37 +191,37 @@ class AmazonLambdaToolSet:
         """
         name = _coerce_function_name(function_name)
         if invocation_type not in {
-            "Event",
-            "RequestResponse",
-            "DryRun",
+            'Event',
+            'RequestResponse',
+            'DryRun',
         }:
-            raise ValueError("invocation_type must be Event/RequestResponse/DryRun")
+            raise ValueError('invocation_type must be Event/RequestResponse/DryRun')
         params: dict[str, Any] = {}
         if qualifier is not None:
-            params["Qualifier"] = qualifier
+            params['Qualifier'] = qualifier
         headers = {
-            "X-Amz-Invocation-Type": invocation_type,
-            "X-Amz-Log-Type": log_type,
+            'X-Amz-Invocation-Type': invocation_type,
+            'X-Amz-Log-Type': log_type,
         }
-        body = _json.dumps(payload).encode("utf-8") if payload is not None else b""
+        body = _json.dumps(payload).encode('utf-8') if payload is not None else b''
         response = self._client.post(
-            f"/2015-03-31/functions/{name}/invocations",
+            f'/2015-03-31/functions/{name}/invocations',
             params=params or None,
             data=body,
             headers=headers,
         )
-        log_header = response.headers.get("X-Amz-Log-Result")
+        log_header = response.headers.get('X-Amz-Log-Result')
         decoded_log: str | None = None
         if log_header:
             try:
-                decoded_log = base64.b64decode(log_header).decode("utf-8", errors="replace")
+                decoded_log = base64.b64decode(log_header).decode('utf-8', errors='replace')
             except (ValueError, UnicodeDecodeError):
                 decoded_log = log_header
         return {
-            "status": response.status,
-            "function_error": response.headers.get("X-Amz-Function-Error"),
-            "log_result": decoded_log,
-            "body": response.text(),
+            'status': response.status,
+            'function_error': response.headers.get('X-Amz-Function-Error'),
+            'log_result': decoded_log,
+            'body': response.text(),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -243,19 +243,19 @@ class AmazonLambdaToolSet:
         name = _coerce_function_name(function_name)
         body: dict[str, Any] = {}
         if environment is not None:
-            body["Environment"] = environment
+            body['Environment'] = environment
         if timeout is not None:
-            body["Timeout"] = timeout
+            body['Timeout'] = timeout
         if memory_size is not None:
-            body["MemorySize"] = memory_size
+            body['MemorySize'] = memory_size
         if handler is not None:
-            body["Handler"] = handler
+            body['Handler'] = handler
         if role is not None:
-            body["Role"] = role
+            body['Role'] = role
         if not body:
-            raise ValueError("at least one update field is required")
+            raise ValueError('at least one update field is required')
         return self._client.put(
-            f"/2015-03-31/functions/{name}/configuration",
+            f'/2015-03-31/functions/{name}/configuration',
             json=body,
         ).json()
 
@@ -279,18 +279,18 @@ class AmazonLambdaToolSet:
         """
         name = _coerce_function_name(function_name)
         if not zip_file and not s3_bucket and not image_uri:
-            raise ValueError("Provide zip_file, s3_bucket/s3_key, or image_uri")
-        body: dict[str, Any] = {"Publish": publish}
+            raise ValueError('Provide zip_file, s3_bucket/s3_key, or image_uri')
+        body: dict[str, Any] = {'Publish': publish}
         if zip_file is not None:
-            body["ZipFile"] = base64.b64encode(zip_file).decode("ascii")
+            body['ZipFile'] = base64.b64encode(zip_file).decode('ascii')
         if s3_bucket is not None and s3_key is not None:
-            body["S3Bucket"] = s3_bucket
-            body["S3Key"] = s3_key
+            body['S3Bucket'] = s3_bucket
+            body['S3Key'] = s3_key
             if s3_object_version is not None:
-                body["S3ObjectVersion"] = s3_object_version
+                body['S3ObjectVersion'] = s3_object_version
         if image_uri is not None:
-            body["ImageUri"] = image_uri
-        return self._client.put(f"/2015-03-31/functions/{name}/code", json=body).json()
+            body['ImageUri'] = image_uri
+        return self._client.put(f'/2015-03-31/functions/{name}/code', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_function(
@@ -307,12 +307,12 @@ class AmazonLambdaToolSet:
         name = _coerce_function_name(function_name)
         params: dict[str, Any] = {}
         if qualifier is not None:
-            params["Qualifier"] = qualifier
+            params['Qualifier'] = qualifier
         response = self._client.delete(
-            f"/2015-03-31/functions/{name}",
+            f'/2015-03-31/functions/{name}',
             params=params or None,
         )
-        return {"status": response.status, "deleted": True}
+        return {'status': response.status, 'deleted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_versions(
@@ -329,12 +329,12 @@ class AmazonLambdaToolSet:
         """
         name = _coerce_function_name(function_name)
         if max_items < 1 or max_items > 10000:
-            raise ValueError("max_items must be between 1 and 10000")
-        params: dict[str, Any] = {"MaxItems": max_items}
+            raise ValueError('max_items must be between 1 and 10000')
+        params: dict[str, Any] = {'MaxItems': max_items}
         if marker is not None:
-            params["Marker"] = marker
+            params['Marker'] = marker
         return self._client.get(
-            f"/2015-03-31/functions/{name}/versions",
+            f'/2015-03-31/functions/{name}/versions',
             params=params,
         ).json()
 
@@ -354,11 +354,11 @@ class AmazonLambdaToolSet:
         name = _coerce_function_name(function_name)
         body: dict[str, Any] = {}
         if description is not None:
-            body["Description"] = description
+            body['Description'] = description
         if code_sha256 is not None:
-            body["CodeSha256"] = code_sha256
+            body['CodeSha256'] = code_sha256
         return self._client.post(
-            f"/2015-03-31/functions/{name}/versions",
+            f'/2015-03-31/functions/{name}/versions',
             json=body or None,
         ).json()
 
@@ -377,12 +377,12 @@ class AmazonLambdaToolSet:
         """
         name = _coerce_function_name(function_name)
         if max_items < 1 or max_items > 10000:
-            raise ValueError("max_items must be between 1 and 10000")
-        params: dict[str, Any] = {"MaxItems": max_items}
+            raise ValueError('max_items must be between 1 and 10000')
+        params: dict[str, Any] = {'MaxItems': max_items}
         if marker is not None:
-            params["Marker"] = marker
+            params['Marker'] = marker
         return self._client.get(
-            f"/2015-03-31/functions/{name}/aliases",
+            f'/2015-03-31/functions/{name}/aliases',
             params=params,
         ).json()
 
@@ -399,6 +399,6 @@ class AmazonLambdaToolSet:
         """
         name = _coerce_function_name(function_name)
         return self._client.put(
-            f"/2017-10-31/functions/{name}/concurrency",
-            json={"ReservedConcurrentExecutions": reserved_concurrent_executions},
+            f'/2017-10-31/functions/{name}/concurrency',
+            json={'ReservedConcurrentExecutions': reserved_concurrent_executions},
         ).json()

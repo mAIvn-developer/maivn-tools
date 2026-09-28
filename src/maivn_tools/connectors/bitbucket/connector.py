@@ -55,7 +55,7 @@ from .output_schemas import (
 _SHA_DISPLAY_LEN = 7
 
 
-@toolset(prefix="bitbucket")
+@toolset(prefix='bitbucket')
 class BitbucketToolSet:
     """A connector for Bitbucket Cloud REST API v2.
 
@@ -66,18 +66,18 @@ class BitbucketToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="bitbucket",
-        display_name="Bitbucket Cloud",
-        version="0.1.0",
-        description="Manage Bitbucket repos, pull requests, issues, and pipelines.",
+        name='bitbucket',
+        display_name='Bitbucket Cloud',
+        version='0.1.0',
+        description='Manage Bitbucket repos, pull requests, issues, and pipelines.',
         auth_modes=(AuthMode.BASIC, AuthMode.OAUTH2_AUTH_CODE),
         scopes={
-            "repository": "Read repos.",
-            "repository:write": "Write to repos.",
-            "pullrequest": "Read PRs.",
-            "pullrequest:write": "Write PRs.",
-            "issue:write": "Manage issues.",
-            "pipeline:write": "Manage pipelines.",
+            'repository': 'Read repos.',
+            'repository:write': 'Write to repos.',
+            'pullrequest': 'Read PRs.',
+            'pullrequest:write': 'Write PRs.',
+            'issue:write': 'Manage issues.',
+            'pipeline:write': 'Manage pipelines.',
         },
         capabilities=frozenset(
             {
@@ -86,9 +86,9 @@ class BitbucketToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://developer.atlassian.com/cloud/bitbucket/rest/intro/",
-        homepage_url="https://bitbucket.org/",
-        tags=("source-control",),
+        documentation_url='https://developer.atlassian.com/cloud/bitbucket/rest/intro/',
+        homepage_url='https://bitbucket.org/',
+        tags=('source-control',),
     )
 
     def __init__(
@@ -97,12 +97,12 @@ class BitbucketToolSet:
         token: str | None = None,
         email: str | None = None,
         api_token: str | None = None,
-        base_url: str = "https://api.bitbucket.org",
+        base_url: str = 'https://api.bitbucket.org',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if token is None and not (email and api_token):
-            raise ValueError("provide either token or email+api_token")
+            raise ValueError('provide either token or email+api_token')
         self.connection = connection
         auth: AuthStrategy
         if token is not None:
@@ -112,10 +112,10 @@ class BitbucketToolSet:
             assert api_token is not None
             auth = BasicAuth(email, api_token)
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=auth,
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -139,34 +139,34 @@ class BitbucketToolSet:
         """
         if isinstance(workspace, dict) and repo_slug is None:
             workspace_dict = cast(dict[str, Any], workspace)
-            full_name: Any = workspace_dict.get("full_name")
-            if isinstance(full_name, str) and "/" in full_name:
-                ws, slug = full_name.split("/", 1)
+            full_name: Any = workspace_dict.get('full_name')
+            if isinstance(full_name, str) and '/' in full_name:
+                ws, slug = full_name.split('/', 1)
                 return ws, slug
             # PR dict: destination.repository.full_name
-            destination: Any = workspace_dict.get("destination")
+            destination: Any = workspace_dict.get('destination')
             if isinstance(destination, dict):
-                dest_repo: Any = cast(dict[str, Any], destination).get("repository")
+                dest_repo: Any = cast(dict[str, Any], destination).get('repository')
                 if isinstance(dest_repo, dict):
-                    dest_full: Any = cast(dict[str, Any], dest_repo).get("full_name")
-                    if isinstance(dest_full, str) and "/" in dest_full:
-                        ws, slug = dest_full.split("/", 1)
+                    dest_full: Any = cast(dict[str, Any], dest_repo).get('full_name')
+                    if isinstance(dest_full, str) and '/' in dest_full:
+                        ws, slug = dest_full.split('/', 1)
                         return ws, slug
-            ws_obj: Any = workspace_dict.get("workspace")
+            ws_obj: Any = workspace_dict.get('workspace')
             ws_value: Any
             if isinstance(ws_obj, dict):
                 ws_obj_dict = cast(dict[str, Any], ws_obj)
-                ws_value = ws_obj_dict.get("slug") or ws_obj_dict.get("name")
+                ws_value = ws_obj_dict.get('slug') or ws_obj_dict.get('name')
             else:
                 ws_value = ws_obj
-            slug_value: Any = workspace_dict.get("slug") or workspace_dict.get("name")
+            slug_value: Any = workspace_dict.get('slug') or workspace_dict.get('name')
             if isinstance(ws_value, str) and isinstance(slug_value, str):
                 return ws_value, slug_value
-            raise ValueError("repo dict must expose full_name or workspace+slug")
+            raise ValueError('repo dict must expose full_name or workspace+slug')
         if isinstance(workspace, str) and repo_slug is None:
-            if "/" not in workspace:
+            if '/' not in workspace:
                 raise ValueError("workspace string without repo_slug must be 'workspace/repo_slug'")
-            ws, slug = workspace.split("/", 1)
+            ws, slug = workspace.split('/', 1)
             return ws, slug
         if isinstance(workspace, str) and isinstance(repo_slug, str) and workspace and repo_slug:
             return workspace, repo_slug
@@ -179,7 +179,7 @@ class BitbucketToolSet:
             return pr_or_id
         if isinstance(pr_or_id, dict):
             pr_dict = cast(dict[str, Any], pr_or_id)
-            value: Any = pr_dict.get("id") or pr_dict.get("pr_id")
+            value: Any = pr_dict.get('id') or pr_dict.get('pr_id')
             if isinstance(value, int):
                 return value
         raise ValueError("expected an int pr_id or a pull request dict with 'id'")
@@ -190,17 +190,17 @@ class BitbucketToolSet:
     def _short_sha(sha: Any) -> str:
         if isinstance(sha, str) and sha:
             return sha[:_SHA_DISPLAY_LEN]
-        return ""
+        return ''
 
     @staticmethod
     def _user_display(user: Any) -> str:
         if isinstance(user, dict):
             user_dict = cast(dict[str, Any], user)
-            for key in ("display_name", "nickname", "username"):
+            for key in ('display_name', 'nickname', 'username'):
                 value: Any = user_dict.get(key)
                 if isinstance(value, str):
                     return value
-        return ""
+        return ''
 
     @classmethod
     def _repo_summary(
@@ -210,29 +210,29 @@ class BitbucketToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        owner: Any = repo.get("workspace") or {}
-        main_branch: Any = repo.get("mainbranch") or {}
+        owner: Any = repo.get('workspace') or {}
+        main_branch: Any = repo.get('mainbranch') or {}
         summary: dict[str, Any] = {
-            "repo_ref": f"repo_{index}",
-            "full_name": repo.get("full_name", ""),
-            "slug": repo.get("slug", repo.get("name", "")),
-            "workspace": (
-                cast(dict[str, Any], owner).get("slug", "") if isinstance(owner, dict) else ""
+            'repo_ref': f'repo_{index}',
+            'full_name': repo.get('full_name', ''),
+            'slug': repo.get('slug', repo.get('name', '')),
+            'workspace': (
+                cast(dict[str, Any], owner).get('slug', '') if isinstance(owner, dict) else ''
             ),
-            "is_private": repo.get("is_private", False),
-            "fork_policy": repo.get("fork_policy", ""),
-            "description": repo.get("description", "") or "",
-            "language": repo.get("language", ""),
-            "default_branch": (
-                cast(dict[str, Any], main_branch).get("name", "")
+            'is_private': repo.get('is_private', False),
+            'fork_policy': repo.get('fork_policy', ''),
+            'description': repo.get('description', '') or '',
+            'language': repo.get('language', ''),
+            'default_branch': (
+                cast(dict[str, Any], main_branch).get('name', '')
                 if isinstance(main_branch, dict)
-                else ""
+                else ''
             ),
-            "updated_on": repo.get("updated_on", ""),
-            "website": repo.get("website", ""),
+            'updated_on': repo.get('updated_on', ''),
+            'website': repo.get('website', ''),
         }
         if include_ids:
-            summary["uuid"] = repo.get("uuid")
+            summary['uuid'] = repo.get('uuid')
         return summary
 
     @classmethod
@@ -243,36 +243,36 @@ class BitbucketToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        source: Any = pr.get("source") or {}
-        destination: Any = pr.get("destination") or {}
+        source: Any = pr.get('source') or {}
+        destination: Any = pr.get('destination') or {}
         source_branch: Any = (
-            cast(dict[str, Any], source).get("branch", {}).get("name", "")
+            cast(dict[str, Any], source).get('branch', {}).get('name', '')
             if isinstance(source, dict)
-            else ""
+            else ''
         )
         dest_branch: Any = (
-            cast(dict[str, Any], destination).get("branch", {}).get("name", "")
+            cast(dict[str, Any], destination).get('branch', {}).get('name', '')
             if isinstance(destination, dict)
-            else ""
+            else ''
         )
         summary: dict[str, Any] = {
-            "pr_ref": f"pr_{index}",
-            "pr_id": pr.get("id"),
-            "title": pr.get("title", ""),
-            "state": pr.get("state", ""),
-            "author": cls._user_display(pr.get("author")),
-            "source_branch": source_branch,
-            "destination_branch": dest_branch,
-            "comment_count": pr.get("comment_count", 0),
-            "task_count": pr.get("task_count", 0),
-            "created_on": pr.get("created_on", ""),
-            "updated_on": pr.get("updated_on", ""),
+            'pr_ref': f'pr_{index}',
+            'pr_id': pr.get('id'),
+            'title': pr.get('title', ''),
+            'state': pr.get('state', ''),
+            'author': cls._user_display(pr.get('author')),
+            'source_branch': source_branch,
+            'destination_branch': dest_branch,
+            'comment_count': pr.get('comment_count', 0),
+            'task_count': pr.get('task_count', 0),
+            'created_on': pr.get('created_on', ''),
+            'updated_on': pr.get('updated_on', ''),
         }
-        links: Any = pr.get("links")
+        links: Any = pr.get('links')
         if isinstance(links, dict):
-            html: Any = cast(dict[str, Any], links).get("html")
+            html: Any = cast(dict[str, Any], links).get('html')
             if isinstance(html, dict):
-                summary["html_url"] = cast(dict[str, Any], html).get("href", "")
+                summary['html_url'] = cast(dict[str, Any], html).get('href', '')
         return summary
 
     @classmethod
@@ -284,23 +284,23 @@ class BitbucketToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "issue_ref": f"issue_{index}",
-            "issue_id": issue.get("id"),
-            "title": issue.get("title", ""),
-            "state": issue.get("state", ""),
-            "kind": issue.get("kind", ""),
-            "priority": issue.get("priority", ""),
-            "reporter": cls._user_display(issue.get("reporter")),
-            "assignee": cls._user_display(issue.get("assignee")),
-            "comment_count": issue.get("comment_count", 0),
-            "created_on": issue.get("created_on", ""),
-            "updated_on": issue.get("updated_on", ""),
+            'issue_ref': f'issue_{index}',
+            'issue_id': issue.get('id'),
+            'title': issue.get('title', ''),
+            'state': issue.get('state', ''),
+            'kind': issue.get('kind', ''),
+            'priority': issue.get('priority', ''),
+            'reporter': cls._user_display(issue.get('reporter')),
+            'assignee': cls._user_display(issue.get('assignee')),
+            'comment_count': issue.get('comment_count', 0),
+            'created_on': issue.get('created_on', ''),
+            'updated_on': issue.get('updated_on', ''),
         }
-        links: Any = issue.get("links")
+        links: Any = issue.get('links')
         if isinstance(links, dict):
-            html: Any = cast(dict[str, Any], links).get("html")
+            html: Any = cast(dict[str, Any], links).get('html')
             if isinstance(html, dict):
-                summary["html_url"] = cast(dict[str, Any], html).get("href", "")
+                summary['html_url'] = cast(dict[str, Any], html).get('href', '')
         return summary
 
     @classmethod
@@ -311,32 +311,32 @@ class BitbucketToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        target: Any = pipeline.get("target") or {}
-        state: Any = pipeline.get("state") or {}
+        target: Any = pipeline.get('target') or {}
+        state: Any = pipeline.get('state') or {}
         commit: Any = (
-            cast(dict[str, Any], target).get("commit") if isinstance(target, dict) else None
+            cast(dict[str, Any], target).get('commit') if isinstance(target, dict) else None
         )
-        sha: Any = cast(dict[str, Any], commit).get("hash", "") if isinstance(commit, dict) else ""
+        sha: Any = cast(dict[str, Any], commit).get('hash', '') if isinstance(commit, dict) else ''
         summary: dict[str, Any] = {
-            "pipeline_ref": f"pipeline_{index}",
-            "build_number": pipeline.get("build_number"),
-            "state": cast(dict[str, Any], state).get("name", "") if isinstance(state, dict) else "",
-            "result": (
-                cast(dict[str, Any], state).get("result", {}).get("name", "")
+            'pipeline_ref': f'pipeline_{index}',
+            'build_number': pipeline.get('build_number'),
+            'state': cast(dict[str, Any], state).get('name', '') if isinstance(state, dict) else '',
+            'result': (
+                cast(dict[str, Any], state).get('result', {}).get('name', '')
                 if isinstance(state, dict)
-                and isinstance(cast(dict[str, Any], state).get("result"), dict)
-                else ""
+                and isinstance(cast(dict[str, Any], state).get('result'), dict)
+                else ''
             ),
-            "branch": (
-                cast(dict[str, Any], target).get("ref_name", "") if isinstance(target, dict) else ""
+            'branch': (
+                cast(dict[str, Any], target).get('ref_name', '') if isinstance(target, dict) else ''
             ),
-            "short_sha": cls._short_sha(sha),
-            "creator": cls._user_display(pipeline.get("creator")),
-            "created_on": pipeline.get("created_on", ""),
-            "completed_on": pipeline.get("completed_on", ""),
+            'short_sha': cls._short_sha(sha),
+            'creator': cls._user_display(pipeline.get('creator')),
+            'created_on': pipeline.get('created_on', ''),
+            'completed_on': pipeline.get('completed_on', ''),
         }
         if include_ids:
-            summary["uuid"] = pipeline.get("uuid")
+            summary['uuid'] = pipeline.get('uuid')
         return summary
 
     @classmethod
@@ -347,15 +347,15 @@ class BitbucketToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        target: Any = branch.get("target") or {}
-        sha: Any = cast(dict[str, Any], target).get("hash", "") if isinstance(target, dict) else ""
+        target: Any = branch.get('target') or {}
+        sha: Any = cast(dict[str, Any], target).get('hash', '') if isinstance(target, dict) else ''
         summary: dict[str, Any] = {
-            "branch_ref": f"branch_{index}",
-            "name": branch.get("name", ""),
-            "short_sha": cls._short_sha(sha),
+            'branch_ref': f'branch_{index}',
+            'name': branch.get('name', ''),
+            'short_sha': cls._short_sha(sha),
         }
         if include_ids and sha:
-            summary["sha"] = sha
+            summary['sha'] = sha
         return summary
 
     # MARK: - User
@@ -367,7 +367,7 @@ class BitbucketToolSet:
         Returns the raw user resource — ``username`` is the stable
         identifier.
         """
-        return self._client.get("/2.0/user").json()
+        return self._client.get('/2.0/user').json()
 
     # MARK: - Workspaces and repositories
 
@@ -379,8 +379,8 @@ class BitbucketToolSet:
         is what you pass as ``workspace`` to other tools.
         """
         return self._client.get(
-            "/2.0/workspaces",
-            params={"page": page, "pagelen": pagelen},
+            '/2.0/workspaces',
+            params={'page': page, 'pagelen': pagelen},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -409,32 +409,32 @@ class BitbucketToolSet:
         (internal handle).
         """
         if not workspace:
-            raise ValueError("workspace must be a non-empty string")
-        params: dict[str, Any] = {"page": page, "pagelen": pagelen}
+            raise ValueError('workspace must be a non-empty string')
+        params: dict[str, Any] = {'page': page, 'pagelen': pagelen}
         if role is not None:
-            params["role"] = role
+            params['role'] = role
         if q is not None:
-            params["q"] = q
+            params['q'] = q
         if sort is not None:
-            params["sort"] = sort
+            params['sort'] = sort
         raw: Any = self._client.get(
-            f"/2.0/repositories/{workspace}",
+            f'/2.0/repositories/{workspace}',
             params=params,
         ).json()
         if not include_metadata or not isinstance(raw, dict):
             return cast(dict[str, Any], raw)
         raw_dict = cast(dict[str, Any], raw)
-        values: list[Any] = raw_dict.get("values", [])
+        values: list[Any] = raw_dict.get('values', [])
         summaries = [
             self._repo_summary(cast(dict[str, Any], item), index=index, include_ids=include_ids)
             for index, item in enumerate(values, start=1)
             if isinstance(item, dict)
         ]
         return {
-            "repositories": summaries,
-            "count": len(summaries),
-            "page": page,
-            "next": raw_dict.get("next"),
+            'repositories': summaries,
+            'count': len(summaries),
+            'page': page,
+            'next': raw_dict.get('next'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -450,7 +450,7 @@ class BitbucketToolSet:
         the raw repository resource.
         """
         ws, slug = self._resolve_workspace_repo(workspace, repo_slug)
-        return self._client.get(f"/2.0/repositories/{ws}/{slug}").json()
+        return self._client.get(f'/2.0/repositories/{ws}/{slug}').json()
 
     # MARK: - Pull requests
 
@@ -480,31 +480,31 @@ class BitbucketToolSet:
         Set ``include_metadata=False`` for the raw paged response.
         """
         ws, slug = self._resolve_workspace_repo(workspace, repo_slug)
-        params: dict[str, Any] = {"page": page, "pagelen": pagelen}
+        params: dict[str, Any] = {'page': page, 'pagelen': pagelen}
         if state is not None:
-            if state not in {"OPEN", "MERGED", "DECLINED", "SUPERSEDED"}:
-                raise ValueError("state must be OPEN/MERGED/DECLINED/SUPERSEDED")
-            params["state"] = state
+            if state not in {'OPEN', 'MERGED', 'DECLINED', 'SUPERSEDED'}:
+                raise ValueError('state must be OPEN/MERGED/DECLINED/SUPERSEDED')
+            params['state'] = state
         if q is not None:
-            params["q"] = q
+            params['q'] = q
         raw: Any = self._client.get(
-            f"/2.0/repositories/{ws}/{slug}/pullrequests",
+            f'/2.0/repositories/{ws}/{slug}/pullrequests',
             params=params,
         ).json()
         if not include_metadata or not isinstance(raw, dict):
             return cast(dict[str, Any], raw)
         raw_dict = cast(dict[str, Any], raw)
-        values: list[Any] = raw_dict.get("values", [])
+        values: list[Any] = raw_dict.get('values', [])
         summaries = [
             self._pr_summary(cast(dict[str, Any], item), index=index, include_ids=include_ids)
             for index, item in enumerate(values, start=1)
             if isinstance(item, dict)
         ]
         return {
-            "pull_requests": summaries,
-            "count": len(summaries),
-            "page": page,
-            "next": raw_dict.get("next"),
+            'pull_requests': summaries,
+            'count': len(summaries),
+            'page': page,
+            'next': raw_dict.get('next'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -519,7 +519,7 @@ class BitbucketToolSet:
         Returns the raw pull request resource.
         """
         return self._client.get(
-            f"/2.0/repositories/{workspace}/{repo_slug}/pullrequests/{pr_id}",
+            f'/2.0/repositories/{workspace}/{repo_slug}/pullrequests/{pr_id}',
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -543,20 +543,20 @@ class BitbucketToolSet:
         """
         ws, slug = self._resolve_workspace_repo(workspace, repo_slug)
         if not title:
-            raise ValueError("workspace, repo_slug, and title must be non-empty")
+            raise ValueError('workspace, repo_slug, and title must be non-empty')
         payload: dict[str, Any] = {
-            "title": title,
-            "source": {"branch": {"name": source_branch}},
-            "destination": {"branch": {"name": destination_branch}},
+            'title': title,
+            'source': {'branch': {'name': source_branch}},
+            'destination': {'branch': {'name': destination_branch}},
         }
         if description is not None:
-            payload["description"] = description
+            payload['description'] = description
         if close_source_branch is not None:
-            payload["close_source_branch"] = close_source_branch
+            payload['close_source_branch'] = close_source_branch
         if reviewers is not None:
-            payload["reviewers"] = [{"uuid": r} for r in reviewers]
+            payload['reviewers'] = [{'uuid': r} for r in reviewers]
         return self._client.post(
-            f"/2.0/repositories/{ws}/{slug}/pullrequests",
+            f'/2.0/repositories/{ws}/{slug}/pullrequests',
             json=payload,
         ).json()
 
@@ -586,15 +586,15 @@ class BitbucketToolSet:
         ws, slug, pid = self._resolve_workspace_repo_pr(workspace, repo_slug, pr_id)
         payload: dict[str, Any] = {}
         if merge_strategy is not None:
-            if merge_strategy not in {"merge_commit", "squash", "fast_forward"}:
-                raise ValueError("merge_strategy must be merge_commit/squash/fast_forward")
-            payload["merge_strategy"] = merge_strategy
+            if merge_strategy not in {'merge_commit', 'squash', 'fast_forward'}:
+                raise ValueError('merge_strategy must be merge_commit/squash/fast_forward')
+            payload['merge_strategy'] = merge_strategy
         if message is not None:
-            payload["message"] = message
+            payload['message'] = message
         if close_source_branch is not None:
-            payload["close_source_branch"] = close_source_branch
+            payload['close_source_branch'] = close_source_branch
         return self._client.post(
-            f"/2.0/repositories/{ws}/{slug}/pullrequests/{pid}/merge",
+            f'/2.0/repositories/{ws}/{slug}/pullrequests/{pid}/merge',
             json=payload or None,
         ).json()
 
@@ -610,7 +610,7 @@ class BitbucketToolSet:
         Returns the updated pull request resource (``state=DECLINED``).
         """
         return self._client.post(
-            f"/2.0/repositories/{workspace}/{repo_slug}/pullrequests/{pr_id}/decline",
+            f'/2.0/repositories/{workspace}/{repo_slug}/pullrequests/{pr_id}/decline',
         ).json()
 
     # MARK: - Issues
@@ -639,27 +639,27 @@ class BitbucketToolSet:
         Set ``include_metadata=False`` for the raw paged response.
         """
         ws, slug = self._resolve_workspace_repo(workspace, repo_slug)
-        params: dict[str, Any] = {"page": page, "pagelen": pagelen}
+        params: dict[str, Any] = {'page': page, 'pagelen': pagelen}
         if q is not None:
-            params["q"] = q
+            params['q'] = q
         raw: Any = self._client.get(
-            f"/2.0/repositories/{ws}/{slug}/issues",
+            f'/2.0/repositories/{ws}/{slug}/issues',
             params=params,
         ).json()
         if not include_metadata or not isinstance(raw, dict):
             return cast(dict[str, Any], raw)
         raw_dict = cast(dict[str, Any], raw)
-        values: list[Any] = raw_dict.get("values", [])
+        values: list[Any] = raw_dict.get('values', [])
         summaries = [
             self._issue_summary(cast(dict[str, Any], item), index=index, include_ids=include_ids)
             for index, item in enumerate(values, start=1)
             if isinstance(item, dict)
         ]
         return {
-            "issues": summaries,
-            "count": len(summaries),
-            "page": page,
-            "next": raw_dict.get("next"),
+            'issues': summaries,
+            'count': len(summaries),
+            'page': page,
+            'next': raw_dict.get('next'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -670,7 +670,7 @@ class BitbucketToolSet:
         *,
         title: str,
         content: str | None = None,
-        kind: str = "bug",
+        kind: str = 'bug',
         priority: str | None = None,
     ) -> dict[str, Any]:
         """Create an issue.
@@ -682,16 +682,16 @@ class BitbucketToolSet:
         """
         ws, slug = self._resolve_workspace_repo(workspace, repo_slug)
         if not title:
-            raise ValueError("title must be a non-empty string")
-        if kind not in {"bug", "enhancement", "proposal", "task"}:
-            raise ValueError("kind must be bug/enhancement/proposal/task")
-        payload: dict[str, Any] = {"title": title, "kind": kind}
+            raise ValueError('title must be a non-empty string')
+        if kind not in {'bug', 'enhancement', 'proposal', 'task'}:
+            raise ValueError('kind must be bug/enhancement/proposal/task')
+        payload: dict[str, Any] = {'title': title, 'kind': kind}
         if content is not None:
-            payload["content"] = {"raw": content}
+            payload['content'] = {'raw': content}
         if priority is not None:
-            payload["priority"] = priority
+            payload['priority'] = priority
         return self._client.post(
-            f"/2.0/repositories/{ws}/{slug}/issues",
+            f'/2.0/repositories/{ws}/{slug}/issues',
             json=payload,
         ).json()
 
@@ -720,23 +720,23 @@ class BitbucketToolSet:
         """
         ws, slug = self._resolve_workspace_repo(workspace, repo_slug)
         raw: Any = self._client.get(
-            f"/2.0/repositories/{ws}/{slug}/pipelines",
-            params={"page": page, "pagelen": pagelen},
+            f'/2.0/repositories/{ws}/{slug}/pipelines',
+            params={'page': page, 'pagelen': pagelen},
         ).json()
         if not include_metadata or not isinstance(raw, dict):
             return cast(dict[str, Any], raw)
         raw_dict = cast(dict[str, Any], raw)
-        values: list[Any] = raw_dict.get("values", [])
+        values: list[Any] = raw_dict.get('values', [])
         summaries = [
             self._pipeline_summary(cast(dict[str, Any], item), index=index, include_ids=include_ids)
             for index, item in enumerate(values, start=1)
             if isinstance(item, dict)
         ]
         return {
-            "pipelines": summaries,
-            "count": len(summaries),
-            "page": page,
-            "next": raw_dict.get("next"),
+            'pipelines': summaries,
+            'count': len(summaries),
+            'page': page,
+            'next': raw_dict.get('next'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -757,14 +757,14 @@ class BitbucketToolSet:
         ws, slug = self._resolve_workspace_repo(workspace, repo_slug)
         target: dict[str, Any]
         if branch is not None:
-            target = {"ref_type": "branch", "type": "pipeline_ref_target", "ref_name": branch}
+            target = {'ref_type': 'branch', 'type': 'pipeline_ref_target', 'ref_name': branch}
         elif commit is not None:
-            target = {"type": "pipeline_commit_target", "commit": {"hash": commit}}
+            target = {'type': 'pipeline_commit_target', 'commit': {'hash': commit}}
         else:
-            raise ValueError("provide either branch or commit")
+            raise ValueError('provide either branch or commit')
         return self._client.post(
-            f"/2.0/repositories/{ws}/{slug}/pipelines",
-            json={"target": target},
+            f'/2.0/repositories/{ws}/{slug}/pipelines',
+            json={'target': target},
         ).json()
 
     # MARK: - Repository contents
@@ -788,27 +788,27 @@ class BitbucketToolSet:
         ``include_metadata=False`` for the raw paged response.
         """
         ws, slug = self._resolve_workspace_repo(workspace, repo_slug)
-        params: dict[str, Any] = {"page": page}
+        params: dict[str, Any] = {'page': page}
         if q is not None:
-            params["q"] = q
+            params['q'] = q
         raw: Any = self._client.get(
-            f"/2.0/repositories/{ws}/{slug}/refs/branches",
+            f'/2.0/repositories/{ws}/{slug}/refs/branches',
             params=params,
         ).json()
         if not include_metadata or not isinstance(raw, dict):
             return cast(dict[str, Any], raw)
         raw_dict = cast(dict[str, Any], raw)
-        values: list[Any] = raw_dict.get("values", [])
+        values: list[Any] = raw_dict.get('values', [])
         summaries = [
             self._branch_summary(cast(dict[str, Any], item), index=index, include_ids=include_ids)
             for index, item in enumerate(values, start=1)
             if isinstance(item, dict)
         ]
         return {
-            "branches": summaries,
-            "count": len(summaries),
-            "page": page,
-            "next": raw_dict.get("next"),
+            'branches': summaries,
+            'count': len(summaries),
+            'page': page,
+            'next': raw_dict.get('next'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -828,15 +828,15 @@ class BitbucketToolSet:
         consumption.
         """
         if not workspace or not repo_slug or not commit_or_branch or not path:
-            raise ValueError("workspace, repo_slug, commit_or_branch, and path are required")
+            raise ValueError('workspace, repo_slug, commit_or_branch, and path are required')
         response = self._client.get(
-            f"/2.0/repositories/{workspace}/{repo_slug}/src/{commit_or_branch}/{path}",
+            f'/2.0/repositories/{workspace}/{repo_slug}/src/{commit_or_branch}/{path}',
         )
         return {
-            "path": path,
-            "ref": commit_or_branch,
-            "status": response.status,
-            "body": response.text(),
+            'path': path,
+            'ref': commit_or_branch,
+            'status': response.status,
+            'body': response.text(),
         }
 
     # MARK: - Internal helpers
@@ -853,7 +853,7 @@ class BitbucketToolSet:
             isinstance(workspace, dict)
             and repo_slug is None
             and pr_id is None
-            and ("id" in workspace or "pr_id" in workspace)
+            and ('id' in workspace or 'pr_id' in workspace)
         ):
             pid = self._resolve_pr_id(workspace)
             ws, slug = self._resolve_workspace_repo(workspace)
@@ -861,7 +861,7 @@ class BitbucketToolSet:
         # full_name shorthand + pr_id
         if (
             isinstance(workspace, str)
-            and "/" in workspace
+            and '/' in workspace
             and isinstance(repo_slug, int)
             and pr_id is None
         ):

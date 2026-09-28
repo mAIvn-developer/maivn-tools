@@ -23,7 +23,7 @@ from .output_schemas import (
 )
 
 
-@toolset(prefix="auth0")
+@toolset(prefix='auth0')
 class Auth0ToolSet:
     """A connector for the Auth0 Management API v2.
 
@@ -33,15 +33,15 @@ class Auth0ToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="auth0",
-        display_name="Auth0",
-        version="0.1.0",
-        description="Users, roles, organizations, connections, and tenant config.",
+        name='auth0',
+        display_name='Auth0',
+        version='0.1.0',
+        description='Users, roles, organizations, connections, and tenant config.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://auth0.com/docs/api/management/v2",
-        homepage_url="https://auth0.com/",
-        tags=("identity", "auth"),
+        documentation_url='https://auth0.com/docs/api/management/v2',
+        homepage_url='https://auth0.com/',
+        tags=('identity', 'auth'),
     )
 
     def __init__(
@@ -53,15 +53,15 @@ class Auth0ToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not domain or not access_token:
-            raise ValueError("domain and access_token are required")
+            raise ValueError('domain and access_token are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=f"https://{domain.rstrip('/')}",
+            base_url=f'https://{domain.rstrip("/")}',
             auth=BearerTokenAuth(access_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -79,16 +79,16 @@ class Auth0ToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "user_ref": f"user_{index}",
-            "email": user.get("email", ""),
-            "name": user.get("name", "") or user.get("nickname", ""),
-            "blocked": bool(user.get("blocked", False)),
-            "email_verified": bool(user.get("email_verified", False)),
-            "last_login": user.get("last_login", ""),
-            "logins_count": user.get("logins_count", 0),
+            'user_ref': f'user_{index}',
+            'email': user.get('email', ''),
+            'name': user.get('name', '') or user.get('nickname', ''),
+            'blocked': bool(user.get('blocked', False)),
+            'email_verified': bool(user.get('email_verified', False)),
+            'last_login': user.get('last_login', ''),
+            'logins_count': user.get('logins_count', 0),
         }
         if include_ids:
-            summary["user_id"] = user.get("user_id", "")
+            summary['user_id'] = user.get('user_id', '')
         return summary
 
     @staticmethod
@@ -99,12 +99,12 @@ class Auth0ToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "role_ref": f"role_{index}",
-            "name": role.get("name", ""),
-            "description": role.get("description", ""),
+            'role_ref': f'role_{index}',
+            'name': role.get('name', ''),
+            'description': role.get('description', ''),
         }
         if include_ids:
-            summary["role_id"] = role.get("id", "")
+            summary['role_id'] = role.get('id', '')
         return summary
 
     @staticmethod
@@ -115,13 +115,13 @@ class Auth0ToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "connection_ref": f"connection_{index}",
-            "name": connection.get("name", ""),
-            "strategy": connection.get("strategy", ""),
-            "is_domain_connection": bool(connection.get("is_domain_connection", False)),
+            'connection_ref': f'connection_{index}',
+            'name': connection.get('name', ''),
+            'strategy': connection.get('strategy', ''),
+            'is_domain_connection': bool(connection.get('is_domain_connection', False)),
         }
         if include_ids:
-            summary["connection_id"] = connection.get("id", "")
+            summary['connection_id'] = connection.get('id', '')
         return summary
 
     @staticmethod
@@ -132,13 +132,13 @@ class Auth0ToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "app_ref": f"app_{index}",
-            "name": client.get("name", ""),
-            "app_type": client.get("app_type", ""),
-            "is_first_party": bool(client.get("is_first_party", False)),
+            'app_ref': f'app_{index}',
+            'name': client.get('name', ''),
+            'app_type': client.get('app_type', ''),
+            'is_first_party': bool(client.get('is_first_party', False)),
         }
         if include_ids:
-            summary["client_id"] = client.get("client_id", "")
+            summary['client_id'] = client.get('client_id', '')
         return summary
 
     @staticmethod
@@ -149,12 +149,12 @@ class Auth0ToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "org_ref": f"org_{index}",
-            "name": org.get("name", ""),
-            "display_name": org.get("display_name", ""),
+            'org_ref': f'org_{index}',
+            'name': org.get('name', ''),
+            'display_name': org.get('display_name', ''),
         }
         if include_ids:
-            summary["org_id"] = org.get("id", "")
+            summary['org_id'] = org.get('id', '')
         return summary
 
     @staticmethod
@@ -167,8 +167,8 @@ class Auth0ToolSet:
         if isinstance(user_or_id, str) and user_or_id:
             return user_or_id
         if isinstance(user_or_id, dict):
-            user_dict = cast("dict[str, Any]", user_or_id)
-            for key in ("user_id", "id"):
+            user_dict = cast('dict[str, Any]', user_or_id)
+            for key in ('user_id', 'id'):
                 value: Any = user_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
@@ -198,35 +198,35 @@ class Auth0ToolSet:
         (update_user, delete_user, assign_roles_to_user) needs the raw id.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         params: dict[str, Any] = {
-            "page": page,
-            "per_page": per_page,
-            "include_totals": str(include_totals).lower(),
+            'page': page,
+            'per_page': per_page,
+            'include_totals': str(include_totals).lower(),
         }
         if q is not None:
-            params["q"] = q
-            params["search_engine"] = "v3"
+            params['q'] = q
+            params['search_engine'] = 'v3'
         if sort is not None:
-            params["sort"] = sort
-        payload: Any = self._client.get("/api/v2/users", params=params).json()
+            params['sort'] = sort
+        payload: Any = self._client.get('/api/v2/users', params=params).json()
         raw_users: list[dict[str, Any]]
         wrapper: dict[str, Any] = {}
         if isinstance(payload, list):
-            payload_list = cast("list[Any]", payload)
-            raw_users = [cast("dict[str, Any]", u) for u in payload_list if isinstance(u, dict)]
+            payload_list = cast('list[Any]', payload)
+            raw_users = [cast('dict[str, Any]', u) for u in payload_list if isinstance(u, dict)]
         elif isinstance(payload, dict):
-            payload_dict = cast("dict[str, Any]", payload)
-            users_field = cast("list[Any]", payload_dict.get("users", []))
-            raw_users = [cast("dict[str, Any]", u) for u in users_field if isinstance(u, dict)]
-            wrapper = {k: v for k, v in payload_dict.items() if k != "users"}
+            payload_dict = cast('dict[str, Any]', payload)
+            users_field = cast('list[Any]', payload_dict.get('users', []))
+            raw_users = [cast('dict[str, Any]', u) for u in users_field if isinstance(u, dict)]
+            wrapper = {k: v for k, v in payload_dict.items() if k != 'users'}
         else:
             raw_users = []
         summaries = [
             self._user_summary(user, index=index, include_ids=include_ids)
             for index, user in enumerate(raw_users, start=1)
         ]
-        result: dict[str, Any] = {"users": summaries}
+        result: dict[str, Any] = {'users': summaries}
         result.update(wrapper)
         return result
 
@@ -240,8 +240,8 @@ class Auth0ToolSet:
         you need the full profile.
         """
         if not user_id:
-            raise ValueError("user_id is required")
-        return self._client.get(f"/api/v2/users/{quote(user_id, safe='')}").json()
+            raise ValueError('user_id is required')
+        return self._client.get(f'/api/v2/users/{quote(user_id, safe="")}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_user(
@@ -263,24 +263,24 @@ class Auth0ToolSet:
         ``user_id``. Confirm sensitive identity changes with the user first.
         """
         if not connection:
-            raise ValueError("connection is required")
+            raise ValueError('connection is required')
         if not email and not username:
-            raise ValueError("email or username is required")
+            raise ValueError('email or username is required')
         body: dict[str, Any] = {
-            "connection": connection,
-            "email_verified": email_verified,
+            'connection': connection,
+            'email_verified': email_verified,
         }
         if email is not None:
-            body["email"] = email
+            body['email'] = email
         if username is not None:
-            body["username"] = username
+            body['username'] = username
         if password is not None:
-            body["password"] = password
+            body['password'] = password
         if user_metadata is not None:
-            body["user_metadata"] = user_metadata
+            body['user_metadata'] = user_metadata
         if app_metadata is not None:
-            body["app_metadata"] = app_metadata
-        return self._client.post("/api/v2/users", json=body).json()
+            body['app_metadata'] = app_metadata
+        return self._client.post('/api/v2/users', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_user(
@@ -302,18 +302,18 @@ class Auth0ToolSet:
         resolved_id = self._resolve_user_id(user_id)
         body: dict[str, Any] = {}
         if blocked is not None:
-            body["blocked"] = blocked
+            body['blocked'] = blocked
         if email is not None:
-            body["email"] = email
+            body['email'] = email
         if email_verified is not None:
-            body["email_verified"] = email_verified
+            body['email_verified'] = email_verified
         if user_metadata is not None:
-            body["user_metadata"] = user_metadata
+            body['user_metadata'] = user_metadata
         if app_metadata is not None:
-            body["app_metadata"] = app_metadata
+            body['app_metadata'] = app_metadata
         if not body:
-            raise ValueError("at least one update field is required")
-        return self._client.patch(f"/api/v2/users/{quote(resolved_id, safe='')}", json=body).json()
+            raise ValueError('at least one update field is required')
+        return self._client.patch(f'/api/v2/users/{quote(resolved_id, safe="")}', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_user(self, user_id: Any) -> dict[str, Any]:
@@ -324,8 +324,8 @@ class Auth0ToolSet:
         Returns ``{"user_id": ..., "deleted": True, "status": ...}``.
         """
         resolved_id = self._resolve_user_id(user_id)
-        response = self._client.delete(f"/api/v2/users/{quote(resolved_id, safe='')}")
-        return {"user_id": resolved_id, "deleted": True, "status": response.status}
+        response = self._client.delete(f'/api/v2/users/{quote(resolved_id, safe="")}')
+        return {'user_id': resolved_id, 'deleted': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_ROLES_OUTPUT)
@@ -347,30 +347,30 @@ class Auth0ToolSet:
         wrapper so callers can detect more pages.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         params: dict[str, Any] = {
-            "page": page,
-            "per_page": per_page,
-            "include_totals": str(include_totals).lower(),
+            'page': page,
+            'per_page': per_page,
+            'include_totals': str(include_totals).lower(),
         }
-        payload: Any = self._client.get("/api/v2/roles", params=params).json()
+        payload: Any = self._client.get('/api/v2/roles', params=params).json()
         raw_roles: list[dict[str, Any]]
         wrapper: dict[str, Any] = {}
         if isinstance(payload, list):
-            payload_list = cast("list[Any]", payload)
-            raw_roles = [cast("dict[str, Any]", r) for r in payload_list if isinstance(r, dict)]
+            payload_list = cast('list[Any]', payload)
+            raw_roles = [cast('dict[str, Any]', r) for r in payload_list if isinstance(r, dict)]
         elif isinstance(payload, dict):
-            payload_dict = cast("dict[str, Any]", payload)
-            roles_field = cast("list[Any]", payload_dict.get("roles", []))
-            raw_roles = [cast("dict[str, Any]", r) for r in roles_field if isinstance(r, dict)]
-            wrapper = {k: v for k, v in payload_dict.items() if k != "roles"}
+            payload_dict = cast('dict[str, Any]', payload)
+            roles_field = cast('list[Any]', payload_dict.get('roles', []))
+            raw_roles = [cast('dict[str, Any]', r) for r in roles_field if isinstance(r, dict)]
+            wrapper = {k: v for k, v in payload_dict.items() if k != 'roles'}
         else:
             raw_roles = []
         summaries = [
             self._role_summary(role, index=index, include_ids=include_ids)
             for index, role in enumerate(raw_roles, start=1)
         ]
-        result: dict[str, Any] = {"roles": summaries}
+        result: dict[str, Any] = {'roles': summaries}
         result.update(wrapper)
         return result
 
@@ -389,12 +389,12 @@ class Auth0ToolSet:
         """
         resolved_id = self._resolve_user_id(user_id)
         if not role_ids:
-            raise ValueError("role_ids is required")
+            raise ValueError('role_ids is required')
         response = self._client.post(
-            f"/api/v2/users/{quote(resolved_id, safe='')}/roles",
-            json={"roles": role_ids},
+            f'/api/v2/users/{quote(resolved_id, safe="")}/roles',
+            json={'roles': role_ids},
         )
-        return {"status": response.status, "assigned": True}
+        return {'status': response.status, 'assigned': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_CONNECTIONS_OUTPUT)
@@ -417,36 +417,36 @@ class Auth0ToolSet:
         start/limit/total wrapper so callers can detect more pages.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         params: dict[str, Any] = {
-            "page": page,
-            "per_page": per_page,
-            "include_totals": str(include_totals).lower(),
+            'page': page,
+            'per_page': per_page,
+            'include_totals': str(include_totals).lower(),
         }
         if strategy is not None:
-            params["strategy"] = strategy
-        payload: Any = self._client.get("/api/v2/connections", params=params).json()
+            params['strategy'] = strategy
+        payload: Any = self._client.get('/api/v2/connections', params=params).json()
         raw_connections: list[dict[str, Any]]
         wrapper: dict[str, Any] = {}
         if isinstance(payload, list):
-            payload_list = cast("list[Any]", payload)
+            payload_list = cast('list[Any]', payload)
             raw_connections = [
-                cast("dict[str, Any]", c) for c in payload_list if isinstance(c, dict)
+                cast('dict[str, Any]', c) for c in payload_list if isinstance(c, dict)
             ]
         elif isinstance(payload, dict):
-            payload_dict = cast("dict[str, Any]", payload)
-            connections_field = cast("list[Any]", payload_dict.get("connections", []))
+            payload_dict = cast('dict[str, Any]', payload)
+            connections_field = cast('list[Any]', payload_dict.get('connections', []))
             raw_connections = [
-                cast("dict[str, Any]", c) for c in connections_field if isinstance(c, dict)
+                cast('dict[str, Any]', c) for c in connections_field if isinstance(c, dict)
             ]
-            wrapper = {k: v for k, v in payload_dict.items() if k != "connections"}
+            wrapper = {k: v for k, v in payload_dict.items() if k != 'connections'}
         else:
             raw_connections = []
         summaries = [
             self._connection_summary(connection, index=index, include_ids=include_ids)
             for index, connection in enumerate(raw_connections, start=1)
         ]
-        result: dict[str, Any] = {"connections": summaries}
+        result: dict[str, Any] = {'connections': summaries}
         result.update(wrapper)
         return result
 
@@ -470,30 +470,30 @@ class Auth0ToolSet:
         pages.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         params: dict[str, Any] = {
-            "page": page,
-            "per_page": per_page,
-            "include_totals": str(include_totals).lower(),
+            'page': page,
+            'per_page': per_page,
+            'include_totals': str(include_totals).lower(),
         }
-        payload: Any = self._client.get("/api/v2/clients", params=params).json()
+        payload: Any = self._client.get('/api/v2/clients', params=params).json()
         raw_clients: list[dict[str, Any]]
         wrapper: dict[str, Any] = {}
         if isinstance(payload, list):
-            payload_list = cast("list[Any]", payload)
-            raw_clients = [cast("dict[str, Any]", c) for c in payload_list if isinstance(c, dict)]
+            payload_list = cast('list[Any]', payload)
+            raw_clients = [cast('dict[str, Any]', c) for c in payload_list if isinstance(c, dict)]
         elif isinstance(payload, dict):
-            payload_dict = cast("dict[str, Any]", payload)
-            clients_field = cast("list[Any]", payload_dict.get("clients", []))
-            raw_clients = [cast("dict[str, Any]", c) for c in clients_field if isinstance(c, dict)]
-            wrapper = {k: v for k, v in payload_dict.items() if k != "clients"}
+            payload_dict = cast('dict[str, Any]', payload)
+            clients_field = cast('list[Any]', payload_dict.get('clients', []))
+            raw_clients = [cast('dict[str, Any]', c) for c in clients_field if isinstance(c, dict)]
+            wrapper = {k: v for k, v in payload_dict.items() if k != 'clients'}
         else:
             raw_clients = []
         summaries = [
             self._client_summary(client, index=index, include_ids=include_ids)
             for index, client in enumerate(raw_clients, start=1)
         ]
-        result: dict[str, Any] = {"apps": summaries}
+        result: dict[str, Any] = {'apps': summaries}
         result.update(wrapper)
         return result
 
@@ -515,30 +515,30 @@ class Auth0ToolSet:
         start/limit/total wrapper so callers can detect more pages.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         params: dict[str, Any] = {
-            "page": page,
-            "per_page": per_page,
-            "include_totals": str(include_totals).lower(),
+            'page': page,
+            'per_page': per_page,
+            'include_totals': str(include_totals).lower(),
         }
-        payload: Any = self._client.get("/api/v2/organizations", params=params).json()
+        payload: Any = self._client.get('/api/v2/organizations', params=params).json()
         raw_orgs: list[dict[str, Any]]
         wrapper: dict[str, Any] = {}
         if isinstance(payload, list):
-            payload_list = cast("list[Any]", payload)
-            raw_orgs = [cast("dict[str, Any]", o) for o in payload_list if isinstance(o, dict)]
+            payload_list = cast('list[Any]', payload)
+            raw_orgs = [cast('dict[str, Any]', o) for o in payload_list if isinstance(o, dict)]
         elif isinstance(payload, dict):
-            payload_dict = cast("dict[str, Any]", payload)
-            orgs_field = cast("list[Any]", payload_dict.get("organizations", []))
-            raw_orgs = [cast("dict[str, Any]", o) for o in orgs_field if isinstance(o, dict)]
-            wrapper = {k: v for k, v in payload_dict.items() if k != "organizations"}
+            payload_dict = cast('dict[str, Any]', payload)
+            orgs_field = cast('list[Any]', payload_dict.get('organizations', []))
+            raw_orgs = [cast('dict[str, Any]', o) for o in orgs_field if isinstance(o, dict)]
+            wrapper = {k: v for k, v in payload_dict.items() if k != 'organizations'}
         else:
             raw_orgs = []
         summaries = [
             self._org_summary(org, index=index, include_ids=include_ids)
             for index, org in enumerate(raw_orgs, start=1)
         ]
-        result: dict[str, Any] = {"organizations": summaries}
+        result: dict[str, Any] = {'organizations': summaries}
         result.update(wrapper)
         return result
 
@@ -556,7 +556,7 @@ class Auth0ToolSet:
         ``date``, ``user_id``, ``client_id``, and ``ip``. Useful for
         diagnosing login failures or unusual access.
         """
-        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        params: dict[str, Any] = {'page': page, 'per_page': per_page}
         if q is not None:
-            params["q"] = q
-        return self._client.get("/api/v2/logs", params=params).json()
+            params['q'] = q
+        return self._client.get('/api/v2/logs', params=params).json()

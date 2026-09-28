@@ -38,16 +38,18 @@ class MCPServerSpec:
 
     def __post_init__(self) -> None:
         if not self.name:
-            raise ValueError("MCPServerSpec.name is required")
+            message = 'MCPServerSpec.name is required'
+            raise ValueError(message)
         if self.rate_limit_per_minute is not None and self.rate_limit_per_minute < 1:
-            raise ValueError("rate_limit_per_minute must be at least 1")
+            message = 'rate_limit_per_minute must be at least 1'
+            raise ValueError(message)
 
 
 @dataclass(frozen=True)
 class MCPStdioServer(MCPServerSpec):
     """Specification for an MCP server launched as a subprocess via stdio."""
 
-    command: str = ""
+    command: str = ''
     args: tuple[str, ...] = ()
     env: dict[str, str] = field(default_factory=dict)
     cwd: str | None = None
@@ -55,21 +57,23 @@ class MCPStdioServer(MCPServerSpec):
     def __post_init__(self) -> None:
         super().__post_init__()
         if not self.command:
-            raise ValueError("MCPStdioServer.command is required")
+            message = 'MCPStdioServer.command is required'
+            raise ValueError(message)
 
 
 @dataclass(frozen=True)
 class MCPHttpServer(MCPServerSpec):
     """Specification for an MCP server reached over HTTP."""
 
-    url: str = ""
+    url: str = ''
     headers: dict[str, str] = field(default_factory=dict)
     bearer_token: str | None = None
 
     def __post_init__(self) -> None:
         super().__post_init__()
         if not self.url:
-            raise ValueError("MCPHttpServer.url is required")
+            message = 'MCPHttpServer.url is required'
+            raise ValueError(message)
 
 
 # MARK: Bridge
@@ -96,43 +100,40 @@ class MCPBridge:
             RuntimeError: When ``maivn`` is not importable in the current
                 environment.
         """
-        try:
-            from maivn import MCPServer  # type: ignore[import-not-found]
-        except ImportError as exc:  # pragma: no cover - depends on user env
-            raise RuntimeError(
-                "MCPBridge.build() requires the 'maivn' SDK to be installed."
-            ) from exc
+        from maivn import MCPServer  # noqa: PLC0415 - intentional lazy SDK seam
 
         servers: list[Any] = []
         for spec in self._specs:
             kwargs: dict[str, Any] = {
-                "name": spec.name,
+                'name': spec.name,
             }
             if spec.prefix is not None:
-                kwargs["prefix"] = spec.prefix
+                kwargs['tool_name_prefix'] = spec.prefix
             if spec.default_args:
-                kwargs["default_args"] = dict(spec.default_args)
+                kwargs['default_tool_args'] = dict(spec.default_args)
             if spec.rate_limit_per_minute is not None:
-                kwargs["rate_limit_per_minute"] = spec.rate_limit_per_minute
+                kwargs['max_calls_per_minute'] = spec.rate_limit_per_minute
             if spec.soft_error_retry:
-                kwargs["soft_error_retry"] = True
+                kwargs['soft_error_handling'] = {'enabled': True}
             if isinstance(spec, MCPStdioServer):
                 kwargs.update(
-                    transport="stdio",
+                    transport='stdio',
                     command=spec.command,
                     args=list(spec.args),
                     env=dict(spec.env),
-                    cwd=spec.cwd,
+                    working_dir=spec.cwd,
                 )
             elif isinstance(spec, MCPHttpServer):
-                kwargs.update(
-                    transport="http",
-                    url=spec.url,
-                    headers=dict(spec.headers),
-                )
+                headers = dict(spec.headers)
                 if spec.bearer_token is not None:
-                    kwargs["bearer_token"] = spec.bearer_token
+                    headers['Authorization'] = f'Bearer {spec.bearer_token}'
+                kwargs.update(
+                    transport='http',
+                    url=spec.url,
+                    headers=headers,
+                )
             else:
-                raise TypeError(f"Unsupported MCPServerSpec subtype: {type(spec).__name__}")
+                message = f'Unsupported MCPServerSpec subtype: {type(spec).__name__}'
+                raise TypeError(message)
             servers.append(MCPServer(**kwargs))
         return servers

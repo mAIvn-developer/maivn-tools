@@ -3,8 +3,8 @@
 Agents routinely pull a PDF out of a CRM, drop a CSV into cloud storage, or
 hand an image to a vision model — and every provider represents that content
 differently. This module gives connectors one provider-agnostic vocabulary
-for moving file content around: a single `Attachment` reference, reliable
-MIME detection that never guesses wrong by raising, pluggable text
+for moving file content around: a single `Attachment` reference, best-effort
+MIME detection, pluggable text
 extraction, and progress/outcome objects for bulk transfers. Connectors speak
 these primitives so Agents and hosts don't have to special-case every
 provider's file model.
@@ -25,7 +25,7 @@ classify_kind("image/png")                    # 'image'
 The detector inspects the first 64 bytes for magic numbers, sniffs the
 central directory of ZIP containers for OOXML markers, and falls back to
 `mimetypes.guess_type` based on the filename. It never raises and returns
-`application/octet-stream` when nothing matches.
+`application/octet-stream` when nothing matches. A MIME hint does not validate file contents.
 
 ## Attachments
 
@@ -41,7 +41,7 @@ local = Attachment(name="data.csv", path="/srv/exports/data.csv")
 
 assert inline.source is AttachmentSource.INLINE
 assert inline.kind == "pdf"
-print(inline.to_dict())  # safe to log; inline content is omitted
+print(inline.to_dict())  # inline bytes omitted; review names, URLs and paths before logging
 ```
 
 For inline attachments, MIME type, size, and SHA-256 checksum are computed
@@ -54,11 +54,10 @@ the content is the consumer's responsibility.
 dependency-free UTF-8 extractor that covers plain text, Markdown, CSV, JSON,
 and XML.
 
-Richer extractors ship alongside it but stay optional. `HtmlTextExtractor`
-is pure-stdlib; `PdfTextExtractor` and `DocxTextExtractor` load their drivers
-(`pypdf` / `python-docx`) lazily inside `extract`, so importing the package
-never pulls in heavy dependencies. Activate the bundled extractors in one
-call:
+The registry also supports HTML, PDF and DOCX extraction. `HtmlTextExtractor`
+uses the standard library. PDF extraction needs the optional `pypdf` driver;
+`python-docx` is already a required package dependency. Register the bundled
+extractors in one call:
 
 ```python
 from maivn_tools import register_default_extractors

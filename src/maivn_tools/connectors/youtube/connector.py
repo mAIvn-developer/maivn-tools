@@ -20,44 +20,44 @@ from .output_schemas import (
 )
 
 
-@toolset(prefix="youtube")
+@toolset(prefix='youtube')
 class YouTubeToolSet:
     """A connector for the YouTube Data API v3."""
 
     metadata = ProviderMetadata(
-        name="youtube",
-        display_name="YouTube",
-        version="0.1.0",
-        description="Channels, videos, playlists, search, comments.",
+        name='youtube',
+        display_name='YouTube',
+        version='0.1.0',
+        description='Channels, videos, playlists, search, comments.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "https://www.googleapis.com/auth/youtube.readonly": "Read-only.",
-            "https://www.googleapis.com/auth/youtube": "Manage own account.",
-            "https://www.googleapis.com/auth/youtube.upload": "Upload videos.",
-            "https://www.googleapis.com/auth/youtube.force-ssl": "Comments / channel write.",
+            'https://www.googleapis.com/auth/youtube.readonly': 'Read-only.',
+            'https://www.googleapis.com/auth/youtube': 'Manage own account.',
+            'https://www.googleapis.com/auth/youtube.upload': 'Upload videos.',
+            'https://www.googleapis.com/auth/youtube.force-ssl': 'Comments / channel write.',
         },
         capabilities=frozenset(
             {ProviderCapability.READ, ProviderCapability.WRITE, ProviderCapability.SEARCH}
         ),
-        documentation_url="https://developers.google.com/youtube/v3/docs",
-        homepage_url="https://www.youtube.com/",
-        tags=("social-media", "video"),
+        documentation_url='https://developers.google.com/youtube/v3/docs',
+        homepage_url='https://www.youtube.com/',
+        tags=('social-media', 'video'),
     )
 
     def __init__(
         self,
         *,
         token: TokenSource,
-        base_url: str = "https://www.googleapis.com",
+        base_url: str = 'https://www.googleapis.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=make_bearer_auth(token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -71,22 +71,22 @@ class YouTubeToolSet:
         """Resolve a video ID from a string or a video dict from search/list."""
         if isinstance(candidate, str):
             if not candidate:
-                raise ValueError("video_id must be a non-empty string")
+                raise ValueError('video_id must be a non-empty string')
             return candidate
         if isinstance(candidate, dict):
             mapping = cast(dict[str, Any], candidate)
-            for key in ("video_id", "videoId", "id"):
+            for key in ('video_id', 'videoId', 'id'):
                 value: object = mapping.get(key)
                 if isinstance(value, str) and value:
                     return value
                 if isinstance(value, dict):
-                    nested: object = cast(dict[str, Any], value).get("videoId")
+                    nested: object = cast(dict[str, Any], value).get('videoId')
                     if isinstance(nested, str) and nested:
                         return nested
         if isinstance(candidate, list) and candidate:
             first: object = cast(list[object], candidate)[0]
             return YouTubeToolSet._select_video_id(first)
-        raise ValueError("could not resolve video_id from input")
+        raise ValueError('could not resolve video_id from input')
 
     @classmethod
     def _video_summary(
@@ -96,34 +96,34 @@ class YouTubeToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        snippet: dict[str, Any] = item.get("snippet") or {}
-        statistics: dict[str, Any] = item.get("statistics") or {}
-        content_details: dict[str, Any] = item.get("contentDetails") or {}
-        video_id_field: object = item.get("id")
+        snippet: dict[str, Any] = item.get('snippet') or {}
+        statistics: dict[str, Any] = item.get('statistics') or {}
+        content_details: dict[str, Any] = item.get('contentDetails') or {}
+        video_id_field: object = item.get('id')
         if isinstance(video_id_field, dict):
             id_map = cast(dict[str, Any], video_id_field)
-            video_id = id_map.get("videoId", "") or id_map.get("playlistId", "")
+            video_id = id_map.get('videoId', '') or id_map.get('playlistId', '')
         else:
-            video_id = video_id_field or ""
+            video_id = video_id_field or ''
         summary: dict[str, Any] = {
-            "video_ref": f"video_{index}",
-            "title": snippet.get("title", ""),
-            "channel": snippet.get("channelTitle", ""),
-            "posted_at": snippet.get("publishedAt", ""),
-            "description": snippet.get("description", ""),
-            "view_count": int(statistics.get("viewCount", 0)) if statistics.get("viewCount") else 0,
-            "like_count": int(statistics.get("likeCount", 0)) if statistics.get("likeCount") else 0,
-            "comment_count": int(statistics.get("commentCount", 0))
-            if statistics.get("commentCount")
+            'video_ref': f'video_{index}',
+            'title': snippet.get('title', ''),
+            'channel': snippet.get('channelTitle', ''),
+            'posted_at': snippet.get('publishedAt', ''),
+            'description': snippet.get('description', ''),
+            'view_count': int(statistics.get('viewCount', 0)) if statistics.get('viewCount') else 0,
+            'like_count': int(statistics.get('likeCount', 0)) if statistics.get('likeCount') else 0,
+            'comment_count': int(statistics.get('commentCount', 0))
+            if statistics.get('commentCount')
             else 0,
-            "duration": content_details.get("duration", ""),
-            "url": f"https://www.youtube.com/watch?v={video_id}" if video_id else "",
+            'duration': content_details.get('duration', ''),
+            'url': f'https://www.youtube.com/watch?v={video_id}' if video_id else '',
         }
         if include_ids:
-            summary["video_id"] = video_id
-            channel_id = snippet.get("channelId", "")
+            summary['video_id'] = video_id
+            channel_id = snippet.get('channelId', '')
             if channel_id:
-                summary["channel_id"] = channel_id
+                summary['channel_id'] = channel_id
         return summary
 
     @classmethod
@@ -134,21 +134,21 @@ class YouTubeToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        snippet: dict[str, Any] = thread.get("snippet") or {}
-        top_comment: dict[str, Any] = snippet.get("topLevelComment") or {}
-        comment_snippet: dict[str, Any] = top_comment.get("snippet") or {}
+        snippet: dict[str, Any] = thread.get('snippet') or {}
+        top_comment: dict[str, Any] = snippet.get('topLevelComment') or {}
+        comment_snippet: dict[str, Any] = top_comment.get('snippet') or {}
         summary: dict[str, Any] = {
-            "comment_ref": f"comment_{index}",
-            "author": comment_snippet.get("authorDisplayName", ""),
-            "text": comment_snippet.get("textDisplay", "")
-            or comment_snippet.get("textOriginal", ""),
-            "posted_at": comment_snippet.get("publishedAt", ""),
-            "like_count": comment_snippet.get("likeCount", 0),
-            "reply_count": snippet.get("totalReplyCount", 0),
+            'comment_ref': f'comment_{index}',
+            'author': comment_snippet.get('authorDisplayName', ''),
+            'text': comment_snippet.get('textDisplay', '')
+            or comment_snippet.get('textOriginal', ''),
+            'posted_at': comment_snippet.get('publishedAt', ''),
+            'like_count': comment_snippet.get('likeCount', 0),
+            'reply_count': snippet.get('totalReplyCount', 0),
         }
         if include_ids:
-            summary["thread_id"] = thread.get("id", "")
-            summary["comment_id"] = top_comment.get("id", "")
+            summary['thread_id'] = thread.get('id', '')
+            summary['comment_id'] = top_comment.get('id', '')
         return summary
 
     # MARK: - Tools
@@ -170,16 +170,16 @@ class YouTubeToolSet:
         ``for_handle`` (``@`` handle), or ``for_username`` (legacy
         username).
         """
-        params: dict[str, Any] = {"part": ",".join(part or ["snippet", "statistics"])}
+        params: dict[str, Any] = {'part': ','.join(part or ['snippet', 'statistics'])}
         if mine is not None:
-            params["mine"] = str(mine).lower()
+            params['mine'] = str(mine).lower()
         if id is not None:
-            params["id"] = ",".join(id)
+            params['id'] = ','.join(id)
         if for_handle is not None:
-            params["forHandle"] = for_handle
+            params['forHandle'] = for_handle
         if for_username is not None:
-            params["forUsername"] = for_username
-        result: dict[str, Any] = self._client.get("/youtube/v3/channels", params=params).json()
+            params['forUsername'] = for_username
+        result: dict[str, Any] = self._client.get('/youtube/v3/channels', params=params).json()
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -202,27 +202,27 @@ class YouTubeToolSet:
         YouTube response.
         """
         if not id:
-            raise ValueError("id must be non-empty")
+            raise ValueError('id must be non-empty')
         payload: dict[str, Any] = self._client.get(
-            "/youtube/v3/videos",
+            '/youtube/v3/videos',
             params={
-                "id": ",".join(id),
-                "part": ",".join(part or ["snippet", "statistics", "contentDetails"]),
+                'id': ','.join(id),
+                'part': ','.join(part or ['snippet', 'statistics', 'contentDetails']),
             },
         ).json()
         if not include_metadata:
             return payload
         summaries: list[dict[str, Any]] = []
-        items: list[Any] = payload.get("items", [])
+        items: list[Any] = payload.get('items', [])
         for index, item in enumerate(items, start=1):
             if not isinstance(item, dict):
                 continue
             video_item = cast(dict[str, Any], item)
             summaries.append(self._video_summary(video_item, index=index, include_ids=include_ids))
         return {
-            "videos": summaries,
-            "next_page_token": payload.get("nextPageToken"),
-            "page_info": payload.get("pageInfo"),
+            'videos': summaries,
+            'next_page_token': payload.get('nextPageToken'),
+            'page_info': payload.get('pageInfo'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -249,33 +249,33 @@ class YouTubeToolSet:
         response.
         """
         params: dict[str, Any] = {
-            "part": "snippet",
-            "maxResults": max_results,
+            'part': 'snippet',
+            'maxResults': max_results,
         }
         if q is not None:
-            params["q"] = q
+            params['q'] = q
         if channel_id is not None:
-            params["channelId"] = channel_id
+            params['channelId'] = channel_id
         if type is not None:
-            params["type"] = ",".join(type)
+            params['type'] = ','.join(type)
         if order is not None:
-            params["order"] = order
+            params['order'] = order
         if page_token is not None:
-            params["pageToken"] = page_token
-        payload: dict[str, Any] = self._client.get("/youtube/v3/search", params=params).json()
+            params['pageToken'] = page_token
+        payload: dict[str, Any] = self._client.get('/youtube/v3/search', params=params).json()
         if not include_metadata:
             return payload
         summaries: list[dict[str, Any]] = []
-        items: list[Any] = payload.get("items", [])
+        items: list[Any] = payload.get('items', [])
         for index, item in enumerate(items, start=1):
             if not isinstance(item, dict):
                 continue
             video_item = cast(dict[str, Any], item)
             summaries.append(self._video_summary(video_item, index=index, include_ids=include_ids))
         return {
-            "videos": summaries,
-            "next_page_token": payload.get("nextPageToken"),
-            "page_info": payload.get("pageInfo"),
+            'videos': summaries,
+            'next_page_token': payload.get('nextPageToken'),
+            'page_info': payload.get('pageInfo'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -293,16 +293,16 @@ class YouTubeToolSet:
         Returns the raw YouTube playlists response. Provide ``mine=True``,
         ``channel_id``, or ``id`` to scope the list.
         """
-        params: dict[str, Any] = {"part": "snippet,contentDetails", "maxResults": max_results}
+        params: dict[str, Any] = {'part': 'snippet,contentDetails', 'maxResults': max_results}
         if mine is not None:
-            params["mine"] = str(mine).lower()
+            params['mine'] = str(mine).lower()
         if channel_id is not None:
-            params["channelId"] = channel_id
+            params['channelId'] = channel_id
         if id is not None:
-            params["id"] = ",".join(id)
+            params['id'] = ','.join(id)
         if page_token is not None:
-            params["pageToken"] = page_token
-        result: dict[str, Any] = self._client.get("/youtube/v3/playlists", params=params).json()
+            params['pageToken'] = page_token
+        result: dict[str, Any] = self._client.get('/youtube/v3/playlists', params=params).json()
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -319,16 +319,16 @@ class YouTubeToolSet:
         carries ``snippet.resourceId.videoId`` to use with ``list_videos``.
         """
         if not playlist_id:
-            raise ValueError("playlist_id must be a non-empty string")
+            raise ValueError('playlist_id must be a non-empty string')
         params: dict[str, Any] = {
-            "playlistId": playlist_id,
-            "part": "snippet,contentDetails",
-            "maxResults": max_results,
+            'playlistId': playlist_id,
+            'part': 'snippet,contentDetails',
+            'maxResults': max_results,
         }
         if page_token is not None:
-            params["pageToken"] = page_token
+            params['pageToken'] = page_token
         result: dict[str, Any] = self._client.get(
-            "/youtube/v3/playlistItems",
+            '/youtube/v3/playlistItems',
             params=params,
         ).json()
         return result
@@ -348,17 +348,17 @@ class YouTubeToolSet:
         ``position`` to insert at a specific zero-based index.
         """
         if not playlist_id or not video_id:
-            raise ValueError("playlist_id and video_id must be non-empty")
+            raise ValueError('playlist_id and video_id must be non-empty')
         snippet: dict[str, Any] = {
-            "playlistId": playlist_id,
-            "resourceId": {"kind": "youtube#video", "videoId": video_id},
+            'playlistId': playlist_id,
+            'resourceId': {'kind': 'youtube#video', 'videoId': video_id},
         }
         if position is not None:
-            snippet["position"] = position
+            snippet['position'] = position
         result: dict[str, Any] = self._client.post(
-            "/youtube/v3/playlistItems",
-            params={"part": "snippet"},
-            json={"snippet": snippet},
+            '/youtube/v3/playlistItems',
+            params={'part': 'snippet'},
+            json={'snippet': snippet},
         ).json()
         return result
 
@@ -370,12 +370,12 @@ class YouTubeToolSet:
         without re-adding the video.
         """
         if not playlist_item_id:
-            raise ValueError("playlist_item_id must be a non-empty string")
+            raise ValueError('playlist_item_id must be a non-empty string')
         response = self._client.delete(
-            "/youtube/v3/playlistItems",
-            params={"id": playlist_item_id},
+            '/youtube/v3/playlistItems',
+            params={'id': playlist_item_id},
         )
-        return {"id": playlist_item_id, "deleted": True, "status": response.status}
+        return {'id': playlist_item_id, 'deleted': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_video(
@@ -392,20 +392,20 @@ class YouTubeToolSet:
         parts.
         """
         if not video_id:
-            raise ValueError("video_id must be a non-empty string")
-        body: dict[str, Any] = {"id": video_id}
+            raise ValueError('video_id must be a non-empty string')
+        body: dict[str, Any] = {'id': video_id}
         parts: list[str] = []
         if snippet is not None:
-            body["snippet"] = snippet
-            parts.append("snippet")
+            body['snippet'] = snippet
+            parts.append('snippet')
         if status is not None:
-            body["status"] = status
-            parts.append("status")
+            body['status'] = status
+            parts.append('status')
         if not parts:
-            raise ValueError("provide snippet or status")
+            raise ValueError('provide snippet or status')
         result: dict[str, Any] = self._client.put(
-            "/youtube/v3/videos",
-            params={"part": ",".join(parts)},
+            '/youtube/v3/videos',
+            params={'part': ','.join(parts)},
             json=body,
         ).json()
         return result
@@ -420,10 +420,10 @@ class YouTubeToolSet:
         """
         video_id = self._select_video_id(video)
         response = self._client.delete(
-            "/youtube/v3/videos",
-            params={"id": video_id},
+            '/youtube/v3/videos',
+            params={'id': video_id},
         )
-        return {"id": video_id, "deleted": True, "status": response.status}
+        return {'id': video_id, 'deleted': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_COMMENT_THREADS_OUTPUT)
@@ -446,27 +446,27 @@ class YouTubeToolSet:
         ``include_metadata=False`` for the raw YouTube response.
         """
         params: dict[str, Any] = {
-            "part": "snippet,replies",
-            "maxResults": max_results,
+            'part': 'snippet,replies',
+            'maxResults': max_results,
         }
         if video_id is not None:
-            params["videoId"] = video_id
+            params['videoId'] = video_id
         elif channel_id is not None:
-            params["channelId"] = channel_id
+            params['channelId'] = channel_id
         else:
-            raise ValueError("provide video_id or channel_id")
+            raise ValueError('provide video_id or channel_id')
         if page_token is not None:
-            params["pageToken"] = page_token
+            params['pageToken'] = page_token
         if order is not None:
-            params["order"] = order
+            params['order'] = order
         payload: dict[str, Any] = self._client.get(
-            "/youtube/v3/commentThreads",
+            '/youtube/v3/commentThreads',
             params=params,
         ).json()
         if not include_metadata:
             return payload
         summaries: list[dict[str, Any]] = []
-        items: list[Any] = payload.get("items", [])
+        items: list[Any] = payload.get('items', [])
         for index, thread in enumerate(items, start=1):
             if not isinstance(thread, dict):
                 continue
@@ -475,9 +475,9 @@ class YouTubeToolSet:
                 self._comment_thread_summary(thread_item, index=index, include_ids=include_ids)
             )
         return {
-            "comments": summaries,
-            "next_page_token": payload.get("nextPageToken"),
-            "page_info": payload.get("pageInfo"),
+            'comments': summaries,
+            'next_page_token': payload.get('nextPageToken'),
+            'page_info': payload.get('pageInfo'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -496,21 +496,21 @@ class YouTubeToolSet:
         channel-page comment, pass ``channel_id`` alone.
         """
         if not text:
-            raise ValueError("text must be a non-empty string")
+            raise ValueError('text must be a non-empty string')
         if video_id is None and channel_id is None:
-            raise ValueError("provide video_id or channel_id")
+            raise ValueError('provide video_id or channel_id')
         if video_id is not None and channel_id is None:
-            raise ValueError("channel_id is required alongside video_id for a video comment")
+            raise ValueError('channel_id is required alongside video_id for a video comment')
         snippet: dict[str, Any] = {
-            "topLevelComment": {"snippet": {"textOriginal": text}},
+            'topLevelComment': {'snippet': {'textOriginal': text}},
         }
         if video_id is not None:
-            snippet["videoId"] = video_id
+            snippet['videoId'] = video_id
         if channel_id is not None:
-            snippet["channelId"] = channel_id
+            snippet['channelId'] = channel_id
         result: dict[str, Any] = self._client.post(
-            "/youtube/v3/commentThreads",
-            params={"part": "snippet"},
-            json={"snippet": snippet},
+            '/youtube/v3/commentThreads',
+            params={'part': 'snippet'},
+            json={'snippet': snippet},
         ).json()
         return result

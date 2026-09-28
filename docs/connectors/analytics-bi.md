@@ -6,7 +6,7 @@ connector follows the standard `@toolset` / `@toolify` shape.
 ## Agent-ready behavior (overview)
 
 List / search tools across this category return compact summaries with
-stable display refs (`cohort_ref`, `user_ref`, `event_ref`,
+response-local display refs (`cohort_ref`, `user_ref`, `event_ref`,
 `insight_ref`, `person_ref`, `source_ref`, `destination_ref`,
 `warehouse_ref`, `look_ref`, `dashboard_ref`, `card_ref`,
 `project_ref`, `workbook_ref`, `view_ref`, `datasource_ref`,

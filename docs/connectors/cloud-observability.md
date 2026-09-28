@@ -7,7 +7,7 @@ infrastructure control planes. Every connector follows the standard
 ## Agent-ready behavior (overview)
 
 All list / search tools in this group return compact summaries by
-default with a stable `_ref` field (`log_ref`, `monitor_ref`,
+default with a response-local `_ref` field (`log_ref`, `monitor_ref`,
 `dashboard_ref`, `issue_ref`, `incident_ref`, `service_ref`,
 `schedule_ref`, `oncall_ref`, `user_ref`, `alert_ref`, `app_ref`,
 `index_ref`, `search_ref`, `folder_ref`, `component_ref`,

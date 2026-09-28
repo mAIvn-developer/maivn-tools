@@ -18,81 +18,81 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _PRODUCT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "product_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "sku": {"type": "string"},
-        "price": {"type": ["number", "string"]},
-        "is_visible": {"type": ["boolean", "null"]},
-        "inventory_level": {"type": ["integer", "null"]},
-        "product_id": {"type": ["integer", "null"]},
+    'type': 'object',
+    'properties': {
+        'product_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'sku': {'type': 'string'},
+        'price': {'type': ['number', 'string']},
+        'is_visible': {'type': ['boolean', 'null']},
+        'inventory_level': {'type': ['integer', 'null']},
+        'product_id': {'type': ['integer', 'null']},
     },
-    "required": ["product_ref"],
+    'required': ['product_ref'],
 }
 
 _ORDER_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "order_ref": {"type": "string"},
-        "order_number": {"type": ["integer", "string"]},
-        "customer_name": {"type": "string"},
-        "customer_email": {"type": "string"},
-        "total_inc_tax": {"type": ["number", "string"]},
-        "currency_code": {"type": "string"},
-        "status": {"type": "string"},
-        "date_created": {"type": "string"},
-        "order_id": {"type": ["integer", "null"]},
+    'type': 'object',
+    'properties': {
+        'order_ref': {'type': 'string'},
+        'order_number': {'type': ['integer', 'string']},
+        'customer_name': {'type': 'string'},
+        'customer_email': {'type': 'string'},
+        'total_inc_tax': {'type': ['number', 'string']},
+        'currency_code': {'type': 'string'},
+        'status': {'type': 'string'},
+        'date_created': {'type': 'string'},
+        'order_id': {'type': ['integer', 'null']},
     },
-    "required": ["order_ref"],
+    'required': ['order_ref'],
 }
 
 _CUSTOMER_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "customer_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "email": {"type": "string"},
-        "company": {"type": "string"},
-        "customer_id": {"type": ["integer", "null"]},
+    'type': 'object',
+    'properties': {
+        'customer_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'email': {'type': 'string'},
+        'company': {'type': 'string'},
+        'customer_id': {'type': ['integer', 'null']},
     },
-    "required": ["customer_ref"],
+    'required': ['customer_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_PRODUCTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "products": {"type": "array", "items": _PRODUCT_SUMMARY},
-        "count": {"type": "integer"},
-        "meta": {"type": ["object", "null"]},
+    'type': 'object',
+    'properties': {
+        'products': {'type': 'array', 'items': _PRODUCT_SUMMARY},
+        'count': {'type': 'integer'},
+        'meta': {'type': ['object', 'null']},
     },
-    "required": ["products", "count"],
+    'required': ['products', 'count'],
 }
 
 LIST_ORDERS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "orders": {"type": "array", "items": _ORDER_SUMMARY},
-        "count": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'orders': {'type': 'array', 'items': _ORDER_SUMMARY},
+        'count': {'type': 'integer'},
     },
-    "required": ["orders", "count"],
+    'required': ['orders', 'count'],
 }
 
 LIST_CUSTOMERS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "customers": {"type": "array", "items": _CUSTOMER_SUMMARY},
-        "count": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'customers': {'type': 'array', 'items': _CUSTOMER_SUMMARY},
+        'count': {'type': 'integer'},
     },
-    "required": ["customers", "count"],
+    'required': ['customers', 'count'],
 }
 
 
 __all__ = [
-    "LIST_CUSTOMERS_OUTPUT",
-    "LIST_ORDERS_OUTPUT",
-    "LIST_PRODUCTS_OUTPUT",
+    'LIST_CUSTOMERS_OUTPUT',
+    'LIST_ORDERS_OUTPUT',
+    'LIST_PRODUCTS_OUTPUT',
 ]

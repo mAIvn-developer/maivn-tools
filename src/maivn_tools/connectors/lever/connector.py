@@ -20,7 +20,7 @@ from .output_schemas import (
 )
 
 
-@toolset(prefix="lever")
+@toolset(prefix='lever')
 class LeverToolSet:
     """A connector for the Lever v1 REST API.
 
@@ -32,15 +32,15 @@ class LeverToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="lever",
-        display_name="Lever",
-        version="0.1.0",
-        description="Opportunities (candidates), postings, stages, and feedback.",
+        name='lever',
+        display_name='Lever',
+        version='0.1.0',
+        description='Opportunities (candidates), postings, stages, and feedback.',
         auth_modes=(AuthMode.BASIC,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://hire.lever.co/developer/documentation",
-        homepage_url="https://www.lever.co/",
-        tags=("hr", "ats", "recruiting"),
+        documentation_url='https://hire.lever.co/developer/documentation',
+        homepage_url='https://www.lever.co/',
+        tags=('hr', 'ats', 'recruiting'),
     )
 
     def __init__(
@@ -52,16 +52,16 @@ class LeverToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
-        host = "api.sandbox.lever.co" if sandbox else "api.lever.co"
+        host = 'api.sandbox.lever.co' if sandbox else 'api.lever.co'
         self._client = HttpClient(
-            base_url=f"https://{host}",
-            auth=BasicAuth(api_key, ""),
+            base_url=f'https://{host}',
+            auth=BasicAuth(api_key, ''),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -78,24 +78,24 @@ class LeverToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        emails = opportunity.get("emails", [])
-        primary_email = ""
+        emails = opportunity.get('emails', [])
+        primary_email = ''
         if isinstance(emails, list) and emails:
-            primary_email = emails[0] if isinstance(emails[0], str) else ""
-        stage: Any = opportunity.get("stage", "")
+            primary_email = emails[0] if isinstance(emails[0], str) else ''
+        stage: Any = opportunity.get('stage', '')
         if isinstance(stage, dict):
-            stage = cast(dict[str, Any], stage).get("text", "") or ""
+            stage = cast(dict[str, Any], stage).get('text', '') or ''
         summary: dict[str, Any] = {
-            "candidate_ref": f"candidate_{index}",
-            "name": opportunity.get("name", "") or "",
-            "email": primary_email,
-            "headline": opportunity.get("headline", "") or "",
-            "stage": stage,
-            "archived": opportunity.get("archived") is not None,
-            "created_at": opportunity.get("createdAt", ""),
+            'candidate_ref': f'candidate_{index}',
+            'name': opportunity.get('name', '') or '',
+            'email': primary_email,
+            'headline': opportunity.get('headline', '') or '',
+            'stage': stage,
+            'archived': opportunity.get('archived') is not None,
+            'created_at': opportunity.get('createdAt', ''),
         }
         if include_ids:
-            summary["opportunity_id"] = opportunity.get("id", "")
+            summary['opportunity_id'] = opportunity.get('id', '')
         return summary
 
     @staticmethod
@@ -105,22 +105,22 @@ class LeverToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        categories_raw: Any = posting.get("categories", {})
+        categories_raw: Any = posting.get('categories', {})
         categories: dict[str, Any] = (
             cast(dict[str, Any], categories_raw) if isinstance(categories_raw, dict) else {}
         )
         summary: dict[str, Any] = {
-            "job_ref": f"job_{index}",
-            "title": posting.get("text", "") or "",
-            "state": posting.get("state", ""),
-            "team": categories.get("team", ""),
-            "department": categories.get("department", ""),
-            "location": categories.get("location", ""),
-            "commitment": categories.get("commitment", ""),
-            "created_at": posting.get("createdAt", ""),
+            'job_ref': f'job_{index}',
+            'title': posting.get('text', '') or '',
+            'state': posting.get('state', ''),
+            'team': categories.get('team', ''),
+            'department': categories.get('department', ''),
+            'location': categories.get('location', ''),
+            'commitment': categories.get('commitment', ''),
+            'created_at': posting.get('createdAt', ''),
         }
         if include_ids:
-            summary["posting_id"] = posting.get("id", "")
+            summary['posting_id'] = posting.get('id', '')
         return summary
 
     @staticmethod
@@ -131,14 +131,14 @@ class LeverToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "user_ref": f"user_{index}",
-            "name": user.get("name", "") or "",
-            "email": user.get("email", ""),
-            "access_role": user.get("accessRole", ""),
-            "deactivated_at": user.get("deactivatedAt", ""),
+            'user_ref': f'user_{index}',
+            'name': user.get('name', '') or '',
+            'email': user.get('email', ''),
+            'access_role': user.get('accessRole', ''),
+            'deactivated_at': user.get('deactivatedAt', ''),
         }
         if include_ids:
-            summary["user_id"] = user.get("id", "")
+            summary['user_id'] = user.get('id', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -166,24 +166,24 @@ class LeverToolSet:
         :meth:`archive_opportunity`) needs the raw ID. Pagination is via
         ``offset``.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if contact_id is not None:
-            params["contact_id"] = contact_id
+            params['contact_id'] = contact_id
         if email is not None:
-            params["email"] = email
+            params['email'] = email
         if posting_id is not None:
-            params["posting_id"] = posting_id
+            params['posting_id'] = posting_id
         if stage_id is not None:
-            params["stage_id"] = stage_id
+            params['stage_id'] = stage_id
         if archived is not None:
-            params["archived"] = str(archived).lower()
+            params['archived'] = str(archived).lower()
         if offset is not None:
-            params["offset"] = offset
-        raw: object = self._client.get("/v1/opportunities", params=params).json()
+            params['offset'] = offset
+        raw: object = self._client.get('/v1/opportunities', params=params).json()
         if not isinstance(raw, dict):
             return cast(dict[str, Any], raw)
         payload: dict[str, Any] = cast(dict[str, Any], raw)
-        data: object = payload.get("data")
+        data: object = payload.get('data')
         if not isinstance(data, list):
             return payload
         items: list[Any] = cast(list[Any], data)
@@ -195,9 +195,9 @@ class LeverToolSet:
             if isinstance(item, dict)
         ]
         return {
-            "candidates": summaries,
-            "next": payload.get("next"),
-            "hasNext": payload.get("hasNext", False),
+            'candidates': summaries,
+            'next': payload.get('next'),
+            'hasNext': payload.get('hasNext', False),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -209,8 +209,8 @@ class LeverToolSet:
         handle and should not appear in final answers.
         """
         if not opportunity_id:
-            raise ValueError("opportunity_id is required")
-        return self._client.get(f"/v1/opportunities/{opportunity_id}").json()
+            raise ValueError('opportunity_id is required')
+        return self._client.get(f'/v1/opportunities/{opportunity_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_opportunity(
@@ -225,10 +225,10 @@ class LeverToolSet:
         Lever opportunity payload (at minimum a ``name``).
         """
         if not perform_as or not opportunity:
-            raise ValueError("perform_as and opportunity are required")
+            raise ValueError('perform_as and opportunity are required')
         return self._client.post(
-            "/v1/opportunities",
-            params={"perform_as": perform_as},
+            '/v1/opportunities',
+            params={'perform_as': perform_as},
             json=opportunity,
         ).json()
 
@@ -245,11 +245,11 @@ class LeverToolSet:
         ``opportunity_id`` and ``stage_id`` are raw Lever IDs.
         """
         if not opportunity_id or not perform_as or not stage_id:
-            raise ValueError("opportunity_id, perform_as, and stage_id are required")
+            raise ValueError('opportunity_id, perform_as, and stage_id are required')
         return self._client.put(
-            f"/v1/opportunities/{opportunity_id}/stage",
-            params={"perform_as": perform_as},
-            json={"stage": stage_id},
+            f'/v1/opportunities/{opportunity_id}/stage',
+            params={'perform_as': perform_as},
+            json={'stage': stage_id},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -270,18 +270,18 @@ class LeverToolSet:
         created date. Raw Lever posting IDs are omitted unless
         ``include_ids=True``.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if state is not None:
-            params["state"] = state
+            params['state'] = state
         if location is not None:
-            params["location"] = location
+            params['location'] = location
         if offset is not None:
-            params["offset"] = offset
-        raw: object = self._client.get("/v1/postings", params=params).json()
+            params['offset'] = offset
+        raw: object = self._client.get('/v1/postings', params=params).json()
         if not isinstance(raw, dict):
             return cast(dict[str, Any], raw)
         payload: dict[str, Any] = cast(dict[str, Any], raw)
-        data: object = payload.get("data")
+        data: object = payload.get('data')
         if not isinstance(data, list):
             return payload
         items: list[Any] = cast(list[Any], data)
@@ -293,9 +293,9 @@ class LeverToolSet:
             if isinstance(posting, dict)
         ]
         return {
-            "jobs": summaries,
-            "next": payload.get("next"),
-            "hasNext": payload.get("hasNext", False),
+            'jobs': summaries,
+            'next': payload.get('next'),
+            'hasNext': payload.get('hasNext', False),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -306,8 +306,8 @@ class LeverToolSet:
         handle and should not appear in final answers.
         """
         if not posting_id:
-            raise ValueError("posting_id is required")
-        return self._client.get(f"/v1/postings/{posting_id}").json()
+            raise ValueError('posting_id is required')
+        return self._client.get(f'/v1/postings/{posting_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_stages(self) -> dict[str, Any]:
@@ -316,7 +316,7 @@ class LeverToolSet:
         Returns the raw Lever stage list. Use ``id`` to drive
         :meth:`update_opportunity_stage`.
         """
-        return self._client.get("/v1/stages").json()
+        return self._client.get('/v1/stages').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_USERS_OUTPUT)
@@ -335,16 +335,16 @@ class LeverToolSet:
         timestamp. Raw Lever user IDs are omitted unless
         ``include_ids=True``.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if access_role is not None:
-            params["access_role"] = access_role
+            params['access_role'] = access_role
         if offset is not None:
-            params["offset"] = offset
-        raw: object = self._client.get("/v1/users", params=params).json()
+            params['offset'] = offset
+        raw: object = self._client.get('/v1/users', params=params).json()
         if not isinstance(raw, dict):
             return cast(dict[str, Any], raw)
         payload: dict[str, Any] = cast(dict[str, Any], raw)
-        data: object = payload.get("data")
+        data: object = payload.get('data')
         if not isinstance(data, list):
             return payload
         items: list[Any] = cast(list[Any], data)
@@ -354,9 +354,9 @@ class LeverToolSet:
             if isinstance(user, dict)
         ]
         return {
-            "users": summaries,
-            "next": payload.get("next"),
-            "hasNext": payload.get("hasNext", False),
+            'users': summaries,
+            'next': payload.get('next'),
+            'hasNext': payload.get('hasNext', False),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -373,12 +373,12 @@ class LeverToolSet:
         feedback list payload.
         """
         if not opportunity_id:
-            raise ValueError("opportunity_id is required")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('opportunity_id is required')
+        params: dict[str, Any] = {'limit': limit}
         if offset is not None:
-            params["offset"] = offset
+            params['offset'] = offset
         return self._client.get(
-            f"/v1/opportunities/{opportunity_id}/feedback", params=params
+            f'/v1/opportunities/{opportunity_id}/feedback', params=params
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -395,9 +395,9 @@ class LeverToolSet:
         arguments are raw Lever IDs.
         """
         if not opportunity_id or not perform_as or not archive_reason_id:
-            raise ValueError("opportunity_id, perform_as, and archive_reason_id are required")
+            raise ValueError('opportunity_id, perform_as, and archive_reason_id are required')
         return self._client.put(
-            f"/v1/opportunities/{opportunity_id}/archived",
-            params={"perform_as": perform_as},
-            json={"reason": archive_reason_id},
+            f'/v1/opportunities/{opportunity_id}/archived',
+            params={'perform_as': perform_as},
+            json={'reason': archive_reason_id},
         ).json()

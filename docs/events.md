@@ -10,8 +10,7 @@ event surfaces for exactly these two directions:
 - **Webhook helpers** verify inbound deliveries from providers (inbound).
 
 Both are lightweight and optional: you choose where audit events go by
-plugging in a sink, and verification is a single call. Neither surface ever
-logs secrets.
+plugging in a sink, and verification is a single call. Audit detail is application-supplied and is not automatically scrubbed.
 
 ## Audit events
 
@@ -79,11 +78,9 @@ from maivn_tools import SignatureAlgorithm, WebhookVerifier
 
 verifier = WebhookVerifier(
     secret="shared-secret",
-    signature_header="X-Hub-Signature-256",
+    signature_header="X-Example-Signature",
     algorithm=SignatureAlgorithm.HMAC_SHA256,
     encoding="hex",
-    timestamp_header="X-Hub-Timestamp",
-    tolerance_seconds=300,
 )
 verifier.verify(request_headers, request_body)
 ```
@@ -91,6 +88,11 @@ verifier.verify(request_headers, request_body)
 A `SignatureMismatchError` is raised when the signature is missing,
 malformed, or wrong, or when the optional timestamp falls outside the
 configured tolerance window.
+
+This example expects the bare hex digest, not GitHub's `sha256=` prefix or
+Stripe's timestamped signature format. The optional timestamp header is checked
+separately from the HMAC and cannot establish authenticated freshness. Implement
+the provider's signed-message and deduplication rules.
 
 For one-off verification without building a verifier, call
 `verify_hmac_signature(secret, payload, signature, algorithm=..., encoding=...)`

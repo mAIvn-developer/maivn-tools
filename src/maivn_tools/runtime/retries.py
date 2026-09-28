@@ -42,13 +42,13 @@ class RetryPolicy:
 
     def __post_init__(self) -> None:
         if self.max_attempts < 1:
-            raise ValueError("max_attempts must be at least 1")
+            raise ValueError('max_attempts must be at least 1')
         if self.initial_backoff_seconds < 0:
-            raise ValueError("initial_backoff_seconds must be non-negative")
+            raise ValueError('initial_backoff_seconds must be non-negative')
         if self.max_backoff_seconds < 0:
-            raise ValueError("max_backoff_seconds must be non-negative")
+            raise ValueError('max_backoff_seconds must be non-negative')
         if self.backoff_multiplier <= 0:
-            raise ValueError("backoff_multiplier must be positive")
+            raise ValueError('backoff_multiplier must be positive')
 
     def should_retry(self, attempt: int, error: BaseException) -> bool:
         """Return True when ``error`` is retryable and budget remains."""
