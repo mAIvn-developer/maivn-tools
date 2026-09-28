@@ -18,22 +18,22 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from .metadata import AuthMode
 
 
-class ConnectionStatus(str, Enum):
+class ConnectionStatus(StrEnum):
     """Lifecycle states for a connection."""
 
-    UNCONFIGURED = "unconfigured"
-    PENDING_AUTH = "pending_auth"
-    ACTIVE = "active"
-    DEGRADED = "degraded"
-    EXPIRED = "expired"
-    REVOKED = "revoked"
-    ERROR = "error"
+    UNCONFIGURED = 'unconfigured'
+    PENDING_AUTH = 'pending_auth'
+    ACTIVE = 'active'
+    DEGRADED = 'degraded'
+    EXPIRED = 'expired'
+    REVOKED = 'revoked'
+    ERROR = 'error'
 
 
 @dataclass(frozen=True)
@@ -101,9 +101,9 @@ class ConnectionMetadata:
 
     def __post_init__(self) -> None:
         if not self.connection_id:
-            raise ValueError("ConnectionMetadata.connection_id is required")
+            raise ValueError('ConnectionMetadata.connection_id is required')
         if not self.provider:
-            raise ValueError("ConnectionMetadata.provider is required")
+            raise ValueError('ConnectionMetadata.provider is required')
 
     def is_active(self) -> bool:
         """Return True when the connection is in the ACTIVE status."""
@@ -114,29 +114,29 @@ class ConnectionMetadata:
         token_view: dict[str, Any] | None = None
         if self.token is not None:
             token_view = {
-                "fingerprint": self.token.fingerprint,
-                "issued_at": _isoformat(self.token.issued_at),
-                "expires_at": _isoformat(self.token.expires_at),
-                "scopes": list(self.token.scopes),
-                "refreshable": self.token.refreshable,
+                'fingerprint': self.token.fingerprint,
+                'issued_at': _isoformat(self.token.issued_at),
+                'expires_at': _isoformat(self.token.expires_at),
+                'scopes': list(self.token.scopes),
+                'refreshable': self.token.refreshable,
             }
         return {
-            "connection_id": self.connection_id,
-            "provider": self.provider,
-            "auth_mode": self.auth_mode.value,
-            "account": self.account,
-            "tenant": self.tenant,
-            "scopes": list(self.scopes),
-            "token": token_view,
-            "health": {
-                "status": self.health.status.value,
-                "checked_at": _isoformat(self.health.checked_at),
-                "detail": self.health.detail,
-                "latency_ms": self.health.latency_ms,
+            'connection_id': self.connection_id,
+            'provider': self.provider,
+            'auth_mode': self.auth_mode.value,
+            'account': self.account,
+            'tenant': self.tenant,
+            'scopes': list(self.scopes),
+            'token': token_view,
+            'health': {
+                'status': self.health.status.value,
+                'checked_at': _isoformat(self.health.checked_at),
+                'detail': self.health.detail,
+                'latency_ms': self.health.latency_ms,
             },
-            "labels": dict(self.labels),
-            "created_at": _isoformat(self.created_at),
-            "updated_at": _isoformat(self.updated_at),
+            'labels': dict(self.labels),
+            'created_at': _isoformat(self.created_at),
+            'updated_at': _isoformat(self.updated_at),
         }
 
 

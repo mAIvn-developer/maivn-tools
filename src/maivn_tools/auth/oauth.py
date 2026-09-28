@@ -75,11 +75,11 @@ class OAuth2BearerAuth(AuthStrategy):
         self,
         provider: OAuth2TokenProvider,
         *,
-        header: str = "Authorization",
-        scheme: str = "Bearer",
+        header: str = 'Authorization',
+        scheme: str = 'Bearer',
     ) -> None:
         if not callable(provider):
-            raise TypeError("provider must be callable")
+            raise TypeError('provider must be callable')
         self._provider = provider
         self._header = header
         self._scheme = scheme
@@ -89,15 +89,15 @@ class OAuth2BearerAuth(AuthStrategy):
         # though the provider's declared return type is OAuth2Token.
         token = cast(object, self._provider())
         if not isinstance(token, OAuth2Token):
-            raise TypeError("OAuth2 token provider must return OAuth2Token")
-        headers = dict(request.get("headers") or {})
-        headers[self._header] = f"{self._scheme} {token.access_token}"
-        request["headers"] = headers
+            raise TypeError('OAuth2 token provider must return OAuth2Token')
+        headers = dict(request.get('headers') or {})
+        headers[self._header] = f'{self._scheme} {token.access_token}'
+        request['headers'] = headers
         return request
 
     def describe(self) -> dict[str, Any]:
         return {
-            "mode": self.mode.value,
-            "header": self._header,
-            "scheme": self._scheme,
+            'mode': self.mode.value,
+            'header': self._header,
+            'scheme': self._scheme,
         }

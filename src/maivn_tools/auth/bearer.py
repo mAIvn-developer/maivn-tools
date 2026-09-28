@@ -29,28 +29,28 @@ class BearerTokenAuth(AuthStrategy):
         self,
         token: str,
         *,
-        scheme: str = "Bearer",
-        header: str = "Authorization",
+        scheme: str = 'Bearer',
+        header: str = 'Authorization',
     ) -> None:
         if not token:
-            raise ValueError("token must be a non-empty string")
+            raise ValueError('token must be a non-empty string')
         if not scheme:
-            raise ValueError("scheme must be a non-empty string")
+            raise ValueError('scheme must be a non-empty string')
         if not header:
-            raise ValueError("header must be a non-empty string")
+            raise ValueError('header must be a non-empty string')
         self._token = token
         self._scheme = scheme
         self._header = header
 
     def apply(self, request: dict[str, Any]) -> dict[str, Any]:
-        headers = dict(request.get("headers") or {})
-        headers[self._header] = f"{self._scheme} {self._token}"
-        request["headers"] = headers
+        headers = dict(request.get('headers') or {})
+        headers[self._header] = f'{self._scheme} {self._token}'
+        request['headers'] = headers
         return request
 
     def describe(self) -> dict[str, Any]:
         return {
-            "mode": self.mode.value,
-            "scheme": self._scheme,
-            "header": self._header,
+            'mode': self.mode.value,
+            'scheme': self._scheme,
+            'header': self._header,
         }

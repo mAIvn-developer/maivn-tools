@@ -15,8 +15,8 @@ from ...runtime.http import HttpClient, HttpTransport
 
 # MARK: Constants
 
-_API_VERSION = "v1"
-_DEFAULT_BASE_URL = f"https://api.hightouch.com/api/{_API_VERSION}"
+_API_VERSION = 'v1'
+_DEFAULT_BASE_URL = f'https://api.hightouch.com/api/{_API_VERSION}'
 
 
 # MARK: Helpers
@@ -33,7 +33,7 @@ def _coerce_id(candidate: Any, *keys: str) -> str:
     if isinstance(candidate, int):
         return str(candidate)
     if isinstance(candidate, dict):
-        candidate_dict = cast("dict[Any, Any]", candidate)
+        candidate_dict = cast('dict[Any, Any]', candidate)
         for key in keys:
             value: Any = candidate_dict.get(key)
             if isinstance(value, str) and value:
@@ -48,26 +48,26 @@ def _coerce_id(candidate: Any, *keys: str) -> str:
                 except ValueError:
                     continue
     if isinstance(candidate, list | tuple):
-        candidate_seq = cast("list[Any] | tuple[Any, ...]", candidate)
+        candidate_seq = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in candidate_seq:
             item_value: Any = item
             try:
                 return _coerce_id(item_value, *keys)
             except ValueError:
                 continue
-    type_name = type(cast("object", candidate)).__name__
-    raise ValueError(f"could not extract an ID from {type_name}")
+    type_name = type(cast('object', candidate)).__name__
+    raise ValueError(f'could not extract an ID from {type_name}')
 
 
 def _summarize_source(source: dict[str, Any], *, index: int, include_ids: bool) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "source_ref": f"source_{index}",
-        "name": source.get("name") or source.get("slug", ""),
-        "type": source.get("type", ""),
-        "created_at": source.get("createdAt", ""),
+        'source_ref': f'source_{index}',
+        'name': source.get('name') or source.get('slug', ''),
+        'type': source.get('type', ''),
+        'created_at': source.get('createdAt', ''),
     }
     if include_ids:
-        summary["source_id"] = source.get("id", "")
+        summary['source_id'] = source.get('id', '')
     return summary
 
 
@@ -75,47 +75,47 @@ def _summarize_destination(
     destination: dict[str, Any], *, index: int, include_ids: bool
 ) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "destination_ref": f"destination_{index}",
-        "name": destination.get("name") or destination.get("slug", ""),
-        "type": destination.get("type", ""),
-        "created_at": destination.get("createdAt", ""),
+        'destination_ref': f'destination_{index}',
+        'name': destination.get('name') or destination.get('slug', ''),
+        'type': destination.get('type', ''),
+        'created_at': destination.get('createdAt', ''),
     }
     if include_ids:
-        summary["destination_id"] = destination.get("id", "")
+        summary['destination_id'] = destination.get('id', '')
     return summary
 
 
 def _summarize_model(model: dict[str, Any], *, index: int, include_ids: bool) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "model_ref": f"model_{index}",
-        "name": model.get("name") or model.get("slug", ""),
-        "source": model.get("sourceName") or model.get("sourceId", ""),
-        "created_at": model.get("createdAt", ""),
+        'model_ref': f'model_{index}',
+        'name': model.get('name') or model.get('slug', ''),
+        'source': model.get('sourceName') or model.get('sourceId', ''),
+        'created_at': model.get('createdAt', ''),
     }
     if include_ids:
-        summary["model_id"] = model.get("id", "")
-        summary["source_id"] = model.get("sourceId", "")
+        summary['model_id'] = model.get('id', '')
+        summary['source_id'] = model.get('sourceId', '')
     return summary
 
 
 def _summarize_sync(sync: dict[str, Any], *, index: int, include_ids: bool) -> dict[str, Any]:
-    schedule: Any = sync.get("schedule") or {}
+    schedule: Any = sync.get('schedule') or {}
     schedule_type: Any = (
-        cast("dict[str, Any]", schedule).get("type") if isinstance(schedule, dict) else ""
+        cast('dict[str, Any]', schedule).get('type') if isinstance(schedule, dict) else ''
     )
     summary: dict[str, Any] = {
-        "sync_ref": f"sync_{index}",
-        "name": sync.get("name") or sync.get("slug", ""),
-        "destination": sync.get("destinationName") or sync.get("destinationId", ""),
-        "model": sync.get("modelName") or sync.get("modelId", ""),
-        "schedule": schedule_type,
-        "disabled": sync.get("disabled"),
-        "last_run_status": sync.get("status") or sync.get("lastRunStatus", ""),
+        'sync_ref': f'sync_{index}',
+        'name': sync.get('name') or sync.get('slug', ''),
+        'destination': sync.get('destinationName') or sync.get('destinationId', ''),
+        'model': sync.get('modelName') or sync.get('modelId', ''),
+        'schedule': schedule_type,
+        'disabled': sync.get('disabled'),
+        'last_run_status': sync.get('status') or sync.get('lastRunStatus', ''),
     }
     if include_ids:
-        summary["sync_id"] = sync.get("id", "")
-        summary["destination_id"] = sync.get("destinationId", "")
-        summary["model_id"] = sync.get("modelId", "")
+        summary['sync_id'] = sync.get('id', '')
+        summary['destination_id'] = sync.get('destinationId', '')
+        summary['model_id'] = sync.get('modelId', '')
     return summary
 
 
@@ -123,22 +123,22 @@ def _summarize_sync_run(
     sync_run: dict[str, Any], *, index: int, include_ids: bool
 ) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "run_ref": f"run_{index}",
-        "status": sync_run.get("status", ""),
-        "started_at": sync_run.get("startedAt") or sync_run.get("createdAt", ""),
-        "finished_at": sync_run.get("finishedAt", ""),
-        "successful_rows": sync_run.get("successfulRows"),
-        "failed_rows": sync_run.get("failedRows"),
-        "query_size": sync_run.get("querySize"),
-        "error": sync_run.get("error", ""),
+        'run_ref': f'run_{index}',
+        'status': sync_run.get('status', ''),
+        'started_at': sync_run.get('startedAt') or sync_run.get('createdAt', ''),
+        'finished_at': sync_run.get('finishedAt', ''),
+        'successful_rows': sync_run.get('successfulRows'),
+        'failed_rows': sync_run.get('failedRows'),
+        'query_size': sync_run.get('querySize'),
+        'error': sync_run.get('error', ''),
     }
     if include_ids:
-        summary["run_id"] = sync_run.get("id", "")
-        summary["sync_id"] = sync_run.get("syncId", "")
+        summary['run_id'] = sync_run.get('id', '')
+        summary['sync_id'] = sync_run.get('syncId', '')
     return summary
 
 
-@toolset(prefix="hightouch")
+@toolset(prefix='hightouch')
 class HightouchToolSet:
     """A connector for the Hightouch REST API.
 
@@ -147,15 +147,15 @@ class HightouchToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="hightouch",
-        display_name="Hightouch",
-        version="0.1.0",
-        description="Sources, models, destinations, syncs, and runs.",
+        name='hightouch',
+        display_name='Hightouch',
+        version='0.1.0',
+        description='Sources, models, destinations, syncs, and runs.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://hightouch.com/docs/api-reference/",
-        homepage_url="https://hightouch.com/",
-        tags=("etl", "reverse-etl", "data-activation"),
+        documentation_url='https://hightouch.com/docs/api-reference/',
+        homepage_url='https://hightouch.com/',
+        tags=('etl', 'reverse-etl', 'data-activation'),
     )
 
     def __init__(
@@ -167,15 +167,15 @@ class HightouchToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(api_key),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -201,22 +201,22 @@ class HightouchToolSet:
         the unfiltered API response.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         payload: dict[str, Any] = self._client.get(
-            "/sources", params={"page": page, "perPage": per_page}
+            '/sources', params={'page': page, 'perPage': per_page}
         ).json()
         if raw:
             return payload
-        items: list[Any] = payload.get("data") or []
+        items: list[Any] = payload.get('data') or []
         summaries: list[dict[str, Any]] = []
         for index, source in enumerate(items, start=1):
             if isinstance(source, dict):
                 summaries.append(
                     _summarize_source(
-                        cast("dict[str, Any]", source), index=index, include_ids=include_ids
+                        cast('dict[str, Any]', source), index=index, include_ids=include_ids
                     )
                 )
-        return {"sources": summaries, "next_page": payload.get("nextPage")}
+        return {'sources': summaries, 'next_page': payload.get('nextPage')}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_source(self, source_id: Any) -> dict[str, Any]:
@@ -226,10 +226,10 @@ class HightouchToolSet:
         raw ID string or a source dict from :meth:`list_sources`
         (``include_ids=True``).
         """
-        resolved_id = _coerce_id(source_id, "source_id", "id")
+        resolved_id = _coerce_id(source_id, 'source_id', 'id')
         if not resolved_id:
-            raise ValueError("source_id is required")
-        result: dict[str, Any] = self._client.get(f"/sources/{resolved_id}").json()
+            raise ValueError('source_id is required')
+        result: dict[str, Any] = self._client.get(f'/sources/{resolved_id}').json()
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -250,25 +250,25 @@ class HightouchToolSet:
         response.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         payload: dict[str, Any] = self._client.get(
-            "/destinations",
-            params={"page": page, "perPage": per_page},
+            '/destinations',
+            params={'page': page, 'perPage': per_page},
         ).json()
         if raw:
             return payload
-        items: list[Any] = payload.get("data") or []
+        items: list[Any] = payload.get('data') or []
         summaries: list[dict[str, Any]] = []
         for index, destination in enumerate(items, start=1):
             if isinstance(destination, dict):
                 summaries.append(
                     _summarize_destination(
-                        cast("dict[str, Any]", destination),
+                        cast('dict[str, Any]', destination),
                         index=index,
                         include_ids=include_ids,
                     )
                 )
-        return {"destinations": summaries, "next_page": payload.get("nextPage")}
+        return {'destinations': summaries, 'next_page': payload.get('nextPage')}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_models(
@@ -288,22 +288,22 @@ class HightouchToolSet:
         response.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         payload: dict[str, Any] = self._client.get(
-            "/models", params={"page": page, "perPage": per_page}
+            '/models', params={'page': page, 'perPage': per_page}
         ).json()
         if raw:
             return payload
-        items: list[Any] = payload.get("data") or []
+        items: list[Any] = payload.get('data') or []
         summaries: list[dict[str, Any]] = []
         for index, model in enumerate(items, start=1):
             if isinstance(model, dict):
                 summaries.append(
                     _summarize_model(
-                        cast("dict[str, Any]", model), index=index, include_ids=include_ids
+                        cast('dict[str, Any]', model), index=index, include_ids=include_ids
                     )
                 )
-        return {"models": summaries, "next_page": payload.get("nextPage")}
+        return {'models': summaries, 'next_page': payload.get('nextPage')}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_model(self, model_id: Any) -> dict[str, Any]:
@@ -313,10 +313,10 @@ class HightouchToolSet:
         ID string or a model dict from :meth:`list_models`
         (``include_ids=True``).
         """
-        resolved_id = _coerce_id(model_id, "model_id", "id")
+        resolved_id = _coerce_id(model_id, 'model_id', 'id')
         if not resolved_id:
-            raise ValueError("model_id is required")
-        result: dict[str, Any] = self._client.get(f"/models/{resolved_id}").json()
+            raise ValueError('model_id is required')
+        result: dict[str, Any] = self._client.get(f'/models/{resolved_id}').json()
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -337,22 +337,22 @@ class HightouchToolSet:
         raw ``sync_id``. Pass ``raw=True`` for the unfiltered API response.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         payload: dict[str, Any] = self._client.get(
-            "/syncs", params={"page": page, "perPage": per_page}
+            '/syncs', params={'page': page, 'perPage': per_page}
         ).json()
         if raw:
             return payload
-        items: list[Any] = payload.get("data") or []
+        items: list[Any] = payload.get('data') or []
         summaries: list[dict[str, Any]] = []
         for index, sync in enumerate(items, start=1):
             if isinstance(sync, dict):
                 summaries.append(
                     _summarize_sync(
-                        cast("dict[str, Any]", sync), index=index, include_ids=include_ids
+                        cast('dict[str, Any]', sync), index=index, include_ids=include_ids
                     )
                 )
-        return {"syncs": summaries, "next_page": payload.get("nextPage")}
+        return {'syncs': summaries, 'next_page': payload.get('nextPage')}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_sync(self, sync_id: Any) -> dict[str, Any]:
@@ -362,10 +362,10 @@ class HightouchToolSet:
         ID string or a sync dict from :meth:`list_syncs`
         (``include_ids=True``).
         """
-        resolved_id = _coerce_id(sync_id, "sync_id", "id")
+        resolved_id = _coerce_id(sync_id, 'sync_id', 'id')
         if not resolved_id:
-            raise ValueError("sync_id is required")
-        result: dict[str, Any] = self._client.get(f"/syncs/{resolved_id}").json()
+            raise ValueError('sync_id is required')
+        result: dict[str, Any] = self._client.get(f'/syncs/{resolved_id}').json()
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -383,12 +383,12 @@ class HightouchToolSet:
         dataset rather than the diff and is heavier — confirm with the
         user first if it would generate notable cost.
         """
-        resolved_id = _coerce_id(sync_id, "sync_id", "id")
+        resolved_id = _coerce_id(sync_id, 'sync_id', 'id')
         if not resolved_id:
-            raise ValueError("sync_id is required")
+            raise ValueError('sync_id is required')
         result: dict[str, Any] = self._client.post(
-            f"/syncs/{resolved_id}/trigger",
-            json={"fullResync": full_resync},
+            f'/syncs/{resolved_id}/trigger',
+            json={'fullResync': full_resync},
         ).json()
         return result
 
@@ -411,26 +411,26 @@ class HightouchToolSet:
         unfiltered API response.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
-        resolved_id = _coerce_id(sync_id, "sync_id", "id")
+            raise ValueError('per_page must be between 1 and 100')
+        resolved_id = _coerce_id(sync_id, 'sync_id', 'id')
         if not resolved_id:
-            raise ValueError("sync_id is required")
+            raise ValueError('sync_id is required')
         payload: dict[str, Any] = self._client.get(
-            f"/syncs/{resolved_id}/runs",
-            params={"page": page, "perPage": per_page},
+            f'/syncs/{resolved_id}/runs',
+            params={'page': page, 'perPage': per_page},
         ).json()
         if raw:
             return payload
-        items: list[Any] = payload.get("data") or []
+        items: list[Any] = payload.get('data') or []
         summaries: list[dict[str, Any]] = []
         for index, run in enumerate(items, start=1):
             if isinstance(run, dict):
                 summaries.append(
                     _summarize_sync_run(
-                        cast("dict[str, Any]", run), index=index, include_ids=include_ids
+                        cast('dict[str, Any]', run), index=index, include_ids=include_ids
                     )
                 )
-        return {"runs": summaries, "next_page": payload.get("nextPage")}
+        return {'runs': summaries, 'next_page': payload.get('nextPage')}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_sync_run(
@@ -448,18 +448,18 @@ class HightouchToolSet:
         The Hightouch API has no single-run-by-id endpoint; this fetches the
         sync's runs filtered by ``runId`` and returns the matching run.
         """
-        resolved_sync_id = _coerce_id(sync_id, "sync_id", "id")
-        resolved_run_id = _coerce_id(run_id, "run_id", "id")
+        resolved_sync_id = _coerce_id(sync_id, 'sync_id', 'id')
+        resolved_run_id = _coerce_id(run_id, 'run_id', 'id')
         if not resolved_sync_id or not resolved_run_id:
-            raise ValueError("sync_id and run_id are required")
+            raise ValueError('sync_id and run_id are required')
         payload: dict[str, Any] = self._client.get(
-            f"/syncs/{resolved_sync_id}/runs",
-            params={"runId": resolved_run_id},
+            f'/syncs/{resolved_sync_id}/runs',
+            params={'runId': resolved_run_id},
         ).json()
-        items: list[Any] = payload.get("data") or []
+        items: list[Any] = payload.get('data') or []
         for run in items:
             if isinstance(run, dict):
-                run_dict = cast("dict[str, Any]", run)
-                if str(run_dict.get("id", "")) == resolved_run_id:
+                run_dict = cast('dict[str, Any]', run)
+                if str(run_dict.get('id', '')) == resolved_run_id:
                     return run_dict
-        raise ValueError(f"sync run {resolved_run_id} not found for sync {resolved_sync_id}")
+        raise ValueError(f'sync run {resolved_run_id} not found for sync {resolved_sync_id}')

@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import MicrosoftExcelToolSet
 
-__all__ = ["MicrosoftExcelToolSet"]
+__all__ = ['MicrosoftExcelToolSet']

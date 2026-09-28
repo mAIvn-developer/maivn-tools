@@ -19,7 +19,7 @@ from ...runtime.http import HttpClient, HttpTransport
 # Current stable Pinecone API version. Pinecone pins versions via the
 # ``X-Pinecone-API-Version`` header and guarantees each stable version a
 # minimum 12-month support window. Bump this single constant to migrate.
-_API_VERSION = "2025-10"
+_API_VERSION = '2025-10'
 
 
 # MARK: Helpers
@@ -30,25 +30,25 @@ def _coerce_name(candidate: Any, *, key: str) -> str:
     if isinstance(candidate, str):
         return candidate
     if isinstance(candidate, dict):
-        mapping = cast("dict[str, Any]", candidate)
-        for k in (key, "name", "index_name"):
+        mapping = cast('dict[str, Any]', candidate)
+        for k in (key, 'name', 'index_name'):
             value: Any = mapping.get(k)
             if isinstance(value, str):
                 return value
-        return ""
+        return ''
     if isinstance(candidate, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+        sequence = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in sequence:
             resolved = _coerce_name(item, key=key)
             if resolved:
                 return resolved
-    return ""
+    return ''
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="pinecone")
+@toolset(prefix='pinecone')
 class PineconeToolSet:
     """A connector for the Pinecone REST API.
 
@@ -63,10 +63,10 @@ class PineconeToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="pinecone",
-        display_name="Pinecone",
-        version="0.1.0",
-        description="Indexes, vectors, namespaces, collections, and metadata filters.",
+        name='pinecone',
+        display_name='Pinecone',
+        version='0.1.0',
+        description='Indexes, vectors, namespaces, collections, and metadata filters.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset(
             {
@@ -75,9 +75,9 @@ class PineconeToolSet:
                 ProviderCapability.SEARCH,
             }
         ),
-        documentation_url="https://docs.pinecone.io/reference/",
-        homepage_url="https://www.pinecone.io/",
-        tags=("vector-store", "ai"),
+        documentation_url='https://docs.pinecone.io/reference/',
+        homepage_url='https://www.pinecone.io/',
+        tags=('vector-store', 'ai'),
     )
 
     def __init__(
@@ -85,33 +85,33 @@ class PineconeToolSet:
         *,
         api_key: str,
         index_host: str | None = None,
-        control_plane_url: str = "https://api.pinecone.io",
+        control_plane_url: str = 'https://api.pinecone.io',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
         self._control = HttpClient(
-            base_url=control_plane_url.rstrip("/"),
-            auth=ApiKeyAuth(api_key, header="Api-Key"),
+            base_url=control_plane_url.rstrip('/'),
+            auth=ApiKeyAuth(api_key, header='Api-Key'),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "X-Pinecone-API-Version": _API_VERSION,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Pinecone-API-Version': _API_VERSION,
             },
         )
         self._data: HttpClient | None = None
         if index_host is not None:
             self._data = HttpClient(
-                base_url=index_host.rstrip("/"),
-                auth=ApiKeyAuth(api_key, header="Api-Key"),
+                base_url=index_host.rstrip('/'),
+                auth=ApiKeyAuth(api_key, header='Api-Key'),
                 transport=transport,
                 default_headers={
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                    "X-Pinecone-API-Version": _API_VERSION,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Pinecone-API-Version': _API_VERSION,
                 },
             )
 
@@ -122,7 +122,7 @@ class PineconeToolSet:
     def _require_data(self) -> HttpClient:
         if self._data is None:
             raise ValueError(
-                "index_host must be set in the constructor to call data-plane endpoints"
+                'index_host must be set in the constructor to call data-plane endpoints'
             )
         return self._data
 
@@ -137,32 +137,32 @@ class PineconeToolSet:
         so they are kept. Set ``include_ids=True`` if the full raw record
         is needed.
         """
-        raw: Any = self._control.get("/indexes").json()
-        payload: dict[str, Any] = cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
-        raw_indexes: Any = payload.get("indexes", [])
-        indexes: list[Any] = cast("list[Any]", raw_indexes) if isinstance(raw_indexes, list) else []
+        raw: Any = self._control.get('/indexes').json()
+        payload: dict[str, Any] = cast('dict[str, Any]', raw) if isinstance(raw, dict) else {}
+        raw_indexes: Any = payload.get('indexes', [])
+        indexes: list[Any] = cast('list[Any]', raw_indexes) if isinstance(raw_indexes, list) else []
         summaries: list[dict[str, Any]] = []
         for index, item in enumerate(indexes, start=1):
             if not isinstance(item, dict):
                 continue
-            record = cast("dict[str, Any]", item)
-            status: Any = record.get("status")
-            state: Any = ""
+            record = cast('dict[str, Any]', item)
+            status: Any = record.get('status')
+            state: Any = ''
             if isinstance(status, dict):
-                state = cast("dict[str, Any]", status).get("state", "")
+                state = cast('dict[str, Any]', status).get('state', '')
             summary: dict[str, Any] = {
-                "index_ref": f"index_{index}",
-                "name": record.get("name", ""),
-                "dimension": record.get("dimension"),
-                "metric": record.get("metric", ""),
-                "status": state,
-                "host": record.get("host", ""),
-                "spec": record.get("spec", {}),
+                'index_ref': f'index_{index}',
+                'name': record.get('name', ''),
+                'dimension': record.get('dimension'),
+                'metric': record.get('metric', ''),
+                'status': state,
+                'host': record.get('host', ''),
+                'spec': record.get('spec', {}),
             }
             if include_ids:
-                summary["raw"] = record
+                summary['raw'] = record
             summaries.append(summary)
-        return {"indexes": summaries}
+        return {'indexes': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def describe_index(self, name: Any) -> dict[str, Any]:
@@ -173,10 +173,10 @@ class PineconeToolSet:
         (``name``, ``dimension``, ``metric``, ``host``, ``spec``,
         ``status``).
         """
-        resolved = _coerce_name(name, key="name")
+        resolved = _coerce_name(name, key='name')
         if not resolved:
-            raise ValueError("name is required")
-        return self._control.get(f"/indexes/{resolved}").json()
+            raise ValueError('name is required')
+        return self._control.get(f'/indexes/{resolved}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_index(
@@ -184,9 +184,9 @@ class PineconeToolSet:
         *,
         name: str,
         dimension: int,
-        metric: str = "cosine",
+        metric: str = 'cosine',
         spec: dict[str, Any] | None = None,
-        deletion_protection: str = "disabled",
+        deletion_protection: str = 'disabled',
     ) -> dict[str, Any]:
         """Create a serverless or pod-based index.
 
@@ -196,18 +196,18 @@ class PineconeToolSet:
         ``{"pod": {...}}``). Returns the new index resource.
         """
         if not name or dimension < 1:
-            raise ValueError("name and a positive dimension are required")
-        if metric not in {"cosine", "euclidean", "dotproduct"}:
-            raise ValueError("metric must be cosine/euclidean/dotproduct")
+            raise ValueError('name and a positive dimension are required')
+        if metric not in {'cosine', 'euclidean', 'dotproduct'}:
+            raise ValueError('metric must be cosine/euclidean/dotproduct')
         body: dict[str, Any] = {
-            "name": name,
-            "dimension": dimension,
-            "metric": metric,
-            "deletion_protection": deletion_protection,
+            'name': name,
+            'dimension': dimension,
+            'metric': metric,
+            'deletion_protection': deletion_protection,
         }
         if spec is not None:
-            body["spec"] = spec
-        return self._control.post("/indexes", json=body).json()
+            body['spec'] = spec
+        return self._control.post('/indexes', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_index(self, name: Any) -> dict[str, Any]:
@@ -217,11 +217,11 @@ class PineconeToolSet:
         Accepts a raw index name or an index dict returned by
         :meth:`list_indexes` / :meth:`describe_index`.
         """
-        resolved = _coerce_name(name, key="name")
+        resolved = _coerce_name(name, key='name')
         if not resolved:
-            raise ValueError("name is required")
-        response = self._control.delete(f"/indexes/{resolved}")
-        return {"name": resolved, "deleted": True, "status": response.status}
+            raise ValueError('name is required')
+        response = self._control.delete(f'/indexes/{resolved}')
+        return {'name': resolved, 'deleted': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def describe_index_stats(self) -> dict[str, Any]:
@@ -231,7 +231,7 @@ class PineconeToolSet:
         Returns ``{"namespaces": {<ns>: {"vectorCount": ...}, ...},
         "dimension": ..., "indexFullness": ..., "totalVectorCount": ...}``.
         """
-        return self._require_data().post("/describe_index_stats", json={}).json()
+        return self._require_data().post('/describe_index_stats', json={}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def upsert(
@@ -246,11 +246,11 @@ class PineconeToolSet:
         "metadata": {...}}``. Returns ``{"upsertedCount": <n>}``.
         """
         if not vectors:
-            raise ValueError("vectors must be non-empty")
-        body: dict[str, Any] = {"vectors": vectors}
+            raise ValueError('vectors must be non-empty')
+        body: dict[str, Any] = {'vectors': vectors}
         if namespace is not None:
-            body["namespace"] = namespace
-        return self._require_data().post("/vectors/upsert", json=body).json()
+            body['namespace'] = namespace
+        return self._require_data().post('/vectors/upsert', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def query(
@@ -275,23 +275,23 @@ class PineconeToolSet:
         agent needs, not an internal handle.
         """
         if top_k < 1:
-            raise ValueError("top_k must be positive")
+            raise ValueError('top_k must be positive')
         if (vector is None) == (id is None):
-            raise ValueError("Provide exactly one of vector or id")
+            raise ValueError('Provide exactly one of vector or id')
         body: dict[str, Any] = {
-            "topK": top_k,
-            "includeValues": include_values,
-            "includeMetadata": include_metadata,
+            'topK': top_k,
+            'includeValues': include_values,
+            'includeMetadata': include_metadata,
         }
         if vector is not None:
-            body["vector"] = vector
+            body['vector'] = vector
         if id is not None:
-            body["id"] = id
+            body['id'] = id
         if namespace is not None:
-            body["namespace"] = namespace
+            body['namespace'] = namespace
         if filter is not None:
-            body["filter"] = filter
-        return self._require_data().post("/query", json=body).json()
+            body['filter'] = filter
+        return self._require_data().post('/query', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def fetch(
@@ -307,11 +307,11 @@ class PineconeToolSet:
         hydrate full vector + metadata records.
         """
         if not ids:
-            raise ValueError("ids must be non-empty")
-        params: dict[str, Any] = {"ids": ids}
+            raise ValueError('ids must be non-empty')
+        params: dict[str, Any] = {'ids': ids}
         if namespace is not None:
-            params["namespace"] = namespace
-        return self._require_data().get("/vectors/fetch", params=params).json()
+            params['namespace'] = namespace
+        return self._require_data().get('/vectors/fetch', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_vectors(
@@ -329,15 +329,15 @@ class PineconeToolSet:
         ``delete_all`` operation.
         """
         if not ids and not delete_all and not filter:
-            raise ValueError("Provide ids, filter, or delete_all=True")
-        body: dict[str, Any] = {"deleteAll": delete_all}
+            raise ValueError('Provide ids, filter, or delete_all=True')
+        body: dict[str, Any] = {'deleteAll': delete_all}
         if ids is not None:
-            body["ids"] = ids
+            body['ids'] = ids
         if namespace is not None:
-            body["namespace"] = namespace
+            body['namespace'] = namespace
         if filter is not None:
-            body["filter"] = filter
-        return self._require_data().post("/vectors/delete", json=body).json()
+            body['filter'] = filter
+        return self._require_data().post('/vectors/delete', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_vector(
@@ -355,12 +355,12 @@ class PineconeToolSet:
         provided.
         """
         if not id:
-            raise ValueError("id is required")
-        body: dict[str, Any] = {"id": id}
+            raise ValueError('id is required')
+        body: dict[str, Any] = {'id': id}
         if values is not None:
-            body["values"] = values
+            body['values'] = values
         if set_metadata is not None:
-            body["setMetadata"] = set_metadata
+            body['setMetadata'] = set_metadata
         if namespace is not None:
-            body["namespace"] = namespace
-        return self._require_data().post("/vectors/update", json=body).json()
+            body['namespace'] = namespace
+        return self._require_data().post('/vectors/update', json=body).json()

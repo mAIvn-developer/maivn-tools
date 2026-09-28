@@ -22,7 +22,7 @@ from ...runtime.http import HttpClient, HttpTransport
 
 # MARK: - Constants
 
-COMPOSIO_API_URL = "https://backend.composio.dev/api"
+COMPOSIO_API_URL = 'https://backend.composio.dev/api'
 
 
 # MARK: - Helpers
@@ -46,40 +46,40 @@ def _coerce_id(candidate: Any, *keys: str) -> str:
                 except ValueError:
                     continue
     if isinstance(candidate, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+        sequence = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in sequence:
             item_value: Any = item
             try:
                 return _coerce_id(item_value, *keys)
             except ValueError:
                 continue
-    raise ValueError(f"could not extract an ID from {type(cast(object, candidate)).__name__}")
+    raise ValueError(f'could not extract an ID from {type(cast(object, candidate)).__name__}')
 
 
 def _summarize_app(app: dict[str, Any], *, index: int, include_ids: bool) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "app_ref": f"app_{index}",
-        "name": app.get("name") or app.get("key", ""),
-        "description": app.get("description", ""),
-        "categories": app.get("categories", []),
-        "no_auth": app.get("no_auth"),
+        'app_ref': f'app_{index}',
+        'name': app.get('name') or app.get('key', ''),
+        'description': app.get('description', ''),
+        'categories': app.get('categories', []),
+        'no_auth': app.get('no_auth'),
     }
     if include_ids:
-        summary["app_id"] = app.get("appId") or app.get("id", "")
-        summary["key"] = app.get("key", "")
+        summary['app_id'] = app.get('appId') or app.get('id', '')
+        summary['key'] = app.get('key', '')
     return summary
 
 
 def _summarize_action(action: dict[str, Any], *, index: int, include_ids: bool) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "action_ref": f"action_{index}",
-        "name": action.get("displayName") or action.get("name", ""),
-        "app": action.get("appName") or action.get("app", ""),
-        "description": action.get("description", ""),
+        'action_ref': f'action_{index}',
+        'name': action.get('displayName') or action.get('name', ''),
+        'app': action.get('appName') or action.get('app', ''),
+        'description': action.get('description', ''),
     }
     if include_ids:
-        summary["action_name"] = action.get("name", "")
-        summary["action_id"] = action.get("id", "")
+        summary['action_name'] = action.get('name', '')
+        summary['action_id'] = action.get('id', '')
     return summary
 
 
@@ -87,16 +87,16 @@ def _summarize_connection(
     connection: dict[str, Any], *, index: int, include_ids: bool
 ) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "connection_ref": f"connection_{index}",
-        "app": connection.get("appName") or connection.get("appUniqueId", ""),
-        "status": connection.get("status", ""),
-        "created_at": connection.get("createdAt", ""),
+        'connection_ref': f'connection_{index}',
+        'app': connection.get('appName') or connection.get('appUniqueId', ''),
+        'status': connection.get('status', ''),
+        'created_at': connection.get('createdAt', ''),
     }
     if include_ids:
-        summary["connection_id"] = (
-            connection.get("connectedAccountId")
-            or connection.get("id")
-            or connection.get("connectionId", "")
+        summary['connection_id'] = (
+            connection.get('connectedAccountId')
+            or connection.get('id')
+            or connection.get('connectionId', '')
         )
     return summary
 
@@ -104,21 +104,21 @@ def _summarize_connection(
 # MARK: - Tool set
 
 
-@toolset(prefix="composio")
+@toolset(prefix='composio')
 class ComposioToolSet:
     """A connector for the Composio toolset bridge."""
 
     metadata = ProviderMetadata(
-        name="composio",
-        display_name="Composio",
-        version="0.1.0",
+        name='composio',
+        display_name='Composio',
+        version='0.1.0',
         description="Browse and execute Composio's catalog of cross-app actions.",
         auth_modes=(AuthMode.API_KEY,),
-        scopes={"actions:execute": "Execute Composio actions on behalf of the account."},
+        scopes={'actions:execute': 'Execute Composio actions on behalf of the account.'},
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://docs.composio.dev",
-        homepage_url="https://composio.dev",
-        tags=("partner", "automation", "tools"),
+        documentation_url='https://docs.composio.dev',
+        homepage_url='https://composio.dev',
+        tags=('partner', 'automation', 'tools'),
     )
 
     def __init__(
@@ -130,13 +130,13 @@ class ComposioToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key must be a non-empty string")
+            raise ValueError('api_key must be a non-empty string')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(api_key, header="x-api-key"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(api_key, header='x-api-key'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     # MARK: - Tools
@@ -157,16 +157,16 @@ class ComposioToolSet:
         :meth:`list_actions` (filtered by app key) needs the raw ``key``.
         Pass ``raw=True`` for the unfiltered API response.
         """
-        payload: dict[str, Any] = self._client.get("/v1/apps").json()
+        payload: dict[str, Any] = self._client.get('/v1/apps').json()
         if raw:
             return payload
-        items: list[Any] = payload.get("items") or payload.get("apps") or payload.get("data") or []
+        items: list[Any] = payload.get('items') or payload.get('apps') or payload.get('data') or []
         summaries: list[dict[str, Any]] = []
         for index, app in enumerate(items, start=1):
             if isinstance(app, dict):
                 app_dict = cast(dict[str, Any], app)
                 summaries.append(_summarize_app(app_dict, index=index, include_ids=include_ids))
-        return {"apps": summaries}
+        return {'apps': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_actions(
@@ -187,17 +187,17 @@ class ComposioToolSet:
         ``raw=True`` for the unfiltered API response.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit}
         if app is not None:
-            params["app"] = app
+            params['app'] = app
         if use_case is not None:
-            params["useCase"] = use_case
-        payload: dict[str, Any] = self._client.get("/v1/actions", params=params).json()
+            params['useCase'] = use_case
+        payload: dict[str, Any] = self._client.get('/v1/actions', params=params).json()
         if raw:
             return payload
         items: list[Any] = (
-            payload.get("items") or payload.get("actions") or payload.get("data") or []
+            payload.get('items') or payload.get('actions') or payload.get('data') or []
         )
         summaries: list[dict[str, Any]] = []
         for index, action in enumerate(items, start=1):
@@ -206,7 +206,7 @@ class ComposioToolSet:
                 summaries.append(
                     _summarize_action(action_dict, index=index, include_ids=include_ids)
                 )
-        return {"actions": summaries}
+        return {'actions': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_connections(
@@ -224,11 +224,11 @@ class ComposioToolSet:
         :meth:`execute_action` needs the raw ``connected_account_id``.
         Pass ``raw=True`` for the unfiltered API response.
         """
-        params = {"app": app} if app else None
-        payload: dict[str, Any] = self._client.get("/v1/connectedAccounts", params=params).json()
+        params = {'app': app} if app else None
+        payload: dict[str, Any] = self._client.get('/v1/connectedAccounts', params=params).json()
         if raw:
             return payload
-        items: list[Any] = payload.get("items") or payload.get("data") or []
+        items: list[Any] = payload.get('items') or payload.get('data') or []
         summaries: list[dict[str, Any]] = []
         for index, connection in enumerate(items, start=1):
             if isinstance(connection, dict):
@@ -236,7 +236,7 @@ class ComposioToolSet:
                 summaries.append(
                     _summarize_connection(connection_dict, index=index, include_ids=include_ids)
                 )
-        return {"connections": summaries}
+        return {'connections': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def execute_action(
@@ -255,20 +255,20 @@ class ComposioToolSet:
         (``include_ids=True``). ``input`` carries action-specific
         arguments.
         """
-        resolved_action_name = _coerce_id(action_name, "action_name", "name", "id")
+        resolved_action_name = _coerce_id(action_name, 'action_name', 'name', 'id')
         resolved_connection_id = _coerce_id(
-            connected_account_id, "connection_id", "connectedAccountId", "id"
+            connected_account_id, 'connection_id', 'connectedAccountId', 'id'
         )
         if not resolved_action_name:
-            raise ValueError("action_name must be a non-empty string")
+            raise ValueError('action_name must be a non-empty string')
         if not resolved_connection_id:
-            raise ValueError("connected_account_id must be a non-empty string")
+            raise ValueError('connected_account_id must be a non-empty string')
         payload: dict[str, Any] = {
-            "connectedAccountId": resolved_connection_id,
-            "input": input or {},
+            'connectedAccountId': resolved_connection_id,
+            'input': input or {},
         }
         result: dict[str, Any] = self._client.post(
-            f"/v1/actions/{resolved_action_name}/execute",
+            f'/v1/actions/{resolved_action_name}/execute',
             json=payload,
         ).json()
         return result

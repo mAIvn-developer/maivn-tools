@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import SigmaToolSet
 
-__all__ = ["SigmaToolSet"]
+__all__ = ['SigmaToolSet']

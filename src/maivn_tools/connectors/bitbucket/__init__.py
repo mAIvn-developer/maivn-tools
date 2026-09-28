@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import BitbucketToolSet
 
-__all__ = ["BitbucketToolSet"]
+__all__ = ['BitbucketToolSet']

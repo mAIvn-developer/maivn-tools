@@ -10,7 +10,7 @@ marks destructive deletes / removals so hosts can filter them out via
 
 All three toolsets follow the same agent-ready conventions:
 
-- List / search tools return compact summaries by default with a stable
+- List / search tools return compact summaries by default with a response-local
   display ref (`file_ref`, `folder_ref`, `item_ref`, `match_ref`).
 - Raw provider IDs are omitted by default. Pass `include_ids=True` only
   when a follow-up tool needs the raw ID.
@@ -38,7 +38,7 @@ connector = LocalFilesToolSet(
     max_read_bytes=512_000,
     max_write_bytes=10_000_000,
 )
-agent = Agent(model="auto")
+agent = Agent(name="files-agent", model="auto")
 register_connector(agent, connector)
 ```
 
@@ -91,8 +91,7 @@ connector.read_text_file(entries[0])
 
 `delete_file` and `remove_directory` (with `recursive=True`) are tagged
 `destructive` and require `PermissionFlag.DELETE`. Filter them off the
-toolset with `exclude_tags=["destructive"]` for read-only / safe-edit
-agents. Both refuse to operate on the connector root.
+toolset with `exclude_tags=["destructive"]` to exclude tagged destructive methods. Both refuse to operate on the connector root.
 
 ### Sandbox guarantees
 
@@ -101,7 +100,7 @@ I/O runs. The connector raises `PathOutsideRootError` for:
 
 - Absolute paths outside the root.
 - Relative paths that traverse out via `..`.
-- Symlink targets that escape the root, unless `follow_symlinks=True`.
+- Symlink targets that escape the root. `follow_symlinks` controls directory traversal; it does not permit paths outside the root.
 
 These checks run after `pathlib.resolve()`, so `.` and `..` segments
 are collapsed before comparison.
@@ -165,7 +164,7 @@ and `permanently_delete` are tagged `destructive` and require
 `PermissionFlag.DELETE`. Box `empty_trash` raises by design (Box has no
 bulk endpoint); iterate trashed items and call `permanently_delete` per
 item. Filter destructive tools off the toolset with
-`exclude_tags=["destructive"]` when wiring a read-only / safe-edit
+`exclude_tags=["destructive"]` when wiring a agents that exclude tagged destructive methods
 agent.
 
 ## DropboxToolSet
@@ -220,4 +219,4 @@ connector.get_temporary_link(results["items"][0])
 `delete` (soft-delete, recoverable via `restore`) and
 `revoke_shared_link` are tagged `destructive` and require
 `PermissionFlag.DELETE`. Filter them off the toolset with
-`exclude_tags=["destructive"]` for read-only / safe-edit agents.
+`exclude_tags=["destructive"]` to exclude tagged destructive methods.

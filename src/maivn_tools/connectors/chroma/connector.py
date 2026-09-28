@@ -30,24 +30,24 @@ def _coerce_collection_id(candidate: Any) -> str:
         return candidate
     if isinstance(candidate, dict):
         mapping = cast(dict[str, Any], candidate)
-        for key in ("id", "collection_id"):
+        for key in ('id', 'collection_id'):
             value: Any = mapping.get(key)
             if isinstance(value, str):
                 return value
-        return ""
+        return ''
     if isinstance(candidate, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+        sequence = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in sequence:
             resolved = _coerce_collection_id(item)
             if resolved:
                 return resolved
-    return ""
+    return ''
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="chroma")
+@toolset(prefix='chroma')
 class ChromaToolSet:
     """A connector for the Chroma vector-store HTTP API.
 
@@ -60,10 +60,10 @@ class ChromaToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="chroma",
-        display_name="Chroma",
-        version="0.1.0",
-        description="Collections, documents, embeddings, query, and metadata filters.",
+        name='chroma',
+        display_name='Chroma',
+        version='0.1.0',
+        description='Collections, documents, embeddings, query, and metadata filters.',
         auth_modes=(AuthMode.API_KEY, AuthMode.NONE),
         capabilities=frozenset(
             {
@@ -72,38 +72,38 @@ class ChromaToolSet:
                 ProviderCapability.SEARCH,
             }
         ),
-        documentation_url="https://docs.trychroma.com/",
-        homepage_url="https://www.trychroma.com/",
-        tags=("vector-store", "ai"),
+        documentation_url='https://docs.trychroma.com/',
+        homepage_url='https://www.trychroma.com/',
+        tags=('vector-store', 'ai'),
     )
 
     def __init__(
         self,
         *,
-        base_url: str = "http://localhost:8000",
+        base_url: str = 'http://localhost:8000',
         auth_token: str | None = None,
-        tenant: str = "default_tenant",
-        database: str = "default_database",
+        tenant: str = 'default_tenant',
+        database: str = 'default_database',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not base_url:
-            raise ValueError("base_url is required")
+            raise ValueError('base_url is required')
         self.connection = connection
         self._tenant = tenant
         self._database = database
         auth = (
-            ApiKeyAuth(auth_token, header="Authorization", prefix="Bearer")
+            ApiKeyAuth(auth_token, header='Authorization', prefix='Bearer')
             if auth_token
             else NoAuth()
         )
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=auth,
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -112,7 +112,7 @@ class ChromaToolSet:
         return self._client
 
     def _base(self) -> str:
-        return f"/api/v2/tenants/{self._tenant}/databases/{self._database}"
+        return f'/api/v2/tenants/{self._tenant}/databases/{self._database}'
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def heartbeat(self) -> dict[str, Any]:
@@ -120,7 +120,7 @@ class ChromaToolSet:
 
         Use this once at startup to confirm connectivity.
         """
-        return self._client.get("/api/v2/heartbeat").json()
+        return self._client.get('/api/v2/heartbeat').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_collections(self, *, include_ids: bool = False) -> dict[str, Any]:
@@ -135,7 +135,7 @@ class ChromaToolSet:
         is an internal handle. Set ``include_ids=True`` when a follow-up
         tool needs the raw ``collection_id``.
         """
-        payload: Any = self._client.get(f"{self._base()}/collections").json()
+        payload: Any = self._client.get(f'{self._base()}/collections').json()
         collections: list[Any] = cast(list[Any], payload) if isinstance(payload, list) else []
         summaries: list[dict[str, Any]] = []
         for index, item in enumerate(collections, start=1):
@@ -143,15 +143,15 @@ class ChromaToolSet:
                 continue
             entry = cast(dict[str, Any], item)
             summary: dict[str, Any] = {
-                "collection_ref": f"collection_{index}",
-                "name": entry.get("name", ""),
-                "metadata": entry.get("metadata", {}),
-                "dimension": entry.get("dimension"),
+                'collection_ref': f'collection_{index}',
+                'name': entry.get('name', ''),
+                'metadata': entry.get('metadata', {}),
+                'dimension': entry.get('dimension'),
             }
             if include_ids:
-                summary["collection_id"] = entry.get("id", "")
+                summary['collection_id'] = entry.get('id', '')
             summaries.append(summary)
-        return {"collections": summaries}
+        return {'collections': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_collection(self, collection_id: Any) -> dict[str, Any]:
@@ -167,8 +167,8 @@ class ChromaToolSet:
         """
         resolved = _coerce_collection_id(collection_id)
         if not resolved:
-            raise ValueError("collection_id is required")
-        return self._client.get(f"{self._base()}/collections/{resolved}").json()
+            raise ValueError('collection_id is required')
+        return self._client.get(f'{self._base()}/collections/{resolved}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_collection(
@@ -187,13 +187,13 @@ class ChromaToolSet:
         ``id``).
         """
         if not name:
-            raise ValueError("name is required")
-        body: dict[str, Any] = {"name": name, "get_or_create": get_or_create}
+            raise ValueError('name is required')
+        body: dict[str, Any] = {'name': name, 'get_or_create': get_or_create}
         if metadata is not None:
-            body["metadata"] = metadata
+            body['metadata'] = metadata
         if configuration is not None:
-            body["configuration"] = configuration
-        return self._client.post(f"{self._base()}/collections", json=body).json()
+            body['configuration'] = configuration
+        return self._client.post(f'{self._base()}/collections', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_collection(self, collection_id: Any) -> dict[str, Any]:
@@ -207,9 +207,9 @@ class ChromaToolSet:
         """
         resolved = _coerce_collection_id(collection_id)
         if not resolved:
-            raise ValueError("collection_id is required")
-        response = self._client.delete(f"{self._base()}/collections/{resolved}")
-        return {"collection_id": resolved, "deleted": True, "status": response.status}
+            raise ValueError('collection_id is required')
+        response = self._client.delete(f'{self._base()}/collections/{resolved}')
+        return {'collection_id': resolved, 'deleted': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def add(
@@ -230,18 +230,18 @@ class ChromaToolSet:
         callers must embed client-side and pass one vector per ``id``.
         """
         if not collection_id or not ids:
-            raise ValueError("collection_id and ids are required")
+            raise ValueError('collection_id and ids are required')
         if not embeddings:
-            raise ValueError("embeddings is required")
+            raise ValueError('embeddings is required')
         if len(embeddings) != len(ids):
-            raise ValueError("embeddings must have the same length as ids")
-        body: dict[str, Any] = {"ids": ids, "embeddings": embeddings}
+            raise ValueError('embeddings must have the same length as ids')
+        body: dict[str, Any] = {'ids': ids, 'embeddings': embeddings}
         if metadatas is not None:
-            body["metadatas"] = metadatas
+            body['metadatas'] = metadatas
         if documents is not None:
-            body["documents"] = documents
+            body['documents'] = documents
         return self._client.post(
-            f"{self._base()}/collections/{collection_id}/add", json=body
+            f'{self._base()}/collections/{collection_id}/add', json=body
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -262,18 +262,18 @@ class ChromaToolSet:
         vector per ``id``.
         """
         if not collection_id or not ids:
-            raise ValueError("collection_id and ids are required")
+            raise ValueError('collection_id and ids are required')
         if not embeddings:
-            raise ValueError("embeddings is required")
+            raise ValueError('embeddings is required')
         if len(embeddings) != len(ids):
-            raise ValueError("embeddings must have the same length as ids")
-        body: dict[str, Any] = {"ids": ids, "embeddings": embeddings}
+            raise ValueError('embeddings must have the same length as ids')
+        body: dict[str, Any] = {'ids': ids, 'embeddings': embeddings}
         if metadatas is not None:
-            body["metadatas"] = metadatas
+            body['metadatas'] = metadatas
         if documents is not None:
-            body["documents"] = documents
+            body['documents'] = documents
         return self._client.post(
-            f"{self._base()}/collections/{collection_id}/upsert", json=body
+            f'{self._base()}/collections/{collection_id}/upsert', json=body
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -301,19 +301,19 @@ class ChromaToolSet:
         ``ids`` are document identifiers the agent needs to keep.
         """
         if not collection_id:
-            raise ValueError("collection_id is required")
+            raise ValueError('collection_id is required')
         if not query_embeddings:
-            raise ValueError("query_embeddings is required")
-        body: dict[str, Any] = {"n_results": n_results}
-        body["query_embeddings"] = query_embeddings
+            raise ValueError('query_embeddings is required')
+        body: dict[str, Any] = {'n_results': n_results}
+        body['query_embeddings'] = query_embeddings
         if where is not None:
-            body["where"] = where
+            body['where'] = where
         if where_document is not None:
-            body["where_document"] = where_document
+            body['where_document'] = where_document
         if include is not None:
-            body["include"] = include
+            body['include'] = include
         return self._client.post(
-            f"{self._base()}/collections/{collection_id}/query", json=body
+            f'{self._base()}/collections/{collection_id}/query', json=body
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -333,20 +333,20 @@ class ChromaToolSet:
         [...]}``. Use this to hydrate documents after :meth:`query`.
         """
         if not collection_id:
-            raise ValueError("collection_id is required")
+            raise ValueError('collection_id is required')
         body: dict[str, Any] = {}
         if ids is not None:
-            body["ids"] = ids
+            body['ids'] = ids
         if where is not None:
-            body["where"] = where
+            body['where'] = where
         if limit is not None:
-            body["limit"] = limit
+            body['limit'] = limit
         if offset is not None:
-            body["offset"] = offset
+            body['offset'] = offset
         if include is not None:
-            body["include"] = include
+            body['include'] = include
         return self._client.post(
-            f"{self._base()}/collections/{collection_id}/get", json=body
+            f'{self._base()}/collections/{collection_id}/get', json=body
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -363,16 +363,16 @@ class ChromaToolSet:
         ``where``. Confirm with the user before bulk deletion.
         """
         if not collection_id:
-            raise ValueError("collection_id is required")
+            raise ValueError('collection_id is required')
         if not ids and not where:
-            raise ValueError("Provide ids or where")
+            raise ValueError('Provide ids or where')
         body: dict[str, Any] = {}
         if ids is not None:
-            body["ids"] = ids
+            body['ids'] = ids
         if where is not None:
-            body["where"] = where
+            body['where'] = where
         return self._client.post(
-            f"{self._base()}/collections/{collection_id}/delete", json=body
+            f'{self._base()}/collections/{collection_id}/delete', json=body
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -382,5 +382,5 @@ class ChromaToolSet:
         ``collection_id`` is the collection UUID.
         """
         if not collection_id:
-            raise ValueError("collection_id is required")
-        return self._client.get(f"{self._base()}/collections/{collection_id}/count").json()
+            raise ValueError('collection_id is required')
+        return self._client.get(f'{self._base()}/collections/{collection_id}/count').json()

@@ -25,7 +25,7 @@ from ...runtime.http import HttpClient, HttpTransport
 # n8n's executions `status` filter accepts only these enum values; `running`
 # and other out-of-enum values are rejected by the API with a 400.
 # https://github.com/n8n-io/n8n/issues/19664
-_EXECUTION_STATUSES: frozenset[str] = frozenset({"canceled", "error", "success", "waiting"})
+_EXECUTION_STATUSES: frozenset[str] = frozenset({'canceled', 'error', 'success', 'waiting'})
 
 # MARK: - Helpers
 
@@ -37,7 +37,7 @@ def _coerce_id(candidate: Any, *keys: str) -> str:
     if isinstance(candidate, int):
         return str(candidate)
     if isinstance(candidate, dict):
-        mapping = cast("dict[Any, Any]", candidate)
+        mapping = cast('dict[Any, Any]', candidate)
         for key in keys:
             value: Any = mapping.get(key)
             if isinstance(value, str) and value:
@@ -51,34 +51,34 @@ def _coerce_id(candidate: Any, *keys: str) -> str:
                 except ValueError:
                     continue
     if isinstance(candidate, list | tuple):
-        for item in cast("tuple[Any, ...]", candidate):
+        for item in cast('tuple[Any, ...]', candidate):
             try:
                 return _coerce_id(item, *keys)
             except ValueError:
                 continue
-    type_name = type(cast("object", candidate)).__name__
-    raise ValueError(f"could not extract an ID from {type_name}")
+    type_name = type(cast('object', candidate)).__name__
+    raise ValueError(f'could not extract an ID from {type_name}')
 
 
 def _summarize_workflow(
     workflow: dict[str, Any], *, index: int, include_ids: bool
 ) -> dict[str, Any]:
-    raw_tags: Any = workflow.get("tags", [])
+    raw_tags: Any = workflow.get('tags', [])
     tags: list[Any] = []
     if isinstance(raw_tags, list | tuple):
-        for tag in cast("tuple[Any, ...]", raw_tags):
+        for tag in cast('tuple[Any, ...]', raw_tags):
             if isinstance(tag, dict):
-                tag_dict = cast("dict[str, Any]", tag)
-                tags.append(tag_dict.get("name", ""))
+                tag_dict = cast('dict[str, Any]', tag)
+                tags.append(tag_dict.get('name', ''))
     summary: dict[str, Any] = {
-        "workflow_ref": f"workflow_{index}",
-        "name": workflow.get("name", ""),
-        "active": workflow.get("active"),
-        "tags": tags,
-        "updated_at": workflow.get("updatedAt", ""),
+        'workflow_ref': f'workflow_{index}',
+        'name': workflow.get('name', ''),
+        'active': workflow.get('active'),
+        'tags': tags,
+        'updated_at': workflow.get('updatedAt', ''),
     }
     if include_ids:
-        summary["workflow_id"] = workflow.get("id", "")
+        summary['workflow_id'] = workflow.get('id', '')
     return summary
 
 
@@ -86,39 +86,39 @@ def _summarize_execution(
     execution: dict[str, Any], *, index: int, include_ids: bool
 ) -> dict[str, Any]:
     summary: dict[str, Any] = {
-        "execution_ref": f"execution_{index}",
-        "status": execution.get("status") or ("error" if execution.get("stoppedAt") else ""),
-        "mode": execution.get("mode", ""),
-        "started_at": execution.get("startedAt", ""),
-        "stopped_at": execution.get("stoppedAt", ""),
-        "finished": execution.get("finished"),
+        'execution_ref': f'execution_{index}',
+        'status': execution.get('status') or ('error' if execution.get('stoppedAt') else ''),
+        'mode': execution.get('mode', ''),
+        'started_at': execution.get('startedAt', ''),
+        'stopped_at': execution.get('stoppedAt', ''),
+        'finished': execution.get('finished'),
     }
     if include_ids:
-        summary["execution_id"] = execution.get("id", "")
-        summary["workflow_id"] = execution.get("workflowId", "")
+        summary['execution_id'] = execution.get('id', '')
+        summary['workflow_id'] = execution.get('workflowId', '')
     return summary
 
 
-@toolset(prefix="n8n")
+@toolset(prefix='n8n')
 class N8nToolSet:
     """A connector for self-hosted or cloud n8n instances."""
 
     metadata = ProviderMetadata(
-        name="n8n",
-        display_name="n8n",
-        version="0.1.0",
-        description="List n8n workflows, inspect executions, and trigger webhook workflows.",
+        name='n8n',
+        display_name='n8n',
+        version='0.1.0',
+        description='List n8n workflows, inspect executions, and trigger webhook workflows.',
         auth_modes=(AuthMode.API_KEY,),
         scopes={
-            "workflow:read": "Read workflows and executions.",
-            "workflow:write": "Activate, deactivate, and edit workflows.",
+            'workflow:read': 'Read workflows and executions.',
+            'workflow:write': 'Activate, deactivate, and edit workflows.',
         },
         capabilities=frozenset(
             {ProviderCapability.READ, ProviderCapability.WRITE, ProviderCapability.PAGINATION}
         ),
-        documentation_url="https://docs.n8n.io/api/",
-        homepage_url="https://n8n.io",
-        tags=("partner", "automation"),
+        documentation_url='https://docs.n8n.io/api/',
+        homepage_url='https://n8n.io',
+        tags=('partner', 'automation'),
     )
 
     def __init__(
@@ -130,15 +130,15 @@ class N8nToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not base_url:
-            raise ValueError("base_url must be a non-empty string")
+            raise ValueError('base_url must be a non-empty string')
         if not api_key:
-            raise ValueError("api_key must be a non-empty string")
+            raise ValueError('api_key must be a non-empty string')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(api_key, header="X-N8N-API-KEY"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(api_key, header='X-N8N-API-KEY'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
         self._webhook_client = HttpClient(transport=transport)
 
@@ -165,29 +165,29 @@ class N8nToolSet:
         page forward.
         """
         if limit < 1 or limit > 250:
-            raise ValueError("limit must be between 1 and 250")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 250')
+        params: dict[str, Any] = {'limit': limit}
         if active is not None:
-            params["active"] = str(active).lower()
+            params['active'] = str(active).lower()
         if cursor is not None:
-            params["cursor"] = cursor
-        payload: dict[str, Any] = self._client.get("/api/v1/workflows", params=params).json()
+            params['cursor'] = cursor
+        payload: dict[str, Any] = self._client.get('/api/v1/workflows', params=params).json()
         if raw:
             return payload
-        raw_items: Any = payload.get("data") or []
+        raw_items: Any = payload.get('data') or []
         items: tuple[Any, ...] = (
-            tuple(cast("tuple[Any, ...]", raw_items)) if isinstance(raw_items, list | tuple) else ()
+            tuple(cast('tuple[Any, ...]', raw_items)) if isinstance(raw_items, list | tuple) else ()
         )
         summaries: list[dict[str, Any]] = []
         for index, workflow in enumerate(items, start=1):
             if isinstance(workflow, dict):
-                workflow_dict = cast("dict[str, Any]", workflow)
+                workflow_dict = cast('dict[str, Any]', workflow)
                 summaries.append(
                     _summarize_workflow(workflow_dict, index=index, include_ids=include_ids)
                 )
         return {
-            "workflows": summaries,
-            "next_cursor": payload.get("nextCursor"),
+            'workflows': summaries,
+            'next_cursor': payload.get('nextCursor'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -198,10 +198,10 @@ class N8nToolSet:
         ID string or a workflow dict from :meth:`list_workflows`
         (``include_ids=True``).
         """
-        resolved_id = _coerce_id(workflow_id, "workflow_id", "id")
+        resolved_id = _coerce_id(workflow_id, 'workflow_id', 'id')
         if not resolved_id:
-            raise ValueError("workflow_id must be a non-empty string")
-        return self._client.get(f"/api/v1/workflows/{resolved_id}").json()
+            raise ValueError('workflow_id must be a non-empty string')
+        return self._client.get(f'/api/v1/workflows/{resolved_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def activate_workflow(self, workflow_id: Any, *, active: bool = True) -> dict[str, Any]:
@@ -211,11 +211,11 @@ class N8nToolSet:
         ID or a workflow dict from :meth:`list_workflows`
         (``include_ids=True``). Pass ``active=False`` to deactivate.
         """
-        resolved_id = _coerce_id(workflow_id, "workflow_id", "id")
+        resolved_id = _coerce_id(workflow_id, 'workflow_id', 'id')
         if not resolved_id:
-            raise ValueError("workflow_id must be a non-empty string")
-        suffix = "activate" if active else "deactivate"
-        return self._client.post(f"/api/v1/workflows/{resolved_id}/{suffix}").json()
+            raise ValueError('workflow_id must be a non-empty string')
+        suffix = 'activate' if active else 'deactivate'
+        return self._client.post(f'/api/v1/workflows/{resolved_id}/{suffix}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_executions(
@@ -239,34 +239,34 @@ class N8nToolSet:
         (n8n rejects other values, including ``running``).
         """
         if limit < 1 or limit > 250:
-            raise ValueError("limit must be between 1 and 250")
+            raise ValueError('limit must be between 1 and 250')
         if status is not None and status not in _EXECUTION_STATUSES:
-            allowed = ", ".join(sorted(_EXECUTION_STATUSES))
-            raise ValueError(f"status must be one of: {allowed}")
-        params: dict[str, Any] = {"limit": limit}
+            allowed = ', '.join(sorted(_EXECUTION_STATUSES))
+            raise ValueError(f'status must be one of: {allowed}')
+        params: dict[str, Any] = {'limit': limit}
         if workflow_id is not None:
-            params["workflowId"] = workflow_id
+            params['workflowId'] = workflow_id
         if status is not None:
-            params["status"] = status
+            params['status'] = status
         if cursor is not None:
-            params["cursor"] = cursor
-        payload: dict[str, Any] = self._client.get("/api/v1/executions", params=params).json()
+            params['cursor'] = cursor
+        payload: dict[str, Any] = self._client.get('/api/v1/executions', params=params).json()
         if raw:
             return payload
-        raw_items: Any = payload.get("data") or []
+        raw_items: Any = payload.get('data') or []
         items: tuple[Any, ...] = (
-            tuple(cast("tuple[Any, ...]", raw_items)) if isinstance(raw_items, list | tuple) else ()
+            tuple(cast('tuple[Any, ...]', raw_items)) if isinstance(raw_items, list | tuple) else ()
         )
         summaries: list[dict[str, Any]] = []
         for index, execution in enumerate(items, start=1):
             if isinstance(execution, dict):
-                execution_dict = cast("dict[str, Any]", execution)
+                execution_dict = cast('dict[str, Any]', execution)
                 summaries.append(
                     _summarize_execution(execution_dict, index=index, include_ids=include_ids)
                 )
         return {
-            "executions": summaries,
-            "next_cursor": payload.get("nextCursor"),
+            'executions': summaries,
+            'next_cursor': payload.get('nextCursor'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -282,6 +282,6 @@ class N8nToolSet:
         — it is the entire URL, not a workflow ID.
         """
         if not webhook_url:
-            raise ValueError("webhook_url must be a non-empty string")
+            raise ValueError('webhook_url must be a non-empty string')
         response = self._webhook_client.post(webhook_url, json=payload or {})
-        return {"status": response.status, "delivered": True}
+        return {'status': response.status, 'delivered': True}

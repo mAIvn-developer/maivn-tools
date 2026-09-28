@@ -70,13 +70,13 @@ class UTF8TextExtractor(TextExtractor):
     """Dependency-free extractor for plain text MIME types."""
 
     mime_types = (
-        "text/plain",
-        "text/markdown",
-        "text/csv",
-        "text/tab-separated-values",
-        "application/json",
-        "application/xml",
-        "text/xml",
+        'text/plain',
+        'text/markdown',
+        'text/csv',
+        'text/tab-separated-values',
+        'application/json',
+        'application/xml',
+        'text/xml',
     )
 
     def extract(
@@ -86,11 +86,11 @@ class UTF8TextExtractor(TextExtractor):
         mime_type: str | None = None,
         filename: str | None = None,
     ) -> ExtractionResult:
-        text = data.decode("utf-8", errors="replace")
+        text = data.decode('utf-8', errors='replace')
         return ExtractionResult(
             text=text,
-            mime_type=mime_type or "text/plain",
-            metadata={"byte_count": len(data)},
+            mime_type=mime_type or 'text/plain',
+            metadata={'byte_count': len(data)},
         )
 
 
@@ -107,7 +107,7 @@ def register_extractor(extractor: object) -> None:
     for specific types if needed.
     """
     if not isinstance(extractor, TextExtractor):
-        raise TypeError("register_extractor requires a TextExtractor instance")
+        raise TypeError('register_extractor requires a TextExtractor instance')
     _REGISTRY.append(extractor)
 
 
@@ -120,4 +120,4 @@ def extractor_for(mime_type: str) -> TextExtractor:
     for extractor in reversed(_REGISTRY):
         if extractor.supports(mime_type):
             return extractor
-    raise LookupError(f"No registered extractor handles MIME type {mime_type!r}")
+    raise LookupError(f'No registered extractor handles MIME type {mime_type!r}')

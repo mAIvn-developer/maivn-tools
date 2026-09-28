@@ -22,38 +22,38 @@ _MAX_SEARCH_RESULTS = 10
 # MARK: ToolSet
 
 
-@toolset(prefix="serpapi")
+@toolset(prefix='serpapi')
 class SerpAPIToolSet:
     """A connector for SerpAPI."""
 
     metadata = ProviderMetadata(
-        name="serpapi",
-        display_name="SerpAPI",
-        version="0.1.0",
-        description="Scrape search-engine results pages (Google, Bing, etc.).",
+        name='serpapi',
+        display_name='SerpAPI',
+        version='0.1.0',
+        description='Scrape search-engine results pages (Google, Bing, etc.).',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.SEARCH}),
-        documentation_url="https://serpapi.com/search-api",
-        homepage_url="https://serpapi.com/",
-        tags=("search",),
+        documentation_url='https://serpapi.com/search-api',
+        homepage_url='https://serpapi.com/',
+        tags=('search',),
     )
 
     def __init__(
         self,
         *,
         api_key: str,
-        base_url: str = "https://serpapi.com",
+        base_url: str = 'https://serpapi.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(api_key, query_param="api_key"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(api_key, query_param='api_key'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -65,7 +65,7 @@ class SerpAPIToolSet:
         self,
         q: str,
         *,
-        engine: str = "google",
+        engine: str = 'google',
         location: str | None = None,
         hl: str | None = None,
         gl: str | None = None,
@@ -81,20 +81,20 @@ class SerpAPIToolSet:
         the source (``google``, ``bing``, ``duckduckgo``, etc.).
         """
         if not q:
-            raise ValueError("q must be a non-empty string")
+            raise ValueError('q must be a non-empty string')
         if num < 1:
-            raise ValueError("num must be positive")
+            raise ValueError('num must be positive')
         capped_num = min(num, _MAX_SEARCH_RESULTS)
-        params: dict[str, Any] = {"q": q, "engine": engine, "num": capped_num}
+        params: dict[str, Any] = {'q': q, 'engine': engine, 'num': capped_num}
         if location is not None:
-            params["location"] = location
+            params['location'] = location
         if hl is not None:
-            params["hl"] = hl
+            params['hl'] = hl
         if gl is not None:
-            params["gl"] = gl
+            params['gl'] = gl
         if start is not None:
-            params["start"] = start
-        return cast("dict[str, Any]", self._client.get("/search", params=params).json())
+            params['start'] = start
+        return cast('dict[str, Any]', self._client.get('/search', params=params).json())
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def location_search(self, query: str) -> dict[str, Any]:
@@ -105,10 +105,10 @@ class SerpAPIToolSet:
         format).
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         return cast(
-            "dict[str, Any]",
-            self._client.get("/locations.json", params={"q": query}).json(),
+            'dict[str, Any]',
+            self._client.get('/locations.json', params={'q': query}).json(),
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -119,4 +119,4 @@ class SerpAPIToolSet:
         "searches_per_month": ..., "this_month_usage": ...}`` — useful for
         quota checks.
         """
-        return cast("dict[str, Any]", self._client.get("/account.json").json())
+        return cast('dict[str, Any]', self._client.get('/account.json').json())

@@ -28,45 +28,45 @@ _MAX_SUGGEST_RESULTS = 10
 
 def _cap_count(count: int, maximum: int) -> int:
     if count < 1:
-        raise ValueError("count must be positive")
+        raise ValueError('count must be positive')
     return min(count, maximum)
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="brave")
+@toolset(prefix='brave')
 class BraveSearchToolSet:
     """A connector for the Brave Search API."""
 
     metadata = ProviderMetadata(
-        name="brave_search",
-        display_name="Brave Search",
-        version="0.1.0",
-        description="Web, news, image, and video search via the Brave Search API.",
+        name='brave_search',
+        display_name='Brave Search',
+        version='0.1.0',
+        description='Web, news, image, and video search via the Brave Search API.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.SEARCH}),
-        documentation_url="https://api.search.brave.com/app/documentation",
-        homepage_url="https://brave.com/search/api/",
-        tags=("search",),
+        documentation_url='https://api.search.brave.com/app/documentation',
+        homepage_url='https://brave.com/search/api/',
+        tags=('search',),
     )
 
     def __init__(
         self,
         *,
         api_key: str,
-        base_url: str = "https://api.search.brave.com",
+        base_url: str = 'https://api.search.brave.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(api_key, header="X-Subscription-Token"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(api_key, header='X-Subscription-Token'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -75,9 +75,9 @@ class BraveSearchToolSet:
 
     def _search(self, path: str, q: str, params: dict[str, Any]) -> dict[str, Any]:
         if not q:
-            raise ValueError("q must be a non-empty string")
+            raise ValueError('q must be a non-empty string')
         merged = dict(params)
-        merged["q"] = q
+        merged['q'] = q
         payload: dict[str, Any] = self._client.get(path, params=merged).json()
         return payload
 
@@ -100,14 +100,14 @@ class BraveSearchToolSet:
         ``count`` is capped at 20.
         """
         capped_count = _cap_count(count, _MAX_WEB_RESULTS)
-        params: dict[str, Any] = {"count": capped_count, "offset": offset}
+        params: dict[str, Any] = {'count': capped_count, 'offset': offset}
         if country is not None:
-            params["country"] = country
+            params['country'] = country
         if search_lang is not None:
-            params["search_lang"] = search_lang
+            params['search_lang'] = search_lang
         if freshness is not None:
-            params["freshness"] = freshness
-        return self._search("/res/v1/web/search", q, params)
+            params['freshness'] = freshness
+        return self._search('/res/v1/web/search', q, params)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def news_search(
@@ -126,10 +126,10 @@ class BraveSearchToolSet:
         ``"pw"`` for past week.
         """
         capped_count = _cap_count(count, _MAX_NEWS_RESULTS)
-        params: dict[str, Any] = {"count": capped_count, "offset": offset}
+        params: dict[str, Any] = {'count': capped_count, 'offset': offset}
         if freshness is not None:
-            params["freshness"] = freshness
-        return self._search("/res/v1/news/search", q, params)
+            params['freshness'] = freshness
+        return self._search('/res/v1/news/search', q, params)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def image_search(
@@ -137,7 +137,7 @@ class BraveSearchToolSet:
         q: str,
         *,
         count: int = 10,
-        safesearch: str = "strict",
+        safesearch: str = 'strict',
         country: str | None = None,
         search_lang: str | None = None,
     ) -> dict[str, Any]:
@@ -148,12 +148,12 @@ class BraveSearchToolSet:
         capped at 200; ``safesearch`` defaults to ``"strict"``.
         """
         capped_count = _cap_count(count, _MAX_IMAGE_RESULTS)
-        params: dict[str, Any] = {"count": capped_count, "safesearch": safesearch}
+        params: dict[str, Any] = {'count': capped_count, 'safesearch': safesearch}
         if country is not None:
-            params["country"] = country
+            params['country'] = country
         if search_lang is not None:
-            params["search_lang"] = search_lang
-        return self._search("/res/v1/images/search", q, params)
+            params['search_lang'] = search_lang
+        return self._search('/res/v1/images/search', q, params)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def video_search(
@@ -174,14 +174,14 @@ class BraveSearchToolSet:
         ``count`` capped at 50.
         """
         capped_count = _cap_count(count, _MAX_VIDEO_RESULTS)
-        params: dict[str, Any] = {"count": capped_count, "offset": offset}
+        params: dict[str, Any] = {'count': capped_count, 'offset': offset}
         if country is not None:
-            params["country"] = country
+            params['country'] = country
         if search_lang is not None:
-            params["search_lang"] = search_lang
+            params['search_lang'] = search_lang
         if freshness is not None:
-            params["freshness"] = freshness
-        return self._search("/res/v1/videos/search", q, params)
+            params['freshness'] = freshness
+        return self._search('/res/v1/videos/search', q, params)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def suggest(self, q: str, *, count: int = 5) -> dict[str, Any]:
@@ -191,4 +191,4 @@ class BraveSearchToolSet:
         autocomplete-style suggestions. ``count`` capped at 10.
         """
         capped_count = _cap_count(count, _MAX_SUGGEST_RESULTS)
-        return self._search("/res/v1/suggest/search", q, {"count": capped_count})
+        return self._search('/res/v1/suggest/search', q, {'count': capped_count})

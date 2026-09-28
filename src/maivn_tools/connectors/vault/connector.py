@@ -15,7 +15,7 @@ from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 
 
-@toolset(prefix="vault")
+@toolset(prefix='vault')
 class VaultToolSet:
     """A connector for HashiCorp Vault.
 
@@ -26,15 +26,15 @@ class VaultToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="vault",
-        display_name="HashiCorp Vault",
-        version="0.1.0",
-        description="KV v2 secrets, leases, transit encrypt/decrypt, and token ops.",
+        name='vault',
+        display_name='HashiCorp Vault',
+        version='0.1.0',
+        description='KV v2 secrets, leases, transit encrypt/decrypt, and token ops.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developer.hashicorp.com/vault/api-docs",
-        homepage_url="https://www.vaultproject.io/",
-        tags=("security", "secrets"),
+        documentation_url='https://developer.hashicorp.com/vault/api-docs',
+        homepage_url='https://www.vaultproject.io/',
+        tags=('security', 'secrets'),
     )
 
     def __init__(
@@ -47,17 +47,17 @@ class VaultToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not base_url or not token:
-            raise ValueError("base_url and token are required")
+            raise ValueError('base_url and token are required')
         self.connection = connection
         headers: dict[str, str] = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
         }
         if namespace is not None:
-            headers["X-Vault-Namespace"] = namespace
+            headers['X-Vault-Namespace'] = namespace
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(token, header="X-Vault-Token"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(token, header='X-Vault-Token'),
             transport=transport,
             default_headers=headers,
         )
@@ -75,7 +75,7 @@ class VaultToolSet:
         Useful as a first call to confirm Vault is reachable and unsealed
         before issuing data-plane requests.
         """
-        return self._client.get("/v1/sys/health").json()
+        return self._client.get('/v1/sys/health').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_mounts(self) -> dict[str, Any]:
@@ -86,7 +86,7 @@ class VaultToolSet:
         ``description``, and options. The mount path is what you pass as
         ``mount`` to kv_* tools (strip the trailing slash).
         """
-        return self._client.get("/v1/sys/mounts").json()
+        return self._client.get('/v1/sys/mounts').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def kv_get(
@@ -103,11 +103,11 @@ class VaultToolSet:
         final user-facing answer.
         """
         if not mount or not path:
-            raise ValueError("mount and path are required")
+            raise ValueError('mount and path are required')
         params: dict[str, Any] = {}
         if version is not None:
-            params["version"] = version
-        return self._client.get(f"/v1/{mount}/data/{path}", params=params or None).json()
+            params['version'] = version
+        return self._client.get(f'/v1/{mount}/data/{path}', params=params or None).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def kv_put(
@@ -125,11 +125,11 @@ class VaultToolSet:
         overwriting an existing secret.
         """
         if not mount or not path or not data:
-            raise ValueError("mount, path, and data are required")
-        body: dict[str, Any] = {"data": data}
+            raise ValueError('mount, path, and data are required')
+        body: dict[str, Any] = {'data': data}
         if cas is not None:
-            body["options"] = {"cas": cas}
-        return self._client.post(f"/v1/{mount}/data/{path}", json=body).json()
+            body['options'] = {'cas': cas}
+        return self._client.post(f'/v1/{mount}/data/{path}', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def kv_patch(
@@ -145,11 +145,11 @@ class VaultToolSet:
         unspecified fields.
         """
         if not mount or not path or not data:
-            raise ValueError("mount, path, and data are required")
+            raise ValueError('mount, path, and data are required')
         return self._client.patch(
-            f"/v1/{mount}/data/{path}",
-            json={"data": data},
-            headers={"Content-Type": "application/merge-patch+json"},
+            f'/v1/{mount}/data/{path}',
+            json={'data': data},
+            headers={'Content-Type': 'application/merge-patch+json'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -166,11 +166,11 @@ class VaultToolSet:
         undeleted. Confirm with the user. Returns Vault's response.
         """
         if not mount or not path:
-            raise ValueError("mount and path are required")
+            raise ValueError('mount and path are required')
         if versions is None:
-            response = self._client.delete(f"/v1/{mount}/data/{path}")
-            return {"status": response.status, "deleted": True}
-        return self._client.post(f"/v1/{mount}/delete/{path}", json={"versions": versions}).json()
+            response = self._client.delete(f'/v1/{mount}/data/{path}')
+            return {'status': response.status, 'deleted': True}
+        return self._client.post(f'/v1/{mount}/delete/{path}', json={'versions': versions}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def kv_destroy(
@@ -186,8 +186,8 @@ class VaultToolSet:
         calling. Returns Vault's response.
         """
         if not mount or not path or not versions:
-            raise ValueError("mount, path, and versions are required")
-        return self._client.post(f"/v1/{mount}/destroy/{path}", json={"versions": versions}).json()
+            raise ValueError('mount, path, and versions are required')
+        return self._client.post(f'/v1/{mount}/destroy/{path}', json={'versions': versions}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def kv_list(
@@ -206,30 +206,30 @@ class VaultToolSet:
         key (useful for follow-up kv_get calls).
         """
         if not mount or not path:
-            raise ValueError("mount and path are required")
+            raise ValueError('mount and path are required')
         payload: object = self._client.get(
-            f"/v1/{mount}/metadata/{path}", params={"list": "true"}
+            f'/v1/{mount}/metadata/{path}', params={'list': 'true'}
         ).json()
         keys: list[str] = []
         if isinstance(payload, dict):
-            data: object = cast("dict[str, Any]", payload).get("data")
+            data: object = cast('dict[str, Any]', payload).get('data')
             if isinstance(data, dict):
-                raw_keys: object = cast("dict[str, Any]", data).get("keys")
+                raw_keys: object = cast('dict[str, Any]', data).get('keys')
                 if isinstance(raw_keys, list):
-                    raw_keys_list = cast("list[Any]", raw_keys)
+                    raw_keys_list = cast('list[Any]', raw_keys)
                     keys = [k for k in raw_keys_list if isinstance(k, str)]
-        base_path = path.rstrip("/")
+        base_path = path.rstrip('/')
         summaries: list[dict[str, Any]] = []
         for index, key in enumerate(keys, start=1):
             entry: dict[str, Any] = {
-                "secret_ref": f"secret_{index}",
-                "key": key,
-                "is_directory": key.endswith("/"),
+                'secret_ref': f'secret_{index}',
+                'key': key,
+                'is_directory': key.endswith('/'),
             }
             if include_ids:
-                entry["path"] = f"{base_path}/{key}".lstrip("/") if base_path else key
+                entry['path'] = f'{base_path}/{key}'.lstrip('/') if base_path else key
             summaries.append(entry)
-        return {"secrets": summaries, "mount": mount, "path": path}
+        return {'secrets': summaries, 'mount': mount, 'path': path}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def lookup_token_self(self) -> dict[str, Any]:
@@ -239,7 +239,7 @@ class VaultToolSet:
         flag. Useful for verifying the token has the expected scope before
         issuing privileged calls.
         """
-        return self._client.get("/v1/auth/token/lookup-self").json()
+        return self._client.get('/v1/auth/token/lookup-self').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def renew_token_self(self, *, increment: str | None = None) -> dict[str, Any]:
@@ -250,8 +250,8 @@ class VaultToolSet:
         """
         body: dict[str, Any] = {}
         if increment is not None:
-            body["increment"] = increment
-        return self._client.post("/v1/auth/token/renew-self", json=body or None).json()
+            body['increment'] = increment
+        return self._client.post('/v1/auth/token/renew-self', json=body or None).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def transit_encrypt(
@@ -268,11 +268,11 @@ class VaultToolSet:
         Returns ``{"data": {"ciphertext": "vault:v1:..."}}``.
         """
         if not mount or not key_name or not plaintext:
-            raise ValueError("mount, key_name, and plaintext are required")
-        body: dict[str, Any] = {"plaintext": plaintext}
+            raise ValueError('mount, key_name, and plaintext are required')
+        body: dict[str, Any] = {'plaintext': plaintext}
         if context is not None:
-            body["context"] = context
-        return self._client.post(f"/v1/{mount}/encrypt/{key_name}", json=body).json()
+            body['context'] = context
+        return self._client.post(f'/v1/{mount}/encrypt/{key_name}', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def transit_decrypt(
@@ -290,8 +290,8 @@ class VaultToolSet:
         Treat the result as sensitive.
         """
         if not mount or not key_name or not ciphertext:
-            raise ValueError("mount, key_name, and ciphertext are required")
-        body: dict[str, Any] = {"ciphertext": ciphertext}
+            raise ValueError('mount, key_name, and ciphertext are required')
+        body: dict[str, Any] = {'ciphertext': ciphertext}
         if context is not None:
-            body["context"] = context
-        return self._client.post(f"/v1/{mount}/decrypt/{key_name}", json=body).json()
+            body['context'] = context
+        return self._client.post(f'/v1/{mount}/decrypt/{key_name}', json=body).json()

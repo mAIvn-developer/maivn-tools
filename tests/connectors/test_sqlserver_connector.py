@@ -20,15 +20,15 @@ class _Cursor:
         self.executed.append((query, params))
         # The connector issues a SET TRANSACTION ISOLATION LEVEL before the
         # real query; skip it so it does not consume a planned response.
-        if query.lstrip().upper().startswith("SET "):
+        if query.lstrip().upper().startswith('SET '):
             return
         if not self._plan:
             self.description = None
             self._rows = []
             return
         match = self._plan.pop(0)
-        self.description = [(name,) for name in match["columns"]]
-        self._rows = list(match["rows"])
+        self.description = [(name,) for name in match['columns']]
+        self._rows = list(match['rows'])
 
     def fetchmany(self, size: int) -> list[tuple[Any, ...]]:
         head = self._rows[:size]
@@ -56,32 +56,32 @@ def make_factory(plan: list[dict[str, Any]]) -> Callable[[], _Connection]:
 
 
 def test_sqlserver_count_rows_returns_count() -> None:
-    plan = [{"columns": ["row_count"], "rows": [(42,)]}]
+    plan = [{'columns': ['row_count'], 'rows': [(42,)]}]
     connector = SQLServerToolSet(connection_factory=make_factory(plan), row_limit=10)
-    info = connector.count_rows(name="users")
-    assert info["row_count"] == 42
-    assert info["schema"] == "dbo"
+    info = connector.count_rows(name='users')
+    assert info['row_count'] == 42
+    assert info['schema'] == 'dbo'
 
 
 def test_sqlserver_sample_table_runs_for_valid_identifier() -> None:
     """Regression: legitimate identifiers must still pass validation and run."""
-    plan = [{"columns": ["id"], "rows": [(1,), (2,)]}]
+    plan = [{'columns': ['id'], 'rows': [(1,), (2,)]}]
     connector = SQLServerToolSet(connection_factory=make_factory(plan), row_limit=10)
-    result = connector.sample_table(name="users", schema="dbo", limit=2)
-    assert result["row_count"] == 2
+    result = connector.sample_table(name='users', schema='dbo', limit=2)
+    assert result['row_count'] == 2
 
 
 def test_sqlserver_sample_table_rejects_identifier_injection() -> None:
     connector = SQLServerToolSet(connection_factory=make_factory([]), row_limit=10)
     with pytest.raises(ValueError):
-        connector.sample_table(name="users] UNION SELECT name, 1 FROM sys.tables -- ")
+        connector.sample_table(name='users] UNION SELECT name, 1 FROM sys.tables -- ')
     with pytest.raises(ValueError):
-        connector.sample_table(name="users", schema="dbo].[secret")
+        connector.sample_table(name='users', schema='dbo].[secret')
 
 
 def test_sqlserver_count_rows_rejects_identifier_injection() -> None:
     connector = SQLServerToolSet(connection_factory=make_factory([]), row_limit=10)
     with pytest.raises(ValueError):
-        connector.count_rows(name="users] UNION SELECT SYSTEM_USER, 1 -- ")
+        connector.count_rows(name='users] UNION SELECT SYSTEM_USER, 1 -- ')
     with pytest.raises(ValueError):
-        connector.count_rows(name="users", schema="a].[b")
+        connector.count_rows(name='users', schema='a].[b')

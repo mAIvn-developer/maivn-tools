@@ -19,70 +19,70 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _BOARD_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "board_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "description": {"type": "string"},
-        "privacy": {"type": "string"},
-        "owner": {"type": "string"},
-        "pin_count": {"type": "integer"},
-        "follower_count": {"type": "integer"},
-        "created_at": {"type": "string"},
-        "board_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'board_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'description': {'type': 'string'},
+        'privacy': {'type': 'string'},
+        'owner': {'type': 'string'},
+        'pin_count': {'type': 'integer'},
+        'follower_count': {'type': 'integer'},
+        'created_at': {'type': 'string'},
+        'board_id': {'type': 'string'},
     },
-    "required": ["board_ref", "name"],
+    'required': ['board_ref', 'name'],
 }
 
 _PIN_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "pin_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "description": {"type": "string"},
-        "alt_text": {"type": "string"},
-        "link": {"type": "string"},
-        "created_at": {"type": "string"},
-        "url": {"type": "string"},
-        "pin_id": {"type": "string"},
-        "board_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'pin_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'description': {'type': 'string'},
+        'alt_text': {'type': 'string'},
+        'link': {'type': 'string'},
+        'created_at': {'type': 'string'},
+        'url': {'type': 'string'},
+        'pin_id': {'type': 'string'},
+        'board_id': {'type': 'string'},
     },
-    "required": ["pin_ref"],
+    'required': ['pin_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_BOARDS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "boards": {"type": "array", "items": _BOARD_SUMMARY},
-        "bookmark": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'boards': {'type': 'array', 'items': _BOARD_SUMMARY},
+        'bookmark': {'type': ['string', 'null']},
     },
-    "required": ["boards"],
+    'required': ['boards'],
 }
 
 LIST_BOARD_PINS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "pins": {"type": "array", "items": _PIN_SUMMARY},
-        "bookmark": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'pins': {'type': 'array', 'items': _PIN_SUMMARY},
+        'bookmark': {'type': ['string', 'null']},
     },
-    "required": ["pins"],
+    'required': ['pins'],
 }
 
 LIST_PINS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "pins": {"type": "array", "items": _PIN_SUMMARY},
-        "bookmark": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'pins': {'type': 'array', 'items': _PIN_SUMMARY},
+        'bookmark': {'type': ['string', 'null']},
     },
-    "required": ["pins"],
+    'required': ['pins'],
 }
 
 
 __all__ = [
-    "LIST_BOARDS_OUTPUT",
-    "LIST_BOARD_PINS_OUTPUT",
-    "LIST_PINS_OUTPUT",
+    'LIST_BOARDS_OUTPUT',
+    'LIST_BOARD_PINS_OUTPUT',
+    'LIST_PINS_OUTPUT',
 ]

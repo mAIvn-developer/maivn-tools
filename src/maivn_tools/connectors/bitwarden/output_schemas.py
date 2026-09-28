@@ -19,27 +19,27 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_secret_summary`` builder)
 
 _SECRET_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "secret_ref": {"type": "string"},
-        "key": {"type": "string"},
-        "secret_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'secret_ref': {'type': 'string'},
+        'key': {'type': 'string'},
+        'secret_id': {'type': 'string'},
     },
-    "required": ["secret_ref", "key"],
+    'required': ['secret_ref', 'key'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_SECRETS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "secrets": {"type": "array", "items": _SECRET_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'secrets': {'type': 'array', 'items': _SECRET_SUMMARY},
     },
-    "required": ["secrets"],
+    'required': ['secrets'],
 }
 
 
 __all__ = [
-    "LIST_SECRETS_OUTPUT",
+    'LIST_SECRETS_OUTPUT',
 ]

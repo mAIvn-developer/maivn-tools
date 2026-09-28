@@ -10,20 +10,20 @@ display a uniform progress view across providers.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 # MARK: Status enum
 
 
-class TransferStatus(str, Enum):
+class TransferStatus(StrEnum):
     """Lifecycle states for a bulk transfer."""
 
-    PENDING = "pending"
-    RUNNING = "running"
-    SUCCEEDED = "succeeded"
-    PARTIAL = "partial"
-    FAILED = "failed"
-    CANCELED = "canceled"
+    PENDING = 'pending'
+    RUNNING = 'running'
+    SUCCEEDED = 'succeeded'
+    PARTIAL = 'partial'
+    FAILED = 'failed'
+    CANCELED = 'canceled'
 
 
 # MARK: Progress / outcome models

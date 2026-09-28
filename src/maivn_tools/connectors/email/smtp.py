@@ -66,7 +66,7 @@ class SmtpClient(Protocol):
 SmtpClientFactory = Callable[[], SmtpClient]
 
 
-@toolset(prefix="smtp")
+@toolset(prefix='smtp')
 class SMTPToolSet:
     """An outbound SMTP connector.
 
@@ -87,34 +87,34 @@ class SMTPToolSet:
     # MARK: - Lifecycle
 
     metadata = ProviderMetadata(
-        name="smtp",
-        display_name="SMTP",
-        version="0.1.0",
-        description="Send outbound email via an SMTP server.",
+        name='smtp',
+        display_name='SMTP',
+        version='0.1.0',
+        description='Send outbound email via an SMTP server.',
         auth_modes=(AuthMode.BASIC, AuthMode.NONE),
         capabilities=frozenset({ProviderCapability.WRITE}),
-        tags=("email", "smtp"),
+        tags=('email', 'smtp'),
     )
 
     def __init__(
         self,
         *,
-        host: str = "",
-        username: str = "",
-        password: str = "",
-        sender: str = "",
+        host: str = '',
+        username: str = '',
+        password: str = '',
+        sender: str = '',
         port: int = 465,
         use_ssl: bool = True,
         starttls: bool = False,
         client_factory: SmtpClientFactory | None = None,
     ) -> None:
         if use_ssl and starttls:
-            raise ValueError("Set exactly one of use_ssl or starttls")
+            raise ValueError('Set exactly one of use_ssl or starttls')
         if client_factory is None:
             if not host:
-                raise ValueError("host is required when client_factory is not supplied")
+                raise ValueError('host is required when client_factory is not supplied')
             if not sender:
-                raise ValueError("sender is required")
+                raise ValueError('sender is required')
 
             def _default_factory() -> SmtpClient:
                 if use_ssl:
@@ -124,7 +124,7 @@ class SMTPToolSet:
             self._client_factory = _default_factory
         else:
             if not sender:
-                raise ValueError("sender is required")
+                raise ValueError('sender is required')
             self._client_factory = client_factory
         self._username = username
         self._password = password
@@ -143,7 +143,7 @@ class SMTPToolSet:
         "ehlo": ..., "noop": ..., "sender": ..., "authenticated": bool}``.
         """
         client = self._client_factory()
-        info: dict[str, Any] = {"ok": False}
+        info: dict[str, Any] = {'ok': False}
         try:
             if self._starttls:
                 client.starttls()
@@ -163,11 +163,11 @@ class SMTPToolSet:
             except Exception:  # noqa: BLE001 - NOOP is optional on some servers
                 noop_result = None
             info = {
-                "ok": True,
-                "ehlo": _summarize_smtp_result(ehlo_result),
-                "noop": _summarize_smtp_result(noop_result),
-                "sender": self._sender,
-                "authenticated": bool(self._username),
+                'ok': True,
+                'ehlo': _summarize_smtp_result(ehlo_result),
+                'noop': _summarize_smtp_result(noop_result),
+                'sender': self._sender,
+                'authenticated': bool(self._username),
             }
         finally:
             try:
@@ -192,12 +192,12 @@ class SMTPToolSet:
         [...], "refused": {...}, "sender": ...}``.
         """
         if not recipients:
-            raise ValueError("recipients must contain at least one address")
+            raise ValueError('recipients must contain at least one address')
         if not raw_message:
-            raise ValueError("raw_message must not be empty")
+            raise ValueError('raw_message must not be empty')
         from_addr = sender or self._sender
         if not from_addr:
-            raise ValueError("sender is required")
+            raise ValueError('sender is required')
         client = self._client_factory()
         try:
             if self._starttls:
@@ -211,9 +211,9 @@ class SMTPToolSet:
             except Exception:  # noqa: BLE001
                 pass
         return {
-            "accepted": [r for r in recipients if r not in refused],
-            "refused": dict(refused),
-            "sender": from_addr,
+            'accepted': [r for r in recipients if r not in refused],
+            'refused': dict(refused),
+            'sender': from_addr,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -241,9 +241,9 @@ class SMTPToolSet:
         interactive agent loop.
         """
         if not to:
-            raise ValueError("to must contain at least one recipient")
+            raise ValueError('to must contain at least one recipient')
         if body_text is None and body_html is None:
-            raise ValueError("body_text or body_html must be supplied")
+            raise ValueError('body_text or body_html must be supplied')
         message = _build_message(
             to=to,
             subject=subject,
@@ -269,10 +269,10 @@ class SMTPToolSet:
             except Exception:  # noqa: BLE001 - cleanup must never raise
                 pass
         return {
-            "accepted": [r for r in recipients if r not in refused],
-            "refused": dict(refused),
-            "subject": subject,
-            "to": list(to),
+            'accepted': [r for r in recipients if r not in refused],
+            'refused': dict(refused),
+            'subject': subject,
+            'to': list(to),
         }
 
 
@@ -285,10 +285,10 @@ def _summarize_smtp_result(result: SmtpReply | None) -> dict[str, Any] | None:
         return None
     code, raw = result
     try:
-        msg = raw.decode("utf-8", errors="replace")
+        msg = raw.decode('utf-8', errors='replace')
     except Exception:  # noqa: BLE001
         msg = repr(raw)
-    return {"code": code, "message": msg}
+    return {'code': code, 'message': msg}
 
 
 def _build_message(
@@ -304,41 +304,41 @@ def _build_message(
     reply_to: str | None,
 ) -> EmailMessage:
     msg = EmailMessage()
-    msg["From"] = sender
-    msg["To"] = ", ".join(to)
-    msg["Subject"] = subject
+    msg['From'] = sender
+    msg['To'] = ', '.join(to)
+    msg['Subject'] = subject
     if cc:
-        msg["Cc"] = ", ".join(cc)
+        msg['Cc'] = ', '.join(cc)
     if bcc:
-        msg["Bcc"] = ", ".join(bcc)
+        msg['Bcc'] = ', '.join(bcc)
     if reply_to:
-        msg["Reply-To"] = reply_to
+        msg['Reply-To'] = reply_to
 
     if body_text is None:
-        msg.set_content("")
+        msg.set_content('')
     else:
         msg.set_content(body_text)
     if body_html is not None:
-        msg.add_alternative(body_html, subtype="html")
+        msg.add_alternative(body_html, subtype='html')
 
     for attachment in attachments or []:
-        filename = str(attachment["filename"])
-        content = attachment["content"]
+        filename = str(attachment['filename'])
+        content = attachment['content']
         if isinstance(content, str):
-            content = content.encode("utf-8")
+            content = content.encode('utf-8')
         if not isinstance(content, (bytes, bytearray)):
-            raise TypeError(f"Attachment {filename!r} content must be bytes or string")
-        maintype_subtype = str(attachment.get("content_type") or "")
+            raise TypeError(f'Attachment {filename!r} content must be bytes or string')
+        maintype_subtype = str(attachment.get('content_type') or '')
         if maintype_subtype:
-            maintype, _, subtype = maintype_subtype.partition("/")
+            maintype, _, subtype = maintype_subtype.partition('/')
             if not subtype:
-                subtype = "octet-stream"
+                subtype = 'octet-stream'
         else:
             guessed, _ = mimetypes.guess_type(filename)
             if guessed:
-                maintype, _, subtype = guessed.partition("/")
+                maintype, _, subtype = guessed.partition('/')
             else:
-                maintype, subtype = "application", "octet-stream"
+                maintype, subtype = 'application', 'octet-stream'
         msg.add_attachment(
             bytes(content),
             maintype=maintype,

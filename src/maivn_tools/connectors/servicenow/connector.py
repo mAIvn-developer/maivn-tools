@@ -15,28 +15,28 @@ from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 
-_VALID_TABLE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
+_VALID_TABLE = re.compile(r'^[A-Za-z][A-Za-z0-9_]*$')
 _SUMMARY_FIELD_CANDIDATES: tuple[str, ...] = (
-    "number",
-    "short_description",
-    "state",
-    "priority",
-    "urgency",
-    "assigned_to",
-    "assignment_group",
-    "category",
-    "sys_updated_on",
+    'number',
+    'short_description',
+    'state',
+    'priority',
+    'urgency',
+    'assigned_to',
+    'assignment_group',
+    'category',
+    'sys_updated_on',
 )
 
 
 def _validate_table(table: str) -> None:
     if not table:
-        raise ValueError("table must be a non-empty string")
+        raise ValueError('table must be a non-empty string')
     if not _VALID_TABLE.match(table):
-        raise ValueError("table must match ^[A-Za-z][A-Za-z0-9_]*$")
+        raise ValueError('table must match ^[A-Za-z][A-Za-z0-9_]*$')
 
 
-@toolset(prefix="servicenow")
+@toolset(prefix='servicenow')
 class ServiceNowToolSet:
     """A connector for the ServiceNow Now Platform Table API.
 
@@ -48,12 +48,12 @@ class ServiceNowToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="servicenow",
-        display_name="ServiceNow",
-        version="0.1.0",
-        description="Read and write ServiceNow records (incidents, problems, changes, tasks, CIs).",
+        name='servicenow',
+        display_name='ServiceNow',
+        version='0.1.0',
+        description='Read and write ServiceNow records (incidents, problems, changes, tasks, CIs).',
         auth_modes=(AuthMode.BASIC, AuthMode.OAUTH2_AUTH_CODE),
-        scopes={"useraccount": "Access records as the authenticated user."},
+        scopes={'useraccount': 'Access records as the authenticated user.'},
         capabilities=frozenset(
             {
                 ProviderCapability.READ,
@@ -62,9 +62,9 @@ class ServiceNowToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://www.servicenow.com/docs/r/zurich/api-reference/rest-apis/c_TableAPI.html",
-        homepage_url="https://www.servicenow.com/",
-        tags=("itsm", "ticketing"),
+        documentation_url='https://www.servicenow.com/docs/r/zurich/api-reference/rest-apis/c_TableAPI.html',
+        homepage_url='https://www.servicenow.com/',
+        tags=('itsm', 'ticketing'),
     )
 
     def __init__(
@@ -77,15 +77,15 @@ class ServiceNowToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not instance_url:
-            raise ValueError("instance_url is required")
+            raise ValueError('instance_url is required')
         if not username or not password:
-            raise ValueError("username and password are required")
+            raise ValueError('username and password are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=instance_url.rstrip("/"),
+            base_url=instance_url.rstrip('/'),
             auth=BasicAuth(username, password),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -123,22 +123,22 @@ class ServiceNowToolSet:
         """
         _validate_table(table)
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
-        params: dict[str, Any] = {"sysparm_limit": limit, "sysparm_offset": offset}
+            raise ValueError('limit must be between 1 and 1000')
+        params: dict[str, Any] = {'sysparm_limit': limit, 'sysparm_offset': offset}
         if query is not None:
-            params["sysparm_query"] = query
+            params['sysparm_query'] = query
         if fields is not None:
-            params["sysparm_fields"] = ",".join(fields)
+            params['sysparm_fields'] = ','.join(fields)
         if order_by is not None:
-            existing = params.get("sysparm_query", "")
-            params["sysparm_query"] = (
-                f"{existing}^ORDERBY{order_by}" if existing else f"ORDERBY{order_by}"
+            existing = params.get('sysparm_query', '')
+            params['sysparm_query'] = (
+                f'{existing}^ORDERBY{order_by}' if existing else f'ORDERBY{order_by}'
             )
         if display_value is not None:
-            if display_value not in {"true", "false", "all"}:
-                raise ValueError("display_value must be true/false/all")
-            params["sysparm_display_value"] = display_value
-        payload: dict[str, Any] = self._client.get(f"/api/now/table/{table}", params=params).json()
+            if display_value not in {'true', 'false', 'all'}:
+                raise ValueError('display_value must be true/false/all')
+            params['sysparm_display_value'] = display_value
+        payload: dict[str, Any] = self._client.get(f'/api/now/table/{table}', params=params).json()
         if not include_metadata:
             return payload
         return self._summarize_records(payload, table=table, include_ids=include_ids)
@@ -162,11 +162,11 @@ class ServiceNowToolSet:
         resolved = self._extract_sys_id(sys_id)
         params: dict[str, Any] = {}
         if fields is not None:
-            params["sysparm_fields"] = ",".join(fields)
+            params['sysparm_fields'] = ','.join(fields)
         if display_value is not None:
-            params["sysparm_display_value"] = display_value
+            params['sysparm_display_value'] = display_value
         return self._client.get(
-            f"/api/now/table/{table}/{resolved}",
+            f'/api/now/table/{table}/{resolved}',
             params=params or None,
         ).json()
 
@@ -179,8 +179,8 @@ class ServiceNowToolSet:
         """
         _validate_table(table)
         if not fields:
-            raise ValueError("fields must be a non-empty dict")
-        return self._client.post(f"/api/now/table/{table}", json=fields).json()
+            raise ValueError('fields must be a non-empty dict')
+        return self._client.post(f'/api/now/table/{table}', json=fields).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_record(
@@ -197,8 +197,8 @@ class ServiceNowToolSet:
         _validate_table(table)
         resolved = self._extract_sys_id(sys_id)
         if not fields:
-            raise ValueError("fields must be a non-empty dict")
-        return self._client.patch(f"/api/now/table/{table}/{resolved}", json=fields).json()
+            raise ValueError('fields must be a non-empty dict')
+        return self._client.patch(f'/api/now/table/{table}/{resolved}', json=fields).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_record(self, table: str, sys_id: Any) -> dict[str, Any]:
@@ -210,8 +210,8 @@ class ServiceNowToolSet:
         """
         _validate_table(table)
         resolved = self._extract_sys_id(sys_id)
-        self._client.delete(f"/api/now/table/{table}/{resolved}")
-        return {"sys_id": resolved, "deleted": True}
+        self._client.delete(f'/api/now/table/{table}/{resolved}')
+        return {'sys_id': resolved, 'deleted': True}
 
     # MARK: - Incident shortcuts
 
@@ -233,7 +233,7 @@ class ServiceNowToolSet:
         behavior; ``include_ids`` and ``include_metadata`` are forwarded.
         """
         return self.list_records(
-            "incident",
+            'incident',
             query=query,
             limit=limit,
             offset=offset,
@@ -260,21 +260,21 @@ class ServiceNowToolSet:
         {...}}`` envelope.
         """
         if not short_description:
-            raise ValueError("short_description must be a non-empty string")
-        fields: dict[str, Any] = {"short_description": short_description}
+            raise ValueError('short_description must be a non-empty string')
+        fields: dict[str, Any] = {'short_description': short_description}
         if description is not None:
-            fields["description"] = description
+            fields['description'] = description
         if category is not None:
-            fields["category"] = category
+            fields['category'] = category
         if urgency is not None:
-            fields["urgency"] = urgency
+            fields['urgency'] = urgency
         if impact is not None:
-            fields["impact"] = impact
+            fields['impact'] = impact
         if caller_id is not None:
-            fields["caller_id"] = caller_id
+            fields['caller_id'] = caller_id
         if extra_fields is not None:
             fields.update(extra_fields)
-        return self.create_record("incident", fields)
+        return self.create_record('incident', fields)
 
     # MARK: - Change request shortcuts
 
@@ -283,19 +283,19 @@ class ServiceNowToolSet:
         self,
         *,
         short_description: str,
-        type: str = "normal",
+        type: str = 'normal',
         description: str | None = None,
         extra_fields: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Create a change request."""
         if not short_description:
-            raise ValueError("short_description must be a non-empty string")
-        fields: dict[str, Any] = {"short_description": short_description, "type": type}
+            raise ValueError('short_description must be a non-empty string')
+        fields: dict[str, Any] = {'short_description': short_description, 'type': type}
         if description is not None:
-            fields["description"] = description
+            fields['description'] = description
         if extra_fields is not None:
             fields.update(extra_fields)
-        return self.create_record("change_request", fields)
+        return self.create_record('change_request', fields)
 
     # MARK: - Aggregation API
 
@@ -316,21 +316,21 @@ class ServiceNowToolSet:
         _validate_table(table)
         params: dict[str, Any] = {}
         if query is not None:
-            params["sysparm_query"] = query
+            params['sysparm_query'] = query
         if group_by is not None:
-            params["sysparm_group_by"] = ",".join(group_by)
+            params['sysparm_group_by'] = ','.join(group_by)
         if count:
-            params["sysparm_count"] = "true"
+            params['sysparm_count'] = 'true'
         if avg_fields is not None:
-            params["sysparm_avg_fields"] = ",".join(avg_fields)
+            params['sysparm_avg_fields'] = ','.join(avg_fields)
         if sum_fields is not None:
-            params["sysparm_sum_fields"] = ",".join(sum_fields)
+            params['sysparm_sum_fields'] = ','.join(sum_fields)
         if min_fields is not None:
-            params["sysparm_min_fields"] = ",".join(min_fields)
+            params['sysparm_min_fields'] = ','.join(min_fields)
         if max_fields is not None:
-            params["sysparm_max_fields"] = ",".join(max_fields)
+            params['sysparm_max_fields'] = ','.join(max_fields)
         return self._client.get(
-            f"/api/now/stats/{table}",
+            f'/api/now/stats/{table}',
             params=params or None,
         ).json()
 
@@ -346,18 +346,18 @@ class ServiceNowToolSet:
         limit: int = 100,
     ) -> dict[str, Any]:
         """List attachments. Filter by record with ``table`` + ``sys_id``."""
-        params: dict[str, Any] = {"sysparm_limit": limit}
+        params: dict[str, Any] = {'sysparm_limit': limit}
         filters: list[str] = []
         if table is not None:
             _validate_table(table)
-            filters.append(f"table_name={table}")
+            filters.append(f'table_name={table}')
         if sys_id is not None:
-            filters.append(f"table_sys_id={sys_id}")
+            filters.append(f'table_sys_id={sys_id}')
         if query is not None:
             filters.append(query)
         if filters:
-            params["sysparm_query"] = "^".join(filters)
-        return self._client.get("/api/now/attachment", params=params).json()
+            params['sysparm_query'] = '^'.join(filters)
+        return self._client.get('/api/now/attachment', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_attachment(self, attachment_sys_id: str) -> dict[str, Any]:
@@ -366,9 +366,9 @@ class ServiceNowToolSet:
         Destructive: cannot be undone.
         """
         if not attachment_sys_id:
-            raise ValueError("attachment_sys_id must be a non-empty string")
-        self._client.delete(f"/api/now/attachment/{attachment_sys_id}")
-        return {"sys_id": attachment_sys_id, "deleted": True}
+            raise ValueError('attachment_sys_id must be a non-empty string')
+        self._client.delete(f'/api/now/attachment/{attachment_sys_id}')
+        return {'sys_id': attachment_sys_id, 'deleted': True}
 
     # MARK: - User lookup
 
@@ -385,13 +385,13 @@ class ServiceNowToolSet:
         ``sys_user`` table.
         """
         if not email and not user_name:
-            raise ValueError("email or user_name must be provided")
+            raise ValueError('email or user_name must be provided')
         filters: list[str] = []
         if email is not None:
-            filters.append(f"email={email}")
+            filters.append(f'email={email}')
         if user_name is not None:
-            filters.append(f"user_name={user_name}")
-        return self.list_records("sys_user", query="^".join(filters), limit=10)
+            filters.append(f'user_name={user_name}')
+        return self.list_records('sys_user', query='^'.join(filters), limit=10)
 
     # MARK: - Internal
 
@@ -402,26 +402,26 @@ class ServiceNowToolSet:
         table: str,
         include_ids: bool,
     ) -> dict[str, Any]:
-        result: object = payload.get("result")
+        result: object = payload.get('result')
         if not isinstance(result, list):
             return payload
-        records = cast("list[Any]", result)
+        records = cast('list[Any]', result)
         summaries: list[dict[str, Any]] = []
         for index, record in enumerate(records, start=1):
             if not isinstance(record, dict):
                 continue
-            record_dict = cast("dict[str, Any]", record)
+            record_dict = cast('dict[str, Any]', record)
             summary: dict[str, Any] = {
-                "record_ref": f"record_{index}",
-                "table": table,
+                'record_ref': f'record_{index}',
+                'table': table,
             }
             for field in _SUMMARY_FIELD_CANDIDATES:
                 if field in record_dict:
                     summary[field] = record_dict[field]
             if include_ids:
-                summary["sys_id"] = record_dict.get("sys_id", "")
+                summary['sys_id'] = record_dict.get('sys_id', '')
             summaries.append(summary)
-        return {"records": summaries}
+        return {'records': summaries}
 
     @staticmethod
     def _extract_sys_id(candidate: Any) -> str:
@@ -433,19 +433,19 @@ class ServiceNowToolSet:
         """
         if isinstance(candidate, str):
             if not candidate:
-                raise ValueError("sys_id must be a non-empty string")
+                raise ValueError('sys_id must be a non-empty string')
             return candidate
         if isinstance(candidate, dict):
-            candidate_dict = cast("dict[Any, Any]", candidate)
-            for key in ("sys_id", "id"):
+            candidate_dict = cast('dict[Any, Any]', candidate)
+            for key in ('sys_id', 'id'):
                 value: Any = candidate_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
         if isinstance(candidate, (list, tuple)):
-            candidate_seq = cast("list[Any] | tuple[Any, ...]", candidate)
+            candidate_seq = cast('list[Any] | tuple[Any, ...]', candidate)
             for item in candidate_seq:
                 try:
                     return ServiceNowToolSet._extract_sys_id(item)
                 except ValueError:
                     continue
-        raise ValueError(f"could not extract ServiceNow sys_id from: {candidate!r}")
+        raise ValueError(f'could not extract ServiceNow sys_id from: {candidate!r}')

@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import json as _json
 from typing import Any, cast
 
 from maivn import toolify, toolset
@@ -20,7 +21,7 @@ from ...runtime.http import HttpClient, HttpTransport
 # supported for a rolling minimum of one year; refresh this on a monthly
 # cadence to stay within the support window (a deprecated/sunset version
 # header returns an error response).
-_API_VERSION = "202605"
+_API_VERSION = '202605'
 
 
 # MARK: Rest.li helpers
@@ -32,11 +33,11 @@ def _restli_date(date: dict[str, int]) -> str:
     LinkedIn expects ``(year:Y,month:M,day:D)`` (day/end may be omitted).
     """
     parts: list[str] = []
-    for key in ("year", "month", "day"):
+    for key in ('year', 'month', 'day'):
         value = date.get(key)
         if value is not None:
-            parts.append(f"{key}:{value}")
-    return "(" + ",".join(parts) + ")"
+            parts.append(f'{key}:{value}')
+    return '(' + ','.join(parts) + ')'
 
 
 def _restli_date_range(date_range: dict[str, dict[str, int]]) -> str:
@@ -46,18 +47,18 @@ def _restli_date_range(date_range: dict[str, dict[str, int]]) -> str:
     The ``end`` is optional (an open-ended range).
     """
     parts: list[str] = []
-    start = date_range.get("start")
+    start = date_range.get('start')
     if isinstance(start, dict):
-        parts.append(f"start:{_restli_date(start)}")
-    end = date_range.get("end")
+        parts.append(f'start:{_restli_date(start)}')
+    end = date_range.get('end')
     if isinstance(end, dict):
-        parts.append(f"end:{_restli_date(end)}")
-    return "(" + ",".join(parts) + ")"
+        parts.append(f'end:{_restli_date(end)}')
+    return '(' + ','.join(parts) + ')'
 
 
 def _restli_urn_list(urns: list[str]) -> str:
     """Render a list of URNs as a Rest.li ``List(urn1,urn2)`` value."""
-    return "List(" + ",".join(urns) + ")"
+    return 'List(' + ','.join(urns) + ')'
 
 
 # MARK: ID / payload coercion helpers
@@ -80,14 +81,14 @@ def _coerce_int_id(candidate: Any, *, key: str) -> int | None:
             return None
     if isinstance(candidate, dict):
         typed_candidate = cast(dict[str, Any], candidate)
-        for k in (key, "id"):
+        for k in (key, 'id'):
             value: Any = typed_candidate.get(k)
             coerced = _coerce_int_id(value, key=key)
             if coerced is not None:
                 return coerced
         return None
     if isinstance(candidate, list | tuple):
-        typed_items = cast("list[Any] | tuple[Any, ...]", candidate)
+        typed_items = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in typed_items:
             value = _coerce_int_id(item, key=key)
             if value is not None:
@@ -104,16 +105,16 @@ def _payload_dict(value: Any) -> dict[str, Any]:
 
 def _payload_elements(payload: dict[str, Any]) -> list[Any]:
     """Return the ``elements`` list from a decoded payload, else an empty list."""
-    elements: Any = payload.get("elements", [])
+    elements: Any = payload.get('elements', [])
     if isinstance(elements, list):
-        return cast("list[Any]", elements)
+        return cast('list[Any]', elements)
     return []
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="linkedin_ads")
+@toolset(prefix='linkedin_ads')
 class LinkedInAdsToolSet:
     """A connector for LinkedIn's Marketing Developer Platform.
 
@@ -123,15 +124,15 @@ class LinkedInAdsToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="linkedin_ads",
-        display_name="LinkedIn Ads",
-        version="0.1.0",
-        description="Ad accounts, campaigns, creatives, audiences, and analytics.",
+        name='linkedin_ads',
+        display_name='LinkedIn Ads',
+        version='0.1.0',
+        description='Ad accounts, campaigns, creatives, audiences, and analytics.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url=("https://learn.microsoft.com/en-us/linkedin/marketing/"),
-        homepage_url="https://www.linkedin.com/marketing-solutions/",
-        tags=("marketing", "ads"),
+        documentation_url=('https://learn.microsoft.com/en-us/linkedin/marketing/'),
+        homepage_url='https://www.linkedin.com/marketing-solutions/',
+        tags=('marketing', 'ads'),
     )
 
     def __init__(
@@ -139,22 +140,22 @@ class LinkedInAdsToolSet:
         *,
         access_token: str,
         linkedin_version: str = _API_VERSION,
-        base_url: str = "https://api.linkedin.com",
+        base_url: str = 'https://api.linkedin.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(access_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "LinkedIn-Version": linkedin_version,
-                "X-Restli-Protocol-Version": "2.0.0",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'LinkedIn-Version': linkedin_version,
+                'X-Restli-Protocol-Version': '2.0.0',
             },
         )
 
@@ -166,7 +167,7 @@ class LinkedInAdsToolSet:
     def list_ad_accounts(
         self,
         *,
-        q: str = "search",
+        q: str = 'search',
         search: dict[str, Any] | None = None,
         count: int = 10,
         start: int = 0,
@@ -181,16 +182,14 @@ class LinkedInAdsToolSet:
         internal handles. Set ``include_ids=True`` when a follow-up tool
         (e.g. :meth:`list_campaigns`) needs the raw ``ad_account_id``.
         """
-        params: dict[str, Any] = {"q": q, "count": count, "start": start}
+        params: dict[str, Any] = {'q': q, 'count': count, 'start': start}
         if search is not None:
-            import json as _json
-
-            params["search"] = _json.dumps(search)
+            params['search'] = _json.dumps(search)
         payload = _payload_dict(
             self._client.get(
-                "/rest/adAccounts",
+                '/rest/adAccounts',
                 params=params,
-                headers={"X-RestLi-Method": "FINDER"},
+                headers={'X-RestLi-Method': 'FINDER'},
             ).json()
         )
         elements = _payload_elements(payload)
@@ -200,19 +199,19 @@ class LinkedInAdsToolSet:
                 continue
             account_dict = cast(dict[str, Any], account)
             summary: dict[str, Any] = {
-                "account_ref": f"account_{index}",
-                "name": account_dict.get("name", ""),
-                "status": account_dict.get("status", ""),
-                "type": account_dict.get("type", ""),
-                "currency": account_dict.get("currency", ""),
-                "reference": account_dict.get("reference", ""),
+                'account_ref': f'account_{index}',
+                'name': account_dict.get('name', ''),
+                'status': account_dict.get('status', ''),
+                'type': account_dict.get('type', ''),
+                'currency': account_dict.get('currency', ''),
+                'reference': account_dict.get('reference', ''),
             }
             if include_ids:
-                summary["ad_account_id"] = account_dict.get("id")
+                summary['ad_account_id'] = account_dict.get('id')
             summaries.append(summary)
         return {
-            "accounts": summaries,
-            "paging": payload.get("paging"),
+            'accounts': summaries,
+            'paging': payload.get('paging'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -222,10 +221,10 @@ class LinkedInAdsToolSet:
         Accepts a raw integer ID or an account dict returned by
         :meth:`list_ad_accounts` (with ``include_ids=True``).
         """
-        resolved_id = _coerce_int_id(ad_account_id, key="ad_account_id")
+        resolved_id = _coerce_int_id(ad_account_id, key='ad_account_id')
         if not resolved_id:
-            raise ValueError("ad_account_id is required")
-        return _payload_dict(self._client.get(f"/rest/adAccounts/{resolved_id}").json())
+            raise ValueError('ad_account_id is required')
+        return _payload_dict(self._client.get(f'/rest/adAccounts/{resolved_id}').json())
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_campaigns(
@@ -249,20 +248,20 @@ class LinkedInAdsToolSet:
         and ``page_token`` (pass the ``next_page_token`` from a prior
         response). Index-based ``count``/``start`` is no longer supported.
         """
-        account = _coerce_int_id(ad_account_id, key="ad_account_id")
+        account = _coerce_int_id(ad_account_id, key='ad_account_id')
         if not account:
-            raise ValueError("ad_account_id is required")
+            raise ValueError('ad_account_id is required')
         params: dict[str, Any] = {
-            "q": "search",
-            "pageSize": min(page_size, 1000),
+            'q': 'search',
+            'pageSize': min(page_size, 1000),
         }
         if page_token:
-            params["pageToken"] = page_token
+            params['pageToken'] = page_token
         payload = _payload_dict(
             self._client.get(
-                f"/rest/adAccounts/{account}/adCampaigns",
+                f'/rest/adAccounts/{account}/adCampaigns',
                 params=params,
-                headers={"X-RestLi-Method": "FINDER"},
+                headers={'X-RestLi-Method': 'FINDER'},
             ).json()
         )
         elements = _payload_elements(payload)
@@ -272,23 +271,23 @@ class LinkedInAdsToolSet:
                 continue
             campaign_dict = cast(dict[str, Any], campaign)
             summary: dict[str, Any] = {
-                "campaign_ref": f"campaign_{index}",
-                "name": campaign_dict.get("name", ""),
-                "status": campaign_dict.get("status", ""),
-                "type": campaign_dict.get("type", ""),
-                "cost_type": campaign_dict.get("costType", ""),
-                "daily_budget": campaign_dict.get("dailyBudget"),
-                "unit_cost": campaign_dict.get("unitCost"),
-                "locale": campaign_dict.get("locale"),
+                'campaign_ref': f'campaign_{index}',
+                'name': campaign_dict.get('name', ''),
+                'status': campaign_dict.get('status', ''),
+                'type': campaign_dict.get('type', ''),
+                'cost_type': campaign_dict.get('costType', ''),
+                'daily_budget': campaign_dict.get('dailyBudget'),
+                'unit_cost': campaign_dict.get('unitCost'),
+                'locale': campaign_dict.get('locale'),
             }
             if include_ids:
-                summary["campaign_id"] = campaign_dict.get("id")
+                summary['campaign_id'] = campaign_dict.get('id')
             summaries.append(summary)
-        metadata = _payload_dict(payload.get("metadata"))
-        next_page_token: Any = metadata.get("nextPageToken")
+        metadata = _payload_dict(payload.get('metadata'))
+        next_page_token: Any = metadata.get('nextPageToken')
         return {
-            "campaigns": summaries,
-            "next_page_token": next_page_token,
+            'campaigns': summaries,
+            'next_page_token': next_page_token,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -303,12 +302,12 @@ class LinkedInAdsToolSet:
         Both IDs accept a raw int / str or a dict returned by the
         corresponding list tool (with ``include_ids=True``).
         """
-        account = _coerce_int_id(ad_account_id, key="ad_account_id")
-        campaign = _coerce_int_id(campaign_id, key="campaign_id")
+        account = _coerce_int_id(ad_account_id, key='ad_account_id')
+        campaign = _coerce_int_id(campaign_id, key='campaign_id')
         if not account or not campaign:
-            raise ValueError("ad_account_id and campaign_id are required")
+            raise ValueError('ad_account_id and campaign_id are required')
         return _payload_dict(
-            self._client.get(f"/rest/adAccounts/{account}/adCampaigns/{campaign}").json()
+            self._client.get(f'/rest/adAccounts/{account}/adCampaigns/{campaign}').json()
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -325,15 +324,15 @@ class LinkedInAdsToolSet:
         to pause). Both IDs accept a raw int / str or a dict (with
         ``include_ids=True``).
         """
-        account = _coerce_int_id(ad_account_id, key="ad_account_id")
-        campaign = _coerce_int_id(campaign_id, key="campaign_id")
+        account = _coerce_int_id(ad_account_id, key='ad_account_id')
+        campaign = _coerce_int_id(campaign_id, key='campaign_id')
         if not account or not campaign or not patch:
-            raise ValueError("ad_account_id, campaign_id, and patch are required")
+            raise ValueError('ad_account_id, campaign_id, and patch are required')
         return _payload_dict(
             self._client.post(
-                f"/rest/adAccounts/{account}/adCampaigns/{campaign}",
-                json={"patch": {"$set": patch}},
-                headers={"X-RestLi-Method": "PARTIAL_UPDATE"},
+                f'/rest/adAccounts/{account}/adCampaigns/{campaign}',
+                json={'patch': {'$set': patch}},
+                headers={'X-RestLi-Method': 'PARTIAL_UPDATE'},
             ).json()
         )
 
@@ -357,20 +356,20 @@ class LinkedInAdsToolSet:
         and ``page_token`` (pass the ``next_page_token`` from a prior
         response). Index-based ``count``/``start`` is no longer supported.
         """
-        account = _coerce_int_id(ad_account_id, key="ad_account_id")
+        account = _coerce_int_id(ad_account_id, key='ad_account_id')
         if not account:
-            raise ValueError("ad_account_id is required")
+            raise ValueError('ad_account_id is required')
         params: dict[str, Any] = {
-            "q": "criteria",
-            "pageSize": min(page_size, 1000),
+            'q': 'criteria',
+            'pageSize': min(page_size, 1000),
         }
         if page_token:
-            params["pageToken"] = page_token
+            params['pageToken'] = page_token
         payload = _payload_dict(
             self._client.get(
-                f"/rest/adAccounts/{account}/creatives",
+                f'/rest/adAccounts/{account}/creatives',
                 params=params,
-                headers={"X-RestLi-Method": "FINDER"},
+                headers={'X-RestLi-Method': 'FINDER'},
             ).json()
         )
         elements = _payload_elements(payload)
@@ -380,21 +379,21 @@ class LinkedInAdsToolSet:
                 continue
             creative_dict = cast(dict[str, Any], creative)
             summary: dict[str, Any] = {
-                "creative_ref": f"creative_{index}",
-                "status": creative_dict.get("status", ""),
-                "campaign": creative_dict.get("campaign", ""),
-                "review_status": creative_dict.get("reviewStatus", ""),
-                "created_at": creative_dict.get("createdAt"),
-                "last_modified_at": creative_dict.get("lastModifiedAt"),
+                'creative_ref': f'creative_{index}',
+                'status': creative_dict.get('status', ''),
+                'campaign': creative_dict.get('campaign', ''),
+                'review_status': creative_dict.get('reviewStatus', ''),
+                'created_at': creative_dict.get('createdAt'),
+                'last_modified_at': creative_dict.get('lastModifiedAt'),
             }
             if include_ids:
-                summary["creative_id"] = creative_dict.get("id")
+                summary['creative_id'] = creative_dict.get('id')
             summaries.append(summary)
-        metadata = _payload_dict(payload.get("metadata"))
-        next_page_token: Any = metadata.get("nextPageToken")
+        metadata = _payload_dict(payload.get('metadata'))
+        next_page_token: Any = metadata.get('nextPageToken')
         return {
-            "creatives": summaries,
-            "next_page_token": next_page_token,
+            'creatives': summaries,
+            'next_page_token': next_page_token,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -403,7 +402,7 @@ class LinkedInAdsToolSet:
         *,
         pivot: str,
         date_range: dict[str, dict[str, int]],
-        time_granularity: str = "DAILY",
+        time_granularity: str = 'DAILY',
         accounts: list[str] | None = None,
         campaigns: list[str] | None = None,
         creatives: list[str] | None = None,
@@ -417,35 +416,35 @@ class LinkedInAdsToolSet:
         "end": {...}}``. Returns the raw analytics ``elements``.
         """
         if not pivot or not date_range:
-            raise ValueError("pivot and date_range are required")
+            raise ValueError('pivot and date_range are required')
         if pivot not in {
-            "ACCOUNT",
-            "CAMPAIGN",
-            "CAMPAIGN_GROUP",
-            "CREATIVE",
-            "MEMBER_COMPANY_SIZE",
-            "MEMBER_INDUSTRY",
+            'ACCOUNT',
+            'CAMPAIGN',
+            'CAMPAIGN_GROUP',
+            'CREATIVE',
+            'MEMBER_COMPANY_SIZE',
+            'MEMBER_INDUSTRY',
         }:
-            raise ValueError("invalid pivot")
+            raise ValueError('invalid pivot')
         params: dict[str, Any] = {
-            "q": "analytics",
-            "pivot": pivot,
-            "timeGranularity": time_granularity,
-            "dateRange": _restli_date_range(date_range),
+            'q': 'analytics',
+            'pivot': pivot,
+            'timeGranularity': time_granularity,
+            'dateRange': _restli_date_range(date_range),
         }
         if accounts is not None:
-            params["accounts"] = _restli_urn_list(accounts)
+            params['accounts'] = _restli_urn_list(accounts)
         if campaigns is not None:
-            params["campaigns"] = _restli_urn_list(campaigns)
+            params['campaigns'] = _restli_urn_list(campaigns)
         if creatives is not None:
-            params["creatives"] = _restli_urn_list(creatives)
+            params['creatives'] = _restli_urn_list(creatives)
         if fields is not None:
-            params["fields"] = ",".join(fields)
+            params['fields'] = ','.join(fields)
         return _payload_dict(
             self._client.get(
-                "/rest/adAnalytics",
+                '/rest/adAnalytics',
                 params=params,
-                headers={"X-RestLi-Method": "FINDER"},
+                headers={'X-RestLi-Method': 'FINDER'},
             ).json()
         )
 
@@ -468,17 +467,17 @@ class LinkedInAdsToolSet:
         :meth:`add_users_to_dmp_segment`) needs the raw ``segment_id``.
         """
         if not account:
-            raise ValueError("account is required")
+            raise ValueError('account is required')
         payload = _payload_dict(
             self._client.get(
-                "/rest/dmpSegments",
+                '/rest/dmpSegments',
                 params={
-                    "q": "account",
-                    "account": account,
-                    "count": count,
-                    "start": start,
+                    'q': 'account',
+                    'account': account,
+                    'count': count,
+                    'start': start,
                 },
-                headers={"X-RestLi-Method": "FINDER"},
+                headers={'X-RestLi-Method': 'FINDER'},
             ).json()
         )
         elements = _payload_elements(payload)
@@ -488,21 +487,21 @@ class LinkedInAdsToolSet:
                 continue
             segment_dict = cast(dict[str, Any], segment)
             summary: dict[str, Any] = {
-                "segment_ref": f"segment_{index}",
-                "name": segment_dict.get("name", ""),
-                "description": segment_dict.get("description", ""),
-                "status": segment_dict.get("status", ""),
-                "type": segment_dict.get("type", ""),
-                "audience_size_lower": segment_dict.get("audienceSizeLowerBound"),
-                "audience_size_upper": segment_dict.get("audienceSizeUpperBound"),
+                'segment_ref': f'segment_{index}',
+                'name': segment_dict.get('name', ''),
+                'description': segment_dict.get('description', ''),
+                'status': segment_dict.get('status', ''),
+                'type': segment_dict.get('type', ''),
+                'audience_size_lower': segment_dict.get('audienceSizeLowerBound'),
+                'audience_size_upper': segment_dict.get('audienceSizeUpperBound'),
             }
             if include_ids:
-                summary["segment_id"] = segment_dict.get("id")
-                summary["segment_urn"] = segment_dict.get("segment")
+                summary['segment_id'] = segment_dict.get('id')
+                summary['segment_urn'] = segment_dict.get('segment')
             summaries.append(summary)
         return {
-            "segments": summaries,
-            "paging": payload.get("paging"),
+            'segments': summaries,
+            'paging': payload.get('paging'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -522,14 +521,14 @@ class LinkedInAdsToolSet:
         resolved_id: Any
         if isinstance(segment_id, dict):
             segment_dict = cast(dict[str, Any], segment_id)
-            resolved_id = segment_dict.get("segment_id") or segment_dict.get("id")
+            resolved_id = segment_dict.get('segment_id') or segment_dict.get('id')
         elif isinstance(segment_id, list | tuple):
-            typed_items = cast("list[Any] | tuple[Any, ...]", segment_id)
+            typed_items = cast('list[Any] | tuple[Any, ...]', segment_id)
             resolved_id = None
             for item in typed_items:
                 if isinstance(item, dict):
                     item_dict = cast(dict[str, Any], item)
-                    candidate: Any = item_dict.get("segment_id") or item_dict.get("id")
+                    candidate: Any = item_dict.get('segment_id') or item_dict.get('id')
                     if candidate:
                         resolved_id = candidate
                         break
@@ -539,10 +538,10 @@ class LinkedInAdsToolSet:
         else:
             resolved_id = segment_id
         if not resolved_id or not users:
-            raise ValueError("segment_id and users are required")
+            raise ValueError('segment_id and users are required')
         return _payload_dict(
             self._client.post(
-                f"/rest/dmpSegments/{resolved_id}/users",
-                json={"elements": users},
+                f'/rest/dmpSegments/{resolved_id}/users',
+                json={'elements': users},
             ).json()
         )

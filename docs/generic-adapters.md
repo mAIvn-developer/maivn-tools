@@ -6,10 +6,9 @@ working, Agent-ready connector against almost any API in minutes, by
 describing the shape of the API rather than coding each call by hand.
 
 They cover the API styles a provider connector almost always needs:
-REST/HTTP, OpenAPI, GraphQL, webhooks, and MCP servers. Each adapter sits on
-the Tier 0 kernel, so callers automatically get retries, rate limits,
-audit-friendly error normalization, and a test transport for free — the same
-guarantees the first-party connectors are built on.
+REST/HTTP, OpenAPI, GraphQL, webhooks, and MCP servers. The HTTP adapters use the shared transport, retry policy and normalized
+errors. Rate limiting requires configuration. Webhook verification and MCP
+server execution have their own behavior; they do not inherit every HTTP feature.
 
 | Adapter | Use it when you have... |
 | --- | --- |
@@ -39,7 +38,7 @@ connector = GenericHttpConnector(
         name="example",
         display_name="Example API",
         version="0.1.0",
-        auth_modes=(AuthMode.BEARER,),
+        auth_modes=(AuthMode("bearer"),),
     ),
     base_url="https://api.example.com",
     auth=BearerTokenAuth("token"),
@@ -192,8 +191,8 @@ from maivn_tools import MCPBridge, MCPHttpServer, MCPStdioServer
 bridge = MCPBridge([
     MCPStdioServer(
         name="local-fs",
-        command="uvx",
-        args=("mcp-filesystem", "--root", "/srv/data"),
+        command="python",
+        args=("/srv/my_app/files_server.py",),  # your MCP stdio server
     ),
     MCPHttpServer(
         name="search",
@@ -203,8 +202,8 @@ bridge = MCPBridge([
     ),
 ])
 
-agent = Agent(model="auto", mcp_servers=bridge.build())
+agent = Agent(name="mcp-agent", model="auto", mcp_servers=bridge.build())
 ```
 
-The bridge imports `maivn` lazily, so you can construct and inspect specs
-without the SDK installed.
+The bridge resolves SDK server classes when `build()` runs. The SDK is a
+required dependency of the current `maivn-tools` distribution.

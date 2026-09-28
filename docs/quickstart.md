@@ -46,7 +46,7 @@ connector = GenericHttpConnector(
         display_name="Status API",
         version="0.1.0",
         description="Read-only status endpoints.",
-        auth_modes=(AuthMode.BEARER,),
+        auth_modes=(AuthMode("bearer"),),
     ),
     base_url="https://status.example.com",
     auth=BearerTokenAuth("token-from-secrets"),
@@ -75,7 +75,7 @@ connector = GenericHttpConnector(
     ],
 )
 
-agent = Agent(model="auto")
+agent = Agent(name="status-agent", model="auto")
 register_connector(agent, connector)
 ```
 
@@ -86,18 +86,19 @@ hosts can inspect them.
 ### Model tiers
 
 `model="auto"` selects a mAIvn model tier rather than a specific
-provider model id. The SDK accepts four tier values:
+provider model id. The SDK accepts these tier values:
 
 | Tier | Use it for |
 | --- | --- |
 | `"auto"` | Recommended default. Let the SDK pick the cheapest tier that meets the task. |
 | `"fast"` | Latency-sensitive, low-complexity work. |
 | `"balanced"` | Steady mid-tier choice when you want a single tier for everything. |
-| `"max"` | Highest-capability reasoning, accepts higher cost and latency. |
+| `"max"` | Higher-capability routing. |
+| `"ultra"` | Highest routing tier; availability and cost depend on the deployment. |
 
 Tier-based selection insulates your application from the underlying
-provider's model lifecycle; the SDK resolves each tier to a current model
-at runtime.
+provider's model lifecycle; the runtime resolves each tier using its configured model catalog.
+Tier selection does not guarantee a cost or latency.
 
 ## Use a tool
 

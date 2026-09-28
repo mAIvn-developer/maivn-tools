@@ -8,12 +8,12 @@ from .openapi import OpenAPIConnector, OpenAPIOperation
 from .webhooks import NormalizedWebhookEvent, WebhookListener
 
 __all__ = [
-    "GenericHttpConnector",
-    "GraphQLConnector",
-    "GraphQLOperation",
-    "HttpEndpoint",
-    "NormalizedWebhookEvent",
-    "OpenAPIConnector",
-    "OpenAPIOperation",
-    "WebhookListener",
+    'GenericHttpConnector',
+    'GraphQLConnector',
+    'GraphQLOperation',
+    'HttpEndpoint',
+    'NormalizedWebhookEvent',
+    'OpenAPIConnector',
+    'OpenAPIOperation',
+    'WebhookListener',
 ]

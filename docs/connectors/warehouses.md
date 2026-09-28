@@ -3,7 +3,7 @@
 Analytics warehouse connectors. For transactional databases see
 [Databases](databases.md).
 
-Both warehouse connectors default to **read-only**: a regex-based
+Both warehouse connectors apply a read-oriented SQL filter: a regex-based
 validator rejects any statement whose first keyword is outside the
 connector's allowed read set, and any compound statement (multiple
 semicolons) or mutation keyword inside the body is rejected as well.
@@ -13,7 +13,7 @@ and `EXPLAIN`.
 
 Both connectors follow the same agent-ready pattern as the database
 connectors: catalog list tools return compact summary envelopes with
-stable ordinal refs (`dataset_ref`, `table_ref`, `schema_ref`,
+response-local ordinal refs (`dataset_ref`, `table_ref`, `schema_ref`,
 `warehouse_ref`, etc.) plus the user-facing names (`dataset_id`,
 `table_id`, `name`, `database_name`, `schema_name`). Default
 `max_results` is **25** for list tools and **100** for query tools;
@@ -48,8 +48,9 @@ Tools: `run_query(sql, bindings)`, `submit_async_query(sql, bindings)`,
 `describe_table(name, database, schema)`,
 `list_warehouses(max_results)`, `server_version`.
 
-`run_query` and `submit_async_query` validate the SQL is read-only
-before submission. Identifier-taking tools validate names against
+`run_query` and `submit_async_query` apply this filter before submission.
+Use a database role without write privileges: regex filtering does not prove
+a query has no side effects. Row limits do not bound bytes scanned or query cost. Identifier-taking tools validate names against
 `^[A-Za-z_][A-Za-z0-9_$]*$` so they cannot inject SQL.
 
 ### Agent-ready behavior
@@ -112,7 +113,7 @@ billing-per-byte-scanned is acceptable.
 ### Agent-ready behavior
 
 - `list_datasets` and `list_tables` return compact summaries by default
-  with stable refs (`dataset_ref`, `table_ref`) plus the user-facing
+  with display refs (`dataset_ref`, `table_ref`) plus the user-facing
   `dataset_id`, `table_id`, parent `project_id`, `location`, `type`
   (`TABLE` / `VIEW` / `MATERIALIZED_VIEW` / `EXTERNAL`),
   `friendly_name`, and `labels`. Pass `include_metadata=False` for the

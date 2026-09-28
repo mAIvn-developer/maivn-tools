@@ -19,42 +19,42 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_entity_summary`` builder)
 
 _SOURCE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "source_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "slug": {"type": "string"},
-        "enabled": {"type": "boolean"},
-        "category": {"type": "string"},
-        "source_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'source_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'slug': {'type': 'string'},
+        'enabled': {'type': 'boolean'},
+        'category': {'type': 'string'},
+        'source_id': {'type': 'string'},
     },
-    "required": ["source_ref"],
+    'required': ['source_ref'],
 }
 
 _DESTINATION_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "destination_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "slug": {"type": "string"},
-        "enabled": {"type": "boolean"},
-        "category": {"type": "string"},
-        "destination_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'destination_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'slug': {'type': 'string'},
+        'enabled': {'type': 'boolean'},
+        'category': {'type': 'string'},
+        'destination_id': {'type': 'string'},
     },
-    "required": ["destination_ref"],
+    'required': ['destination_ref'],
 }
 
 _WAREHOUSE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "warehouse_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "slug": {"type": "string"},
-        "enabled": {"type": "boolean"},
-        "category": {"type": "string"},
-        "warehouse_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'warehouse_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'slug': {'type': 'string'},
+        'enabled': {'type': 'boolean'},
+        'category': {'type': 'string'},
+        'warehouse_id': {'type': 'string'},
     },
-    "required": ["warehouse_ref"],
+    'required': ['warehouse_ref'],
 }
 
 
@@ -64,24 +64,24 @@ _WAREHOUSE_SUMMARY: dict[str, JsonValue] = {
 def _listing(item_key: str, item_schema: dict[str, JsonValue]) -> dict[str, JsonValue]:
     """Build a ``{<item_key>: [...], nextCursor: str | null}`` schema."""
     return {
-        "type": "object",
-        "properties": {
-            item_key: {"type": "array", "items": item_schema},
-            "nextCursor": {"type": ["string", "null"]},
+        'type': 'object',
+        'properties': {
+            item_key: {'type': 'array', 'items': item_schema},
+            'nextCursor': {'type': ['string', 'null']},
         },
-        "required": [item_key],
+        'required': [item_key],
     }
 
 
 # MARK: - Tool output schemas
 
-LIST_SOURCES_OUTPUT: dict[str, JsonValue] = _listing("sources", _SOURCE_SUMMARY)
-LIST_DESTINATIONS_OUTPUT: dict[str, JsonValue] = _listing("destinations", _DESTINATION_SUMMARY)
-LIST_WAREHOUSES_OUTPUT: dict[str, JsonValue] = _listing("warehouses", _WAREHOUSE_SUMMARY)
+LIST_SOURCES_OUTPUT: dict[str, JsonValue] = _listing('sources', _SOURCE_SUMMARY)
+LIST_DESTINATIONS_OUTPUT: dict[str, JsonValue] = _listing('destinations', _DESTINATION_SUMMARY)
+LIST_WAREHOUSES_OUTPUT: dict[str, JsonValue] = _listing('warehouses', _WAREHOUSE_SUMMARY)
 
 
 __all__ = [
-    "LIST_DESTINATIONS_OUTPUT",
-    "LIST_SOURCES_OUTPUT",
-    "LIST_WAREHOUSES_OUTPUT",
+    'LIST_DESTINATIONS_OUTPUT',
+    'LIST_SOURCES_OUTPUT',
+    'LIST_WAREHOUSES_OUTPUT',
 ]

@@ -5,9 +5,11 @@ from __future__ import annotations
 from .calendar import GoogleCalendarToolSet
 from .drive import GoogleDriveToolSet
 from .gmail import GmailToolSet
+from .oauth import GMAIL_OAUTH_DESCRIPTOR
 
 __all__ = [
-    "GmailToolSet",
-    "GoogleCalendarToolSet",
-    "GoogleDriveToolSet",
+    'GmailToolSet',
+    'GMAIL_OAUTH_DESCRIPTOR',
+    'GoogleCalendarToolSet',
+    'GoogleDriveToolSet',
 ]

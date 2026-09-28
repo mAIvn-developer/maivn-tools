@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import NetSuiteToolSet
 
-__all__ = ["NetSuiteToolSet"]
+__all__ = ['NetSuiteToolSet']

@@ -10,7 +10,7 @@ follows the standard `@toolset` / `@toolify` shape.
 
 > **Agent-ready pattern.** Across all four connectors, broad list /
 > search / history tools return compact human-readable summaries by
-> default with a stable `_ref` field (`channel_ref`, `message_ref`,
+> default with a response-local `_ref` field (`channel_ref`, `message_ref`,
 > `team_ref`, `space_ref`, `meeting_ref`, etc.) and a small default page
 > size (usually 10-25). Raw provider IDs are omitted unless you pass
 > `include_ids=True`; pass `include_metadata=False` to get the raw
@@ -31,7 +31,7 @@ from maivn import Agent
 from maivn_tools import SlackToolSet, register_connector
 
 connector = SlackToolSet(token="xoxb-...")
-agent = Agent(model="auto")
+agent = Agent(name="slack-agent", model="auto")
 register_connector(agent, connector)
 ```
 
@@ -90,7 +90,7 @@ channel-summary dict from `list_channels`. `update_message` /
 or a message-summary dict from `channel_history`.
 
 ```python
-# Summaries — safe for final answers, channel_ref is stable across calls.
+# Summaries — safe for final answers, ordinal refs can change between calls.
 slack.search_messages("from:alice db migration")
 # { "messages": [{"message_ref": "message_1", "username": "alice",
 #                  "channel_name": "ops", "text": "...", "ts": "...",

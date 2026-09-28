@@ -6,14 +6,13 @@ inventory for one storefront or marketplace platform.
 
 All commerce connectors follow the same agent-ready pattern:
 `list_products`, `list_orders`, `list_customers`, `list_items`, and
-`search_items` return compact summaries with stable ordinal refs
+`search_items` return compact summaries with response-local ordinal refs
 (`product_ref`, `order_ref`, `customer_ref`, `item_ref`) plus
 user-facing fields (`title` / `name`, `sku` / `handle`, `status`,
 `total_price` / `price`, `customer_name`, `email`). Raw provider IDs
 are hidden unless `include_ids=True` is passed; pass `include_raw=True`
 (Shopify / WooCommerce / BigCommerce / Magento / Amazon / eBay /
-Walmart) to receive the unmodified provider payload. Default `limit` is
-**25** across the connectors. Write tools that take an ID accept either
+Walmart) to receive the unmodified provider payload. List defaults vary by connector (commonly 25; Walmart uses 20). Write tools that take an ID accept either
 the raw ID or the dict returned by the corresponding list/get tool.
 
 > Tip: register with `add_toolset(..., exclude_tags=["destructive"])`
@@ -46,7 +45,7 @@ Tools: `get_shop`,
 ### Agent-ready behavior
 
 - `list_products`, `list_orders`, `list_customers` return compact
-  summaries with stable refs (`product_ref`, `order_ref`,
+  summaries with display refs (`product_ref`, `order_ref`,
   `customer_ref`) plus user-facing fields (`title`, `vendor`, `sku`,
   `price`, `status`, `order_number`, `customer_name`, `total_price`,
   `currency`, `financial_status`, `fulfillment_status`).
@@ -91,7 +90,7 @@ Tools: `list_products(per_page, page, search, status, include_ids, include_raw)`
 ### Agent-ready behavior
 
 - `list_products`, `list_orders`, `list_customers` return compact
-  summaries with stable refs (`product_ref`, `order_ref`,
+  summaries with display refs (`product_ref`, `order_ref`,
   `customer_ref`) plus user-facing fields (`name`, `sku`,
   `regular_price`, `status`, `number`, `total`, `customer_name`,
   `email`).
@@ -128,7 +127,7 @@ Tools:
 ### Agent-ready behavior
 
 - `list_products`, `list_orders`, `list_customers` return compact
-  summaries with stable refs (`product_ref`, `order_ref`,
+  summaries with display refs (`product_ref`, `order_ref`,
   `customer_ref`) plus user-facing fields (`name`, `sku`, `price`,
   `is_visible`, order status / totals, customer name / email).
 - Raw IDs hidden by default; pass `include_ids=True` to opt in. Pass
@@ -163,7 +162,7 @@ Tools:
 ### Agent-ready behavior
 
 - `list_products`, `list_orders`, `list_customers` return compact
-  summaries with stable refs plus user-facing fields. Products are
+  summaries with display refs plus user-facing fields. Products are
   addressed by `sku` (user-facing); orders show `increment_id` (the
   customer-facing order number).
 - Raw Magento IDs hidden by default; pass `include_ids=True` to opt

@@ -121,12 +121,12 @@ class MockTransport(HttpTransport):
         )
         if not self._queue:
             raise AssertionError(
-                f"MockTransport has no queued response for {request.method} {request.url}"
+                f'MockTransport has no queued response for {request.method} {request.url}'
             )
         next_response = self._queue.popleft()
         if not next_response.matches(request):
             raise AssertionError(
-                f"MockTransport response did not match request: {request.method} {request.url}"
+                f'MockTransport response did not match request: {request.method} {request.url}'
             )
         return next_response.resolve(request)
 
@@ -139,11 +139,11 @@ def json_response(
     *,
     status: int = 200,
     headers: Mapping[str, str] | None = None,
-    url: str = "https://example.test/",
+    url: str = 'https://example.test/',
 ) -> HttpResponse:
     """Build a canned JSON response for use in tests."""
-    payload = _json.dumps(body).encode("utf-8")
-    merged_headers = {"Content-Type": "application/json"}
+    payload = _json.dumps(body).encode('utf-8')
+    merged_headers = {'Content-Type': 'application/json'}
     if headers:
         merged_headers.update(headers)
     return HttpResponse(status=status, headers=merged_headers, body=payload, url=url)
@@ -154,10 +154,10 @@ def text_response(
     *,
     status: int = 200,
     headers: Mapping[str, str] | None = None,
-    url: str = "https://example.test/",
+    url: str = 'https://example.test/',
 ) -> HttpResponse:
     """Build a canned text response for use in tests."""
-    merged_headers = {"Content-Type": "text/plain; charset=utf-8"}
+    merged_headers = {'Content-Type': 'text/plain; charset=utf-8'}
     if headers:
         merged_headers.update(headers)
-    return HttpResponse(status=status, headers=merged_headers, body=body.encode("utf-8"), url=url)
+    return HttpResponse(status=status, headers=merged_headers, body=body.encode('utf-8'), url=url)

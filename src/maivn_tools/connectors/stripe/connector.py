@@ -17,21 +17,21 @@ from ...runtime.http import HttpClient, HttpTransport
 # deterministic; this is a current Basil release. In Basil the Subscription
 # object's top-level ``current_period_start``/``current_period_end`` were
 # removed and moved to ``items.data[].current_period_*``.
-_API_VERSION = "2025-03-31.basil"
+_API_VERSION = '2025-03-31.basil'
 
 
 def _flatten(prefix: str, value: Any, out: list[tuple[str, str]]) -> None:
     """Encode nested dict/list values to Stripe's form-style flat keys."""
     if isinstance(value, dict):
-        for k, v in cast("dict[Any, Any]", value).items():
-            _flatten(f"{prefix}[{k}]", v, out)
+        for k, v in cast('dict[Any, Any]', value).items():
+            _flatten(f'{prefix}[{k}]', v, out)
     elif isinstance(value, list):
-        for i, v in enumerate(cast("list[Any]", value)):
-            _flatten(f"{prefix}[{i}]", v, out)
+        for i, v in enumerate(cast('list[Any]', value)):
+            _flatten(f'{prefix}[{i}]', v, out)
     elif isinstance(value, bool):
-        out.append((prefix, "true" if value else "false"))
+        out.append((prefix, 'true' if value else 'false'))
     elif value is None:
-        out.append((prefix, ""))
+        out.append((prefix, ''))
     else:
         out.append((prefix, str(value)))
 
@@ -46,7 +46,7 @@ def stripe_form_encode(payload: dict[str, Any]) -> dict[str, Any]:
         if key in result:
             existing = result[key]
             if isinstance(existing, list):
-                cast("list[Any]", existing).append(value)
+                cast('list[Any]', existing).append(value)
             else:
                 result[key] = [existing, value]
         else:
@@ -59,9 +59,9 @@ def _format_amount(amount_minor: Any, currency: Any) -> str:
     try:
         amount_int = int(amount_minor)
     except (TypeError, ValueError):
-        return ""
-    code = str(currency or "").upper()
-    return f"{amount_int / 100:.2f} {code}".rstrip()
+        return ''
+    code = str(currency or '').upper()
+    return f'{amount_int / 100:.2f} {code}'.rstrip()
 
 
 def _coerce_id(candidate: Any, *, prefix: str | None = None) -> str:
@@ -80,8 +80,8 @@ def _coerce_id(candidate: Any, *, prefix: str | None = None) -> str:
                 return value
             return None
         if isinstance(value, dict):
-            value_dict = cast("dict[Any, Any]", value)
-            for key in ("id", "subscription_id", "customer_id", "invoice_id", "payment_intent_id"):
+            value_dict = cast('dict[Any, Any]', value)
+            for key in ('id', 'subscription_id', 'customer_id', 'invoice_id', 'payment_intent_id'):
                 inner = value_dict.get(key)
                 if isinstance(inner, str):
                     if prefix is None or inner.startswith(prefix):
@@ -93,7 +93,7 @@ def _coerce_id(candidate: Any, *, prefix: str | None = None) -> str:
                         return found
             return None
         if isinstance(value, list | tuple):
-            for item in cast("list[Any] | tuple[Any, ...]", value):
+            for item in cast('list[Any] | tuple[Any, ...]', value):
                 found = _scan(item)
                 if found is not None:
                     return found
@@ -102,10 +102,10 @@ def _coerce_id(candidate: Any, *, prefix: str | None = None) -> str:
     found = _scan(candidate)
     if found is not None:
         return found
-    raise ValueError("could not resolve a Stripe ID from the given input")
+    raise ValueError('could not resolve a Stripe ID from the given input')
 
 
-@toolset(prefix="stripe")
+@toolset(prefix='stripe')
 class StripeToolSet:
     """A connector for the Stripe REST API.
 
@@ -115,17 +115,17 @@ class StripeToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="stripe",
-        display_name="Stripe",
-        version="0.1.0",
-        description="Customers, subscriptions, invoices, charges, disputes, checkout.",
+        name='stripe',
+        display_name='Stripe',
+        version='0.1.0',
+        description='Customers, subscriptions, invoices, charges, disputes, checkout.',
         auth_modes=(AuthMode.BEARER, AuthMode.API_KEY),
         capabilities=frozenset(
             {ProviderCapability.READ, ProviderCapability.WRITE, ProviderCapability.PAGINATION}
         ),
-        documentation_url="https://stripe.com/docs/api",
-        homepage_url="https://stripe.com/",
-        tags=("payments", "billing"),
+        documentation_url='https://stripe.com/docs/api',
+        homepage_url='https://stripe.com/',
+        tags=('payments', 'billing'),
     )
 
     def __init__(
@@ -133,18 +133,18 @@ class StripeToolSet:
         *,
         api_key: str,
         api_version: str | None = _API_VERSION,
-        base_url: str = "https://api.stripe.com",
+        base_url: str = 'https://api.stripe.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
-        headers: dict[str, str] = {"Accept": "application/json"}
+        headers: dict[str, str] = {'Accept': 'application/json'}
         if api_version is not None:
-            headers["Stripe-Version"] = api_version
+            headers['Stripe-Version'] = api_version
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(api_key),
             transport=transport,
             default_headers=headers,
@@ -186,43 +186,43 @@ class StripeToolSet:
         | None}``.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit}
         if email is not None:
-            params["email"] = email
+            params['email'] = email
         if starting_after is not None:
-            params["starting_after"] = starting_after
+            params['starting_after'] = starting_after
         if ending_before is not None:
-            params["ending_before"] = ending_before
-        payload: dict[str, Any] = self._client.get("/v1/customers", params=params).json()
-        customers: list[Any] = payload.get("data", [])
+            params['ending_before'] = ending_before
+        payload: dict[str, Any] = self._client.get('/v1/customers', params=params).json()
+        customers: list[Any] = payload.get('data', [])
         summaries: list[dict[str, Any]] = []
         for index, customer in enumerate(customers, start=1):
             if not isinstance(customer, dict):
                 continue
-            customer = cast("dict[str, Any]", customer)
+            customer = cast('dict[str, Any]', customer)
             summary: dict[str, Any] = {
-                "customer_ref": f"customer_{index}",
-                "name": customer.get("name") or "",
-                "email": customer.get("email") or "",
-                "description": customer.get("description") or "",
-                "currency": (customer.get("currency") or "").upper(),
-                "delinquent": bool(customer.get("delinquent")),
-                "created": customer.get("created"),
+                'customer_ref': f'customer_{index}',
+                'name': customer.get('name') or '',
+                'email': customer.get('email') or '',
+                'description': customer.get('description') or '',
+                'currency': (customer.get('currency') or '').upper(),
+                'delinquent': bool(customer.get('delinquent')),
+                'created': customer.get('created'),
             }
-            balance = customer.get("balance")
+            balance = customer.get('balance')
             if isinstance(balance, int):
-                summary["balance"] = _format_amount(balance, customer.get("currency"))
+                summary['balance'] = _format_amount(balance, customer.get('currency'))
             if include_ids:
-                summary["customer_id"] = customer.get("id", "")
+                summary['customer_id'] = customer.get('id', '')
             summaries.append(summary)
-        last_id = ""
+        last_id = ''
         if summaries and customers and isinstance(customers[-1], dict):
-            last_id = cast("dict[str, Any]", customers[-1]).get("id", "") or ""
+            last_id = cast('dict[str, Any]', customers[-1]).get('id', '') or ''
         return {
-            "customers": summaries,
-            "has_more": bool(payload.get("has_more")),
-            "next_cursor": last_id or None,
+            'customers': summaries,
+            'has_more': bool(payload.get('has_more')),
+            'next_cursor': last_id or None,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -234,8 +234,8 @@ class StripeToolSet:
         beyond the summary (addresses, tax info, metadata).
         """
         if not customer_id:
-            raise ValueError("customer_id must be a non-empty string")
-        return self._client.get(f"/v1/customers/{customer_id}").json()
+            raise ValueError('customer_id must be a non-empty string')
+        return self._client.get(f'/v1/customers/{customer_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_customer(self, **fields: Any) -> dict[str, Any]:
@@ -247,8 +247,8 @@ class StripeToolSet:
         ``id`` (a ``cus_...`` handle for follow-up calls).
         """
         if not fields:
-            raise ValueError("at least one field is required")
-        return self._form_post("/v1/customers", fields)
+            raise ValueError('at least one field is required')
+        return self._form_post('/v1/customers', fields)
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_customer(self, customer_id: Any, **fields: Any) -> dict[str, Any]:
@@ -259,10 +259,10 @@ class StripeToolSet:
         entry (with ``include_ids=True``). Returns the updated customer
         resource.
         """
-        resolved = _coerce_id(customer_id, prefix="cus_")
+        resolved = _coerce_id(customer_id, prefix='cus_')
         if not fields:
-            raise ValueError("at least one field is required")
-        return self._form_post(f"/v1/customers/{resolved}", fields)
+            raise ValueError('at least one field is required')
+        return self._form_post(f'/v1/customers/{resolved}', fields)
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_customer(self, customer_id: Any) -> dict[str, Any]:
@@ -271,8 +271,8 @@ class StripeToolSet:
         Destructive — confirm with the user before calling. ``customer_id``
         accepts the raw ID or the dict from a list/get tool.
         """
-        resolved = _coerce_id(customer_id, prefix="cus_")
-        return self._client.delete(f"/v1/customers/{resolved}").json()
+        resolved = _coerce_id(customer_id, prefix='cus_')
+        return self._client.delete(f'/v1/customers/{resolved}').json()
 
     # MARK: - Subscriptions
 
@@ -294,76 +294,76 @@ class StripeToolSet:
         to narrow the search. Raw IDs are omitted unless ``include_ids=True``.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit}
         if customer is not None:
-            params["customer"] = customer
+            params['customer'] = customer
         if status is not None:
-            params["status"] = status
-        payload: dict[str, Any] = self._client.get("/v1/subscriptions", params=params).json()
-        subscriptions: list[Any] = payload.get("data", [])
+            params['status'] = status
+        payload: dict[str, Any] = self._client.get('/v1/subscriptions', params=params).json()
+        subscriptions: list[Any] = payload.get('data', [])
         summaries: list[dict[str, Any]] = []
         for index, sub in enumerate(subscriptions, start=1):
             if not isinstance(sub, dict):
                 continue
-            sub = cast("dict[str, Any]", sub)
-            sub_items = sub.get("items")
+            sub = cast('dict[str, Any]', sub)
+            sub_items = sub.get('items')
             items: list[Any] = (
-                cast("dict[str, Any]", sub_items).get("data", [])
+                cast('dict[str, Any]', sub_items).get('data', [])
                 if isinstance(sub_items, dict)
                 else []
             )
             price_entries: list[str] = []
-            currency = ""
+            currency = ''
             for item in items:
                 if not isinstance(item, dict):
                     continue
-                item = cast("dict[str, Any]", item)
-                price_value = item.get("price")
+                item = cast('dict[str, Any]', item)
+                price_value = item.get('price')
                 price: dict[str, Any] = (
-                    cast("dict[str, Any]", price_value) if isinstance(price_value, dict) else {}
+                    cast('dict[str, Any]', price_value) if isinstance(price_value, dict) else {}
                 )
-                qty = item.get("quantity")
-                unit = _format_amount(price.get("unit_amount"), price.get("currency"))
+                qty = item.get('quantity')
+                unit = _format_amount(price.get('unit_amount'), price.get('currency'))
                 if unit:
-                    qty_str = f" x{qty}" if isinstance(qty, int) and qty != 1 else ""
-                    price_entries.append(f"{unit}{qty_str}")
+                    qty_str = f' x{qty}' if isinstance(qty, int) and qty != 1 else ''
+                    price_entries.append(f'{unit}{qty_str}')
                 if not currency:
-                    currency = str(price.get("currency") or "").upper()
+                    currency = str(price.get('currency') or '').upper()
             # In the Basil API version the Subscription's top-level
             # current_period_start/end were removed and moved to each
             # item (items.data[].current_period_*). Read from the first
             # item, falling back to the top-level fields for accounts
             # still pinned to pre-Basil versions.
             first_item: dict[str, Any] = (
-                cast("dict[str, Any]", items[0]) if items and isinstance(items[0], dict) else {}
+                cast('dict[str, Any]', items[0]) if items and isinstance(items[0], dict) else {}
             )
-            period_start = first_item.get("current_period_start")
+            period_start = first_item.get('current_period_start')
             if period_start is None:
-                period_start = sub.get("current_period_start")
-            period_end = first_item.get("current_period_end")
+                period_start = sub.get('current_period_start')
+            period_end = first_item.get('current_period_end')
             if period_end is None:
-                period_end = sub.get("current_period_end")
+                period_end = sub.get('current_period_end')
             summary: dict[str, Any] = {
-                "subscription_ref": f"subscription_{index}",
-                "status": sub.get("status", ""),
-                "currency": currency,
-                "pricing": "; ".join(price_entries),
-                "current_period_start": period_start,
-                "current_period_end": period_end,
-                "cancel_at_period_end": bool(sub.get("cancel_at_period_end")),
+                'subscription_ref': f'subscription_{index}',
+                'status': sub.get('status', ''),
+                'currency': currency,
+                'pricing': '; '.join(price_entries),
+                'current_period_start': period_start,
+                'current_period_end': period_end,
+                'cancel_at_period_end': bool(sub.get('cancel_at_period_end')),
             }
             if include_ids:
-                summary["subscription_id"] = sub.get("id", "")
-                summary["customer_id"] = sub.get("customer", "")
+                summary['subscription_id'] = sub.get('id', '')
+                summary['customer_id'] = sub.get('customer', '')
             summaries.append(summary)
-        last_id = ""
+        last_id = ''
         if subscriptions and isinstance(subscriptions[-1], dict):
-            last_id = cast("dict[str, Any]", subscriptions[-1]).get("id", "") or ""
+            last_id = cast('dict[str, Any]', subscriptions[-1]).get('id', '') or ''
         return {
-            "subscriptions": summaries,
-            "has_more": bool(payload.get("has_more")),
-            "next_cursor": last_id or None,
+            'subscriptions': summaries,
+            'has_more': bool(payload.get('has_more')),
+            'next_cursor': last_id or None,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -380,9 +380,9 @@ class StripeToolSet:
         ``quantity``). Returns the new subscription resource.
         """
         if not customer or not items:
-            raise ValueError("customer and items must be non-empty")
-        body = {"customer": customer, "items": items, **fields}
-        return self._form_post("/v1/subscriptions", body)
+            raise ValueError('customer and items must be non-empty')
+        body = {'customer': customer, 'items': items, **fields}
+        return self._form_post('/v1/subscriptions', body)
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
     def cancel_subscription(
@@ -398,14 +398,14 @@ class StripeToolSet:
         accepts the raw ``sub_...`` ID or the dict from :meth:`list_subscriptions`
         (with ``include_ids=True``). Confirm with the user before calling.
         """
-        resolved = _coerce_id(subscription_id, prefix="sub_")
+        resolved = _coerce_id(subscription_id, prefix='sub_')
         params: dict[str, Any] = {}
         if invoice_now is not None:
-            params["invoice_now"] = str(invoice_now).lower()
+            params['invoice_now'] = str(invoice_now).lower()
         if prorate is not None:
-            params["prorate"] = str(prorate).lower()
+            params['prorate'] = str(prorate).lower()
         return self._client.delete(
-            f"/v1/subscriptions/{resolved}",
+            f'/v1/subscriptions/{resolved}',
             params=params or None,
         ).json()
 
@@ -429,51 +429,51 @@ class StripeToolSet:
         ``include_ids=True``.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit}
         if customer is not None:
-            params["customer"] = customer
+            params['customer'] = customer
         if status is not None:
-            params["status"] = status
-        payload: dict[str, Any] = self._client.get("/v1/invoices", params=params).json()
-        invoices: list[Any] = payload.get("data", [])
+            params['status'] = status
+        payload: dict[str, Any] = self._client.get('/v1/invoices', params=params).json()
+        invoices: list[Any] = payload.get('data', [])
         summaries: list[dict[str, Any]] = []
         for index, invoice in enumerate(invoices, start=1):
             if not isinstance(invoice, dict):
                 continue
-            invoice = cast("dict[str, Any]", invoice)
-            currency = invoice.get("currency") or ""
+            invoice = cast('dict[str, Any]', invoice)
+            currency = invoice.get('currency') or ''
             summary: dict[str, Any] = {
-                "invoice_ref": f"invoice_{index}",
-                "number": invoice.get("number") or "",
-                "status": invoice.get("status", ""),
-                "total": _format_amount(invoice.get("total"), currency),
-                "amount_due": _format_amount(invoice.get("amount_due"), currency),
-                "amount_paid": _format_amount(invoice.get("amount_paid"), currency),
-                "currency": str(currency).upper(),
-                "customer_email": invoice.get("customer_email") or "",
-                "due_date": invoice.get("due_date"),
-                "created": invoice.get("created"),
+                'invoice_ref': f'invoice_{index}',
+                'number': invoice.get('number') or '',
+                'status': invoice.get('status', ''),
+                'total': _format_amount(invoice.get('total'), currency),
+                'amount_due': _format_amount(invoice.get('amount_due'), currency),
+                'amount_paid': _format_amount(invoice.get('amount_paid'), currency),
+                'currency': str(currency).upper(),
+                'customer_email': invoice.get('customer_email') or '',
+                'due_date': invoice.get('due_date'),
+                'created': invoice.get('created'),
             }
             if include_ids:
-                summary["invoice_id"] = invoice.get("id", "")
-                summary["customer_id"] = invoice.get("customer", "")
+                summary['invoice_id'] = invoice.get('id', '')
+                summary['customer_id'] = invoice.get('customer', '')
             summaries.append(summary)
-        last_id = ""
+        last_id = ''
         if invoices and isinstance(invoices[-1], dict):
-            last_id = cast("dict[str, Any]", invoices[-1]).get("id", "") or ""
+            last_id = cast('dict[str, Any]', invoices[-1]).get('id', '') or ''
         return {
-            "invoices": summaries,
-            "has_more": bool(payload.get("has_more")),
-            "next_cursor": last_id or None,
+            'invoices': summaries,
+            'has_more': bool(payload.get('has_more')),
+            'next_cursor': last_id or None,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_invoice(self, *, customer: str, **fields: Any) -> dict[str, Any]:
         """Create a draft invoice. Returns the new invoice resource."""
         if not customer:
-            raise ValueError("customer must be a non-empty string")
-        return self._form_post("/v1/invoices", {"customer": customer, **fields})
+            raise ValueError('customer must be a non-empty string')
+        return self._form_post('/v1/invoices', {'customer': customer, **fields})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def finalize_invoice(self, invoice_id: Any) -> dict[str, Any]:
@@ -483,8 +483,8 @@ class StripeToolSet:
         :meth:`list_invoices` with ``include_ids=True``. Returns the
         finalized invoice resource.
         """
-        resolved = _coerce_id(invoice_id, prefix="in_")
-        return self._client.post(f"/v1/invoices/{resolved}/finalize").json()
+        resolved = _coerce_id(invoice_id, prefix='in_')
+        return self._client.post(f'/v1/invoices/{resolved}/finalize').json()
 
     # MARK: - Payment intents & refunds
 
@@ -507,16 +507,16 @@ class StripeToolSet:
         recipient and amount with the user before calling.
         """
         if amount < 1 or not currency:
-            raise ValueError("amount must be > 0 and currency must be non-empty")
-        body: dict[str, Any] = {"amount": amount, "currency": currency, **fields}
+            raise ValueError('amount must be > 0 and currency must be non-empty')
+        body: dict[str, Any] = {'amount': amount, 'currency': currency, **fields}
         if customer is not None:
-            body["customer"] = customer
+            body['customer'] = customer
         if payment_method is not None:
-            body["payment_method"] = payment_method
+            body['payment_method'] = payment_method
         if confirm is not None:
-            body["confirm"] = confirm
+            body['confirm'] = confirm
         response = self._client.post(
-            "/v1/payment_intents",
+            '/v1/payment_intents',
             params=stripe_form_encode(body),
             idempotency_key=idempotency_key,
         )
@@ -526,9 +526,9 @@ class StripeToolSet:
     def confirm_payment_intent(self, payment_intent_id: str, **fields: Any) -> dict[str, Any]:
         """Confirm a PaymentIntent and return the updated resource."""
         if not payment_intent_id:
-            raise ValueError("payment_intent_id must be a non-empty string")
+            raise ValueError('payment_intent_id must be a non-empty string')
         return self._form_post(
-            f"/v1/payment_intents/{payment_intent_id}/confirm",
+            f'/v1/payment_intents/{payment_intent_id}/confirm',
             fields,
         )
 
@@ -551,18 +551,18 @@ class StripeToolSet:
         calling. Returns the new refund resource.
         """
         if not charge and not payment_intent:
-            raise ValueError("provide charge or payment_intent")
+            raise ValueError('provide charge or payment_intent')
         body: dict[str, Any] = {}
         if charge is not None:
-            body["charge"] = _coerce_id(charge, prefix="ch_")
+            body['charge'] = _coerce_id(charge, prefix='ch_')
         if payment_intent is not None:
-            body["payment_intent"] = _coerce_id(payment_intent, prefix="pi_")
+            body['payment_intent'] = _coerce_id(payment_intent, prefix='pi_')
         if amount is not None:
-            body["amount"] = amount
+            body['amount'] = amount
         if reason is not None:
-            body["reason"] = reason
+            body['reason'] = reason
         response = self._client.post(
-            "/v1/refunds",
+            '/v1/refunds',
             params=stripe_form_encode(body),
             idempotency_key=idempotency_key,
         )
@@ -585,42 +585,42 @@ class StripeToolSet:
         receipt email. Raw IDs are omitted unless ``include_ids=True``.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit}
         if customer is not None:
-            params["customer"] = customer
-        payload: dict[str, Any] = self._client.get("/v1/charges", params=params).json()
-        charges: list[Any] = payload.get("data", [])
+            params['customer'] = customer
+        payload: dict[str, Any] = self._client.get('/v1/charges', params=params).json()
+        charges: list[Any] = payload.get('data', [])
         summaries: list[dict[str, Any]] = []
         for index, charge in enumerate(charges, start=1):
             if not isinstance(charge, dict):
                 continue
-            charge = cast("dict[str, Any]", charge)
-            currency = charge.get("currency") or ""
+            charge = cast('dict[str, Any]', charge)
+            currency = charge.get('currency') or ''
             summary: dict[str, Any] = {
-                "charge_ref": f"charge_{index}",
-                "amount": _format_amount(charge.get("amount"), currency),
-                "amount_refunded": _format_amount(charge.get("amount_refunded"), currency),
-                "currency": str(currency).upper(),
-                "status": charge.get("status", ""),
-                "captured": bool(charge.get("captured")),
-                "refunded": bool(charge.get("refunded")),
-                "description": charge.get("description") or "",
-                "receipt_email": charge.get("receipt_email") or "",
-                "created": charge.get("created"),
+                'charge_ref': f'charge_{index}',
+                'amount': _format_amount(charge.get('amount'), currency),
+                'amount_refunded': _format_amount(charge.get('amount_refunded'), currency),
+                'currency': str(currency).upper(),
+                'status': charge.get('status', ''),
+                'captured': bool(charge.get('captured')),
+                'refunded': bool(charge.get('refunded')),
+                'description': charge.get('description') or '',
+                'receipt_email': charge.get('receipt_email') or '',
+                'created': charge.get('created'),
             }
             if include_ids:
-                summary["charge_id"] = charge.get("id", "")
-                summary["customer_id"] = charge.get("customer", "")
-                summary["payment_intent_id"] = charge.get("payment_intent", "")
+                summary['charge_id'] = charge.get('id', '')
+                summary['customer_id'] = charge.get('customer', '')
+                summary['payment_intent_id'] = charge.get('payment_intent', '')
             summaries.append(summary)
-        last_id = ""
+        last_id = ''
         if charges and isinstance(charges[-1], dict):
-            last_id = cast("dict[str, Any]", charges[-1]).get("id", "") or ""
+            last_id = cast('dict[str, Any]', charges[-1]).get('id', '') or ''
         return {
-            "charges": summaries,
-            "has_more": bool(payload.get("has_more")),
-            "next_cursor": last_id or None,
+            'charges': summaries,
+            'has_more': bool(payload.get('has_more')),
+            'next_cursor': last_id or None,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -631,43 +631,43 @@ class StripeToolSet:
         amount, status, reason, and the underlying charge reference.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        payload: dict[str, Any] = self._client.get("/v1/disputes", params={"limit": limit}).json()
-        disputes: list[Any] = payload.get("data", [])
+            raise ValueError('limit must be between 1 and 100')
+        payload: dict[str, Any] = self._client.get('/v1/disputes', params={'limit': limit}).json()
+        disputes: list[Any] = payload.get('data', [])
         summaries: list[dict[str, Any]] = []
         for index, dispute in enumerate(disputes, start=1):
             if not isinstance(dispute, dict):
                 continue
-            dispute = cast("dict[str, Any]", dispute)
-            currency = dispute.get("currency") or ""
-            evidence_details_value = dispute.get("evidence_details")
+            dispute = cast('dict[str, Any]', dispute)
+            currency = dispute.get('currency') or ''
+            evidence_details_value = dispute.get('evidence_details')
             evidence_details: dict[str, Any] = (
-                cast("dict[str, Any]", evidence_details_value)
+                cast('dict[str, Any]', evidence_details_value)
                 if isinstance(evidence_details_value, dict)
                 else {}
             )
             summary: dict[str, Any] = {
-                "dispute_ref": f"dispute_{index}",
-                "amount": _format_amount(dispute.get("amount"), currency),
-                "currency": str(currency).upper(),
-                "status": dispute.get("status", ""),
-                "reason": dispute.get("reason", ""),
-                "evidence_due_by": evidence_details.get("due_by"),
-                "is_charge_refundable": bool(dispute.get("is_charge_refundable")),
-                "created": dispute.get("created"),
+                'dispute_ref': f'dispute_{index}',
+                'amount': _format_amount(dispute.get('amount'), currency),
+                'currency': str(currency).upper(),
+                'status': dispute.get('status', ''),
+                'reason': dispute.get('reason', ''),
+                'evidence_due_by': evidence_details.get('due_by'),
+                'is_charge_refundable': bool(dispute.get('is_charge_refundable')),
+                'created': dispute.get('created'),
             }
             summaries.append(summary)
         return {
-            "disputes": summaries,
-            "has_more": bool(payload.get("has_more")),
+            'disputes': summaries,
+            'has_more': bool(payload.get('has_more')),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_dispute(self, dispute_id: str, **fields: Any) -> dict[str, Any]:
         """Update a dispute (submit evidence). Returns the updated dispute."""
         if not dispute_id:
-            raise ValueError("dispute_id must be a non-empty string")
-        return self._form_post(f"/v1/disputes/{dispute_id}", fields)
+            raise ValueError('dispute_id must be a non-empty string')
+        return self._form_post(f'/v1/disputes/{dispute_id}', fields)
 
     # MARK: - Checkout & products
 
@@ -680,8 +680,8 @@ class StripeToolSet:
         ``cancel_url``, etc. as keyword args.
         """
         if not fields:
-            raise ValueError("at least one field is required")
-        return self._form_post("/v1/checkout/sessions", fields)
+            raise ValueError('at least one field is required')
+        return self._form_post('/v1/checkout/sessions', fields)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_products(self, *, active: bool | None = None, limit: int = 10) -> dict[str, Any]:
@@ -691,11 +691,11 @@ class StripeToolSet:
         ``active=True`` filters to active products only.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit}
         if active is not None:
-            params["active"] = str(active).lower()
-        return self._client.get("/v1/products", params=params).json()
+            params['active'] = str(active).lower()
+        return self._client.get('/v1/products', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_prices(self, *, product: str | None = None, limit: int = 10) -> dict[str, Any]:
@@ -705,11 +705,11 @@ class StripeToolSet:
         to filter to prices on a specific product.
         """
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 100')
+        params: dict[str, Any] = {'limit': limit}
         if product is not None:
-            params["product"] = product
-        return self._client.get("/v1/prices", params=params).json()
+            params['product'] = product
+        return self._client.get('/v1/prices', params=params).json()
 
     # MARK: - Balance
 
@@ -720,4 +720,4 @@ class StripeToolSet:
         Returns ``{"available": [...], "pending": [...]}``. Each entry has
         ``amount`` (minor units) and ``currency``.
         """
-        return self._client.get("/v1/balance").json()
+        return self._client.get('/v1/balance').json()

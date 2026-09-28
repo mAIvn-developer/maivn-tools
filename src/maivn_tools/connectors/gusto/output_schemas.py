@@ -18,49 +18,49 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's builders)
 
 _COMPANY_ITEM: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "uuid": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'uuid': {'type': 'string'},
     },
-    "required": ["uuid"],
+    'required': ['uuid'],
 }
 
 _EMPLOYEE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "employee_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "email": {"type": "string"},
-        "title": {"type": "string"},
-        "department": {"type": "string"},
-        "hire_date": {"type": "string"},
-        "is_terminated": {"type": "boolean"},
-        "employee_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'employee_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'email': {'type': 'string'},
+        'title': {'type': 'string'},
+        'department': {'type': 'string'},
+        'hire_date': {'type': 'string'},
+        'is_terminated': {'type': 'boolean'},
+        'employee_id': {'type': 'string'},
     },
-    "required": ["employee_ref", "name"],
+    'required': ['employee_ref', 'name'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_COMPANIES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "companies": {"type": "array", "items": _COMPANY_ITEM},
+    'type': 'object',
+    'properties': {
+        'companies': {'type': 'array', 'items': _COMPANY_ITEM},
     },
-    "required": ["companies"],
+    'required': ['companies'],
 }
 
 LIST_EMPLOYEES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "employees": {"type": "array", "items": _EMPLOYEE_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'employees': {'type': 'array', 'items': _EMPLOYEE_SUMMARY},
     },
-    "required": ["employees"],
+    'required': ['employees'],
 }
 
 
 __all__ = [
-    "LIST_COMPANIES_OUTPUT",
-    "LIST_EMPLOYEES_OUTPUT",
+    'LIST_COMPANIES_OUTPUT',
+    'LIST_EMPLOYEES_OUTPUT',
 ]

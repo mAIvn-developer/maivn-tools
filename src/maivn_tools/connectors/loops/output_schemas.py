@@ -15,29 +15,29 @@ from pydantic import JsonValue
 # MARK: - Entity summary (mirrors the connector's ``_list_summary`` builder)
 
 _LIST_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "list_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "description": {"type": "string"},
-        "is_public": {"type": ["boolean", "null"]},
-        "list_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'list_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'description': {'type': 'string'},
+        'is_public': {'type': ['boolean', 'null']},
+        'list_id': {'type': 'string'},
     },
-    "required": ["list_ref"],
+    'required': ['list_ref'],
 }
 
 # MARK: - Tool output schemas
 
 LIST_MAILING_LISTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "lists": {"type": "array", "items": _LIST_SUMMARY},
-        "count": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'lists': {'type': 'array', 'items': _LIST_SUMMARY},
+        'count': {'type': 'integer'},
     },
-    "required": ["lists"],
+    'required': ['lists'],
 }
 
 
 __all__ = [
-    "LIST_MAILING_LISTS_OUTPUT",
+    'LIST_MAILING_LISTS_OUTPUT',
 ]

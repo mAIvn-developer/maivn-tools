@@ -29,7 +29,7 @@ from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_UPDATES_OUTPUT
 
 # Buffer's current public API is a single unversioned GraphQL endpoint.
-_API_BASE_URL = "https://api.buffer.com"
+_API_BASE_URL = 'https://api.buffer.com'
 
 # MARK: - GraphQL documents
 
@@ -177,7 +177,7 @@ query PostInteractions($id: ID!, $event: String!, $first: Int!, $after: String) 
 """
 
 
-@toolset(prefix="buffer")
+@toolset(prefix='buffer')
 class BufferToolSet:
     """A connector for Buffer's social scheduling GraphQL API.
 
@@ -188,10 +188,10 @@ class BufferToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="buffer",
-        display_name="Buffer",
-        version="0.1.0",
-        description="Channels, queues, posts, drafts, and analytics.",
+        name='buffer',
+        display_name='Buffer',
+        version='0.1.0',
+        description='Channels, queues, posts, drafts, and analytics.',
         auth_modes=(AuthMode.BEARER, AuthMode.OAUTH2_AUTH_CODE),
         capabilities=frozenset(
             {
@@ -200,9 +200,9 @@ class BufferToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://developers.buffer.com/guides/graphql-intro.html",
-        homepage_url="https://buffer.com/",
-        tags=("social-media", "scheduling"),
+        documentation_url='https://developers.buffer.com/guides/graphql-intro.html',
+        homepage_url='https://buffer.com/',
+        tags=('social-media', 'scheduling'),
     )
 
     def __init__(
@@ -214,16 +214,16 @@ class BufferToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
-        self._endpoint = base_url.rstrip("/")
+        self._endpoint = base_url.rstrip('/')
         self._client = HttpClient(
-            base_url="",
+            base_url='',
             auth=BearerTokenAuth(api_key),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -243,15 +243,15 @@ class BufferToolSet:
         Raises ``ValueError`` when the response carries a GraphQL ``errors``
         array so failures are not silently treated as success payloads.
         """
-        payload: dict[str, Any] = {"query": query}
+        payload: dict[str, Any] = {'query': query}
         if variables is not None:
-            payload["variables"] = variables
+            payload['variables'] = variables
         response: object = self._client.post(self._endpoint, json=payload).json()
         if isinstance(response, dict):
             envelope = cast(dict[str, Any], response)
-            if envelope.get("errors"):
-                raise ValueError(f"Buffer GraphQL error: {envelope['errors']}")
-            data = envelope.get("data")
+            if envelope.get('errors'):
+                raise ValueError(f'Buffer GraphQL error: {envelope["errors"]}')
+            data = envelope.get('data')
             if isinstance(data, dict):
                 return cast(dict[str, Any], data)
         return {}
@@ -261,18 +261,18 @@ class BufferToolSet:
         """Resolve a Buffer post ID from a string or a post dict."""
         if isinstance(candidate, str):
             if not candidate:
-                raise ValueError("update_id must be a non-empty string")
+                raise ValueError('update_id must be a non-empty string')
             return candidate
         if isinstance(candidate, dict):
             mapping = cast(dict[str, Any], candidate)
-            for key in ("update_id", "id", "_id"):
+            for key in ('update_id', 'id', '_id'):
                 value = mapping.get(key)
                 if isinstance(value, str) and value:
                     return value
         if isinstance(candidate, list) and candidate:
             items = cast(list[Any], candidate)
             return BufferToolSet._select_update_id(items[0])
-        raise ValueError("could not resolve update_id from input")
+        raise ValueError('could not resolve update_id from input')
 
     @classmethod
     def _update_summary(
@@ -282,25 +282,25 @@ class BufferToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        author: object = post.get("author") or {}
-        author_name: str = ""
+        author: object = post.get('author') or {}
+        author_name: str = ''
         if isinstance(author, dict):
-            name = cast(dict[str, Any], author).get("name", "")
-            author_name = name if isinstance(name, str) else ""
+            name = cast(dict[str, Any], author).get('name', '')
+            author_name = name if isinstance(name, str) else ''
         summary: dict[str, Any] = {
-            "update_ref": f"update_{index}",
-            "text": post.get("text", ""),
-            "status": post.get("status", ""),
-            "scheduled_at": post.get("scheduledAt", 0),
-            "sent_at": post.get("sentAt", 0),
-            "service": post.get("service", ""),
-            "author": author_name,
+            'update_ref': f'update_{index}',
+            'text': post.get('text', ''),
+            'status': post.get('status', ''),
+            'scheduled_at': post.get('scheduledAt', 0),
+            'sent_at': post.get('sentAt', 0),
+            'service': post.get('service', ''),
+            'author': author_name,
         }
         if include_ids:
-            summary["update_id"] = post.get("id", "")
-            channel_id = post.get("channelId")
+            summary['update_id'] = post.get('id', '')
+            channel_id = post.get('channelId')
             if channel_id:
-                summary["profile_id"] = channel_id
+                summary['profile_id'] = channel_id
         return summary
 
     def _list_posts(
@@ -314,29 +314,29 @@ class BufferToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         if not profile_id:
-            raise ValueError("profile_id is required")
+            raise ValueError('profile_id is required')
         variables: dict[str, Any] = {
-            "channelId": profile_id,
-            "status": status,
-            "first": first,
+            'channelId': profile_id,
+            'status': status,
+            'first': first,
         }
         if after is not None:
-            variables["after"] = after
+            variables['after'] = after
         data = self._execute(_POSTS_QUERY, variables)
-        raw_connection: object = data.get("posts", {})
+        raw_connection: object = data.get('posts', {})
         connection: dict[str, Any] = (
             cast(dict[str, Any], raw_connection) if isinstance(raw_connection, dict) else {}
         )
-        raw_edges: object = connection.get("edges", [])
+        raw_edges: object = connection.get('edges', [])
         edges: list[Any] = cast(list[Any], raw_edges) if isinstance(raw_edges, list) else []
-        raw_page_info: object = connection.get("pageInfo", {})
+        raw_page_info: object = connection.get('pageInfo', {})
         page_info: dict[str, Any] = (
             cast(dict[str, Any], raw_page_info) if isinstance(raw_page_info, dict) else {}
         )
         nodes: list[dict[str, Any]] = []
         for edge in edges:
             if isinstance(edge, dict):
-                node = cast(dict[str, Any], edge).get("node")
+                node = cast(dict[str, Any], edge).get('node')
                 if isinstance(node, dict):
                     nodes.append(cast(dict[str, Any], node))
         if not include_metadata:
@@ -346,9 +346,9 @@ class BufferToolSet:
             for index, node in enumerate(nodes, start=1)
         ]
         return {
-            "updates": summaries,
-            "has_next_page": page_info.get("hasNextPage", False),
-            "end_cursor": page_info.get("endCursor"),
+            'updates': summaries,
+            'has_next_page': page_info.get('hasNextPage', False),
+            'end_cursor': page_info.get('endCursor'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -378,8 +378,8 @@ class BufferToolSet:
         ``list_profiles`` when you want metadata for one specific channel.
         """
         if not profile_id:
-            raise ValueError("profile_id is required")
-        return self._execute(_CHANNEL_QUERY, {"id": profile_id})
+            raise ValueError('profile_id is required')
+        return self._execute(_CHANNEL_QUERY, {'id': profile_id})
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_UPDATES_OUTPUT)
@@ -403,7 +403,7 @@ class BufferToolSet:
         """
         return self._list_posts(
             profile_id,
-            status="pending",
+            status='pending',
             first=first,
             after=after,
             include_metadata=include_metadata,
@@ -429,7 +429,7 @@ class BufferToolSet:
         """
         return self._list_posts(
             profile_id,
-            status="sent",
+            status='sent',
             first=first,
             after=after,
             include_metadata=include_metadata,
@@ -443,8 +443,8 @@ class BufferToolSet:
         Returns the GraphQL ``post`` resource.
         """
         if not update_id:
-            raise ValueError("update_id is required")
-        return self._execute(_POST_QUERY, {"id": update_id})
+            raise ValueError('update_id is required')
+        return self._execute(_POST_QUERY, {'id': update_id})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_update(
@@ -465,21 +465,21 @@ class BufferToolSet:
         to schedule.
         """
         if not profile_ids or not text:
-            raise ValueError("profile_ids and text are required")
+            raise ValueError('profile_ids and text are required')
         post_input: dict[str, Any] = {
-            "channelIds": list(profile_ids),
-            "text": text,
-            "shorten": shorten,
+            'channelIds': list(profile_ids),
+            'text': text,
+            'shorten': shorten,
         }
         if media is not None:
-            post_input["media"] = media
+            post_input['media'] = media
         if scheduled_at is not None:
-            post_input["scheduledAt"] = scheduled_at
+            post_input['scheduledAt'] = scheduled_at
         if now:
-            post_input["now"] = True
+            post_input['now'] = True
         if top:
-            post_input["top"] = True
-        return self._execute(_CREATE_POST_MUTATION, {"input": post_input})
+            post_input['top'] = True
+        return self._execute(_CREATE_POST_MUTATION, {'input': post_input})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_update(
@@ -496,16 +496,16 @@ class BufferToolSet:
         from ``list_pending_updates`` (looks up ``update_id`` / ``id``).
         """
         update_id = self._select_update_id(update)
-        post_input: dict[str, Any] = {"id": update_id}
+        post_input: dict[str, Any] = {'id': update_id}
         if text is not None:
-            post_input["text"] = text
+            post_input['text'] = text
         if scheduled_at is not None:
-            post_input["scheduledAt"] = scheduled_at
+            post_input['scheduledAt'] = scheduled_at
         if media is not None:
-            post_input["media"] = media
+            post_input['media'] = media
         if len(post_input) == 1:
-            raise ValueError("at least one of text/scheduled_at/media is required")
-        return self._execute(_UPDATE_POST_MUTATION, {"input": post_input})
+            raise ValueError('at least one of text/scheduled_at/media is required')
+        return self._execute(_UPDATE_POST_MUTATION, {'input': post_input})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def share_update_now(self, update: str | dict[str, Any]) -> dict[str, Any]:
@@ -516,7 +516,7 @@ class BufferToolSet:
         calling — this publishes publicly.
         """
         update_id = self._select_update_id(update)
-        return self._execute(_SHARE_POST_MUTATION, {"id": update_id})
+        return self._execute(_SHARE_POST_MUTATION, {'id': update_id})
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def destroy_update(self, update: str | dict[str, Any]) -> dict[str, Any]:
@@ -527,14 +527,14 @@ class BufferToolSet:
         not reversible — confirm with the user.
         """
         update_id = self._select_update_id(update)
-        return self._execute(_DELETE_POST_MUTATION, {"id": update_id})
+        return self._execute(_DELETE_POST_MUTATION, {'id': update_id})
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_update_interactions(
         self,
         update_id: str,
         *,
-        event: str = "mention",
+        event: str = 'mention',
         first: int = 20,
         after: str | None = None,
     ) -> dict[str, Any]:
@@ -545,12 +545,12 @@ class BufferToolSet:
         Pass ``after`` (an ``endCursor``) to page.
         """
         if not update_id:
-            raise ValueError("update_id is required")
+            raise ValueError('update_id is required')
         variables: dict[str, Any] = {
-            "id": update_id,
-            "event": event,
-            "first": first,
+            'id': update_id,
+            'event': event,
+            'first': first,
         }
         if after is not None:
-            variables["after"] = after
+            variables['after'] = after
         return self._execute(_POST_INTERACTIONS_QUERY, variables)

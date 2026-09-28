@@ -21,7 +21,7 @@ from .output_schemas import (
 )
 
 
-@toolset(prefix="segment")
+@toolset(prefix='segment')
 class SegmentToolSet:
     """A connector for Segment's Tracking + Public APIs.
 
@@ -32,15 +32,15 @@ class SegmentToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="segment",
-        display_name="Segment",
-        version="0.1.0",
-        description="Track / identify / page / group + sources, destinations, and warehouses.",
+        name='segment',
+        display_name='Segment',
+        version='0.1.0',
+        description='Track / identify / page / group + sources, destinations, and warehouses.',
         auth_modes=(AuthMode.BASIC, AuthMode.BEARER),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://segment.com/docs/connections/",
-        homepage_url="https://segment.com/",
-        tags=("analytics", "cdp"),
+        documentation_url='https://segment.com/docs/connections/',
+        homepage_url='https://segment.com/',
+        tags=('analytics', 'cdp'),
     )
 
     def __init__(
@@ -52,28 +52,28 @@ class SegmentToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not write_key and not public_api_token:
-            raise ValueError("at least one of write_key or public_api_token is required")
+            raise ValueError('at least one of write_key or public_api_token is required')
         self.connection = connection
         self._tracking: HttpClient | None = None
         self._public: HttpClient | None = None
         if write_key:
             self._tracking = HttpClient(
-                base_url="https://api.segment.io",
-                auth=BasicAuth(write_key, ""),
+                base_url='https://api.segment.io',
+                auth=BasicAuth(write_key, ''),
                 transport=transport,
                 default_headers={
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
                 },
             )
         if public_api_token:
             self._public = HttpClient(
-                base_url="https://api.segmentapis.com",
+                base_url='https://api.segmentapis.com',
                 auth=BearerTokenAuth(public_api_token),
                 transport=transport,
                 default_headers={
-                    "Accept": "application/vnd.segment.v1+json",
-                    "Content-Type": "application/vnd.segment.v1+json",
+                    'Accept': 'application/vnd.segment.v1+json',
+                    'Content-Type': 'application/vnd.segment.v1+json',
                 },
             )
 
@@ -81,17 +81,17 @@ class SegmentToolSet:
     def client(self) -> HttpClient:
         client = self._public or self._tracking
         if client is None:
-            raise ValueError("no client configured (provide write_key or public_api_token)")
+            raise ValueError('no client configured (provide write_key or public_api_token)')
         return client
 
     def _require_tracking(self) -> HttpClient:
         if self._tracking is None:
-            raise ValueError("write_key must be set in the constructor")
+            raise ValueError('write_key must be set in the constructor')
         return self._tracking
 
     def _require_public(self) -> HttpClient:
         if self._public is None:
-            raise ValueError("public_api_token must be set in the constructor")
+            raise ValueError('public_api_token must be set in the constructor')
         return self._public
 
     # MARK: - Internal helpers
@@ -105,36 +105,36 @@ class SegmentToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            f"{ref_prefix}_ref": f"{ref_prefix}_{index}",
-            "name": entity.get("name", "") or entity.get("displayName", ""),
-            "slug": entity.get("slug", ""),
-            "enabled": entity.get("enabled", entity.get("isActive", True)),
+            f'{ref_prefix}_ref': f'{ref_prefix}_{index}',
+            'name': entity.get('name', '') or entity.get('displayName', ''),
+            'slug': entity.get('slug', ''),
+            'enabled': entity.get('enabled', entity.get('isActive', True)),
         }
-        metadata = entity.get("metadata")
+        metadata = entity.get('metadata')
         if isinstance(metadata, dict):
-            metadata_dict = cast("dict[str, Any]", metadata)
-            summary["category"] = metadata_dict.get("slug", "") or metadata_dict.get("name", "")
+            metadata_dict = cast('dict[str, Any]', metadata)
+            summary['category'] = metadata_dict.get('slug', '') or metadata_dict.get('name', '')
         if include_ids:
-            summary[f"{ref_prefix}_id"] = entity.get("id", "")
+            summary[f'{ref_prefix}_id'] = entity.get('id', '')
         return summary
 
     @staticmethod
     def _payload_data(payload: object) -> dict[str, Any] | None:
         if not isinstance(payload, dict):
             return None
-        data: object = cast("dict[str, Any]", payload).get("data")
+        data: object = cast('dict[str, Any]', payload).get('data')
         if not isinstance(data, dict):
             return None
-        return cast("dict[str, Any]", data)
+        return cast('dict[str, Any]', data)
 
     @staticmethod
     def _next_cursor(data: dict[str, Any] | None) -> Any:
         if data is None:
             return None
-        pagination: object = data.get("pagination", {}) or {}
+        pagination: object = data.get('pagination', {}) or {}
         if not isinstance(pagination, dict):
             return None
-        return cast("dict[str, Any]", pagination).get("next")
+        return cast('dict[str, Any]', pagination).get('next')
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def track(
@@ -153,19 +153,19 @@ class SegmentToolSet:
         ``{"success": True}`` on accepted ingest.
         """
         if not user_id and not anonymous_id:
-            raise ValueError("user_id or anonymous_id is required")
+            raise ValueError('user_id or anonymous_id is required')
         if not event:
-            raise ValueError("event is required")
-        body: dict[str, Any] = {"event": event}
+            raise ValueError('event is required')
+        body: dict[str, Any] = {'event': event}
         if user_id is not None:
-            body["userId"] = user_id
+            body['userId'] = user_id
         if anonymous_id is not None:
-            body["anonymousId"] = anonymous_id
+            body['anonymousId'] = anonymous_id
         if properties is not None:
-            body["properties"] = properties
+            body['properties'] = properties
         if context is not None:
-            body["context"] = context
-        return self._require_tracking().post("/v1/track", json=body).json()
+            body['context'] = context
+        return self._require_tracking().post('/v1/track', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def identify(
@@ -182,17 +182,17 @@ class SegmentToolSet:
         least one of ``user_id``/``anonymous_id`` is required.
         """
         if not user_id and not anonymous_id:
-            raise ValueError("user_id or anonymous_id is required")
+            raise ValueError('user_id or anonymous_id is required')
         body: dict[str, Any] = {}
         if user_id is not None:
-            body["userId"] = user_id
+            body['userId'] = user_id
         if anonymous_id is not None:
-            body["anonymousId"] = anonymous_id
+            body['anonymousId'] = anonymous_id
         if traits is not None:
-            body["traits"] = traits
+            body['traits'] = traits
         if context is not None:
-            body["context"] = context
-        return self._require_tracking().post("/v1/identify", json=body).json()
+            body['context'] = context
+        return self._require_tracking().post('/v1/identify', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def group(
@@ -209,17 +209,17 @@ class SegmentToolSet:
         ``user_id``/``anonymous_id`` must be provided.
         """
         if not group_id:
-            raise ValueError("group_id is required")
+            raise ValueError('group_id is required')
         if not user_id and not anonymous_id:
-            raise ValueError("user_id or anonymous_id is required")
-        body: dict[str, Any] = {"groupId": group_id}
+            raise ValueError('user_id or anonymous_id is required')
+        body: dict[str, Any] = {'groupId': group_id}
         if user_id is not None:
-            body["userId"] = user_id
+            body['userId'] = user_id
         if anonymous_id is not None:
-            body["anonymousId"] = anonymous_id
+            body['anonymousId'] = anonymous_id
         if traits is not None:
-            body["traits"] = traits
-        return self._require_tracking().post("/v1/group", json=body).json()
+            body['traits'] = traits
+        return self._require_tracking().post('/v1/group', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def page(
@@ -235,17 +235,17 @@ class SegmentToolSet:
         At least one of ``user_id``/``anonymous_id`` must be provided.
         """
         if not user_id and not anonymous_id:
-            raise ValueError("user_id or anonymous_id is required")
+            raise ValueError('user_id or anonymous_id is required')
         body: dict[str, Any] = {}
         if name is not None:
-            body["name"] = name
+            body['name'] = name
         if user_id is not None:
-            body["userId"] = user_id
+            body['userId'] = user_id
         if anonymous_id is not None:
-            body["anonymousId"] = anonymous_id
+            body['anonymousId'] = anonymous_id
         if properties is not None:
-            body["properties"] = properties
-        return self._require_tracking().post("/v1/page", json=body).json()
+            body['properties'] = properties
+        return self._require_tracking().post('/v1/page', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def batch(
@@ -260,11 +260,11 @@ class SegmentToolSet:
         /etc.) and the matching shape for that call.
         """
         if not batch:
-            raise ValueError("batch must be non-empty")
-        body: dict[str, Any] = {"batch": batch}
+            raise ValueError('batch must be non-empty')
+        body: dict[str, Any] = {'batch': batch}
         if context is not None:
-            body["context"] = context
-        return self._require_tracking().post("/v1/batch", json=body).json()
+            body['context'] = context
+        return self._require_tracking().post('/v1/batch', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_workspace(self) -> dict[str, Any]:
@@ -273,7 +273,7 @@ class SegmentToolSet:
         The Segment Public API token maps to exactly one workspace; this
         returns that single Workspace wrapped under ``data.workspace``.
         """
-        return self._require_public().get("/workspace").json()
+        return self._require_public().get('/workspace').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_SOURCES_OUTPUT)
@@ -292,19 +292,19 @@ class SegmentToolSet:
         are omitted unless ``include_ids=True``; set it only when a
         follow-up tool needs the raw ID. ``cursor`` paginates.
         """
-        params: dict[str, Any] = {"pagination.count": page_size}
+        params: dict[str, Any] = {'pagination.count': page_size}
         if cursor is not None:
-            params["pagination.cursor"] = cursor
-        payload: object = self._require_public().get("/sources", params=params).json()
+            params['pagination.cursor'] = cursor
+        payload: object = self._require_public().get('/sources', params=params).json()
         data = self._payload_data(payload)
-        raw_sources: object = data.get("sources", []) if data is not None else []
+        raw_sources: object = data.get('sources', []) if data is not None else []
         if not isinstance(raw_sources, list):
-            return cast("dict[str, Any]", payload)
-        sources_list = cast("list[object]", raw_sources)
+            return cast('dict[str, Any]', payload)
+        sources_list = cast('list[object]', raw_sources)
         summaries: list[dict[str, Any]] = [
             self._entity_summary(
-                cast("dict[str, Any]", source),
-                ref_prefix="source",
+                cast('dict[str, Any]', source),
+                ref_prefix='source',
                 index=index,
                 include_ids=include_ids,
             )
@@ -313,8 +313,8 @@ class SegmentToolSet:
         ]
         next_cursor = self._next_cursor(data)
         return {
-            "sources": summaries,
-            "nextCursor": next_cursor,
+            'sources': summaries,
+            'nextCursor': next_cursor,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -326,8 +326,8 @@ class SegmentToolSet:
         and should not appear in final answers.
         """
         if not source_id:
-            raise ValueError("source_id is required")
-        return self._require_public().get(f"/sources/{source_id}").json()
+            raise ValueError('source_id is required')
+        return self._require_public().get(f'/sources/{source_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_DESTINATIONS_OUTPUT)
@@ -344,19 +344,19 @@ class SegmentToolSet:
         and enabled state. Raw destination IDs are omitted unless
         ``include_ids=True``.
         """
-        params: dict[str, Any] = {"pagination.count": page_size}
+        params: dict[str, Any] = {'pagination.count': page_size}
         if cursor is not None:
-            params["pagination.cursor"] = cursor
-        payload: object = self._require_public().get("/destinations", params=params).json()
+            params['pagination.cursor'] = cursor
+        payload: object = self._require_public().get('/destinations', params=params).json()
         data = self._payload_data(payload)
-        raw_destinations: object = data.get("destinations", []) if data is not None else []
+        raw_destinations: object = data.get('destinations', []) if data is not None else []
         if not isinstance(raw_destinations, list):
-            return cast("dict[str, Any]", payload)
-        destinations_list = cast("list[object]", raw_destinations)
+            return cast('dict[str, Any]', payload)
+        destinations_list = cast('list[object]', raw_destinations)
         summaries: list[dict[str, Any]] = [
             self._entity_summary(
-                cast("dict[str, Any]", destination),
-                ref_prefix="destination",
+                cast('dict[str, Any]', destination),
+                ref_prefix='destination',
                 index=index,
                 include_ids=include_ids,
             )
@@ -365,8 +365,8 @@ class SegmentToolSet:
         ]
         next_cursor = self._next_cursor(data)
         return {
-            "destinations": summaries,
-            "nextCursor": next_cursor,
+            'destinations': summaries,
+            'nextCursor': next_cursor,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -384,19 +384,19 @@ class SegmentToolSet:
         enabled state. Raw warehouse IDs are omitted unless
         ``include_ids=True``.
         """
-        params: dict[str, Any] = {"pagination.count": page_size}
+        params: dict[str, Any] = {'pagination.count': page_size}
         if cursor is not None:
-            params["pagination.cursor"] = cursor
-        payload: object = self._require_public().get("/warehouses", params=params).json()
+            params['pagination.cursor'] = cursor
+        payload: object = self._require_public().get('/warehouses', params=params).json()
         data = self._payload_data(payload)
-        raw_warehouses: object = data.get("warehouses", []) if data is not None else []
+        raw_warehouses: object = data.get('warehouses', []) if data is not None else []
         if not isinstance(raw_warehouses, list):
-            return cast("dict[str, Any]", payload)
-        warehouses_list = cast("list[object]", raw_warehouses)
+            return cast('dict[str, Any]', payload)
+        warehouses_list = cast('list[object]', raw_warehouses)
         summaries: list[dict[str, Any]] = [
             self._entity_summary(
-                cast("dict[str, Any]", warehouse),
-                ref_prefix="warehouse",
+                cast('dict[str, Any]', warehouse),
+                ref_prefix='warehouse',
                 index=index,
                 include_ids=include_ids,
             )
@@ -405,6 +405,6 @@ class SegmentToolSet:
         ]
         next_cursor = self._next_cursor(data)
         return {
-            "warehouses": summaries,
-            "nextCursor": next_cursor,
+            'warehouses': summaries,
+            'nextCursor': next_cursor,
         }

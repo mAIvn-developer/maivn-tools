@@ -22,36 +22,36 @@ from pydantic import JsonValue
 # type, so a listing may carry ``file_ref``/``folder_ref``/``item_ref`` and,
 # when ``include_ids=True``, ``file_id``/``folder_id``/``id`` plus ``parent_id``.
 _ENTRY_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "file_ref": {"type": "string"},
-        "folder_ref": {"type": "string"},
-        "item_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "kind": {"type": "string"},
-        "size": {"type": "integer"},
-        "modified_time": {"type": "string"},
-        "owner": {"type": "string"},
-        "file_id": {"type": "string"},
-        "folder_id": {"type": "string"},
-        "id": {"type": "string"},
-        "parent_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'file_ref': {'type': 'string'},
+        'folder_ref': {'type': 'string'},
+        'item_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'kind': {'type': 'string'},
+        'size': {'type': 'integer'},
+        'modified_time': {'type': 'string'},
+        'owner': {'type': 'string'},
+        'file_id': {'type': 'string'},
+        'folder_id': {'type': 'string'},
+        'id': {'type': 'string'},
+        'parent_id': {'type': 'string'},
     },
-    "required": ["name", "kind"],
+    'required': ['name', 'kind'],
 }
 
 
 # MARK: - Listing wrapper (mirrors ``_summarize_box_entries``)
 
 _ENTRY_LISTING: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "items": {"type": "array", "items": _ENTRY_SUMMARY},
-        "total_count": {"type": "integer"},
-        "offset": {"type": "integer"},
-        "limit": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'items': {'type': 'array', 'items': _ENTRY_SUMMARY},
+        'total_count': {'type': 'integer'},
+        'offset': {'type': 'integer'},
+        'limit': {'type': 'integer'},
     },
-    "required": ["items"],
+    'required': ['items'],
 }
 
 
@@ -62,6 +62,6 @@ SEARCH_OUTPUT: dict[str, JsonValue] = _ENTRY_LISTING
 
 
 __all__ = [
-    "LIST_FOLDER_ITEMS_OUTPUT",
-    "SEARCH_OUTPUT",
+    'LIST_FOLDER_ITEMS_OUTPUT',
+    'SEARCH_OUTPUT',
 ]

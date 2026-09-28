@@ -39,7 +39,7 @@ def _select_id_from_value(
             return None
         return str(value)
     if isinstance(value, dict):
-        value_dict = cast("dict[str, Any]", value)
+        value_dict = cast('dict[str, Any]', value)
         for key in keys:
             candidate: Any = value_dict.get(key)
             resolved = _select_id_from_value(candidate, keys)
@@ -52,7 +52,7 @@ def _select_id_from_value(
                     return resolved
         return None
     if isinstance(value, list | tuple):
-        value_seq = cast("list[Any] | tuple[Any, ...]", value)
+        value_seq = cast('list[Any] | tuple[Any, ...]', value)
         for item in value_seq:
             resolved = _select_id_from_value(item, keys)
             if resolved is not None:
@@ -63,7 +63,7 @@ def _select_id_from_value(
 # MARK: ToolSet
 
 
-@toolset(prefix="tradier")
+@toolset(prefix='tradier')
 class TradierToolSet:
     """A connector for the Tradier API.
 
@@ -75,15 +75,15 @@ class TradierToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="tradier",
-        display_name="Tradier",
-        version="0.1.0",
-        description="Accounts, balances, positions, orders, and market data (sandbox-first).",
+        name='tradier',
+        display_name='Tradier',
+        version='0.1.0',
+        description='Accounts, balances, positions, orders, and market data (sandbox-first).',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://docs.tradier.com/",
-        homepage_url="https://www.tradier.com/",
-        tags=("trading", "brokerage"),
+        documentation_url='https://docs.tradier.com/',
+        homepage_url='https://www.tradier.com/',
+        tags=('trading', 'brokerage'),
     )
 
     def __init__(
@@ -95,15 +95,15 @@ class TradierToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._sandbox = sandbox
-        base = "https://sandbox.tradier.com" if sandbox else "https://api.tradier.com"
+        base = 'https://sandbox.tradier.com' if sandbox else 'https://api.tradier.com'
         self._client = HttpClient(
             base_url=base,
             auth=BearerTokenAuth(access_token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -112,7 +112,7 @@ class TradierToolSet:
 
     @property
     def _mode(self) -> str:
-        return "sandbox" if self._sandbox else "live"
+        return 'sandbox' if self._sandbox else 'live'
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_profile(self) -> dict[str, Any]:
@@ -121,7 +121,7 @@ class TradierToolSet:
         Use this once at startup to discover the ``account_id`` values
         the rest of the toolset needs.
         """
-        return self._client.get("/v1/user/profile").json()
+        return self._client.get('/v1/user/profile').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_balances(self, account_id: str) -> dict[str, Any]:
@@ -130,8 +130,8 @@ class TradierToolSet:
         Use before placing orders to confirm available funds.
         """
         if not account_id:
-            raise ValueError("account_id must be a non-empty string")
-        return self._client.get(f"/v1/accounts/{account_id}/balances").json()
+            raise ValueError('account_id must be a non-empty string')
+        return self._client.get(f'/v1/accounts/{account_id}/balances').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_positions(
@@ -151,40 +151,40 @@ class TradierToolSet:
         positions are addressed by symbol).
         """
         if not account_id:
-            raise ValueError("account_id must be a non-empty string")
-        payload: dict[str, Any] = self._client.get(f"/v1/accounts/{account_id}/positions").json()
+            raise ValueError('account_id must be a non-empty string')
+        payload: dict[str, Any] = self._client.get(f'/v1/accounts/{account_id}/positions').json()
         if raw:
             return payload
-        positions_node: Any = payload.get("positions")
+        positions_node: Any = payload.get('positions')
         items: list[Any] = []
         if isinstance(positions_node, dict):
-            raw_items: Any = cast("dict[str, Any]", positions_node).get("position")
+            raw_items: Any = cast('dict[str, Any]', positions_node).get('position')
             if isinstance(raw_items, list):
-                items = cast("list[Any]", raw_items)
+                items = cast('list[Any]', raw_items)
             elif isinstance(raw_items, dict):
                 items = [raw_items]
         elif isinstance(positions_node, list):
-            items = cast("list[Any]", positions_node)
+            items = cast('list[Any]', positions_node)
         summaries: list[dict[str, Any]] = []
         for index, position in enumerate(items, start=1):
             if not isinstance(position, dict):
                 continue
-            position_dict = cast("dict[str, Any]", position)
+            position_dict = cast('dict[str, Any]', position)
             summary: dict[str, Any] = {
-                "position_ref": f"position_{index}",
-                "symbol": position_dict.get("symbol", ""),
-                "quantity": position_dict.get("quantity"),
-                "cost_basis": position_dict.get("cost_basis"),
-                "date_acquired": position_dict.get("date_acquired", ""),
+                'position_ref': f'position_{index}',
+                'symbol': position_dict.get('symbol', ''),
+                'quantity': position_dict.get('quantity'),
+                'cost_basis': position_dict.get('cost_basis'),
+                'date_acquired': position_dict.get('date_acquired', ''),
             }
             if include_ids:
-                summary["position_id"] = position_dict.get("id", "")
+                summary['position_id'] = position_dict.get('id', '')
             summaries.append(summary)
         return {
-            "positions": summaries,
-            "count": len(summaries),
-            "account_id": account_id,
-            "mode": self._mode,
+            'positions': summaries,
+            'count': len(summaries),
+            'account_id': account_id,
+            'mode': self._mode,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -212,48 +212,48 @@ class TradierToolSet:
         ``order_id``) to :meth:`cancel_order`.
         """
         if not account_id:
-            raise ValueError("account_id must be a non-empty string")
+            raise ValueError('account_id must be a non-empty string')
         payload: dict[str, Any] = self._client.get(
-            f"/v1/accounts/{account_id}/orders",
-            params={"includeTags": str(include_provider_tags).lower()},
+            f'/v1/accounts/{account_id}/orders',
+            params={'includeTags': str(include_provider_tags).lower()},
         ).json()
         if raw:
             return payload
-        orders_node: Any = payload.get("orders")
+        orders_node: Any = payload.get('orders')
         items: list[Any] = []
         if isinstance(orders_node, dict):
-            raw_items: Any = cast("dict[str, Any]", orders_node).get("order")
+            raw_items: Any = cast('dict[str, Any]', orders_node).get('order')
             if isinstance(raw_items, list):
-                items = cast("list[Any]", raw_items)
+                items = cast('list[Any]', raw_items)
             elif isinstance(raw_items, dict):
                 items = [raw_items]
         elif isinstance(orders_node, list):
-            items = cast("list[Any]", orders_node)
+            items = cast('list[Any]', orders_node)
         summaries: list[dict[str, Any]] = []
         for index, order in enumerate(items, start=1):
             if not isinstance(order, dict):
                 continue
-            order_dict = cast("dict[str, Any]", order)
+            order_dict = cast('dict[str, Any]', order)
             summary: dict[str, Any] = {
-                "order_ref": f"order_{index}",
-                "symbol": order_dict.get("symbol", ""),
-                "side": order_dict.get("side"),
-                "quantity": order_dict.get("quantity"),
-                "type": order_dict.get("type"),
-                "status": order_dict.get("status"),
-                "price": order_dict.get("price"),
-                "stop": order_dict.get("stop"),
-                "duration": order_dict.get("duration"),
-                "create_date": order_dict.get("create_date", ""),
+                'order_ref': f'order_{index}',
+                'symbol': order_dict.get('symbol', ''),
+                'side': order_dict.get('side'),
+                'quantity': order_dict.get('quantity'),
+                'type': order_dict.get('type'),
+                'status': order_dict.get('status'),
+                'price': order_dict.get('price'),
+                'stop': order_dict.get('stop'),
+                'duration': order_dict.get('duration'),
+                'create_date': order_dict.get('create_date', ''),
             }
             if include_ids:
-                summary["order_id"] = order_dict.get("id")
+                summary['order_id'] = order_dict.get('id')
             summaries.append(summary)
         return {
-            "orders": summaries,
-            "count": len(summaries),
-            "account_id": account_id,
-            "mode": self._mode,
+            'orders': summaries,
+            'count': len(summaries),
+            'account_id': account_id,
+            'mode': self._mode,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -264,9 +264,9 @@ class TradierToolSet:
         inspect a specific order's full Tradier fields.
         """
         if not account_id or not order_id:
-            raise ValueError("account_id and order_id must be non-empty")
+            raise ValueError('account_id and order_id must be non-empty')
         return self._client.get(
-            f"/v1/accounts/{account_id}/orders/{order_id}",
+            f'/v1/accounts/{account_id}/orders/{order_id}',
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -277,8 +277,8 @@ class TradierToolSet:
         symbol: str,
         side: str,
         quantity: int,
-        type: str = "market",
-        duration: str = "day",
+        type: str = 'market',
+        duration: str = 'day',
         price: float | None = None,
         stop: float | None = None,
         preview: bool = False,
@@ -293,30 +293,30 @@ class TradierToolSet:
         order ack payload.
         """
         if not account_id or not symbol or not side:
-            raise ValueError("account_id, symbol, and side must be non-empty")
-        if side not in {"buy", "buy_to_cover", "sell", "sell_short"}:
-            raise ValueError("invalid side")
+            raise ValueError('account_id, symbol, and side must be non-empty')
+        if side not in {'buy', 'buy_to_cover', 'sell', 'sell_short'}:
+            raise ValueError('invalid side')
         params: dict[str, Any] = {
-            "class": "equity",
-            "symbol": symbol,
-            "side": side,
-            "quantity": quantity,
-            "type": type,
-            "duration": duration,
-            "preview": str(preview).lower(),
+            'class': 'equity',
+            'symbol': symbol,
+            'side': side,
+            'quantity': quantity,
+            'type': type,
+            'duration': duration,
+            'preview': str(preview).lower(),
         }
         if price is not None:
-            params["price"] = price
+            params['price'] = price
         if stop is not None:
-            params["stop"] = stop
+            params['stop'] = stop
         # Tradier requires order parameters in an application/x-www-form-urlencoded
         # request body, not on the query string. Encode them to bytes and send via
         # the form body with an explicit Content-Type header.
-        body = urllib.parse.urlencode(params, doseq=True).encode("utf-8")
+        body = urllib.parse.urlencode(params, doseq=True).encode('utf-8')
         return self._client.post(
-            f"/v1/accounts/{account_id}/orders",
+            f'/v1/accounts/{account_id}/orders',
             data=body,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -328,12 +328,12 @@ class TradierToolSet:
         or :meth:`get_order`. Confirm with the user before calling.
         """
         if not account_id:
-            raise ValueError("account_id must be a non-empty string")
-        order_id = _select_id_from_value(order, ("order_id", "id"))
+            raise ValueError('account_id must be a non-empty string')
+        order_id = _select_id_from_value(order, ('order_id', 'id'))
         if not order_id:
-            raise ValueError("order must be an order id or order dict with an id")
+            raise ValueError('order must be an order id or order dict with an id')
         return self._client.delete(
-            f"/v1/accounts/{account_id}/orders/{order_id}",
+            f'/v1/accounts/{account_id}/orders/{order_id}',
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -345,12 +345,12 @@ class TradierToolSet:
         delta / gamma / etc.
         """
         if not symbols:
-            raise ValueError("symbols must be non-empty")
+            raise ValueError('symbols must be non-empty')
         return self._client.get(
-            "/v1/markets/quotes",
+            '/v1/markets/quotes',
             params={
-                "symbols": ",".join(symbols),
-                "greeks": str(greeks).lower(),
+                'symbols': ','.join(symbols),
+                'greeks': str(greeks).lower(),
             },
         ).json()
 
@@ -368,13 +368,13 @@ class TradierToolSet:
         IV/delta/gamma/theta/vega.
         """
         if not symbol or not expiration:
-            raise ValueError("symbol and expiration must be non-empty")
+            raise ValueError('symbol and expiration must be non-empty')
         return self._client.get(
-            "/v1/markets/options/chains",
+            '/v1/markets/options/chains',
             params={
-                "symbol": symbol,
-                "expiration": expiration,
-                "greeks": str(greeks).lower(),
+                'symbol': symbol,
+                'expiration': expiration,
+                'greeks': str(greeks).lower(),
             },
         ).json()
 
@@ -385,7 +385,7 @@ class TradierToolSet:
         Returns ``{"clock": {"date": ..., "state": "open" | "closed",
         "next_change": ...}}``.
         """
-        return self._client.get("/v1/markets/clock").json()
+        return self._client.get('/v1/markets/clock').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_watchlists(self) -> dict[str, Any]:
@@ -393,4 +393,4 @@ class TradierToolSet:
 
         Returns Tradier's raw watchlists payload.
         """
-        return self._client.get("/v1/watchlists").json()
+        return self._client.get('/v1/watchlists').json()

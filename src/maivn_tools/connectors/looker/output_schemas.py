@@ -19,73 +19,73 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _LOOK_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "look_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "description": {"type": "string"},
-        "view_count": {"type": "integer"},
-        "updated_at": {"type": "string"},
-        "look_id": {"type": ["integer", "string"]},
+    'type': 'object',
+    'properties': {
+        'look_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'description': {'type': 'string'},
+        'view_count': {'type': 'integer'},
+        'updated_at': {'type': 'string'},
+        'look_id': {'type': ['integer', 'string']},
     },
-    "required": ["look_ref"],
+    'required': ['look_ref'],
 }
 
 _DASHBOARD_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "dashboard_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "description": {"type": "string"},
-        "view_count": {"type": "integer"},
-        "updated_at": {"type": "string"},
-        "dashboard_id": {"type": ["integer", "string"]},
+    'type': 'object',
+    'properties': {
+        'dashboard_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'description': {'type': 'string'},
+        'view_count': {'type': 'integer'},
+        'updated_at': {'type': 'string'},
+        'dashboard_id': {'type': ['integer', 'string']},
     },
-    "required": ["dashboard_ref"],
+    'required': ['dashboard_ref'],
 }
 
 _USER_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "user_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "email": {"type": "string"},
-        "is_disabled": {"type": "boolean"},
-        "user_id": {"type": ["integer", "string"]},
+    'type': 'object',
+    'properties': {
+        'user_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'email': {'type': 'string'},
+        'is_disabled': {'type': 'boolean'},
+        'user_id': {'type': ['integer', 'string']},
     },
-    "required": ["user_ref"],
+    'required': ['user_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_LOOKS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "looks": {"type": "array", "items": _LOOK_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'looks': {'type': 'array', 'items': _LOOK_SUMMARY},
     },
-    "required": ["looks"],
+    'required': ['looks'],
 }
 
 LIST_DASHBOARDS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "dashboards": {"type": "array", "items": _DASHBOARD_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'dashboards': {'type': 'array', 'items': _DASHBOARD_SUMMARY},
     },
-    "required": ["dashboards"],
+    'required': ['dashboards'],
 }
 
 LIST_USERS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "users": {"type": "array", "items": _USER_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'users': {'type': 'array', 'items': _USER_SUMMARY},
     },
-    "required": ["users"],
+    'required': ['users'],
 }
 
 
 __all__ = [
-    "LIST_DASHBOARDS_OUTPUT",
-    "LIST_LOOKS_OUTPUT",
-    "LIST_USERS_OUTPUT",
+    'LIST_DASHBOARDS_OUTPUT',
+    'LIST_LOOKS_OUTPUT',
+    'LIST_USERS_OUTPUT',
 ]

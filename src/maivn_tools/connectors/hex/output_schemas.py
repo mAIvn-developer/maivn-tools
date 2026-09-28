@@ -18,32 +18,32 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_project_summary`` builder)
 
 _PROJECT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "project_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "description": {"type": "string"},
-        "creator_email": {"type": "string"},
-        "last_edited_at": {"type": "string"},
-        "archived": {"type": "boolean"},
-        "project_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'project_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'description': {'type': 'string'},
+        'creator_email': {'type': 'string'},
+        'last_edited_at': {'type': 'string'},
+        'archived': {'type': 'boolean'},
+        'project_id': {'type': 'string'},
     },
-    "required": ["project_ref"],
+    'required': ['project_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_PROJECTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "projects": {"type": "array", "items": _PROJECT_SUMMARY},
-        "nextAfter": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'projects': {'type': 'array', 'items': _PROJECT_SUMMARY},
+        'nextAfter': {'type': ['string', 'null']},
     },
-    "required": ["projects"],
+    'required': ['projects'],
 }
 
 
 __all__ = [
-    "LIST_PROJECTS_OUTPUT",
+    'LIST_PROJECTS_OUTPUT',
 ]

@@ -18,31 +18,31 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_summarize_source`` builder)
 
 _SOURCE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "source_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "type": {"type": "string"},
-        "schedule": {"type": ["integer", "null"]},
-        "paused": {"type": "boolean"},
-        "last_run_status": {"type": "string"},
-        "source_id": {"type": ["integer", "string"]},
+    'type': 'object',
+    'properties': {
+        'source_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'type': {'type': 'string'},
+        'schedule': {'type': ['integer', 'null']},
+        'paused': {'type': 'boolean'},
+        'last_run_status': {'type': 'string'},
+        'source_id': {'type': ['integer', 'string']},
     },
-    "required": ["source_ref", "name"],
+    'required': ['source_ref', 'name'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_SOURCES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "sources": {"type": "array", "items": _SOURCE_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'sources': {'type': 'array', 'items': _SOURCE_SUMMARY},
     },
-    "required": ["sources"],
+    'required': ['sources'],
 }
 
 
 __all__ = [
-    "LIST_SOURCES_OUTPUT",
+    'LIST_SOURCES_OUTPUT',
 ]

@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 import re
 from collections.abc import Callable, Sequence
 from contextlib import closing
@@ -28,7 +29,7 @@ from .output_schemas import (
 # MARK: Constants
 
 _FORBIDDEN_KEYWORDS = re.compile(
-    r"\b(insert|update|delete|drop|alter|create|replace|truncate|grant|revoke|rename|set)\b",
+    r'\b(insert|update|delete|drop|alter|create|replace|truncate|grant|revoke|rename|set)\b',
     re.IGNORECASE,
 )
 
@@ -71,20 +72,20 @@ def _is_safe_identifier(name: str) -> bool:
     inject SQL. Restrict to the same strict shape the sqlite connector
     enforces; exotic identifiers can go through ``run_query`` with quoting.
     """
-    return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name))
+    return bool(re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', name))
 
 
 def _validate_read_only_sql(sql: str) -> None:
     if not sql or not sql.strip():
-        raise ValueError("sql must be a non-empty string")
-    stripped = sql.strip().rstrip(";")
-    if ";" in stripped:
-        raise ValueError("Compound statements are not allowed")
+        raise ValueError('sql must be a non-empty string')
+    stripped = sql.strip().rstrip(';')
+    if ';' in stripped:
+        raise ValueError('Compound statements are not allowed')
     first_word = stripped.split(None, 1)[0].lower()
-    if first_word not in {"select", "with", "explain", "describe", "desc", "show"}:
-        raise ValueError("Only read statements (SELECT/WITH/EXPLAIN/DESCRIBE/SHOW) are allowed")
+    if first_word not in {'select', 'with', 'explain', 'describe', 'desc', 'show'}:
+        raise ValueError('Only read statements (SELECT/WITH/EXPLAIN/DESCRIBE/SHOW) are allowed')
     if _FORBIDDEN_KEYWORDS.search(stripped):
-        raise ValueError("Query contains a forbidden mutation keyword")
+        raise ValueError('Query contains a forbidden mutation keyword')
 
 
 def _row_as_tuple(row: Any) -> tuple[Any, ...]:
@@ -105,7 +106,7 @@ def _run_select(
 ) -> dict[str, Any]:
     with closing(connection) as conn, closing(conn.cursor()) as cur:
         try:
-            cur.execute("SET SESSION TRANSACTION READ ONLY")
+            cur.execute('SET SESSION TRANSACTION READ ONLY')
         except Exception:  # noqa: BLE001
             pass
         if params is None:
@@ -122,10 +123,10 @@ def _run_select(
             else []
         )
     return {
-        "columns": columns,
-        "rows": rows,
-        "row_count": len(rows),
-        "truncated": truncated,
+        'columns': columns,
+        'rows': rows,
+        'row_count': len(rows),
+        'truncated': truncated,
     }
 
 
@@ -141,20 +142,20 @@ def _paginate_summary(
     slice_ = rows[:max_results]
     summaries: list[dict[str, Any]] = []
     for index, row in enumerate(slice_, start=1):
-        summary: dict[str, Any] = {f"{ref_prefix}_ref": f"{ref_prefix}_{index}", **row}
+        summary: dict[str, Any] = {f'{ref_prefix}_ref': f'{ref_prefix}_{index}', **row}
         summaries.append(summary)
     return {
         key: summaries,
-        "returned": len(summaries),
-        "total": total,
-        "truncated": total > len(summaries),
+        'returned': len(summaries),
+        'total': total,
+        'truncated': total > len(summaries),
     }
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="mysql")
+@toolset(prefix='mysql')
 class MySQLToolSet:
     """A read-only MySQL/MariaDB connector built on DB-API 2.0.
 
@@ -172,13 +173,13 @@ class MySQLToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="mysql",
-        display_name="MySQL / MariaDB",
-        version="0.1.0",
-        description="Read-only access to a MySQL or MariaDB database.",
+        name='mysql',
+        display_name='MySQL / MariaDB',
+        version='0.1.0',
+        description='Read-only access to a MySQL or MariaDB database.',
         auth_modes=(AuthMode.BASIC,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.SEARCH}),
-        tags=("database", "mysql", "mariadb", "sql"),
+        tags=('database', 'mysql', 'mariadb', 'sql'),
     )
 
     def __init__(
@@ -190,9 +191,9 @@ class MySQLToolSet:
         connect_kwargs: dict[str, Any] | None = None,
     ) -> None:
         if row_limit < 1:
-            raise ValueError("row_limit must be at least 1")
+            raise ValueError('row_limit must be at least 1')
         if connection_factory is None and not dsn and not connect_kwargs:
-            raise ValueError("Provide dsn, connect_kwargs, or connection_factory")
+            raise ValueError('Provide dsn, connect_kwargs, or connection_factory')
         self._dsn = dsn
         self._factory = connection_factory
         self._connect_kwargs = connect_kwargs or {}
@@ -203,23 +204,24 @@ class MySQLToolSet:
         if self._factory is not None:
             return self._factory()
         try:
-            import mysql.connector  # type: ignore[import-not-found]
+            mysql_connector = import_module('mysql.connector')
         except ImportError:
             try:
-                import pymysql  # type: ignore[import-not-found, no-redef]
+                pymysql = import_module('pymysql')
             except ImportError as exc:  # pragma: no cover
                 raise RuntimeError(
                     "MySQLToolSet requires 'mysql-connector-python' or 'pymysql'."
                 ) from exc
             # Third-party driver has no type stubs; coerce to our protocol.
-            return cast(MySQLConnection, cast(object, pymysql.connect(**self._connect_kwargs)))
+            pymysql_connect = cast('Callable[..., object]', cast(Any, pymysql).connect)
+            return cast(MySQLConnection, pymysql_connect(**self._connect_kwargs))
         # Third-party driver exposes no type stubs; treat connect as Any.
-        connect: Any = cast(Any, mysql.connector).connect
+        connect = cast('Callable[..., object]', cast(Any, mysql_connector).connect)
         if self._dsn:
             conn = connect(uri=self._dsn, **self._connect_kwargs)
         else:
             conn = connect(**self._connect_kwargs)
-        return cast(MySQLConnection, cast(object, conn))
+        return cast(MySQLConnection, conn)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(MYSQL_LIST_DATABASES_OUTPUT)
@@ -237,15 +239,15 @@ class MySQLToolSet:
         as the ``schema`` argument of :meth:`list_tables`.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         rows = _run_select(
             self._open(),
-            "SHOW DATABASES",
+            'SHOW DATABASES',
             None,
             self._row_limit,
-        )["rows"]
+        )['rows']
         return _paginate_summary(
-            rows, key="databases", ref_prefix="database", max_results=max_results
+            rows, key='databases', ref_prefix='database', max_results=max_results
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -265,26 +267,26 @@ class MySQLToolSet:
         ``schema``) to :meth:`describe_table` or :meth:`sample_table`.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         if schema is not None:
             sql = (
-                "SELECT table_name AS name, table_type AS type "
-                "FROM information_schema.tables WHERE table_schema = %s "
-                "ORDER BY table_name"
+                'SELECT table_name AS name, table_type AS type '
+                'FROM information_schema.tables WHERE table_schema = %s '
+                'ORDER BY table_name'
             )
             params: Any = (schema,)
         else:
             sql = (
-                "SELECT table_name AS name, table_type AS type "
-                "FROM information_schema.tables "
-                "WHERE table_schema = DATABASE() ORDER BY table_name"
+                'SELECT table_name AS name, table_type AS type '
+                'FROM information_schema.tables '
+                'WHERE table_schema = DATABASE() ORDER BY table_name'
             )
             params = None
-        rows = _run_select(self._open(), sql, params, self._row_limit)["rows"]
+        rows = _run_select(self._open(), sql, params, self._row_limit)['rows']
         if schema is not None:
             for row in rows:
-                row["schema"] = schema
-        return _paginate_summary(rows, key="tables", ref_prefix="table", max_results=max_results)
+                row['schema'] = schema
+        return _paginate_summary(rows, key='tables', ref_prefix='table', max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(MYSQL_DESCRIBE_TABLE_OUTPUT)
@@ -302,32 +304,32 @@ class MySQLToolSet:
         """
         if schema is None:
             sql = (
-                "SELECT column_name AS name, data_type AS type, "
+                'SELECT column_name AS name, data_type AS type, '
                 "       is_nullable = 'YES' AS nullable, column_default AS `default`, "
-                "       column_key AS `key` "
-                "FROM information_schema.columns "
-                "WHERE table_schema = DATABASE() AND table_name = %s "
-                "ORDER BY ordinal_position"
+                '       column_key AS `key` '
+                'FROM information_schema.columns '
+                'WHERE table_schema = DATABASE() AND table_name = %s '
+                'ORDER BY ordinal_position'
             )
             params: Any = (name,)
         else:
             sql = (
-                "SELECT column_name AS name, data_type AS type, "
+                'SELECT column_name AS name, data_type AS type, '
                 "       is_nullable = 'YES' AS nullable, column_default AS `default`, "
-                "       column_key AS `key` "
-                "FROM information_schema.columns "
-                "WHERE table_schema = %s AND table_name = %s "
-                "ORDER BY ordinal_position"
+                '       column_key AS `key` '
+                'FROM information_schema.columns '
+                'WHERE table_schema = %s AND table_name = %s '
+                'ORDER BY ordinal_position'
             )
             params = (schema, name)
         cols = _run_select(self._open(), sql, params, self._row_limit)
-        if not cols["rows"]:
-            raise LookupError(f"Table {schema!r}.{name!r} does not exist")
+        if not cols['rows']:
+            raise LookupError(f'Table {schema!r}.{name!r} does not exist')
         return {
-            "schema": schema,
-            "name": name,
-            "columns": cols["rows"],
-            "primary_key": [r["name"] for r in cols["rows"] if r.get("key") == "PRI"],
+            'schema': schema,
+            'name': name,
+            'columns': cols['rows'],
+            'primary_key': [r['name'] for r in cols['rows'] if r.get('key') == 'PRI'],
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -347,16 +349,16 @@ class MySQLToolSet:
         ``Non_unique``, ``Seq_in_index``, ...).
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
-        safe_name = name.replace("`", "")
+            raise ValueError('max_results must be at least 1')
+        safe_name = name.replace('`', '')
         params: Any = None
         if schema is None:
-            sql = f"SHOW INDEXES FROM `{safe_name}`"
+            sql = f'SHOW INDEXES FROM `{safe_name}`'
         else:
-            safe_schema = schema.replace("`", "")
-            sql = f"SHOW INDEXES FROM `{safe_schema}`.`{safe_name}`"
-        rows = _run_select(self._open(), sql, params, self._row_limit)["rows"]
-        return _paginate_summary(rows, key="indexes", ref_prefix="index", max_results=max_results)
+            safe_schema = schema.replace('`', '')
+            sql = f'SHOW INDEXES FROM `{safe_schema}`.`{safe_name}`'
+        rows = _run_select(self._open(), sql, params, self._row_limit)['rows']
+        return _paginate_summary(rows, key='indexes', ref_prefix='index', max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(MYSQL_EXPLAIN_QUERY_OUTPUT)
@@ -369,10 +371,10 @@ class MySQLToolSet:
         """
         _validate_read_only_sql(sql)
         if analyze:
-            raise ValueError("EXPLAIN ANALYZE executes the query and is not allowed")
+            raise ValueError('EXPLAIN ANALYZE executes the query and is not allowed')
         return _run_select(
             self._open(),
-            f"EXPLAIN FORMAT=JSON {sql}",
+            f'EXPLAIN FORMAT=JSON {sql}',
             None,
             self._row_limit,
         )
@@ -387,11 +389,11 @@ class MySQLToolSet:
         """
         rows = _run_select(
             self._open(),
-            "SELECT VERSION() AS version, DATABASE() AS `database`",
+            'SELECT VERSION() AS version, DATABASE() AS `database`',
             None,
             1,
-        )["rows"]
-        return rows[0] if rows else {"version": None, "database": None}
+        )['rows']
+        return rows[0] if rows else {'version': None, 'database': None}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(MYSQL_SAMPLE_TABLE_OUTPUT)
@@ -410,13 +412,13 @@ class MySQLToolSet:
         ``LIMIT``/``OFFSET``.
         """
         if limit < 1 or limit > self._row_limit:
-            raise ValueError(f"limit must be between 1 and {self._row_limit}")
+            raise ValueError(f'limit must be between 1 and {self._row_limit}')
         if schema is not None and not _is_safe_identifier(schema):
-            raise ValueError(f"Invalid schema name: {schema!r}")
+            raise ValueError(f'Invalid schema name: {schema!r}')
         if not _is_safe_identifier(name):
-            raise ValueError(f"Invalid table name: {name!r}")
-        qualified = f"`{schema}`.`{name}`" if schema else f"`{name}`"
-        return self.run_query(f"SELECT * FROM {qualified} LIMIT %s", [limit], row_limit=limit)
+            raise ValueError(f'Invalid table name: {name!r}')
+        qualified = f'`{schema}`.`{name}`' if schema else f'`{name}`'
+        return self.run_query(f'SELECT * FROM {qualified} LIMIT %s', [limit], row_limit=limit)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(MYSQL_COUNT_ROWS_OUTPUT)
@@ -428,20 +430,20 @@ class MySQLToolSet:
         the index.
         """
         if schema is not None and not _is_safe_identifier(schema):
-            raise ValueError(f"Invalid schema name: {schema!r}")
+            raise ValueError(f'Invalid schema name: {schema!r}')
         if not _is_safe_identifier(name):
-            raise ValueError(f"Invalid table name: {name!r}")
-        qualified = f"`{schema}`.`{name}`" if schema else f"`{name}`"
+            raise ValueError(f'Invalid table name: {name!r}')
+        qualified = f'`{schema}`.`{name}`' if schema else f'`{name}`'
         rows = _run_select(
             self._open(),
-            f"SELECT COUNT(*) AS row_count FROM {qualified}",
+            f'SELECT COUNT(*) AS row_count FROM {qualified}',
             None,
             1,
-        )["rows"]
+        )['rows']
         return {
-            "schema": schema,
-            "name": name,
-            "row_count": rows[0]["row_count"] if rows else 0,
+            'schema': schema,
+            'name': name,
+            'row_count': rows[0]['row_count'] if rows else 0,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -475,7 +477,7 @@ class MySQLToolSet:
         effective_limit = min(self._row_limit, _DEFAULT_QUERY_LIMIT)
         limit = effective_limit if row_limit is None else int(row_limit)
         if limit < 1:
-            raise ValueError("row_limit must be at least 1")
+            raise ValueError('row_limit must be at least 1')
         if limit > self._row_limit:
             limit = self._row_limit
         params: Any

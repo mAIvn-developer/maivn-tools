@@ -18,53 +18,53 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _TEMPLATE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "template_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "generation": {"type": "string"},
-        "updated_at": {"type": "string"},
-        "template_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'template_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'generation': {'type': 'string'},
+        'updated_at': {'type': 'string'},
+        'template_id': {'type': 'string'},
     },
-    "required": ["template_ref"],
+    'required': ['template_ref'],
 }
 
 _LIST_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "list_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "contact_count": {"type": "integer"},
-        "list_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'list_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'contact_count': {'type': 'integer'},
+        'list_id': {'type': 'string'},
     },
-    "required": ["list_ref"],
+    'required': ['list_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_TEMPLATES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "templates": {"type": "array", "items": _TEMPLATE_SUMMARY},
-        "count": {"type": "integer"},
-        "next_page_token": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'templates': {'type': 'array', 'items': _TEMPLATE_SUMMARY},
+        'count': {'type': 'integer'},
+        'next_page_token': {'type': ['string', 'null']},
     },
-    "required": ["templates", "count"],
+    'required': ['templates', 'count'],
 }
 
 LIST_LISTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "lists": {"type": "array", "items": _LIST_SUMMARY},
-        "count": {"type": "integer"},
-        "next_page_token": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'lists': {'type': 'array', 'items': _LIST_SUMMARY},
+        'count': {'type': 'integer'},
+        'next_page_token': {'type': ['string', 'null']},
     },
-    "required": ["lists", "count"],
+    'required': ['lists', 'count'],
 }
 
 
 __all__ = [
-    "LIST_LISTS_OUTPUT",
-    "LIST_TEMPLATES_OUTPUT",
+    'LIST_LISTS_OUTPUT',
+    'LIST_TEMPLATES_OUTPUT',
 ]

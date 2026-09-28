@@ -23,7 +23,7 @@ from .output_schemas import (
 )
 
 _FORBIDDEN_KEYWORDS = re.compile(
-    r"\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|merge|copy|put|get)\b",
+    r'\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|merge|copy|put|get)\b',
     re.IGNORECASE,
 )
 
@@ -34,21 +34,21 @@ _DEFAULT_LIST_LIMIT = 25
 # When supplied it must match the token kind; omitting it lets Snowflake
 # auto-detect. Accepted values: OAUTH, KEYPAIR_JWT, PROGRAMMATIC_ACCESS_TOKEN.
 # See https://docs.snowflake.com/en/developer-guide/sql-api/authenticating.
-_TOKEN_TYPE_HEADER = "X-Snowflake-Authorization-Token-Type"
-_DEFAULT_TOKEN_TYPE = "OAUTH"
+_TOKEN_TYPE_HEADER = 'X-Snowflake-Authorization-Token-Type'
+_DEFAULT_TOKEN_TYPE = 'OAUTH'
 
 
 def _validate_read_only_sql(sql: object) -> None:
     if not isinstance(sql, str) or not sql.strip():
-        raise ValueError("sql must be a non-empty string")
-    stripped = sql.strip().rstrip(";")
-    if ";" in stripped:
-        raise ValueError("Compound statements are not allowed")
+        raise ValueError('sql must be a non-empty string')
+    stripped = sql.strip().rstrip(';')
+    if ';' in stripped:
+        raise ValueError('Compound statements are not allowed')
     first_word = stripped.split(None, 1)[0].lower()
-    if first_word not in {"select", "with", "show", "describe", "desc", "explain", "use"}:
-        raise ValueError("Only read statements are allowed")
+    if first_word not in {'select', 'with', 'show', 'describe', 'desc', 'explain', 'use'}:
+        raise ValueError('Only read statements are allowed')
     if _FORBIDDEN_KEYWORDS.search(stripped):
-        raise ValueError("Query contains a forbidden mutation keyword")
+        raise ValueError('Query contains a forbidden mutation keyword')
 
 
 def _rows_from_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -59,24 +59,24 @@ def _rows_from_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
     onto a dict keyed by the user-facing column names so summaries are
     self-describing.
     """
-    metadata: dict[str, Any] = payload.get("resultSetMetaData") or {}
-    row_types: list[Any] = metadata.get("rowType") or []
+    metadata: dict[str, Any] = payload.get('resultSetMetaData') or {}
+    row_types: list[Any] = metadata.get('rowType') or []
     columns: list[str] = []
     for row_type in row_types:
         if not isinstance(row_type, dict):
             continue
-        row_type_dict = cast("dict[str, Any]", row_type)
-        name: Any = row_type_dict.get("name")
+        row_type_dict = cast('dict[str, Any]', row_type)
+        name: Any = row_type_dict.get('name')
         if name is not None:
             columns.append(str(name))
-    data: list[Any] = payload.get("data") or []
+    data: list[Any] = payload.get('data') or []
     rows: list[dict[str, Any]] = []
     for row in data:
         if isinstance(row, list):
-            row_list = cast("list[Any]", row)
+            row_list = cast('list[Any]', row)
             rows.append(dict(zip(columns, row_list, strict=False)))
         elif isinstance(row, dict):
-            row_dict = cast("dict[str, Any]", row)
+            row_dict = cast('dict[str, Any]', row)
             rows.append(dict(row_dict))
     return rows
 
@@ -103,17 +103,17 @@ def _paginate_summary(
             payload = dict(row)
         else:
             payload = {k: row.get(k) for k in summary_keys if k in row}
-        summary = {f"{ref_prefix}_ref": f"{ref_prefix}_{index}", **payload}
+        summary = {f'{ref_prefix}_ref': f'{ref_prefix}_{index}', **payload}
         summaries.append(summary)
     return {
         key: summaries,
-        "returned": len(summaries),
-        "total": total,
-        "truncated": total > len(summaries),
+        'returned': len(summaries),
+        'total': total,
+        'truncated': total > len(summaries),
     }
 
 
-@toolset(prefix="snowflake")
+@toolset(prefix='snowflake')
 class SnowflakeToolSet:
     """A connector for the Snowflake SQL API v2.
 
@@ -132,10 +132,10 @@ class SnowflakeToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="snowflake",
-        display_name="Snowflake",
-        version="0.1.0",
-        description="Read-only Snowflake SQL execution via the SQL API v2.",
+        name='snowflake',
+        display_name='Snowflake',
+        version='0.1.0',
+        description='Read-only Snowflake SQL execution via the SQL API v2.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE, AuthMode.SERVICE_ACCOUNT, AuthMode.CUSTOM),
         capabilities=frozenset(
             {
@@ -144,9 +144,9 @@ class SnowflakeToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://docs.snowflake.com/en/developer-guide/sql-api/index",
-        homepage_url="https://www.snowflake.com/",
-        tags=("database", "warehouse"),
+        documentation_url='https://docs.snowflake.com/en/developer-guide/sql-api/index',
+        homepage_url='https://www.snowflake.com/',
+        tags=('database', 'warehouse'),
     )
 
     def __init__(
@@ -164,23 +164,23 @@ class SnowflakeToolSet:
         request_timeout_seconds: int = 60,
     ) -> None:
         if not account or not token:
-            raise ValueError("account and token are required")
+            raise ValueError('account and token are required')
         self.connection = connection
         self._defaults = {
-            "warehouse": warehouse,
-            "database": database,
-            "schema": schema,
-            "role": role,
+            'warehouse': warehouse,
+            'database': database,
+            'schema': schema,
+            'role': role,
         }
         self._timeout = request_timeout_seconds
         default_headers: dict[str, str] = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
         }
         if token_type is not None:
             default_headers[_TOKEN_TYPE_HEADER] = token_type
         self._client = HttpClient(
-            base_url=f"https://{account}.snowflakecomputing.com",
+            base_url=f'https://{account}.snowflakecomputing.com',
             auth=BearerTokenAuth(token),
             transport=transport,
             default_headers=default_headers,
@@ -197,15 +197,15 @@ class SnowflakeToolSet:
         bindings: dict[str, Any] | None = None,
         async_exec: bool = False,
     ) -> dict[str, Any]:
-        payload: dict[str, Any] = {"statement": sql, "timeout": self._timeout}
+        payload: dict[str, Any] = {'statement': sql, 'timeout': self._timeout}
         for key, value in self._defaults.items():
             if value is not None:
                 payload[key] = value
         if bindings is not None:
-            payload["bindings"] = bindings
-        params = {"async": "true"} if async_exec else None
+            payload['bindings'] = bindings
+        params = {'async': 'true'} if async_exec else None
         return self._client.post(
-            "/api/v2/statements",
+            '/api/v2/statements',
             params=params,
             json=payload,
         ).json()
@@ -267,10 +267,10 @@ class SnowflakeToolSet:
         result sets (0 by default).
         """
         if not statement_handle:
-            raise ValueError("statement_handle must be a non-empty string")
-        params: dict[str, Any] | None = {"partition": partition} if partition else None
+            raise ValueError('statement_handle must be a non-empty string')
+        params: dict[str, Any] | None = {'partition': partition} if partition else None
         return self._client.get(
-            f"/api/v2/statements/{statement_handle}",
+            f'/api/v2/statements/{statement_handle}',
             params=params,
         ).json()
 
@@ -283,9 +283,9 @@ class SnowflakeToolSet:
         discarded.
         """
         if not statement_handle:
-            raise ValueError("statement_handle must be a non-empty string")
+            raise ValueError('statement_handle must be a non-empty string')
         return self._client.post(
-            f"/api/v2/statements/{statement_handle}/cancel",
+            f'/api/v2/statements/{statement_handle}/cancel',
         ).json()
 
     # MARK: - Catalog helpers (build small SHOW queries)
@@ -307,15 +307,15 @@ class SnowflakeToolSet:
         :meth:`list_tables`.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
-        payload = self._submit_statement("SHOW DATABASES")
+            raise ValueError('max_results must be at least 1')
+        payload = self._submit_statement('SHOW DATABASES')
         rows = _rows_from_payload(payload)
         return _paginate_summary(
             rows,
-            key="databases",
-            ref_prefix="database",
+            key='databases',
+            ref_prefix='database',
             max_results=max_results,
-            summary_keys=("name", "kind", "owner", "created_on"),
+            summary_keys=('name', 'kind', 'owner', 'created_on'),
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -334,20 +334,20 @@ class SnowflakeToolSet:
         :meth:`list_tables`.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         if database is not None:
             self._validate_identifier(database)
-            sql = f"SHOW SCHEMAS IN DATABASE {database}"
+            sql = f'SHOW SCHEMAS IN DATABASE {database}'
         else:
-            sql = "SHOW SCHEMAS"
+            sql = 'SHOW SCHEMAS'
         payload = self._submit_statement(sql)
         rows = _rows_from_payload(payload)
         return _paginate_summary(
             rows,
-            key="schemas",
-            ref_prefix="schema",
+            key='schemas',
+            ref_prefix='schema',
             max_results=max_results,
-            summary_keys=("name", "database_name", "owner", "created_on"),
+            summary_keys=('name', 'database_name', 'owner', 'created_on'),
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -369,17 +369,17 @@ class SnowflakeToolSet:
         ``"EXTERNAL"``). Pass ``name`` to :meth:`describe_table`.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
-        target = self._scope_target(database, schema, kind="SCHEMA")
-        sql = f"SHOW TABLES IN {target}" if target else "SHOW TABLES"
+            raise ValueError('max_results must be at least 1')
+        target = self._scope_target(database, schema, kind='SCHEMA')
+        sql = f'SHOW TABLES IN {target}' if target else 'SHOW TABLES'
         payload = self._submit_statement(sql)
         rows = _rows_from_payload(payload)
         return _paginate_summary(
             rows,
-            key="tables",
-            ref_prefix="table",
+            key='tables',
+            ref_prefix='table',
             max_results=max_results,
-            summary_keys=("name", "database_name", "schema_name", "kind", "rows", "bytes"),
+            summary_keys=('name', 'database_name', 'schema_name', 'kind', 'rows', 'bytes'),
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -398,17 +398,17 @@ class SnowflakeToolSet:
         ``database_name`` / ``schema_name``, and ``owner``.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
-        target = self._scope_target(database, schema, kind="SCHEMA")
-        sql = f"SHOW VIEWS IN {target}" if target else "SHOW VIEWS"
+            raise ValueError('max_results must be at least 1')
+        target = self._scope_target(database, schema, kind='SCHEMA')
+        sql = f'SHOW VIEWS IN {target}' if target else 'SHOW VIEWS'
         payload = self._submit_statement(sql)
         rows = _rows_from_payload(payload)
         return _paginate_summary(
             rows,
-            key="views",
-            ref_prefix="view",
+            key='views',
+            ref_prefix='view',
             max_results=max_results,
-            summary_keys=("name", "database_name", "schema_name", "owner", "is_secure"),
+            summary_keys=('name', 'database_name', 'schema_name', 'owner', 'is_secure'),
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -428,7 +428,7 @@ class SnowflakeToolSet:
         """
         self._validate_identifier(name)
         qualified = self._qualified_name(name, database, schema)
-        return self._submit_statement(f"DESCRIBE TABLE {qualified}")
+        return self._submit_statement(f'DESCRIBE TABLE {qualified}')
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_WAREHOUSES_OUTPUT)
@@ -444,15 +444,15 @@ class SnowflakeToolSet:
         (``state``, ``size``, ``running``, ``queued``, ``auto_suspend``).
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
-        payload = self._submit_statement("SHOW WAREHOUSES")
+            raise ValueError('max_results must be at least 1')
+        payload = self._submit_statement('SHOW WAREHOUSES')
         rows = _rows_from_payload(payload)
         return _paginate_summary(
             rows,
-            key="warehouses",
-            ref_prefix="warehouse",
+            key='warehouses',
+            ref_prefix='warehouse',
             max_results=max_results,
-            summary_keys=("name", "state", "size", "running", "queued", "auto_suspend"),
+            summary_keys=('name', 'state', 'size', 'running', 'queued', 'auto_suspend'),
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -463,7 +463,7 @@ class SnowflakeToolSet:
         carries Snowflake's version string and the account identifier.
         """
         return self._submit_statement(
-            "SELECT CURRENT_VERSION() AS version, CURRENT_ACCOUNT() AS account"
+            'SELECT CURRENT_VERSION() AS version, CURRENT_ACCOUNT() AS account'
         )
 
     # MARK: - Helpers
@@ -471,9 +471,9 @@ class SnowflakeToolSet:
     @staticmethod
     def _validate_identifier(identifier: str) -> None:
         if not identifier:
-            raise ValueError("identifier must be a non-empty string")
-        if not re.match(r"^[A-Za-z_][A-Za-z0-9_$]*$", identifier):
-            raise ValueError("identifier must match ^[A-Za-z_][A-Za-z0-9_$]*$ (no quotes)")
+            raise ValueError('identifier must be a non-empty string')
+        if not re.match(r'^[A-Za-z_][A-Za-z0-9_$]*$', identifier):
+            raise ValueError('identifier must match ^[A-Za-z_][A-Za-z0-9_$]*$ (no quotes)')
 
     @classmethod
     def _qualified_name(
@@ -491,7 +491,7 @@ class SnowflakeToolSet:
             cls._validate_identifier(schema)
             parts.append(schema)
         parts.append(name)
-        return ".".join(parts)
+        return '.'.join(parts)
 
     @classmethod
     def _scope_target(
@@ -504,7 +504,7 @@ class SnowflakeToolSet:
         if database is None and schema is None:
             return None
         if schema is not None:
-            return f"{kind} {cls._qualified_name(schema, database, None)}"
+            return f'{kind} {cls._qualified_name(schema, database, None)}'
         assert database is not None
         cls._validate_identifier(database)
-        return f"DATABASE {database}"
+        return f'DATABASE {database}'

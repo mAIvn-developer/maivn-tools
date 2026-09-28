@@ -28,19 +28,19 @@ class _AlpacaAuth(AuthStrategy):
 
     def __init__(self, api_key: str, api_secret: str) -> None:
         if not api_key or not api_secret:
-            raise ValueError("api_key and api_secret must be non-empty")
+            raise ValueError('api_key and api_secret must be non-empty')
         self._key = api_key
         self._secret = api_secret
 
     def apply(self, request: dict[str, Any]) -> dict[str, Any]:
-        headers = dict(request.get("headers") or {})
-        headers["APCA-API-KEY-ID"] = self._key
-        headers["APCA-API-SECRET-KEY"] = self._secret
-        request["headers"] = headers
+        headers = dict(request.get('headers') or {})
+        headers['APCA-API-KEY-ID'] = self._key
+        headers['APCA-API-SECRET-KEY'] = self._secret
+        request['headers'] = headers
         return request
 
     def describe(self) -> dict[str, Any]:
-        return {"mode": self.mode.value, "headers": ["APCA-API-KEY-ID", "APCA-API-SECRET-KEY"]}
+        return {'mode': self.mode.value, 'headers': ['APCA-API-KEY-ID', 'APCA-API-SECRET-KEY']}
 
 
 def _select_id_from_value(
@@ -56,7 +56,7 @@ def _select_id_from_value(
     if isinstance(value, str):
         return value or None
     if isinstance(value, dict):
-        mapping = cast("dict[Any, Any]", value)
+        mapping = cast('dict[Any, Any]', value)
         for key in keys:
             candidate = mapping.get(key)
             if isinstance(candidate, str) and candidate:
@@ -68,7 +68,7 @@ def _select_id_from_value(
                     return resolved
         return None
     if isinstance(value, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", value)
+        sequence = cast('list[Any] | tuple[Any, ...]', value)
         for item in sequence:
             resolved = _select_id_from_value(item, keys)
             if resolved is not None:
@@ -76,7 +76,7 @@ def _select_id_from_value(
     return None
 
 
-@toolset(prefix="alpaca")
+@toolset(prefix='alpaca')
 class AlpacaToolSet:
     """A connector for Alpaca's broker and market-data APIs.
 
@@ -89,15 +89,15 @@ class AlpacaToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="alpaca",
-        display_name="Alpaca",
-        version="0.1.0",
-        description="Accounts, positions, orders, watchlists, and market data (paper-first).",
+        name='alpaca',
+        display_name='Alpaca',
+        version='0.1.0',
+        description='Accounts, positions, orders, watchlists, and market data (paper-first).',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://docs.alpaca.markets/",
-        homepage_url="https://alpaca.markets/",
-        tags=("trading", "brokerage"),
+        documentation_url='https://docs.alpaca.markets/',
+        homepage_url='https://alpaca.markets/',
+        tags=('trading', 'brokerage'),
     )
 
     def __init__(
@@ -106,25 +106,25 @@ class AlpacaToolSet:
         api_key: str,
         api_secret: str,
         paper: bool = True,
-        data_url: str = "https://data.alpaca.markets",
+        data_url: str = 'https://data.alpaca.markets',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         self.connection = connection
         self._paper = paper
-        base = "https://paper-api.alpaca.markets" if paper else "https://api.alpaca.markets"
+        base = 'https://paper-api.alpaca.markets' if paper else 'https://api.alpaca.markets'
         auth = _AlpacaAuth(api_key, api_secret)
         self._trading = HttpClient(
             base_url=base,
             auth=auth,
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
         self._data = HttpClient(
-            base_url=data_url.rstrip("/"),
+            base_url=data_url.rstrip('/'),
             auth=auth,
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -137,7 +137,7 @@ class AlpacaToolSet:
 
     @property
     def _mode(self) -> str:
-        return "paper" if self._paper else "live"
+        return 'paper' if self._paper else 'live'
 
     # MARK: - Account / positions / activities
 
@@ -151,7 +151,7 @@ class AlpacaToolSet:
         ``equity``, ``buying_power``, ``portfolio_value``, ``status``,
         and the ``account_number``.
         """
-        return self._trading.get("/v2/account").json()
+        return self._trading.get('/v2/account').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_positions(
@@ -176,34 +176,34 @@ class AlpacaToolSet:
         To liquidate a returned position, pass the position dict (or its
         ``symbol``) to :meth:`close_position`.
         """
-        positions: Any = self._trading.get("/v2/positions").json()
+        positions: Any = self._trading.get('/v2/positions').json()
         if raw:
-            return {"positions": positions, "mode": self._mode}
-        items: list[Any] = cast("list[Any]", positions) if isinstance(positions, list) else []
+            return {'positions': positions, 'mode': self._mode}
+        items: list[Any] = cast('list[Any]', positions) if isinstance(positions, list) else []
         summaries: list[dict[str, Any]] = []
         for index, position in enumerate(items, start=1):
             if not isinstance(position, dict):
                 continue
-            position = cast("dict[Any, Any]", position)
+            position = cast('dict[Any, Any]', position)
             summary: dict[str, Any] = {
-                "position_ref": f"position_{index}",
-                "symbol": position.get("symbol", ""),
-                "qty": position.get("qty"),
-                "side": position.get("side"),
-                "market_value": position.get("market_value"),
-                "avg_entry_price": position.get("avg_entry_price"),
-                "current_price": position.get("current_price"),
-                "unrealized_pl": position.get("unrealized_pl"),
-                "unrealized_plpc": position.get("unrealized_plpc"),
-                "asset_class": position.get("asset_class"),
+                'position_ref': f'position_{index}',
+                'symbol': position.get('symbol', ''),
+                'qty': position.get('qty'),
+                'side': position.get('side'),
+                'market_value': position.get('market_value'),
+                'avg_entry_price': position.get('avg_entry_price'),
+                'current_price': position.get('current_price'),
+                'unrealized_pl': position.get('unrealized_pl'),
+                'unrealized_plpc': position.get('unrealized_plpc'),
+                'asset_class': position.get('asset_class'),
             }
             if include_ids:
-                summary["asset_id"] = position.get("asset_id", "")
+                summary['asset_id'] = position.get('asset_id', '')
             summaries.append(summary)
         return {
-            "positions": summaries,
-            "count": len(summaries),
-            "mode": self._mode,
+            'positions': summaries,
+            'count': len(summaries),
+            'mode': self._mode,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -215,8 +215,8 @@ class AlpacaToolSet:
         currently held.
         """
         if not symbol:
-            raise ValueError("symbol must be a non-empty string")
-        return self._trading.get(f"/v2/positions/{symbol}").json()
+            raise ValueError('symbol must be a non-empty string')
+        return self._trading.get(f'/v2/positions/{symbol}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_activities(
@@ -236,19 +236,19 @@ class AlpacaToolSet:
         ``page_size`` is 25 to keep responses small for triage.
         """
         if page_size < 1 or page_size > 100:
-            raise ValueError("page_size must be between 1 and 100")
-        params: dict[str, Any] = {"page_size": page_size}
+            raise ValueError('page_size must be between 1 and 100')
+        params: dict[str, Any] = {'page_size': page_size}
         if activity_types is not None:
-            params["activity_types"] = ",".join(activity_types)
+            params['activity_types'] = ','.join(activity_types)
         if date is not None:
-            params["date"] = date
+            params['date'] = date
         if until is not None:
-            params["until"] = until
+            params['until'] = until
         if after is not None:
-            params["after"] = after
+            params['after'] = after
         if direction is not None:
-            params["direction"] = direction
-        return self._trading.get("/v2/account/activities", params=params).json()
+            params['direction'] = direction
+        return self._trading.get('/v2/account/activities', params=params).json()
 
     # MARK: - Watchlists & assets
 
@@ -256,7 +256,7 @@ class AlpacaToolSet:
     def list_assets(
         self,
         *,
-        status: str = "active",
+        status: str = 'active',
         asset_class: str | None = None,
         exchange: str | None = None,
         limit: int = 25,
@@ -276,39 +276,39 @@ class AlpacaToolSet:
         for the internal ``asset_id`` UUIDs.
         """
         if limit < 1:
-            raise ValueError("limit must be positive")
-        params: dict[str, Any] = {"status": status}
+            raise ValueError('limit must be positive')
+        params: dict[str, Any] = {'status': status}
         if asset_class is not None:
-            params["asset_class"] = asset_class
+            params['asset_class'] = asset_class
         if exchange is not None:
-            params["exchange"] = exchange
-        assets: Any = self._trading.get("/v2/assets", params=params).json()
+            params['exchange'] = exchange
+        assets: Any = self._trading.get('/v2/assets', params=params).json()
         if raw:
-            return {"assets": assets, "mode": self._mode}
-        items: list[Any] = cast("list[Any]", assets) if isinstance(assets, list) else []
+            return {'assets': assets, 'mode': self._mode}
+        items: list[Any] = cast('list[Any]', assets) if isinstance(assets, list) else []
         summaries: list[dict[str, Any]] = []
         for index, asset in enumerate(items[:limit], start=1):
             if not isinstance(asset, dict):
                 continue
-            asset = cast("dict[Any, Any]", asset)
+            asset = cast('dict[Any, Any]', asset)
             summary: dict[str, Any] = {
-                "asset_ref": f"asset_{index}",
-                "symbol": asset.get("symbol", ""),
-                "name": asset.get("name", ""),
-                "exchange": asset.get("exchange", ""),
-                "asset_class": asset.get("class", asset.get("asset_class", "")),
-                "tradable": asset.get("tradable"),
-                "fractionable": asset.get("fractionable"),
-                "shortable": asset.get("shortable"),
+                'asset_ref': f'asset_{index}',
+                'symbol': asset.get('symbol', ''),
+                'name': asset.get('name', ''),
+                'exchange': asset.get('exchange', ''),
+                'asset_class': asset.get('class', asset.get('asset_class', '')),
+                'tradable': asset.get('tradable'),
+                'fractionable': asset.get('fractionable'),
+                'shortable': asset.get('shortable'),
             }
             if include_ids:
-                summary["asset_id"] = asset.get("id", "")
+                summary['asset_id'] = asset.get('id', '')
             summaries.append(summary)
         return {
-            "assets": summaries,
-            "count": len(summaries),
-            "total_returned_by_provider": len(items),
-            "limit": limit,
+            'assets': summaries,
+            'count': len(summaries),
+            'total_returned_by_provider': len(items),
+            'limit': limit,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -318,7 +318,7 @@ class AlpacaToolSet:
         Returns the raw Alpaca watchlist list — each entry has ``id``,
         ``name``, ``created_at``, and (in some responses) ``assets``.
         """
-        return self._trading.get("/v2/watchlists").json()
+        return self._trading.get('/v2/watchlists').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_watchlist(self, *, name: str, symbols: list[str]) -> dict[str, Any]:
@@ -328,10 +328,10 @@ class AlpacaToolSet:
         cannot place orders.
         """
         if not name or not symbols:
-            raise ValueError("name and symbols must be non-empty")
+            raise ValueError('name and symbols must be non-empty')
         return self._trading.post(
-            "/v2/watchlists",
-            json={"name": name, "symbols": symbols},
+            '/v2/watchlists',
+            json={'name': name, 'symbols': symbols},
         ).json()
 
     # MARK: - Orders
@@ -340,11 +340,11 @@ class AlpacaToolSet:
     def list_orders(
         self,
         *,
-        status: str = "open",
+        status: str = 'open',
         limit: int = 25,
         after: str | None = None,
         until: str | None = None,
-        direction: str = "desc",
+        direction: str = 'desc',
         symbols: list[str] | None = None,
         include_ids: bool = False,
         raw: bool = False,
@@ -365,45 +365,45 @@ class AlpacaToolSet:
         ``order_id``) to :meth:`cancel_order`.
         """
         if limit < 1 or limit > 500:
-            raise ValueError("limit must be between 1 and 500")
-        params: dict[str, Any] = {"status": status, "limit": limit, "direction": direction}
+            raise ValueError('limit must be between 1 and 500')
+        params: dict[str, Any] = {'status': status, 'limit': limit, 'direction': direction}
         if after is not None:
-            params["after"] = after
+            params['after'] = after
         if until is not None:
-            params["until"] = until
+            params['until'] = until
         if symbols is not None:
-            params["symbols"] = ",".join(symbols)
-        orders: Any = self._trading.get("/v2/orders", params=params).json()
+            params['symbols'] = ','.join(symbols)
+        orders: Any = self._trading.get('/v2/orders', params=params).json()
         if raw:
-            return {"orders": orders, "mode": self._mode}
-        items: list[Any] = cast("list[Any]", orders) if isinstance(orders, list) else []
+            return {'orders': orders, 'mode': self._mode}
+        items: list[Any] = cast('list[Any]', orders) if isinstance(orders, list) else []
         summaries: list[dict[str, Any]] = []
         for index, order in enumerate(items, start=1):
             if not isinstance(order, dict):
                 continue
-            order = cast("dict[Any, Any]", order)
+            order = cast('dict[Any, Any]', order)
             summary: dict[str, Any] = {
-                "order_ref": f"order_{index}",
-                "symbol": order.get("symbol", ""),
-                "side": order.get("side"),
-                "qty": order.get("qty"),
-                "filled_qty": order.get("filled_qty"),
-                "type": order.get("type"),
-                "status": order.get("status"),
-                "limit_price": order.get("limit_price"),
-                "stop_price": order.get("stop_price"),
-                "submitted_at": order.get("submitted_at"),
-                "time_in_force": order.get("time_in_force"),
+                'order_ref': f'order_{index}',
+                'symbol': order.get('symbol', ''),
+                'side': order.get('side'),
+                'qty': order.get('qty'),
+                'filled_qty': order.get('filled_qty'),
+                'type': order.get('type'),
+                'status': order.get('status'),
+                'limit_price': order.get('limit_price'),
+                'stop_price': order.get('stop_price'),
+                'submitted_at': order.get('submitted_at'),
+                'time_in_force': order.get('time_in_force'),
             }
             if include_ids:
-                summary["order_id"] = order.get("id", "")
-                summary["client_order_id"] = order.get("client_order_id", "")
+                summary['order_id'] = order.get('id', '')
+                summary['client_order_id'] = order.get('client_order_id', '')
             summaries.append(summary)
         return {
-            "orders": summaries,
-            "count": len(summaries),
-            "status_filter": status,
-            "mode": self._mode,
+            'orders': summaries,
+            'count': len(summaries),
+            'status_filter': status,
+            'mode': self._mode,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -414,8 +414,8 @@ class AlpacaToolSet:
         inspect a specific order's full fields.
         """
         if not order_id:
-            raise ValueError("order_id must be a non-empty string")
-        return self._trading.get(f"/v2/orders/{order_id}").json()
+            raise ValueError('order_id must be a non-empty string')
+        return self._trading.get(f'/v2/orders/{order_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
     def submit_order(
@@ -425,8 +425,8 @@ class AlpacaToolSet:
         qty: float | None = None,
         notional: float | None = None,
         side: str,
-        type: str = "market",
-        time_in_force: str = "day",
+        type: str = 'market',
+        time_in_force: str = 'day',
         limit_price: float | None = None,
         stop_price: float | None = None,
         client_order_id: str | None = None,
@@ -444,31 +444,31 @@ class AlpacaToolSet:
         ``qty``, etc.).
         """
         if not symbol or not side:
-            raise ValueError("symbol and side must be non-empty")
-        if side not in {"buy", "sell"}:
+            raise ValueError('symbol and side must be non-empty')
+        if side not in {'buy', 'sell'}:
             raise ValueError("side must be 'buy' or 'sell'")
         if qty is None and notional is None:
-            raise ValueError("provide qty or notional")
+            raise ValueError('provide qty or notional')
         body: dict[str, Any] = {
-            "symbol": symbol,
-            "side": side,
-            "type": type,
-            "time_in_force": time_in_force,
+            'symbol': symbol,
+            'side': side,
+            'type': type,
+            'time_in_force': time_in_force,
         }
         if qty is not None:
-            body["qty"] = qty
+            body['qty'] = qty
         if notional is not None:
-            body["notional"] = notional
+            body['notional'] = notional
         if limit_price is not None:
-            body["limit_price"] = limit_price
+            body['limit_price'] = limit_price
         if stop_price is not None:
-            body["stop_price"] = stop_price
+            body['stop_price'] = stop_price
         if client_order_id is not None:
-            body["client_order_id"] = client_order_id
+            body['client_order_id'] = client_order_id
         if extended_hours is not None:
-            body["extended_hours"] = extended_hours
+            body['extended_hours'] = extended_hours
         response = self._trading.post(
-            "/v2/orders",
+            '/v2/orders',
             json=body,
             idempotency_key=idempotency_key,
         )
@@ -484,11 +484,11 @@ class AlpacaToolSet:
         "status": <http-status>}``. Confirm with the user before
         calling.
         """
-        order_id = _select_id_from_value(order, ("order_id", "id", "client_order_id"))
+        order_id = _select_id_from_value(order, ('order_id', 'id', 'client_order_id'))
         if not order_id:
-            raise ValueError("order must be an order id or order dict with an id")
-        response = self._trading.delete(f"/v2/orders/{order_id}")
-        return {"id": order_id, "cancelled": True, "status": response.status}
+            raise ValueError('order must be an order id or order dict with an id')
+        response = self._trading.delete(f'/v2/orders/{order_id}')
+        return {'id': order_id, 'cancelled': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
     def cancel_all_orders(self) -> dict[str, Any]:
@@ -498,11 +498,11 @@ class AlpacaToolSet:
         Confirm with the user before calling — this affects every
         pending order in the account at once.
         """
-        response = self._trading.delete("/v2/orders")
+        response = self._trading.delete('/v2/orders')
         try:
-            return {"cancelled": response.json(), "status": response.status}
+            return {'cancelled': response.json(), 'status': response.status}
         except ValueError:
-            return {"status": response.status}
+            return {'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
     def close_position(
@@ -518,14 +518,14 @@ class AlpacaToolSet:
         liquidate a partial position; omit it to close the whole
         position. Confirm with the user before calling.
         """
-        symbol = _select_id_from_value(position, ("symbol",))
+        symbol = _select_id_from_value(position, ('symbol',))
         if not symbol:
-            raise ValueError("position must be a symbol or position dict with a symbol")
+            raise ValueError('position must be a symbol or position dict with a symbol')
         params: dict[str, Any] = {}
         if qty is not None:
-            params["qty"] = qty
+            params['qty'] = qty
         return self._trading.delete(
-            f"/v2/positions/{symbol}",
+            f'/v2/positions/{symbol}',
             params=params or None,
         ).json()
 
@@ -547,12 +547,12 @@ class AlpacaToolSet:
         account's subscription.
         """
         if not symbol:
-            raise ValueError("symbol must be a non-empty string")
+            raise ValueError('symbol must be a non-empty string')
         params: dict[str, Any] = {}
         if feed is not None:
-            params["feed"] = feed
+            params['feed'] = feed
         return self._data.get(
-            f"/v2/stocks/{symbol}/quotes/latest",
+            f'/v2/stocks/{symbol}/quotes/latest',
             params=params or None,
         ).json()
 
@@ -566,12 +566,12 @@ class AlpacaToolSet:
         the account's subscription.
         """
         if not symbol:
-            raise ValueError("symbol must be a non-empty string")
+            raise ValueError('symbol must be a non-empty string')
         params: dict[str, Any] = {}
         if feed is not None:
-            params["feed"] = feed
+            params['feed'] = feed
         return self._data.get(
-            f"/v2/stocks/{symbol}/trades/latest",
+            f'/v2/stocks/{symbol}/trades/latest',
             params=params or None,
         ).json()
 
@@ -597,18 +597,18 @@ class AlpacaToolSet:
         "next_page_token": ...}``.
         """
         if not symbol or not timeframe:
-            raise ValueError("symbol and timeframe must be non-empty")
+            raise ValueError('symbol and timeframe must be non-empty')
         if limit < 1 or limit > 10_000:
-            raise ValueError("limit must be between 1 and 10000")
-        params: dict[str, Any] = {"timeframe": timeframe, "limit": limit}
+            raise ValueError('limit must be between 1 and 10000')
+        params: dict[str, Any] = {'timeframe': timeframe, 'limit': limit}
         if feed is not None:
-            params["feed"] = feed
+            params['feed'] = feed
         if start is not None:
-            params["start"] = start
+            params['start'] = start
         if end is not None:
-            params["end"] = end
+            params['end'] = end
         return self._data.get(
-            f"/v2/stocks/{symbol}/bars",
+            f'/v2/stocks/{symbol}/bars',
             params=params,
         ).json()
 
@@ -619,7 +619,7 @@ class AlpacaToolSet:
         Returns ``{"timestamp": ..., "is_open": bool, "next_open": ...,
         "next_close": ...}``.
         """
-        return self._trading.get("/v2/clock").json()
+        return self._trading.get('/v2/clock').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_calendar(self, *, start: str | None = None, end: str | None = None) -> dict[str, Any]:
@@ -630,7 +630,7 @@ class AlpacaToolSet:
         """
         params: dict[str, Any] = {}
         if start is not None:
-            params["start"] = start
+            params['start'] = start
         if end is not None:
-            params["end"] = end
-        return self._trading.get("/v2/calendar", params=params or None).json()
+            params['end'] = end
+        return self._trading.get('/v2/calendar', params=params or None).json()

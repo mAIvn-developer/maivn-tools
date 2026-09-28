@@ -15,7 +15,7 @@ from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 
 
-@toolset(prefix="zendesk")
+@toolset(prefix='zendesk')
 class ZendeskToolSet:
     """A connector for Zendesk Support.
 
@@ -29,15 +29,15 @@ class ZendeskToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="zendesk",
-        display_name="Zendesk",
-        version="0.1.0",
-        description="Search, read, and update Zendesk tickets and users.",
+        name='zendesk',
+        display_name='Zendesk',
+        version='0.1.0',
+        description='Search, read, and update Zendesk tickets and users.',
         auth_modes=(AuthMode.BASIC,),
         scopes={
-            "tickets:read": "Read tickets and ticket comments.",
-            "tickets:write": "Create, update, and add comments to tickets.",
-            "users:read": "Read user records.",
+            'tickets:read': 'Read tickets and ticket comments.',
+            'tickets:write': 'Create, update, and add comments to tickets.',
+            'users:read': 'Read user records.',
         },
         capabilities=frozenset(
             {
@@ -47,15 +47,15 @@ class ZendeskToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://developer.zendesk.com/api-reference/",
-        homepage_url="https://www.zendesk.com",
-        tags=("ticketing", "support"),
+        documentation_url='https://developer.zendesk.com/api-reference/',
+        homepage_url='https://www.zendesk.com',
+        tags=('ticketing', 'support'),
     )
 
     def __init__(
         self,
         *,
-        subdomain: str = "",
+        subdomain: str = '',
         email: str,
         api_token: str,
         transport: HttpTransport | None = None,
@@ -63,18 +63,18 @@ class ZendeskToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if base_url is None and not subdomain:
-            raise ValueError("Either subdomain or base_url is required")
+            raise ValueError('Either subdomain or base_url is required')
         if not email:
-            raise ValueError("email is required")
+            raise ValueError('email is required')
         if not api_token:
-            raise ValueError("api_token is required")
-        resolved_base = base_url or f"https://{subdomain}.zendesk.com"
+            raise ValueError('api_token is required')
+        resolved_base = base_url or f'https://{subdomain}.zendesk.com'
         self.connection = connection
         self._client = HttpClient(
-            base_url=resolved_base.rstrip("/"),
-            auth=BasicAuth(f"{email}/token", api_token),
+            base_url=resolved_base.rstrip('/'),
+            auth=BasicAuth(f'{email}/token', api_token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -88,8 +88,8 @@ class ZendeskToolSet:
         self,
         query: str,
         *,
-        sort_by: str | None = "updated_at",
-        sort_order: str = "desc",
+        sort_by: str | None = 'updated_at',
+        sort_order: str = 'desc',
         page: int = 1,
         per_page: int = 25,
         include_metadata: bool = True,
@@ -116,21 +116,21 @@ class ZendeskToolSet:
         sets.
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         params: dict[str, Any] = {
-            "query": query,
-            "page": page,
-            "per_page": per_page,
-            "sort_order": sort_order,
+            'query': query,
+            'page': page,
+            'per_page': per_page,
+            'sort_order': sort_order,
         }
         if sort_by is not None:
-            params["sort_by"] = sort_by
-        payload = self._client.get("/api/v2/search.json", params=params).json()
+            params['sort_by'] = sort_by
+        payload = self._client.get('/api/v2/search.json', params=params).json()
         if not include_metadata:
             return payload
-        return self._summarize_tickets(payload, source_key="results", include_ids=include_ids)
+        return self._summarize_tickets(payload, source_key='results', include_ids=include_ids)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_ticket(self, ticket_id: Any) -> dict[str, Any]:
@@ -141,7 +141,7 @@ class ZendeskToolSet:
         of such dicts.
         """
         resolved = self._extract_ticket_id(ticket_id)
-        return self._client.get(f"/api/v2/tickets/{resolved}.json").json()
+        return self._client.get(f'/api/v2/tickets/{resolved}.json').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_ticket(
@@ -160,22 +160,22 @@ class ZendeskToolSet:
         first ticket comment.
         """
         if not subject:
-            raise ValueError("subject must be a non-empty string")
+            raise ValueError('subject must be a non-empty string')
         if not description:
-            raise ValueError("description must be a non-empty string")
+            raise ValueError('description must be a non-empty string')
         ticket: dict[str, Any] = {
-            "subject": subject,
-            "comment": {"body": description},
+            'subject': subject,
+            'comment': {'body': description},
         }
         if requester_email is not None:
-            ticket["requester"] = {"email": requester_email}
+            ticket['requester'] = {'email': requester_email}
         if priority is not None:
-            ticket["priority"] = priority
+            ticket['priority'] = priority
         if tags is not None:
-            ticket["tags"] = list(tags)
+            ticket['tags'] = list(tags)
         if extra_fields is not None:
             ticket.update(extra_fields)
-        return self._client.post("/api/v2/tickets.json", json={"ticket": ticket}).json()
+        return self._client.post('/api/v2/tickets.json', json={'ticket': ticket}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_ticket(self, ticket_id: Any, patch: dict[str, Any]) -> dict[str, Any]:
@@ -187,10 +187,10 @@ class ZendeskToolSet:
         """
         resolved = self._extract_ticket_id(ticket_id)
         if not patch:
-            raise ValueError("patch must be a non-empty dict")
+            raise ValueError('patch must be a non-empty dict')
         return self._client.put(
-            f"/api/v2/tickets/{resolved}.json",
-            json={"ticket": patch},
+            f'/api/v2/tickets/{resolved}.json',
+            json={'ticket': patch},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -208,14 +208,14 @@ class ZendeskToolSet:
         """
         resolved = self._extract_ticket_id(ticket_id)
         if not body:
-            raise ValueError("body must be a non-empty string")
-        payload = {"ticket": {"comment": {"body": body, "public": public}}}
-        return self._client.put(f"/api/v2/tickets/{resolved}.json", json=payload).json()
+            raise ValueError('body must be a non-empty string')
+        payload = {'ticket': {'comment': {'body': body, 'public': public}}}
+        return self._client.put(f'/api/v2/tickets/{resolved}.json', json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_user(self, user_id: int) -> dict[str, Any]:
         """Return one user record by ID."""
-        return self._client.get(f"/api/v2/users/{int(user_id)}.json").json()
+        return self._client.get(f'/api/v2/users/{int(user_id)}.json').json()
 
     # MARK: - Tickets (list, comments, attachments)
 
@@ -223,8 +223,8 @@ class ZendeskToolSet:
     def list_tickets(
         self,
         *,
-        sort_by: str = "id",
-        sort_order: str = "asc",
+        sort_by: str = 'id',
+        sort_order: str = 'asc',
         page: int = 1,
         per_page: int = 25,
         include_metadata: bool = True,
@@ -246,19 +246,19 @@ class ZendeskToolSet:
         payload to page through large result sets.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         payload = self._client.get(
-            "/api/v2/tickets.json",
+            '/api/v2/tickets.json',
             params={
-                "sort_by": sort_by,
-                "sort_order": sort_order,
-                "page": page,
-                "per_page": per_page,
+                'sort_by': sort_by,
+                'sort_order': sort_order,
+                'page': page,
+                'per_page': per_page,
             },
         ).json()
         if not include_metadata:
             return payload
-        return self._summarize_tickets(payload, source_key="tickets", include_ids=include_ids)
+        return self._summarize_tickets(payload, source_key='tickets', include_ids=include_ids)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_ticket_comments(
@@ -275,8 +275,8 @@ class ZendeskToolSet:
         """
         resolved = self._extract_ticket_id(ticket_id)
         return self._client.get(
-            f"/api/v2/tickets/{resolved}/comments.json",
-            params={"per_page": per_page, "page": page},
+            f'/api/v2/tickets/{resolved}/comments.json',
+            params={'per_page': per_page, 'page': page},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -287,8 +287,8 @@ class ZendeskToolSet:
         raw integer ID or a dict/list from the ticket search/list tools.
         """
         resolved = self._extract_ticket_id(ticket_id)
-        self._client.delete(f"/api/v2/tickets/{resolved}.json")
-        return {"id": resolved, "deleted": True}
+        self._client.delete(f'/api/v2/tickets/{resolved}.json')
+        return {'id': resolved, 'deleted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def merge_tickets(
@@ -305,14 +305,14 @@ class ZendeskToolSet:
         """
         resolved_target = self._extract_ticket_id(target_ticket_id)
         if not source_ticket_ids:
-            raise ValueError("source_ticket_ids must contain at least one id")
+            raise ValueError('source_ticket_ids must contain at least one id')
         resolved_sources = [self._extract_ticket_id(item) for item in source_ticket_ids]
-        payload: dict[str, Any] = {"ids": resolved_sources}
+        payload: dict[str, Any] = {'ids': resolved_sources}
         if comment is not None:
-            payload["target_comment"] = comment
-            payload["source_comment"] = comment
+            payload['target_comment'] = comment
+            payload['source_comment'] = comment
         return self._client.post(
-            f"/api/v2/tickets/{resolved_target}/merge.json",
+            f'/api/v2/tickets/{resolved_target}/merge.json',
             json=payload,
         ).json()
 
@@ -327,10 +327,10 @@ class ZendeskToolSet:
         per_page: int = 100,
     ) -> dict[str, Any]:
         """List users (optionally narrowed by ``role``)."""
-        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        params: dict[str, Any] = {'page': page, 'per_page': per_page}
         if role is not None:
-            params["role"] = role
-        return self._client.get("/api/v2/users.json", params=params).json()
+            params['role'] = role
+        return self._client.get('/api/v2/users.json', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def search_users(
@@ -342,13 +342,13 @@ class ZendeskToolSet:
     ) -> dict[str, Any]:
         """Search users by name, email, or role using the search endpoint."""
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         return self.search_tickets(
-            query=f"type:user {query}",
+            query=f'type:user {query}',
             page=page,
             per_page=per_page,
             sort_by=None,
-            sort_order="desc",
+            sort_order='desc',
             include_metadata=False,
         )
 
@@ -358,25 +358,25 @@ class ZendeskToolSet:
         *,
         name: str,
         email: str,
-        role: str = "end-user",
+        role: str = 'end-user',
         extra_fields: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Create a user."""
         if not name or not email:
-            raise ValueError("name and email must be non-empty")
-        user: dict[str, Any] = {"name": name, "email": email, "role": role}
+            raise ValueError('name and email must be non-empty')
+        user: dict[str, Any] = {'name': name, 'email': email, 'role': role}
         if extra_fields is not None:
             user.update(extra_fields)
-        return self._client.post("/api/v2/users.json", json={"user": user}).json()
+        return self._client.post('/api/v2/users.json', json={'user': user}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_user(self, user_id: int, patch: dict[str, Any]) -> dict[str, Any]:
         """Patch user fields."""
         if not patch:
-            raise ValueError("patch must be a non-empty dict")
+            raise ValueError('patch must be a non-empty dict')
         return self._client.put(
-            f"/api/v2/users/{int(user_id)}.json",
-            json={"user": patch},
+            f'/api/v2/users/{int(user_id)}.json',
+            json={'user': patch},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -385,8 +385,8 @@ class ZendeskToolSet:
 
         Destructive: confirm with the user first.
         """
-        self._client.delete(f"/api/v2/users/{int(user_id)}.json")
-        return {"id": int(user_id), "deleted": True}
+        self._client.delete(f'/api/v2/users/{int(user_id)}.json')
+        return {'id': int(user_id), 'deleted': True}
 
     # MARK: - Organizations & groups
 
@@ -399,14 +399,14 @@ class ZendeskToolSet:
     ) -> dict[str, Any]:
         """List organizations."""
         return self._client.get(
-            "/api/v2/organizations.json",
-            params={"page": page, "per_page": per_page},
+            '/api/v2/organizations.json',
+            params={'page': page, 'per_page': per_page},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_organization(self, organization_id: int) -> dict[str, Any]:
         """Return one organization by ID."""
-        return self._client.get(f"/api/v2/organizations/{int(organization_id)}.json").json()
+        return self._client.get(f'/api/v2/organizations/{int(organization_id)}.json').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_organization(
@@ -417,11 +417,11 @@ class ZendeskToolSet:
     ) -> dict[str, Any]:
         """Create an organization."""
         if not name:
-            raise ValueError("name must be a non-empty string")
-        org: dict[str, Any] = {"name": name}
+            raise ValueError('name must be a non-empty string')
+        org: dict[str, Any] = {'name': name}
         if extra_fields is not None:
             org.update(extra_fields)
-        return self._client.post("/api/v2/organizations.json", json={"organization": org}).json()
+        return self._client.post('/api/v2/organizations.json', json={'organization': org}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_groups(
@@ -432,14 +432,14 @@ class ZendeskToolSet:
     ) -> dict[str, Any]:
         """List agent groups."""
         return self._client.get(
-            "/api/v2/groups.json",
-            params={"page": page, "per_page": per_page},
+            '/api/v2/groups.json',
+            params={'page': page, 'per_page': per_page},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_group(self, group_id: int) -> dict[str, Any]:
         """Return one group by ID."""
-        return self._client.get(f"/api/v2/groups/{int(group_id)}.json").json()
+        return self._client.get(f'/api/v2/groups/{int(group_id)}.json').json()
 
     # MARK: - Macros & views
 
@@ -452,10 +452,10 @@ class ZendeskToolSet:
         per_page: int = 100,
     ) -> dict[str, Any]:
         """List macros, optionally narrowed by ``active`` state."""
-        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        params: dict[str, Any] = {'page': page, 'per_page': per_page}
         if active is not None:
-            params["active"] = str(active).lower()
-        return self._client.get("/api/v2/macros.json", params=params).json()
+            params['active'] = str(active).lower()
+        return self._client.get('/api/v2/macros.json', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def show_macro_application(
@@ -465,7 +465,7 @@ class ZendeskToolSet:
     ) -> dict[str, Any]:
         """Preview the changes a macro would apply to a ticket (no write)."""
         return self._client.get(
-            f"/api/v2/tickets/{int(ticket_id)}/macros/{int(macro_id)}/apply.json"
+            f'/api/v2/tickets/{int(ticket_id)}/macros/{int(macro_id)}/apply.json'
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -477,8 +477,8 @@ class ZendeskToolSet:
     ) -> dict[str, Any]:
         """List ticket views."""
         return self._client.get(
-            "/api/v2/views.json",
-            params={"page": page, "per_page": per_page},
+            '/api/v2/views.json',
+            params={'page': page, 'per_page': per_page},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -491,8 +491,8 @@ class ZendeskToolSet:
     ) -> dict[str, Any]:
         """Return the tickets that match a saved view."""
         return self._client.get(
-            f"/api/v2/views/{int(view_id)}/execute.json",
-            params={"page": page, "per_page": per_page},
+            f'/api/v2/views/{int(view_id)}/execute.json',
+            params={'page': page, 'per_page': per_page},
         ).json()
 
     # MARK: - Tags & metadata
@@ -500,31 +500,31 @@ class ZendeskToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_ticket_fields(self) -> dict[str, Any]:
         """List all ticket field definitions."""
-        return self._client.get("/api/v2/ticket_fields.json").json()
+        return self._client.get('/api/v2/ticket_fields.json').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_user_fields(self) -> dict[str, Any]:
         """List custom user-field definitions."""
-        return self._client.get("/api/v2/user_fields.json").json()
+        return self._client.get('/api/v2/user_fields.json').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def add_tags_to_ticket(self, ticket_id: int, tags: list[str]) -> dict[str, Any]:
         """Append tags to a ticket."""
         if not tags:
-            raise ValueError("tags must contain at least one value")
+            raise ValueError('tags must contain at least one value')
         return self._client.put(
-            f"/api/v2/tickets/{int(ticket_id)}/tags.json",
-            json={"tags": list(tags)},
+            f'/api/v2/tickets/{int(ticket_id)}/tags.json',
+            json={'tags': list(tags)},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def remove_tags_from_ticket(self, ticket_id: int, tags: list[str]) -> dict[str, Any]:
         """Remove tags from a ticket."""
         if not tags:
-            raise ValueError("tags must contain at least one value")
+            raise ValueError('tags must contain at least one value')
         return self._client.delete(
-            f"/api/v2/tickets/{int(ticket_id)}/tags.json",
-            json={"tags": list(tags)},
+            f'/api/v2/tickets/{int(ticket_id)}/tags.json',
+            json={'tags': list(tags)},
         ).json()
 
     # MARK: - Internal
@@ -545,25 +545,25 @@ class ZendeskToolSet:
             raw_dict = cast(dict[str, Any], raw)
             # Filter to ticket-shaped objects when reading a heterogeneous
             # search response (search endpoint may include users etc.).
-            if source_key == "results":
-                result_type: Any = raw_dict.get("result_type") or raw_dict.get("type")
-                if result_type not in (None, "ticket"):
+            if source_key == 'results':
+                result_type: Any = raw_dict.get('result_type') or raw_dict.get('type')
+                if result_type not in (None, 'ticket'):
                     continue
             index += 1
             summary: dict[str, Any] = {
-                "ticket_ref": f"ticket_{index}",
-                "subject": raw_dict.get("subject", ""),
-                "status": raw_dict.get("status", ""),
-                "priority": raw_dict.get("priority", ""),
-                "requester_id": raw_dict.get("requester_id", ""),
-                "updated_at": raw_dict.get("updated_at", ""),
-                "tags": raw_dict.get("tags", []) or [],
+                'ticket_ref': f'ticket_{index}',
+                'subject': raw_dict.get('subject', ''),
+                'status': raw_dict.get('status', ''),
+                'priority': raw_dict.get('priority', ''),
+                'requester_id': raw_dict.get('requester_id', ''),
+                'updated_at': raw_dict.get('updated_at', ''),
+                'tags': raw_dict.get('tags', []) or [],
             }
             if include_ids:
-                summary["ticket_id"] = raw_dict.get("id", "")
+                summary['ticket_id'] = raw_dict.get('id', '')
             summaries.append(summary)
-        result: dict[str, Any] = {"tickets": summaries}
-        for cursor_key in ("next_page", "previous_page", "count"):
+        result: dict[str, Any] = {'tickets': summaries}
+        for cursor_key in ('next_page', 'previous_page', 'count'):
             if cursor_key in payload:
                 result[cursor_key] = payload[cursor_key]
         return result
@@ -577,17 +577,17 @@ class ZendeskToolSet:
         such dicts.
         """
         if isinstance(candidate, bool):
-            raise ValueError(f"ticket id must be an integer, got bool: {candidate!r}")
+            raise ValueError(f'ticket id must be an integer, got bool: {candidate!r}')
         if isinstance(candidate, int):
             return candidate
         if isinstance(candidate, str):
             try:
                 return int(candidate)
             except ValueError as exc:
-                raise ValueError(f"ticket id must be numeric, got: {candidate!r}") from exc
+                raise ValueError(f'ticket id must be numeric, got: {candidate!r}') from exc
         if isinstance(candidate, dict):
             candidate_dict = cast(dict[str, Any], candidate)
-            for key in ("ticket_id", "id"):
+            for key in ('ticket_id', 'id'):
                 value: Any = candidate_dict.get(key)
                 if value is not None:
                     try:
@@ -595,10 +595,10 @@ class ZendeskToolSet:
                     except (TypeError, ValueError):
                         continue
         if isinstance(candidate, list | tuple):
-            candidate_seq = cast("list[Any] | tuple[Any, ...]", candidate)
+            candidate_seq = cast('list[Any] | tuple[Any, ...]', candidate)
             for item in candidate_seq:
                 try:
                     return ZendeskToolSet._extract_ticket_id(item)
                 except ValueError:
                     continue
-        raise ValueError(f"could not extract Zendesk ticket id from: {candidate!r}")
+        raise ValueError(f'could not extract Zendesk ticket id from: {candidate!r}')

@@ -20,22 +20,22 @@ def _extract_pres_id(candidate: Any) -> str:
     """Pull a Google Slides ``presentationId`` out of a raw string or dict."""
     if isinstance(candidate, str):
         if not candidate:
-            raise ValueError("presentation_id must be a non-empty string")
+            raise ValueError('presentation_id must be a non-empty string')
         return candidate
     if isinstance(candidate, dict):
-        mapping = cast("dict[str, object]", candidate)
-        for key in ("presentation_id", "presentationId", "file_id", "id"):
+        mapping = cast('dict[str, object]', candidate)
+        for key in ('presentation_id', 'presentationId', 'file_id', 'id'):
             value = mapping.get(key)
             if isinstance(value, str) and value:
                 return value
-        raise ValueError("dict candidate has no presentation id")
-    raise ValueError("presentation_id must be a string or a presentation dict")
+        raise ValueError('dict candidate has no presentation id')
+    raise ValueError('presentation_id must be a string or a presentation dict')
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="google_slides")
+@toolset(prefix='google_slides')
 class GoogleSlidesToolSet:
     """A connector for the Google Slides API v1.
 
@@ -46,35 +46,35 @@ class GoogleSlidesToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="google_slides",
-        display_name="Google Slides",
-        version="0.1.0",
-        description="Create and edit Google Slides presentations.",
+        name='google_slides',
+        display_name='Google Slides',
+        version='0.1.0',
+        description='Create and edit Google Slides presentations.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "https://www.googleapis.com/auth/presentations": "Full Slides access.",
-            "https://www.googleapis.com/auth/presentations.readonly": "Read-only Slides access.",
+            'https://www.googleapis.com/auth/presentations': 'Full Slides access.',
+            'https://www.googleapis.com/auth/presentations.readonly': 'Read-only Slides access.',
         },
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developers.google.com/slides/api/reference/rest",
-        homepage_url="https://slides.google.com/",
-        tags=("slides", "google-workspace"),
+        documentation_url='https://developers.google.com/slides/api/reference/rest',
+        homepage_url='https://slides.google.com/',
+        tags=('slides', 'google-workspace'),
     )
 
     def __init__(
         self,
         *,
         token: TokenSource,
-        base_url: str = "https://slides.googleapis.com",
+        base_url: str = 'https://slides.googleapis.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=make_bearer_auth(token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -91,7 +91,7 @@ class GoogleSlidesToolSet:
         ``masters[*]``, ``layouts[*]``.
         """
         presentation_id = _extract_pres_id(presentation_id)
-        return self._client.get(f"/v1/presentations/{presentation_id}").json()
+        return self._client.get(f'/v1/presentations/{presentation_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_page(self, presentation_id: Any, page_object_id: str) -> dict[str, Any]:
@@ -103,9 +103,9 @@ class GoogleSlidesToolSet:
         """
         presentation_id = _extract_pres_id(presentation_id)
         if not page_object_id:
-            raise ValueError("page_object_id must be non-empty")
+            raise ValueError('page_object_id must be non-empty')
         return self._client.get(
-            f"/v1/presentations/{presentation_id}/pages/{page_object_id}",
+            f'/v1/presentations/{presentation_id}/pages/{page_object_id}',
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -127,16 +127,16 @@ class GoogleSlidesToolSet:
         """
         presentation_id = _extract_pres_id(presentation_id)
         if not page_object_id:
-            raise ValueError("page_object_id must be non-empty")
-        if mime_type is not None and mime_type != "PNG":
+            raise ValueError('page_object_id must be non-empty')
+        if mime_type is not None and mime_type != 'PNG':
             raise ValueError("mime_type must be 'PNG' (the only valid ThumbnailMimeType)")
         params: dict[str, Any] = {}
         if thumbnail_size is not None:
-            params["thumbnailProperties.thumbnailSize"] = thumbnail_size
+            params['thumbnailProperties.thumbnailSize'] = thumbnail_size
         if mime_type is not None:
-            params["thumbnailProperties.mimeType"] = mime_type
+            params['thumbnailProperties.mimeType'] = mime_type
         return self._client.get(
-            f"/v1/presentations/{presentation_id}/pages/{page_object_id}/thumbnail",
+            f'/v1/presentations/{presentation_id}/pages/{page_object_id}/thumbnail',
             params=params or None,
         ).json()
 
@@ -148,8 +148,8 @@ class GoogleSlidesToolSet:
         ``create_slide`` / ``insert_text`` / ``batch_update`` to populate it.
         """
         if not title:
-            raise ValueError("title must be a non-empty string")
-        return self._client.post("/v1/presentations", json={"title": title}).json()
+            raise ValueError('title must be a non-empty string')
+        return self._client.post('/v1/presentations', json={'title': title}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def batch_update(
@@ -166,10 +166,10 @@ class GoogleSlidesToolSet:
         """
         presentation_id = _extract_pres_id(presentation_id)
         if not requests:
-            raise ValueError("requests must be non-empty")
+            raise ValueError('requests must be non-empty')
         return self._client.post(
-            f"/v1/presentations/{presentation_id}:batchUpdate",
-            json={"requests": requests},
+            f'/v1/presentations/{presentation_id}:batchUpdate',
+            json={'requests': requests},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -190,12 +190,12 @@ class GoogleSlidesToolSet:
         """
         request: dict[str, Any] = {}
         if insertion_index is not None:
-            request["insertionIndex"] = insertion_index
+            request['insertionIndex'] = insertion_index
         if layout is not None:
-            request["slideLayoutReference"] = {"predefinedLayout": layout}
+            request['slideLayoutReference'] = {'predefinedLayout': layout}
         if object_id is not None:
-            request["objectId"] = object_id
-        return self.batch_update(presentation_id, [{"createSlide": request}])
+            request['objectId'] = object_id
+        return self.batch_update(presentation_id, [{'createSlide': request}])
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def insert_text(
@@ -212,15 +212,15 @@ class GoogleSlidesToolSet:
         is the shape's ``objectId`` from the presentation.
         """
         if not object_id or not text:
-            raise ValueError("object_id and text must be non-empty")
+            raise ValueError('object_id and text must be non-empty')
         return self.batch_update(
             presentation_id,
             [
                 {
-                    "insertText": {
-                        "objectId": object_id,
-                        "text": text,
-                        "insertionIndex": insertion_index,
+                    'insertText': {
+                        'objectId': object_id,
+                        'text': text,
+                        'insertionIndex': insertion_index,
                     }
                 }
             ],
@@ -240,14 +240,14 @@ class GoogleSlidesToolSet:
         Accepts a raw presentation ID or a presentation dict.
         """
         if not find:
-            raise ValueError("find must be a non-empty string")
+            raise ValueError('find must be a non-empty string')
         return self.batch_update(
             presentation_id,
             [
                 {
-                    "replaceAllText": {
-                        "containsText": {"text": find, "matchCase": match_case},
-                        "replaceText": replace,
+                    'replaceAllText': {
+                        'containsText': {'text': find, 'matchCase': match_case},
+                        'replaceText': replace,
                     }
                 }
             ],
@@ -265,8 +265,8 @@ class GoogleSlidesToolSet:
         ``presentation_id``.
         """
         if not object_id:
-            raise ValueError("object_id must be a non-empty string")
+            raise ValueError('object_id must be a non-empty string')
         return self.batch_update(
             presentation_id,
-            [{"deleteObject": {"objectId": object_id}}],
+            [{'deleteObject': {'objectId': object_id}}],
         )

@@ -20,43 +20,43 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _WORKER_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "worker_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "email": {"type": "string"},
-        "title": {"type": "string"},
-        "hire_date": {"type": "string"},
-        "is_active": {"type": "boolean"},
-        "worker_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'worker_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'email': {'type': 'string'},
+        'title': {'type': 'string'},
+        'hire_date': {'type': 'string'},
+        'is_active': {'type': 'boolean'},
+        'worker_id': {'type': 'string'},
     },
-    "required": ["worker_ref", "name"],
+    'required': ['worker_ref', 'name'],
 }
 
 _CANDIDATE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "candidate_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "email": {"type": "string"},
-        "status": {"type": "string"},
-        "application_date": {"type": "string"},
-        "candidate_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'candidate_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'email': {'type': 'string'},
+        'status': {'type': 'string'},
+        'application_date': {'type': 'string'},
+        'candidate_id': {'type': 'string'},
     },
-    "required": ["candidate_ref", "name"],
+    'required': ['candidate_ref', 'name'],
 }
 
 _JOB_POSTING_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "job_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "location": {"type": "string"},
-        "posted_at": {"type": "string"},
-        "status": {"type": "string"},
-        "job_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'job_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'location': {'type': 'string'},
+        'posted_at': {'type': 'string'},
+        'status': {'type': 'string'},
+        'job_id': {'type': 'string'},
     },
-    "required": ["job_ref", "title"],
+    'required': ['job_ref', 'title'],
 }
 
 
@@ -66,24 +66,24 @@ _JOB_POSTING_SUMMARY: dict[str, JsonValue] = {
 def _listing(item_key: str, item_schema: dict[str, JsonValue]) -> dict[str, JsonValue]:
     """Build a ``{<item_key>: [...], total: int | null}`` schema."""
     return {
-        "type": "object",
-        "properties": {
-            item_key: {"type": "array", "items": item_schema},
-            "total": {"type": ["integer", "null"]},
+        'type': 'object',
+        'properties': {
+            item_key: {'type': 'array', 'items': item_schema},
+            'total': {'type': ['integer', 'null']},
         },
-        "required": [item_key],
+        'required': [item_key],
     }
 
 
 # MARK: - Tool output schemas
 
-LIST_WORKERS_OUTPUT: dict[str, JsonValue] = _listing("workers", _WORKER_SUMMARY)
-LIST_JOB_POSTINGS_OUTPUT: dict[str, JsonValue] = _listing("jobs", _JOB_POSTING_SUMMARY)
-LIST_CANDIDATES_OUTPUT: dict[str, JsonValue] = _listing("candidates", _CANDIDATE_SUMMARY)
+LIST_WORKERS_OUTPUT: dict[str, JsonValue] = _listing('workers', _WORKER_SUMMARY)
+LIST_JOB_POSTINGS_OUTPUT: dict[str, JsonValue] = _listing('jobs', _JOB_POSTING_SUMMARY)
+LIST_CANDIDATES_OUTPUT: dict[str, JsonValue] = _listing('candidates', _CANDIDATE_SUMMARY)
 
 
 __all__ = [
-    "LIST_CANDIDATES_OUTPUT",
-    "LIST_JOB_POSTINGS_OUTPUT",
-    "LIST_WORKERS_OUTPUT",
+    'LIST_CANDIDATES_OUTPUT',
+    'LIST_JOB_POSTINGS_OUTPUT',
+    'LIST_WORKERS_OUTPUT',
 ]

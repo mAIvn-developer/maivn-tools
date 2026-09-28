@@ -35,7 +35,7 @@ class WeeklyReportsToolSet:
         ...
 
 
-agent = Agent(model="auto")
+agent = Agent(name="weekly-reports", model="auto")
 agent.add_toolset(WeeklyReportsToolSet("/srv/warehouse.db"))
 ```
 
@@ -77,13 +77,11 @@ Use this checklist when creating or reviewing a toolset:
 - **Write tools accept natural read results when safe.** If a read tool returns
   a record with `record_id`, a write tool can accept either the raw ID or that
   record shape when the mapping is obvious and non-dangerous.
-- **Structured outputs are first class.** Use SDK return-type inference for
-  precise return annotations, `@tool_output(...)` for generic return types that
-  still have a stable public result shape, and app-side `ToolOverride` when the
-  app needs to replace a provider-owned result contract.
-- **Provider code stays generic.** Use SDK `ToolOverride` registration options
-  for app-specific names, descriptions, default args, dependencies, or
-  final-tool behavior.
+- **Output schemas are explicit.** Use `@tool_output(...)` for a stable result
+  schema. Ordinary Pydantic return annotations are not inferred by the current SDK.
+- **Provider code stays generic.** Register application wrappers for different
+  defaults, result handling, or dependencies. Current `add_tool` and `add_toolset`
+  do not accept `ToolOverride` arguments.
 
 For example, a search tool should favor compact summaries:
 
@@ -163,7 +161,7 @@ class Configured: ...
 
 Marks an individual method as a tool. Two forms:
 
-```python
+```text
 class Example:
     @toolify
     def simple(self) -> None:
@@ -185,7 +183,7 @@ class Example:
 ```
 
 `@toolify` coexists with the existing dependency decorators
-(`@depends_on_tool`, `@depends_on_agent`, `@compose_artifact_policy`, etc.).
+(`@depends_on_tool`, `@depends_on_agent`, `@compose_argument_policy`, etc.).
 Order doesn't matter — each decorator attaches its own attribute and the
 dependency collector reads them all at registration time.
 
@@ -229,10 +227,9 @@ class RecordsToolSet:
         ...
 ```
 
-When the return annotation is already precise, prefer the annotation. When a
-specific application needs a different contract than the provider connector
-declares, pass `ToolOverride(output_schema=...)` at registration time instead
-of changing the provider toolset.
+Use an explicit output decorator even for ordinary Pydantic return annotations.
+For a different application contract, decorate a wrapper function with
+`@tool_output(...)`. `ToolOverride` registration is not supported by the current SDK.
 
 ## Registration
 
@@ -242,7 +239,7 @@ agent.add_toolset(other_instance)   # multiple toolsets accumulate
 ```
 
 The SDK walks the class, finds every `@toolify`-marked method, and creates
-one `MethodTool` per method bound to the instance. Tools are appended to
+one `ToolMetadata` entry per method bound to the instance. Tools are appended to
 `agent.tools` so anything that inspects the agent's tool list sees them
 the same way it sees free-callable tools.
 
@@ -252,7 +249,7 @@ the same way it sees free-callable tools.
 ships its **complete tool surface**; filters let callers narrow that
 surface to just what a given agent needs.
 
-```python
+```text
 agent.add_toolset(instance, *,
     include=None,        # list[str]: only these method names register
     exclude=None,        # list[str]: skip these method names
@@ -307,7 +304,7 @@ agent.add_toolset(
 
 **By user-defined tags:**
 
-```python
+```text
 @toolset(prefix="dispatch")
 class DispatchToolSet:
     @toolify(tags=["email"])
@@ -342,8 +339,8 @@ method's user-supplied tags with values derived from `permissions` and
 
 That's why `include_tags=["read"]` and `exclude_tags=["destructive"]`
 work without you having to add those strings to every method's `tags=`
-list manually. The auto-tags are filter-only — the `MethodTool.tags`
-attribute still reflects exactly what you declared.
+list manually. The registered `ToolMetadata.tags` includes those derived tags as well as
+class and method tags.
 
 ### Names use the *post-resolution* method name
 
@@ -364,23 +361,15 @@ with a clear hint that filters dropped everything. Set
 
 ## Tool inspection
 
-Each `MethodTool` produced by `add_toolset` carries:
+Each registered `ToolMetadata` entry exposes its name, description, input/output
+schemas, tags, metadata, and callable `target`. The target is the bound method;
+its instance binding is preserved. Permission metadata is a list of lower-case
+permission names, not the original `PermissionSet` object.
 
-| Attribute | Source |
-| --- | --- |
-| `name` | `f"{PREFIX}_{method_name}"` (prefix uppercased, joined with `_`) or `@toolify(name=...)` override. |
-| `description` | The method's docstring or `@toolify(description=...)`. |
-| `qualified_name` | `"OwnerClass.method_name"` — used in audit logs. |
-| `owner` | The toolset instance. Useful for cleanup; the runtime never inspects it. |
-| `func` | The bound method (`instance.method`). |
-| `metadata["permissions"]` | `PermissionSet` from `@toolify(permissions=...)`. |
-| `metadata["destructive"]` | `True` when `@toolify(destructive=True)`. |
-| `tags` | Tags merged from `@toolset(tags=...)` + `@toolify(tags=...)`. |
-| `dependencies` | Resolved from any stacked `@depends_on_*` decorators. |
-
-The SDK's runtime treats `MethodTool` exactly like `FunctionTool` for
-execution — bound methods invoke just like free callables, so `self`
-binding is preserved without any custom logic.
+```python
+for tool in agent.list_tools():
+    print(tool.name, tool.tags, tool.metadata)
+```
 
 ## What does NOT become a tool
 
@@ -394,7 +383,8 @@ binding is preserved without any custom logic.
 
 ## Errors at registration
 
-`add_toolset` raises clear errors before any tool is registered:
+`add_toolset` can raise during registration. It appends methods as it goes, so
+a later error can leave earlier methods registered:
 
 | Condition | Exception |
 | --- | --- |
@@ -402,7 +392,7 @@ binding is preserved without any custom logic.
 | No `@toolify`-marked methods (with `require_marker=True`) | `ValueError` |
 | All methods removed by filters (with `require_marker=True`) | `ValueError` (mentions filters) |
 | Two methods resolve to the same tool name | `ValueError` |
-| Method missing a docstring and no `description=` override | `ValueError` from `ToolifyService` |
+| Method missing a docstring and no `description=` override | Uses `Invoke <tool_name>.` as the description |
 
 ## Builder-style connectors
 

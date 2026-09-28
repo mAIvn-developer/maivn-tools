@@ -29,7 +29,7 @@ from .output_schemas import (
 _LINK_HEADER_ENTRY = re.compile(r'<(?P<url>[^>]+)>\s*;\s*rel="(?P<rel>[^"]+)"')
 
 
-@toolset(prefix="okta")
+@toolset(prefix='okta')
 class OktaToolSet:
     """A connector for the Okta Management API.
 
@@ -39,15 +39,15 @@ class OktaToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="okta",
-        display_name="Okta",
-        version="0.1.0",
-        description="Users, groups, applications, factors, and system logs.",
+        name='okta',
+        display_name='Okta',
+        version='0.1.0',
+        description='Users, groups, applications, factors, and system logs.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developer.okta.com/docs/reference/api/",
-        homepage_url="https://www.okta.com/",
-        tags=("identity", "sso", "auth"),
+        documentation_url='https://developer.okta.com/docs/reference/api/',
+        homepage_url='https://www.okta.com/',
+        tags=('identity', 'sso', 'auth'),
     )
 
     def __init__(
@@ -59,15 +59,15 @@ class OktaToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not org_url or not api_token:
-            raise ValueError("org_url and api_token are required")
+            raise ValueError('org_url and api_token are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=org_url.rstrip("/"),
-            auth=ApiKeyAuth(api_token, header="Authorization", prefix="SSWS"),
+            base_url=org_url.rstrip('/'),
+            auth=ApiKeyAuth(api_token, header='Authorization', prefix='SSWS'),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -84,27 +84,27 @@ class OktaToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        profile_value: Any = user.get("profile")
+        profile_value: Any = user.get('profile')
         profile: dict[str, Any] = (
-            cast("dict[str, Any]", profile_value) if isinstance(profile_value, dict) else {}
+            cast('dict[str, Any]', profile_value) if isinstance(profile_value, dict) else {}
         )
         summary: dict[str, Any] = {
-            "user_ref": f"user_{index}",
-            "email": profile.get("email", "") or profile.get("login", ""),
-            "name": " ".join(
+            'user_ref': f'user_{index}',
+            'email': profile.get('email', '') or profile.get('login', ''),
+            'name': ' '.join(
                 part
                 for part in (
-                    profile.get("firstName", ""),
-                    profile.get("lastName", ""),
+                    profile.get('firstName', ''),
+                    profile.get('lastName', ''),
                 )
                 if part
             ).strip(),
-            "login": profile.get("login", ""),
-            "status": user.get("status", ""),
-            "last_login": user.get("lastLogin", ""),
+            'login': profile.get('login', ''),
+            'status': user.get('status', ''),
+            'last_login': user.get('lastLogin', ''),
         }
         if include_ids:
-            summary["user_id"] = user.get("id", "")
+            summary['user_id'] = user.get('id', '')
         return summary
 
     @staticmethod
@@ -114,18 +114,18 @@ class OktaToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        profile_value: Any = group.get("profile")
+        profile_value: Any = group.get('profile')
         profile: dict[str, Any] = (
-            cast("dict[str, Any]", profile_value) if isinstance(profile_value, dict) else {}
+            cast('dict[str, Any]', profile_value) if isinstance(profile_value, dict) else {}
         )
         summary: dict[str, Any] = {
-            "group_ref": f"group_{index}",
-            "name": profile.get("name", ""),
-            "description": profile.get("description", ""),
-            "type": group.get("type", ""),
+            'group_ref': f'group_{index}',
+            'name': profile.get('name', ''),
+            'description': profile.get('description', ''),
+            'type': group.get('type', ''),
         }
         if include_ids:
-            summary["group_id"] = group.get("id", "")
+            summary['group_id'] = group.get('id', '')
         return summary
 
     @staticmethod
@@ -136,14 +136,14 @@ class OktaToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "app_ref": f"app_{index}",
-            "name": app.get("name", ""),
-            "label": app.get("label", ""),
-            "status": app.get("status", ""),
-            "sign_on_mode": app.get("signOnMode", ""),
+            'app_ref': f'app_{index}',
+            'name': app.get('name', ''),
+            'label': app.get('label', ''),
+            'status': app.get('status', ''),
+            'sign_on_mode': app.get('signOnMode', ''),
         }
         if include_ids:
-            summary["app_id"] = app.get("id", "")
+            summary['app_id'] = app.get('id', '')
         return summary
 
     @staticmethod
@@ -152,15 +152,15 @@ class OktaToolSet:
         if isinstance(user_or_id, str) and user_or_id:
             return user_or_id
         if isinstance(user_or_id, dict):
-            user_dict: dict[str, Any] = cast("dict[str, Any]", user_or_id)
-            for key in ("user_id", "id"):
+            user_dict: dict[str, Any] = cast('dict[str, Any]', user_or_id)
+            for key in ('user_id', 'id'):
                 value: Any = user_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
-            profile_value: Any = user_dict.get("profile")
+            profile_value: Any = user_dict.get('profile')
             if isinstance(profile_value, dict):
-                profile: dict[str, Any] = cast("dict[str, Any]", profile_value)
-                login: Any = profile.get("login")
+                profile: dict[str, Any] = cast('dict[str, Any]', profile_value)
+                login: Any = profile.get('login')
                 if isinstance(login, str) and login:
                     return login
         raise ValueError("expected a user id string or a user dict with 'id'")
@@ -168,14 +168,14 @@ class OktaToolSet:
     @staticmethod
     def _coerce_user_list(payload: Any) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         if isinstance(payload, list):
-            payload_list: list[Any] = cast("list[Any]", payload)
+            payload_list: list[Any] = cast('list[Any]', payload)
             return [u for u in payload_list if isinstance(u, dict)], {}
         if isinstance(payload, dict):
-            payload_dict: dict[str, Any] = cast("dict[str, Any]", payload)
-            users_field: Iterable[Any] = payload_dict.get("users", [])
+            payload_dict: dict[str, Any] = cast('dict[str, Any]', payload)
+            users_field: Iterable[Any] = payload_dict.get('users', [])
             return (
                 [u for u in users_field if isinstance(u, dict)],
-                {k: v for k, v in payload_dict.items() if k != "users"},
+                {k: v for k, v in payload_dict.items() if k != 'users'},
             )
         return [], {}
 
@@ -187,14 +187,14 @@ class OktaToolSet:
         ``rel="next"`` URL (never in the body). Returns the ``after`` query
         param from that URL, or ``None`` when there is no next page.
         """
-        link = response.header("Link")
+        link = response.header('Link')
         if not link:
             return None
         for match in _LINK_HEADER_ENTRY.finditer(link):
-            if match.group("rel") != "next":
+            if match.group('rel') != 'next':
                 continue
-            query = urllib.parse.urlparse(match.group("url")).query
-            after = urllib.parse.parse_qs(query).get("after")
+            query = urllib.parse.urlparse(match.group('url')).query
+            after = urllib.parse.parse_qs(query).get('after')
             if after:
                 return after[0]
         return None
@@ -223,25 +223,25 @@ class OktaToolSet:
         ``after`` for pagination.
         """
         if limit < 1 or limit > 200:
-            raise ValueError("limit must be between 1 and 200")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 200')
+        params: dict[str, Any] = {'limit': limit}
         if q is not None:
-            params["q"] = q
+            params['q'] = q
         if filter is not None:
-            params["filter"] = filter
+            params['filter'] = filter
         if search is not None:
-            params["search"] = search
+            params['search'] = search
         if after is not None:
-            params["after"] = after
-        response = self._client.get("/api/v1/users", params=params)
+            params['after'] = after
+        response = self._client.get('/api/v1/users', params=params)
         raw_users, wrapper = self._coerce_user_list(response.json())
         summaries = [
             self._user_summary(user, index=index, include_ids=include_ids)
             for index, user in enumerate(raw_users, start=1)
         ]
-        result: dict[str, Any] = {"users": summaries}
+        result: dict[str, Any] = {'users': summaries}
         result.update(wrapper)
-        result["next_after"] = self._next_after(response)
+        result['next_after'] = self._next_after(response)
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -253,8 +253,8 @@ class OktaToolSet:
         the full profile.
         """
         if not user_id:
-            raise ValueError("user_id is required")
-        return self._client.get(f"/api/v1/users/{user_id}").json()
+            raise ValueError('user_id is required')
+        return self._client.get(f'/api/v1/users/{user_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_user(
@@ -272,15 +272,15 @@ class OktaToolSet:
         the email and group assignments with the user before calling.
         """
         if not profile:
-            raise ValueError("profile is required")
-        body: dict[str, Any] = {"profile": profile}
+            raise ValueError('profile is required')
+        body: dict[str, Any] = {'profile': profile}
         if credentials is not None:
-            body["credentials"] = credentials
+            body['credentials'] = credentials
         if group_ids is not None:
-            body["groupIds"] = group_ids
+            body['groupIds'] = group_ids
         return self._client.post(
-            "/api/v1/users",
-            params={"activate": str(activate).lower()},
+            '/api/v1/users',
+            params={'activate': str(activate).lower()},
             json=body,
         ).json()
 
@@ -300,12 +300,12 @@ class OktaToolSet:
         resolved_id = self._resolve_user_id(user_id)
         body: dict[str, Any] = {}
         if profile is not None:
-            body["profile"] = profile
+            body['profile'] = profile
         if credentials is not None:
-            body["credentials"] = credentials
+            body['credentials'] = credentials
         if not body:
-            raise ValueError("at least one update field is required")
-        return self._client.post(f"/api/v1/users/{resolved_id}", json=body).json()
+            raise ValueError('at least one update field is required')
+        return self._client.post(f'/api/v1/users/{resolved_id}', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
     def suspend_user(self, user_id: Any) -> dict[str, Any]:
@@ -315,8 +315,8 @@ class OktaToolSet:
         user. Returns ``{"status": ..., "suspended": True}``.
         """
         resolved_id = self._resolve_user_id(user_id)
-        response = self._client.post(f"/api/v1/users/{resolved_id}/lifecycle/suspend")
-        return {"status": response.status, "suspended": True}
+        response = self._client.post(f'/api/v1/users/{resolved_id}/lifecycle/suspend')
+        return {'status': response.status, 'suspended': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def unsuspend_user(self, user_id: Any) -> dict[str, Any]:
@@ -325,8 +325,8 @@ class OktaToolSet:
         Returns ``{"status": ..., "unsuspended": True}``.
         """
         resolved_id = self._resolve_user_id(user_id)
-        response = self._client.post(f"/api/v1/users/{resolved_id}/lifecycle/unsuspend")
-        return {"status": response.status, "unsuspended": True}
+        response = self._client.post(f'/api/v1/users/{resolved_id}/lifecycle/unsuspend')
+        return {'status': response.status, 'unsuspended': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def deactivate_user(self, user_id: Any) -> dict[str, Any]:
@@ -338,8 +338,8 @@ class OktaToolSet:
         ``{"status": ..., "deactivated": True}``.
         """
         resolved_id = self._resolve_user_id(user_id)
-        response = self._client.post(f"/api/v1/users/{resolved_id}/lifecycle/deactivate")
-        return {"status": response.status, "deactivated": True}
+        response = self._client.post(f'/api/v1/users/{resolved_id}/lifecycle/deactivate')
+        return {'status': response.status, 'deactivated': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_GROUPS_OUTPUT)
@@ -360,18 +360,18 @@ class OktaToolSet:
         them.
         """
         if limit < 1 or limit > 200:
-            raise ValueError("limit must be between 1 and 200")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 200')
+        params: dict[str, Any] = {'limit': limit}
         if q is not None:
-            params["q"] = q
+            params['q'] = q
         if filter is not None:
-            params["filter"] = filter
+            params['filter'] = filter
         if after is not None:
-            params["after"] = after
-        response = self._client.get("/api/v1/groups", params=params)
+            params['after'] = after
+        response = self._client.get('/api/v1/groups', params=params)
         payload: Any = response.json()
         raw_groups: list[dict[str, Any]] = (
-            [g for g in cast("list[Any]", payload) if isinstance(g, dict)]
+            [g for g in cast('list[Any]', payload) if isinstance(g, dict)]
             if isinstance(payload, list)
             else []
         )
@@ -379,7 +379,7 @@ class OktaToolSet:
             self._group_summary(group, index=index, include_ids=include_ids)
             for index, group in enumerate(raw_groups, start=1)
         ]
-        return {"groups": summaries, "next_after": self._next_after(response)}
+        return {'groups': summaries, 'next_after': self._next_after(response)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def add_user_to_group(
@@ -395,10 +395,10 @@ class OktaToolSet:
         Returns ``{"status": ..., "assigned": True}``.
         """
         if not group_id:
-            raise ValueError("group_id is required")
+            raise ValueError('group_id is required')
         resolved_id = self._resolve_user_id(user_id)
-        response = self._client.put(f"/api/v1/groups/{group_id}/users/{resolved_id}")
-        return {"status": response.status, "assigned": True}
+        response = self._client.put(f'/api/v1/groups/{group_id}/users/{resolved_id}')
+        return {'status': response.status, 'assigned': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def remove_user_from_group(
@@ -413,10 +413,10 @@ class OktaToolSet:
         Returns ``{"status": ..., "removed": True}``.
         """
         if not group_id:
-            raise ValueError("group_id is required")
+            raise ValueError('group_id is required')
         resolved_id = self._resolve_user_id(user_id)
-        response = self._client.delete(f"/api/v1/groups/{group_id}/users/{resolved_id}")
-        return {"status": response.status, "removed": True}
+        response = self._client.delete(f'/api/v1/groups/{group_id}/users/{resolved_id}')
+        return {'status': response.status, 'removed': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_APPLICATIONS_OUTPUT)
@@ -435,16 +435,16 @@ class OktaToolSet:
         omitted by default. Use ``after`` for pagination.
         """
         if limit < 1 or limit > 200:
-            raise ValueError("limit must be between 1 and 200")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('limit must be between 1 and 200')
+        params: dict[str, Any] = {'limit': limit}
         if q is not None:
-            params["q"] = q
+            params['q'] = q
         if after is not None:
-            params["after"] = after
-        response = self._client.get("/api/v1/apps", params=params)
+            params['after'] = after
+        response = self._client.get('/api/v1/apps', params=params)
         payload: Any = response.json()
         raw_apps: list[dict[str, Any]] = (
-            [a for a in cast("list[Any]", payload) if isinstance(a, dict)]
+            [a for a in cast('list[Any]', payload) if isinstance(a, dict)]
             if isinstance(payload, list)
             else []
         )
@@ -452,7 +452,7 @@ class OktaToolSet:
             self._app_summary(app, index=index, include_ids=include_ids)
             for index, app in enumerate(raw_apps, start=1)
         ]
-        return {"apps": summaries, "next_after": self._next_after(response)}
+        return {'apps': summaries, 'next_after': self._next_after(response)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_factors(self, user_id: str) -> dict[str, Any]:
@@ -462,8 +462,8 @@ class OktaToolSet:
         ``factorType``, ``provider``, ``status``).
         """
         if not user_id:
-            raise ValueError("user_id is required")
-        return self._client.get(f"/api/v1/users/{user_id}/factors").json()
+            raise ValueError('user_id is required')
+        return self._client.get(f'/api/v1/users/{user_id}/factors').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_system_logs(
@@ -482,14 +482,14 @@ class OktaToolSet:
         sign-ins, MFA failures, and admin changes. Pass ``since`` / ``until``
         as ISO-8601 timestamps and ``after`` for pagination.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if since is not None:
-            params["since"] = since
+            params['since'] = since
         if until is not None:
-            params["until"] = until
+            params['until'] = until
         if filter is not None:
-            params["filter"] = filter
+            params['filter'] = filter
         if after is not None:
-            params["after"] = after
-        response = self._client.get("/api/v1/logs", params=params)
-        return {"events": response.json(), "next_after": self._next_after(response)}
+            params['after'] = after
+        response = self._client.get('/api/v1/logs', params=params)
+        return {'events': response.json(), 'next_after': self._next_after(response)}

@@ -16,34 +16,34 @@ from pydantic import JsonValue
 # MARK: - Entity summary (mirrors the connector's ``_employee_summary`` builder)
 
 _EMPLOYEE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "employee_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "email": {"type": "string"},
-        "title": {"type": "string"},
-        "department": {"type": "string"},
-        "hire_date": {"type": "string"},
-        "status": {"type": "string"},
-        "employee_id": {"type": ["string", "integer"]},
+    'type': 'object',
+    'properties': {
+        'employee_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'email': {'type': 'string'},
+        'title': {'type': 'string'},
+        'department': {'type': 'string'},
+        'hire_date': {'type': 'string'},
+        'status': {'type': 'string'},
+        'employee_id': {'type': ['string', 'integer']},
     },
-    "required": ["employee_ref", "name"],
+    'required': ['employee_ref', 'name'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_EMPLOYEES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "employees": {"type": "array", "items": _EMPLOYEE_SUMMARY},
-        "totalAvailable": {"type": "integer"},
-        "fields": {"type": ["array", "object", "null"]},
+    'type': 'object',
+    'properties': {
+        'employees': {'type': 'array', 'items': _EMPLOYEE_SUMMARY},
+        'totalAvailable': {'type': 'integer'},
+        'fields': {'type': ['array', 'object', 'null']},
     },
-    "required": ["employees"],
+    'required': ['employees'],
 }
 
 
 __all__ = [
-    "LIST_EMPLOYEES_OUTPUT",
+    'LIST_EMPLOYEES_OUTPUT',
 ]

@@ -55,7 +55,7 @@ def _select_id_from_value(
                     return resolved
         return None
     if isinstance(value, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", value)
+        sequence = cast('list[Any] | tuple[Any, ...]', value)
         for item in sequence:
             item_value: Any = item
             resolved = _select_id_from_value(item_value, keys)
@@ -64,7 +64,7 @@ def _select_id_from_value(
     return None
 
 
-@toolset(prefix="ibkr")
+@toolset(prefix='ibkr')
 class InteractiveBrokersToolSet:
     """A connector for IBKR Client Portal Web API.
 
@@ -76,30 +76,30 @@ class InteractiveBrokersToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="interactive_brokers",
-        display_name="Interactive Brokers",
-        version="0.1.0",
-        description="Accounts, portfolio, orders, market data via Client Portal Web API.",
+        name='interactive_brokers',
+        display_name='Interactive Brokers',
+        version='0.1.0',
+        description='Accounts, portfolio, orders, market data via Client Portal Web API.',
         auth_modes=(AuthMode.CUSTOM,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://www.interactivebrokers.com/api/doc.html",
-        homepage_url="https://www.interactivebrokers.com/",
-        tags=("trading", "brokerage"),
+        documentation_url='https://www.interactivebrokers.com/api/doc.html',
+        homepage_url='https://www.interactivebrokers.com/',
+        tags=('trading', 'brokerage'),
     )
 
     def __init__(
         self,
         *,
-        base_url: str = "https://localhost:5000",
+        base_url: str = 'https://localhost:5000',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=NoAuth(),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -115,7 +115,7 @@ class InteractiveBrokersToolSet:
         bool, "connected": bool, "competing": bool, "fail": str,
         "MAC": ...}`` payload.
         """
-        return self._client.post("/v1/api/iserver/auth/status", json={}).json()
+        return self._client.post('/v1/api/iserver/auth/status', json={}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def reauthenticate(self) -> dict[str, Any]:
@@ -124,7 +124,7 @@ class InteractiveBrokersToolSet:
         Returns the gateway's ack message. Use when
         :meth:`authentication_status` reports stale session.
         """
-        return self._client.post("/v1/api/iserver/reauthenticate", json={}).json()
+        return self._client.post('/v1/api/iserver/reauthenticate', json={}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_accounts(self) -> dict[str, Any]:
@@ -134,7 +134,7 @@ class InteractiveBrokersToolSet:
         (the value other tools call ``account_id``), ``accountVan``,
         ``displayName``, and ``type`` (e.g. ``"DEMO"`` for paper).
         """
-        return self._client.get("/v1/api/portfolio/accounts").json()
+        return self._client.get('/v1/api/portfolio/accounts').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_account_summary(self, account_id: str) -> dict[str, Any]:
@@ -144,9 +144,9 @@ class InteractiveBrokersToolSet:
         liquidation values for a specific account.
         """
         if not account_id:
-            raise ValueError("account_id must be a non-empty string")
+            raise ValueError('account_id must be a non-empty string')
         return self._client.get(
-            f"/v1/api/portfolio/{account_id}/summary",
+            f'/v1/api/portfolio/{account_id}/summary',
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -173,38 +173,38 @@ class InteractiveBrokersToolSet:
         the unmodified IBKR response.
         """
         if not account_id:
-            raise ValueError("account_id must be a non-empty string")
+            raise ValueError('account_id must be a non-empty string')
         payload: Any = self._client.get(
-            f"/v1/api/portfolio/{account_id}/positions/{page_id}",
+            f'/v1/api/portfolio/{account_id}/positions/{page_id}',
         ).json()
         if raw:
             return payload
-        items: list[Any] = cast("list[Any]", payload) if isinstance(payload, list) else []
+        items: list[Any] = cast('list[Any]', payload) if isinstance(payload, list) else []
         summaries: list[dict[str, Any]] = []
         for index, position in enumerate(items, start=1):
             if not isinstance(position, dict):
                 continue
             entry = cast(dict[Any, Any], position)
             summary: dict[str, Any] = {
-                "position_ref": f"position_{index}",
-                "symbol": entry.get("contractDesc") or entry.get("ticker", ""),
-                "position": entry.get("position"),
-                "mkt_value": entry.get("mktValue"),
-                "mkt_price": entry.get("mktPrice"),
-                "avg_cost": entry.get("avgCost"),
-                "unrealized_pnl": entry.get("unrealizedPnl"),
-                "asset_class": entry.get("assetClass", ""),
-                "currency": entry.get("currency", ""),
-                "exchange": entry.get("listingExchange", ""),
+                'position_ref': f'position_{index}',
+                'symbol': entry.get('contractDesc') or entry.get('ticker', ''),
+                'position': entry.get('position'),
+                'mkt_value': entry.get('mktValue'),
+                'mkt_price': entry.get('mktPrice'),
+                'avg_cost': entry.get('avgCost'),
+                'unrealized_pnl': entry.get('unrealizedPnl'),
+                'asset_class': entry.get('assetClass', ''),
+                'currency': entry.get('currency', ''),
+                'exchange': entry.get('listingExchange', ''),
             }
             if include_ids:
-                summary["conid"] = entry.get("conid")
+                summary['conid'] = entry.get('conid')
             summaries.append(summary)
         return {
-            "positions": summaries,
-            "count": len(summaries),
-            "page_id": page_id,
-            "account_id": account_id,
+            'positions': summaries,
+            'count': len(summaries),
+            'page_id': page_id,
+            'account_id': account_id,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -223,12 +223,12 @@ class InteractiveBrokersToolSet:
         :meth:`market_data_snapshot` and order tools.
         """
         if not symbol:
-            raise ValueError("symbol must be a non-empty string")
-        body: dict[str, Any] = {"symbol": symbol, "name": name}
+            raise ValueError('symbol must be a non-empty string')
+        body: dict[str, Any] = {'symbol': symbol, 'name': name}
         if sec_type is not None:
-            body["secType"] = sec_type
+            body['secType'] = sec_type
         return self._client.post(
-            "/v1/api/iserver/secdef/search",
+            '/v1/api/iserver/secdef/search',
             json=body,
         ).json()
 
@@ -247,12 +247,12 @@ class InteractiveBrokersToolSet:
         warmed-up snapshot.
         """
         if not conids:
-            raise ValueError("conids must be non-empty")
-        params: dict[str, Any] = {"conids": ",".join(str(c) for c in conids)}
+            raise ValueError('conids must be non-empty')
+        params: dict[str, Any] = {'conids': ','.join(str(c) for c in conids)}
         if fields is not None:
-            params["fields"] = ",".join(fields)
+            params['fields'] = ','.join(fields)
         return self._client.get(
-            "/v1/api/iserver/marketdata/snapshot",
+            '/v1/api/iserver/marketdata/snapshot',
             params=params,
         ).json()
 
@@ -267,10 +267,10 @@ class InteractiveBrokersToolSet:
         free-form read.
         """
         if not account_id or not orders:
-            raise ValueError("account_id and orders must be non-empty")
+            raise ValueError('account_id and orders must be non-empty')
         return self._client.post(
-            f"/v1/api/iserver/account/{account_id}/orders/whatif",
-            json={"orders": orders},
+            f'/v1/api/iserver/account/{account_id}/orders/whatif',
+            json={'orders': orders},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -285,10 +285,10 @@ class InteractiveBrokersToolSet:
         reply ID. Run :meth:`preview_order` first when in doubt.
         """
         if not account_id or not orders:
-            raise ValueError("account_id and orders must be non-empty")
+            raise ValueError('account_id and orders must be non-empty')
         return self._client.post(
-            f"/v1/api/iserver/account/{account_id}/orders",
-            json={"orders": orders},
+            f'/v1/api/iserver/account/{account_id}/orders',
+            json={'orders': orders},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -299,12 +299,12 @@ class InteractiveBrokersToolSet:
         order dict returned by :meth:`list_orders`.
         """
         if not account_id:
-            raise ValueError("account_id must be a non-empty string")
-        order_id = _select_id_from_value(order, ("order_id", "orderId", "id"))
+            raise ValueError('account_id must be a non-empty string')
+        order_id = _select_id_from_value(order, ('order_id', 'orderId', 'id'))
         if not order_id:
-            raise ValueError("order must be an order id or order dict with an id")
+            raise ValueError('order must be an order id or order dict with an id')
         return self._client.delete(
-            f"/v1/api/iserver/account/{account_id}/order/{order_id}",
+            f'/v1/api/iserver/account/{account_id}/order/{order_id}',
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -327,37 +327,37 @@ class InteractiveBrokersToolSet:
         hidden by default — set ``include_ids=True`` to expose it.
         ``raw=True`` returns the unmodified IBKR response.
         """
-        payload: Any = self._client.get("/v1/api/iserver/account/orders").json()
+        payload: Any = self._client.get('/v1/api/iserver/account/orders').json()
         if raw:
             return payload
         orders_node: Any = (
-            cast(dict[Any, Any], payload).get("orders") if isinstance(payload, dict) else None
+            cast(dict[Any, Any], payload).get('orders') if isinstance(payload, dict) else None
         )
-        items: list[Any] = cast("list[Any]", orders_node) if isinstance(orders_node, list) else []
+        items: list[Any] = cast('list[Any]', orders_node) if isinstance(orders_node, list) else []
         summaries: list[dict[str, Any]] = []
         for index, order in enumerate(items, start=1):
             if not isinstance(order, dict):
                 continue
             entry = cast(dict[Any, Any], order)
             summary: dict[str, Any] = {
-                "order_ref": f"order_{index}",
-                "symbol": entry.get("ticker") or entry.get("symbol", ""),
-                "side": entry.get("side"),
-                "quantity": entry.get("remainingQuantity") or entry.get("totalSize"),
-                "status": entry.get("status"),
-                "order_type": entry.get("orderType"),
-                "limit_price": entry.get("price"),
-                "avg_price": entry.get("avgPrice"),
-                "filled_quantity": entry.get("filledQuantity"),
-                "time_in_force": entry.get("timeInForce"),
-                "account_id": entry.get("acct"),
+                'order_ref': f'order_{index}',
+                'symbol': entry.get('ticker') or entry.get('symbol', ''),
+                'side': entry.get('side'),
+                'quantity': entry.get('remainingQuantity') or entry.get('totalSize'),
+                'status': entry.get('status'),
+                'order_type': entry.get('orderType'),
+                'limit_price': entry.get('price'),
+                'avg_price': entry.get('avgPrice'),
+                'filled_quantity': entry.get('filledQuantity'),
+                'time_in_force': entry.get('timeInForce'),
+                'account_id': entry.get('acct'),
             }
             if include_ids:
-                summary["order_id"] = entry.get("orderId")
+                summary['order_id'] = entry.get('orderId')
             summaries.append(summary)
         return {
-            "orders": summaries,
-            "count": len(summaries),
+            'orders': summaries,
+            'count': len(summaries),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -375,6 +375,6 @@ class InteractiveBrokersToolSet:
         Returns IBKR's bar list under ``"data"``.
         """
         return self._client.get(
-            "/v1/api/iserver/marketdata/history",
-            params={"conid": conid, "period": period, "bar": bar},
+            '/v1/api/iserver/marketdata/history',
+            params={'conid': conid, 'period': period, 'bar': bar},
         ).json()

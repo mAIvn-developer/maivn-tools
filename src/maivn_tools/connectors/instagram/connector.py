@@ -15,10 +15,10 @@ from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_COMMENTS_OUTPUT, LIST_MEDIA_OUTPUT
 
-_API_VERSION = "v25.0"
+_API_VERSION = 'v25.0'
 
 
-@toolset(prefix="instagram")
+@toolset(prefix='instagram')
 class InstagramToolSet:
     """A connector for the Instagram Graph API.
 
@@ -28,23 +28,23 @@ class InstagramToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="instagram",
-        display_name="Instagram",
-        version="0.1.0",
-        description="Media, stories, comments, insights, and content publishing.",
+        name='instagram',
+        display_name='Instagram',
+        version='0.1.0',
+        description='Media, stories, comments, insights, and content publishing.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "instagram_basic": "Read media + profile.",
-            "instagram_content_publish": "Publish photos / videos / reels.",
-            "instagram_manage_comments": "Reply to / delete comments.",
-            "instagram_manage_insights": "Read insights.",
+            'instagram_basic': 'Read media + profile.',
+            'instagram_content_publish': 'Publish photos / videos / reels.',
+            'instagram_manage_comments': 'Reply to / delete comments.',
+            'instagram_manage_insights': 'Read insights.',
         },
         capabilities=frozenset(
             {ProviderCapability.READ, ProviderCapability.WRITE, ProviderCapability.PAGINATION}
         ),
-        documentation_url="https://developers.facebook.com/docs/instagram-platform/",
-        homepage_url="https://www.instagram.com/",
-        tags=("social-media", "meta"),
+        documentation_url='https://developers.facebook.com/docs/instagram-platform/',
+        homepage_url='https://www.instagram.com/',
+        tags=('social-media', 'meta'),
     )
 
     def __init__(
@@ -52,19 +52,19 @@ class InstagramToolSet:
         *,
         access_token: str,
         graph_version: str = _API_VERSION,
-        base_url: str = "https://graph.facebook.com",
+        base_url: str = 'https://graph.facebook.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._version = graph_version
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(access_token, query_param="access_token"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(access_token, query_param='access_token'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -72,7 +72,7 @@ class InstagramToolSet:
         return self._client
 
     def _path(self, suffix: str) -> str:
-        return f"/{self._version}{suffix}"
+        return f'/{self._version}{suffix}'
 
     # MARK: - Internal helpers
 
@@ -85,16 +85,16 @@ class InstagramToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "media_ref": f"media_{index}",
-            "caption": media.get("caption", ""),
-            "media_type": media.get("media_type", ""),
-            "permalink": media.get("permalink", ""),
-            "posted_at": media.get("timestamp", ""),
-            "like_count": media.get("like_count", 0),
-            "comments_count": media.get("comments_count", 0),
+            'media_ref': f'media_{index}',
+            'caption': media.get('caption', ''),
+            'media_type': media.get('media_type', ''),
+            'permalink': media.get('permalink', ''),
+            'posted_at': media.get('timestamp', ''),
+            'like_count': media.get('like_count', 0),
+            'comments_count': media.get('comments_count', 0),
         }
         if include_ids:
-            summary["media_id"] = media.get("id", "")
+            summary['media_id'] = media.get('id', '')
         return summary
 
     @classmethod
@@ -105,16 +105,16 @@ class InstagramToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        username = comment.get("username", "") or comment.get("from", {}).get("username", "")
+        username = comment.get('username', '') or comment.get('from', {}).get('username', '')
         summary: dict[str, Any] = {
-            "comment_ref": f"comment_{index}",
-            "author": username,
-            "text": comment.get("text", ""),
-            "posted_at": comment.get("timestamp", ""),
-            "like_count": comment.get("like_count", 0),
+            'comment_ref': f'comment_{index}',
+            'author': username,
+            'text': comment.get('text', ''),
+            'posted_at': comment.get('timestamp', ''),
+            'like_count': comment.get('like_count', 0),
         }
         if include_ids:
-            summary["comment_id"] = comment.get("id", "")
+            summary['comment_id'] = comment.get('id', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -126,12 +126,12 @@ class InstagramToolSet:
         ``followers_count``, ``media_count``).
         """
         if not ig_user_id:
-            raise ValueError("ig_user_id must be a non-empty string")
+            raise ValueError('ig_user_id must be a non-empty string')
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = ",".join(fields)
+            params['fields'] = ','.join(fields)
         return self._client.get(
-            self._path(f"/{ig_user_id}"),
+            self._path(f'/{ig_user_id}'),
             params=params or None,
         ).json()
 
@@ -159,40 +159,40 @@ class InstagramToolSet:
         Graph response.
         """
         if not ig_user_id:
-            raise ValueError("ig_user_id must be a non-empty string")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('ig_user_id must be a non-empty string')
+        params: dict[str, Any] = {'limit': limit}
         if after is not None:
-            params["after"] = after
+            params['after'] = after
         merged_fields = list(fields) if fields else []
         if include_metadata:
             for needed in (
-                "caption",
-                "media_type",
-                "permalink",
-                "timestamp",
-                "like_count",
-                "comments_count",
+                'caption',
+                'media_type',
+                'permalink',
+                'timestamp',
+                'like_count',
+                'comments_count',
             ):
                 if needed not in merged_fields:
                     merged_fields.append(needed)
         if merged_fields:
-            params["fields"] = ",".join(merged_fields)
+            params['fields'] = ','.join(merged_fields)
         payload: dict[str, Any] = self._client.get(
-            self._path(f"/{ig_user_id}/media"),
+            self._path(f'/{ig_user_id}/media'),
             params=params,
         ).json()
         if not include_metadata:
             return payload
         summaries: list[dict[str, Any]] = []
-        data: list[Any] = payload.get("data", [])
+        data: list[Any] = payload.get('data', [])
         for index, media in enumerate(data, start=1):
             if not isinstance(media, dict):
                 continue
             media_obj = cast(dict[str, Any], media)
             summaries.append(self._media_summary(media_obj, index=index, include_ids=include_ids))
         return {
-            "media": summaries,
-            "paging": payload.get("paging"),
+            'media': summaries,
+            'paging': payload.get('paging'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -203,12 +203,12 @@ class InstagramToolSet:
         ``list_media(include_ids=True)`` when you need full media details.
         """
         if not media_id:
-            raise ValueError("media_id must be a non-empty string")
+            raise ValueError('media_id must be a non-empty string')
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = ",".join(fields)
+            params['fields'] = ','.join(fields)
         return self._client.get(
-            self._path(f"/{media_id}"),
+            self._path(f'/{media_id}'),
             params=params or None,
         ).json()
 
@@ -232,24 +232,24 @@ class InstagramToolSet:
         then again with ``media_type="CAROUSEL"`` and ``children=[<ids>]``.
         """
         if not ig_user_id:
-            raise ValueError("ig_user_id must be a non-empty string")
+            raise ValueError('ig_user_id must be a non-empty string')
         if image_url is None and video_url is None and not children:
-            raise ValueError("provide image_url, video_url, or children")
+            raise ValueError('provide image_url, video_url, or children')
         body: dict[str, Any] = {}
         if image_url is not None:
-            body["image_url"] = image_url
+            body['image_url'] = image_url
         if video_url is not None:
-            body["video_url"] = video_url
+            body['video_url'] = video_url
         if caption is not None:
-            body["caption"] = caption
+            body['caption'] = caption
         if media_type is not None:
-            body["media_type"] = media_type
+            body['media_type'] = media_type
         if is_carousel_item is not None:
-            body["is_carousel_item"] = is_carousel_item
+            body['is_carousel_item'] = is_carousel_item
         if children is not None:
-            body["children"] = ",".join(children)
+            body['children'] = ','.join(children)
         return self._client.post(
-            self._path(f"/{ig_user_id}/media"),
+            self._path(f'/{ig_user_id}/media'),
             json=body,
         ).json()
 
@@ -261,10 +261,10 @@ class InstagramToolSet:
         before calling — this posts publicly to the account's grid.
         """
         if not ig_user_id or not creation_id:
-            raise ValueError("ig_user_id and creation_id must be non-empty")
+            raise ValueError('ig_user_id and creation_id must be non-empty')
         return self._client.post(
-            self._path(f"/{ig_user_id}/media_publish"),
-            json={"creation_id": creation_id},
+            self._path(f'/{ig_user_id}/media_publish'),
+            json={'creation_id': creation_id},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -275,10 +275,10 @@ class InstagramToolSet:
         ...}``. Poll until ``FINISHED`` before calling ``publish_media``.
         """
         if not container_id:
-            raise ValueError("container_id must be a non-empty string")
+            raise ValueError('container_id must be a non-empty string')
         return self._client.get(
-            self._path(f"/{container_id}"),
-            params={"fields": "status_code,status"},
+            self._path(f'/{container_id}'),
+            params={'fields': 'status_code,status'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -299,18 +299,18 @@ class InstagramToolSet:
         ``include_metadata=False`` for the raw Graph response.
         """
         if not media_id:
-            raise ValueError("media_id must be a non-empty string")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('media_id must be a non-empty string')
+        params: dict[str, Any] = {'limit': limit}
         if include_metadata:
-            params["fields"] = "username,text,timestamp,like_count"
+            params['fields'] = 'username,text,timestamp,like_count'
         payload: dict[str, Any] = self._client.get(
-            self._path(f"/{media_id}/comments"),
+            self._path(f'/{media_id}/comments'),
             params=params,
         ).json()
         if not include_metadata:
             return payload
         summaries: list[dict[str, Any]] = []
-        data: list[Any] = payload.get("data", [])
+        data: list[Any] = payload.get('data', [])
         for index, comment in enumerate(data, start=1):
             if not isinstance(comment, dict):
                 continue
@@ -319,8 +319,8 @@ class InstagramToolSet:
                 self._comment_summary(comment_obj, index=index, include_ids=include_ids)
             )
         return {
-            "comments": summaries,
-            "paging": payload.get("paging"),
+            'comments': summaries,
+            'paging': payload.get('paging'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -331,10 +331,10 @@ class InstagramToolSet:
         Graph internal ID returned by ``list_comments(include_ids=True)``.
         """
         if not comment_id or not message:
-            raise ValueError("comment_id and message must be non-empty")
+            raise ValueError('comment_id and message must be non-empty')
         return self._client.post(
-            self._path(f"/{comment_id}/replies"),
-            json={"message": message},
+            self._path(f'/{comment_id}/replies'),
+            json={'message': message},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -345,8 +345,8 @@ class InstagramToolSet:
         calling.
         """
         if not comment_id:
-            raise ValueError("comment_id must be a non-empty string")
-        return self._client.delete(self._path(f"/{comment_id}")).json()
+            raise ValueError('comment_id must be a non-empty string')
+        return self._client.delete(self._path(f'/{comment_id}')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def hide_comment(self, comment_id: str, *, hide: bool = True) -> dict[str, Any]:
@@ -356,10 +356,10 @@ class InstagramToolSet:
         retrievable. Pass ``hide=False`` to unhide.
         """
         if not comment_id:
-            raise ValueError("comment_id must be a non-empty string")
+            raise ValueError('comment_id must be a non-empty string')
         return self._client.post(
-            self._path(f"/{comment_id}"),
-            json={"hide": hide},
+            self._path(f'/{comment_id}'),
+            json={'hide': hide},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -375,10 +375,10 @@ class InstagramToolSet:
         "reach", "engagement"]``). Returns the raw Graph insights response.
         """
         if not media_id or not metric:
-            raise ValueError("media_id and metric must be non-empty")
+            raise ValueError('media_id and metric must be non-empty')
         return self._client.get(
-            self._path(f"/{media_id}/insights"),
-            params={"metric": ",".join(metric)},
+            self._path(f'/{media_id}/insights'),
+            params={'metric': ','.join(metric)},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -387,7 +387,7 @@ class InstagramToolSet:
         ig_user_id: str,
         *,
         metric: list[str],
-        period: str = "day",
+        period: str = 'day',
         since: str | None = None,
         until: str | None = None,
     ) -> dict[str, Any]:
@@ -397,14 +397,14 @@ class InstagramToolSet:
         account-level insight names (e.g. ``["reach", "impressions"]``).
         """
         if not ig_user_id or not metric:
-            raise ValueError("ig_user_id and metric must be non-empty")
-        params: dict[str, Any] = {"metric": ",".join(metric), "period": period}
+            raise ValueError('ig_user_id and metric must be non-empty')
+        params: dict[str, Any] = {'metric': ','.join(metric), 'period': period}
         if since is not None:
-            params["since"] = since
+            params['since'] = since
         if until is not None:
-            params["until"] = until
+            params['until'] = until
         return self._client.get(
-            self._path(f"/{ig_user_id}/insights"),
+            self._path(f'/{ig_user_id}/insights'),
             params=params,
         ).json()
 
@@ -416,5 +416,5 @@ class InstagramToolSet:
         so the list will be short.
         """
         if not ig_user_id:
-            raise ValueError("ig_user_id must be a non-empty string")
-        return self._client.get(self._path(f"/{ig_user_id}/stories")).json()
+            raise ValueError('ig_user_id must be a non-empty string')
+        return self._client.get(self._path(f'/{ig_user_id}/stories')).json()

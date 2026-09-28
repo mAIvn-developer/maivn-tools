@@ -1,67 +1,47 @@
-# mAIvn Tools
+# maivn-tools
 
-Official optional connector layer for the [mAIvn Python SDK](https://github.com/mAIvn-developer/maivn).
+`maivn-tools` provides connector toolsets, generic API adapters, file helpers,
+and an HTTP runtime for the [mAIvn Python SDK](https://maivn.io).
 
-> [!warning]
-> **Experimental — use with care.** `maivn-tools` is in early development
-> (alpha). Connectors and toolsets are exercised against a mock transport in
-> CI, but **most have not yet been validated end-to-end against live
-> third-party provider APIs**. Request shapes, behavior, and the public surface
-> may change between releases. Test against your own provider accounts before
-> relying on any connector in production, and please
-> [report issues](https://github.com/mAIvn-developer/maivn-tools/issues).
+> **Pre-release software.** Most provider connectors are covered by offline
+> contract tests but have not yet been exercised end to end against live
+> provider accounts. Test the exact operations and permissions you plan to use
+> before relying on a connector with production data.
 
-`maivn-tools` is a standalone PyPI package that depends on `maivn`. Installing it
-pulls the SDK as well:
+## Install
 
 ```bash
 pip install maivn-tools
 ```
 
-Some connectors need optional dependencies:
+The package installs `maivn` as a direct dependency. Provider credentials stay
+in the caller's process; use the authentication and secret-resolver APIs rather
+than putting credentials in prompts, tool metadata, or source code.
 
-```bash
-pip install "maivn-tools[pdf]"      # pypdf — PDF tooling
-pip install "maivn-tools[docx]"     # python-docx — Word docs
-pip install "maivn-tools[postgres]" # psycopg — Postgres connector
-pip install "maivn-tools[all]"      # everything above
+## Start here
+
+- [Quickstart](docs/quickstart.md)
+- [Toolset authoring](docs/toolsets.md)
+- [Authentication and secrets](docs/auth.md)
+- [Permissions and dry runs](docs/permissions.md)
+- [Connector catalog](docs/index.md#connectors-by-category)
+
+The package exports more than 170 toolsets. Register only the tools and
+permissions needed for a workflow, and exclude destructive tools when the
+application does not need them.
+
+```python
+from pathlib import Path
+
+from maivn import Agent
+from maivn_tools import LocalFilesToolSet
+
+workspace = Path('./documents')
+workspace.mkdir(exist_ok=True)
+
+agent = Agent(name='Document reviewer')
+agent.add_toolset(LocalFilesToolSet(workspace), include_tags=['read'])
 ```
 
-The package is not exposed as a `maivn[tools]` extra. That would create the same
-circular release coupling we removed for `maivn[studio]` in 0.3.0; instead,
-`maivn-tools` pins a compatible SDK version range directly.
-
-## Ecosystem
-
-`maivn-tools` is the optional connector layer in the **mAIvn** developer ecosystem. Learn more at
-[maivn.io](https://maivn.io) — or dive into the developer hub at
-[developer.maivn.io](https://developer.maivn.io).
-
-```mermaid
-flowchart TD
-    platform["mAIvn platform<br/>hosted agent API"]
-    sdk["maivn<br/>Python SDK — agents · tools · swarms"]
-    shared["maivn-shared<br/>shared contracts & models"]
-    tools["maivn-tools<br/>optional connector toolsets"]
-    studio["maivn-studio<br/>local studio — run & debug demos"]
-
-    sdk -->|HTTPS + API key| platform
-    sdk -->|depends on| shared
-    tools -->|add_toolset| sdk
-    studio -->|maivn studio CLI| sdk
-
-    classDef current fill:#dbeafe,stroke:#2563eb,stroke-width:2px;
-    class tools current;
-```
-
-## Development
-
-```powershell
-uv sync
-uv run pytest
-uv run ruff check .
-uv run pyright
-```
-
-See [`docs/`](docs) for usage guides and [`docs/index.md`](docs/index.md) for the
-documentation index.
+See each connector page for its constructor, provider scopes, pagination,
+write behavior, and current validation limits.

@@ -19,19 +19,19 @@ def _extract_excel_item_id(candidate: Any) -> str:
     """Pull an Excel workbook item id out of a raw string or Graph item dict."""
     if isinstance(candidate, str):
         if not candidate:
-            raise ValueError("item_id must be a non-empty string")
+            raise ValueError('item_id must be a non-empty string')
         return candidate
     if isinstance(candidate, dict):
         item: dict[str, Any] = cast(dict[str, Any], candidate)
-        for key in ("item_id", "file_id", "workbook_id", "id"):
+        for key in ('item_id', 'file_id', 'workbook_id', 'id'):
             value: Any = item.get(key)
             if isinstance(value, str) and value:
                 return value
-        raise ValueError("dict candidate has no Excel item id")
-    raise ValueError("item_id must be a string or an item dict")
+        raise ValueError('dict candidate has no Excel item id')
+    raise ValueError('item_id must be a string or an item dict')
 
 
-@toolset(prefix="excel")
+@toolset(prefix='excel')
 class MicrosoftExcelToolSet:
     """A connector for Excel workbooks via Microsoft Graph v1.0.
 
@@ -42,20 +42,20 @@ class MicrosoftExcelToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="microsoft_excel",
-        display_name="Microsoft Excel",
-        version="0.1.0",
-        description="Read and write Excel workbook ranges, tables, and worksheets.",
+        name='microsoft_excel',
+        display_name='Microsoft Excel',
+        version='0.1.0',
+        description='Read and write Excel workbook ranges, tables, and worksheets.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "Files.Read": "Read user files.",
-            "Files.ReadWrite": "Read and write user files.",
-            "Sites.ReadWrite.All": "Read and write SharePoint workbooks.",
+            'Files.Read': 'Read user files.',
+            'Files.ReadWrite': 'Read and write user files.',
+            'Sites.ReadWrite.All': 'Read and write SharePoint workbooks.',
         },
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://learn.microsoft.com/en-us/graph/api/resources/excel",
-        homepage_url="https://www.microsoft.com/microsoft-365/excel",
-        tags=("spreadsheet", "microsoft"),
+        documentation_url='https://learn.microsoft.com/en-us/graph/api/resources/excel',
+        homepage_url='https://www.microsoft.com/microsoft-365/excel',
+        tags=('spreadsheet', 'microsoft'),
     )
 
     def __init__(
@@ -67,17 +67,17 @@ class MicrosoftExcelToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         self.connection = connection
-        self._drive_root = f"drives/{drive_id}" if drive_id else "me/drive"
+        self._drive_root = f'drives/{drive_id}' if drive_id else 'me/drive'
         self._client: HttpClient = make_graph_client(token, transport=transport)
 
     @property
     def client(self) -> HttpClient:
         return self._client
 
-    def _path(self, item_id: Any, suffix: str = "") -> str:
+    def _path(self, item_id: Any, suffix: str = '') -> str:
         item_id = _extract_excel_item_id(item_id)
-        base = f"/{self._drive_root}/items/{item_id}/workbook"
-        return f"{base}{suffix}"
+        base = f'/{self._drive_root}/items/{item_id}/workbook'
+        return f'{base}{suffix}'
 
     # MARK: - Worksheets
 
@@ -89,7 +89,7 @@ class MicrosoftExcelToolSet:
         provider response with ``value[*]`` worksheet resources (each has
         ``id``, ``name``, ``position``).
         """
-        return self._client.get(self._path(item_id, "/worksheets")).json()
+        return self._client.get(self._path(item_id, '/worksheets')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_worksheet(self, item_id: Any, name: str) -> dict[str, Any]:
@@ -98,8 +98,8 @@ class MicrosoftExcelToolSet:
         Accepts a raw item id or a Graph item dict for ``item_id``.
         """
         if not name:
-            raise ValueError("name must be a non-empty string")
-        return self._client.get(self._path(item_id, f"/worksheets/{name}")).json()
+            raise ValueError('name must be a non-empty string')
+        return self._client.get(self._path(item_id, f'/worksheets/{name}')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def add_worksheet(self, item_id: Any, *, name: str | None = None) -> dict[str, Any]:
@@ -110,9 +110,9 @@ class MicrosoftExcelToolSet:
         """
         body: dict[str, Any] = {}
         if name is not None:
-            body["name"] = name
+            body['name'] = name
         return self._client.post(
-            self._path(item_id, "/worksheets/add"),
+            self._path(item_id, '/worksheets/add'),
             json=body,
         ).json()
 
@@ -123,9 +123,9 @@ class MicrosoftExcelToolSet:
         Accepts a raw item id or a Graph item dict for ``item_id``.
         """
         if not name:
-            raise ValueError("name must be a non-empty string")
-        self._client.delete(self._path(item_id, f"/worksheets/{name}"))
-        return {"name": name, "deleted": True}
+            raise ValueError('name must be a non-empty string')
+        self._client.delete(self._path(item_id, f'/worksheets/{name}'))
+        return {'name': name, 'deleted': True}
 
     # MARK: - Ranges
 
@@ -143,7 +143,7 @@ class MicrosoftExcelToolSet:
         ``address`` is A1 notation (``"A1:B10"``).
         """
         if not worksheet or not address:
-            raise ValueError("worksheet and address must be non-empty")
+            raise ValueError('worksheet and address must be non-empty')
         return self._client.get(
             self._path(item_id, f"/worksheets/{worksheet}/range(address='{address}')"),
         ).json()
@@ -161,9 +161,9 @@ class MicrosoftExcelToolSet:
         Accepts a raw item id or a Graph item dict for ``item_id``.
         Good first call when you don't know the data extent.
         """
-        suffix = f"/worksheets/{worksheet}/usedRange"
+        suffix = f'/worksheets/{worksheet}/usedRange'
         if values_only:
-            suffix += "(valuesOnly=true)"
+            suffix += '(valuesOnly=true)'
         return self._client.get(self._path(item_id, suffix)).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -183,12 +183,12 @@ class MicrosoftExcelToolSet:
         ``values`` is a 2D list — rows then columns.
         """
         if not worksheet or not address:
-            raise ValueError("worksheet and address must be non-empty")
-        body: dict[str, Any] = {"values": values}
+            raise ValueError('worksheet and address must be non-empty')
+        body: dict[str, Any] = {'values': values}
         if formulas is not None:
-            body["formulas"] = formulas
+            body['formulas'] = formulas
         if number_format is not None:
-            body["numberFormat"] = number_format
+            body['numberFormat'] = number_format
         return self._client.patch(
             self._path(item_id, f"/worksheets/{worksheet}/range(address='{address}')"),
             json=body,
@@ -201,7 +201,7 @@ class MicrosoftExcelToolSet:
         *,
         worksheet: str,
         address: str,
-        apply_to: str = "All",
+        apply_to: str = 'All',
     ) -> dict[str, Any]:
         """Clear a range. Destructive — confirm with the user.
 
@@ -209,14 +209,14 @@ class MicrosoftExcelToolSet:
         ``apply_to`` is one of ``All`` (default), ``Formats``,
         ``Contents``.
         """
-        if apply_to not in {"All", "Formats", "Contents"}:
-            raise ValueError("apply_to must be All/Formats/Contents")
+        if apply_to not in {'All', 'Formats', 'Contents'}:
+            raise ValueError('apply_to must be All/Formats/Contents')
         return self._client.post(
             self._path(
                 item_id,
                 f"/worksheets/{worksheet}/range(address='{address}')/clear",
             ),
-            json={"applyTo": apply_to},
+            json={'applyTo': apply_to},
         ).json()
 
     # MARK: - Tables
@@ -227,7 +227,7 @@ class MicrosoftExcelToolSet:
 
         Accepts a raw item id or a Graph item dict for ``item_id``.
         """
-        suffix = "/tables" if worksheet is None else f"/worksheets/{worksheet}/tables"
+        suffix = '/tables' if worksheet is None else f'/worksheets/{worksheet}/tables'
         return self._client.get(self._path(item_id, suffix)).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -246,10 +246,10 @@ class MicrosoftExcelToolSet:
         ``add_table_rows`` / ``get_table_rows`` / ``delete_table``.
         """
         if not worksheet or not address:
-            raise ValueError("worksheet and address must be non-empty")
+            raise ValueError('worksheet and address must be non-empty')
         return self._client.post(
-            self._path(item_id, f"/worksheets/{worksheet}/tables/add"),
-            json={"address": address, "hasHeaders": has_headers},
+            self._path(item_id, f'/worksheets/{worksheet}/tables/add'),
+            json={'address': address, 'hasHeaders': has_headers},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -267,12 +267,12 @@ class MicrosoftExcelToolSet:
         Pass ``index`` to insert at a specific row; omit to append at end.
         """
         if not table_name or not values:
-            raise ValueError("table_name and values must be non-empty")
-        body: dict[str, Any] = {"values": values}
+            raise ValueError('table_name and values must be non-empty')
+        body: dict[str, Any] = {'values': values}
         if index is not None:
-            body["index"] = index
+            body['index'] = index
         return self._client.post(
-            self._path(item_id, f"/tables/{table_name}/rows/add"),
+            self._path(item_id, f'/tables/{table_name}/rows/add'),
             json=body,
         ).json()
 
@@ -283,9 +283,9 @@ class MicrosoftExcelToolSet:
         Accepts a raw item id or a Graph item dict for ``item_id``.
         """
         if not table_name:
-            raise ValueError("table_name must be a non-empty string")
+            raise ValueError('table_name must be a non-empty string')
         return self._client.get(
-            self._path(item_id, f"/tables/{table_name}/rows"),
+            self._path(item_id, f'/tables/{table_name}/rows'),
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -295,9 +295,9 @@ class MicrosoftExcelToolSet:
         Accepts a raw item id or a Graph item dict for ``item_id``.
         """
         if not table_name:
-            raise ValueError("table_name must be a non-empty string")
-        self._client.delete(self._path(item_id, f"/tables/{table_name}"))
-        return {"name": table_name, "deleted": True}
+            raise ValueError('table_name must be a non-empty string')
+        self._client.delete(self._path(item_id, f'/tables/{table_name}'))
+        return {'name': table_name, 'deleted': True}
 
     # MARK: - Sessions
 
@@ -311,8 +311,8 @@ class MicrosoftExcelToolSet:
         efficient batch edits.
         """
         return self._client.post(
-            self._path(item_id, "/createSession"),
-            json={"persistChanges": persist_changes},
+            self._path(item_id, '/createSession'),
+            json={'persistChanges': persist_changes},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -327,10 +327,10 @@ class MicrosoftExcelToolSet:
         Accepts a raw item id or a Graph item dict for ``item_id``.
         """
         if not workbook_session_id:
-            raise ValueError("workbook_session_id must be a non-empty string")
+            raise ValueError('workbook_session_id must be a non-empty string')
         response = self._client.post(
-            self._path(item_id, "/closeSession"),
-            headers={"Workbook-Session-Id": workbook_session_id},
+            self._path(item_id, '/closeSession'),
+            headers={'Workbook-Session-Id': workbook_session_id},
             json={},
         )
-        return {"session_id": workbook_session_id, "closed": True, "status": response.status}
+        return {'session_id': workbook_session_id, 'closed': True, 'status': response.status}

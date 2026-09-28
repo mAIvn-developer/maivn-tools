@@ -18,83 +18,83 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _USER_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "user_ref": {"type": "string"},
-        "user_id": {"type": "string"},
-        "email": {"type": "string"},
-        "phone": {"type": "string"},
-        "role": {"type": "string"},
-        "created_at": {"type": "string"},
-        "last_sign_in_at": {"type": "string"},
-        "confirmed_at": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'user_ref': {'type': 'string'},
+        'user_id': {'type': 'string'},
+        'email': {'type': 'string'},
+        'phone': {'type': 'string'},
+        'role': {'type': 'string'},
+        'created_at': {'type': 'string'},
+        'last_sign_in_at': {'type': 'string'},
+        'confirmed_at': {'type': 'string'},
     },
-    "required": ["user_ref"],
+    'required': ['user_ref'],
 }
 
 _BUCKET_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "bucket_ref": {"type": "string"},
-        "bucket_id": {"type": "string"},
-        "name": {"type": "string"},
-        "public": {"type": "boolean"},
-        "file_size_limit": {"type": ["integer", "null"]},
-        "allowed_mime_types": {"type": "array", "items": {"type": "string"}},
-        "created_at": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'bucket_ref': {'type': 'string'},
+        'bucket_id': {'type': 'string'},
+        'name': {'type': 'string'},
+        'public': {'type': 'boolean'},
+        'file_size_limit': {'type': ['integer', 'null']},
+        'allowed_mime_types': {'type': 'array', 'items': {'type': 'string'}},
+        'created_at': {'type': 'string'},
     },
-    "required": ["bucket_ref", "bucket_id", "name"],
+    'required': ['bucket_ref', 'bucket_id', 'name'],
 }
 
 _OBJECT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "object_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "size": {"type": ["integer", "null"]},
-        "content_type": {"type": "string"},
-        "updated_at": {"type": "string"},
-        "created_at": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'object_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'size': {'type': ['integer', 'null']},
+        'content_type': {'type': 'string'},
+        'updated_at': {'type': 'string'},
+        'created_at': {'type': 'string'},
     },
-    "required": ["object_ref", "name"],
+    'required': ['object_ref', 'name'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_USERS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "users": {"type": "array", "items": _USER_SUMMARY},
-        "page": {"type": "integer"},
-        "per_page": {"type": "integer"},
-        "total": {"type": "integer"},
-        "next_page": {"type": ["integer", "null"]},
-        "last_page": {"type": ["integer", "null"]},
+    'type': 'object',
+    'properties': {
+        'users': {'type': 'array', 'items': _USER_SUMMARY},
+        'page': {'type': 'integer'},
+        'per_page': {'type': 'integer'},
+        'total': {'type': 'integer'},
+        'next_page': {'type': ['integer', 'null']},
+        'last_page': {'type': ['integer', 'null']},
     },
-    "required": ["users"],
+    'required': ['users'],
 }
 
 LIST_BUCKETS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "buckets": {"type": "array", "items": _BUCKET_SUMMARY},
+    'type': 'object',
+    'properties': {
+        'buckets': {'type': 'array', 'items': _BUCKET_SUMMARY},
     },
-    "required": ["buckets"],
+    'required': ['buckets'],
 }
 
 LIST_OBJECTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "objects": {"type": "array", "items": _OBJECT_SUMMARY},
-        "bucket_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'objects': {'type': 'array', 'items': _OBJECT_SUMMARY},
+        'bucket_id': {'type': 'string'},
     },
-    "required": ["objects"],
+    'required': ['objects'],
 }
 
 
 __all__ = [
-    "LIST_BUCKETS_OUTPUT",
-    "LIST_OBJECTS_OUTPUT",
-    "LIST_USERS_OUTPUT",
+    'LIST_BUCKETS_OUTPUT',
+    'LIST_OBJECTS_OUTPUT',
+    'LIST_USERS_OUTPUT',
 ]

@@ -28,7 +28,7 @@ returning one — the same shape as the Google Workspace connectors.
 
 > **Agent-ready pattern.** Across the three connectors, list / search
 > tools return compact human-readable summaries by default with a
-> stable `_ref` field (`folder_ref`, `message_ref`, `calendar_ref`,
+> response-local `_ref` field (`folder_ref`, `message_ref`, `calendar_ref`,
 > `event_ref`, `item_ref`). Default page size is 25.
 > Raw Graph GUIDs are hidden unless you pass `include_ids=True`; pass
 > `include_metadata=False` to get the raw Graph response with every

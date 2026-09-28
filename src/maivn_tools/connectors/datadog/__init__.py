@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import DatadogToolSet
 
-__all__ = ["DatadogToolSet"]
+__all__ = ['DatadogToolSet']

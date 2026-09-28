@@ -26,22 +26,22 @@ def _extract_word_item_id(candidate: Any) -> str:
     """Pull a Word/Graph drive item id out of a raw string or dict."""
     if isinstance(candidate, str):
         if not candidate:
-            raise ValueError("item_id must be a non-empty string")
+            raise ValueError('item_id must be a non-empty string')
         return candidate
     if isinstance(candidate, dict):
-        mapping = cast("dict[str, Any]", candidate)
-        for key in ("item_id", "file_id", "id"):
+        mapping = cast('dict[str, Any]', candidate)
+        for key in ('item_id', 'file_id', 'id'):
             value = mapping.get(key)
             if isinstance(value, str) and value:
                 return value
-        raise ValueError("dict candidate has no Word/Graph item id")
-    raise ValueError("item_id must be a string or an item dict")
+        raise ValueError('dict candidate has no Word/Graph item id')
+    raise ValueError('item_id must be a string or an item dict')
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="word")
+@toolset(prefix='word')
 class MicrosoftWordToolSet:
     """A connector for Word documents stored on OneDrive / SharePoint.
 
@@ -52,19 +52,19 @@ class MicrosoftWordToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="microsoft_word",
-        display_name="Microsoft Word",
-        version="0.1.0",
-        description="Read, convert, and replace Word documents via Microsoft Graph.",
+        name='microsoft_word',
+        display_name='Microsoft Word',
+        version='0.1.0',
+        description='Read, convert, and replace Word documents via Microsoft Graph.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "Files.Read": "Read user files.",
-            "Files.ReadWrite": "Read and write user files.",
+            'Files.Read': 'Read user files.',
+            'Files.ReadWrite': 'Read and write user files.',
         },
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://learn.microsoft.com/en-us/graph/api/driveitem-get-content",
-        homepage_url="https://www.microsoft.com/microsoft-365/word",
-        tags=("document", "microsoft"),
+        documentation_url='https://learn.microsoft.com/en-us/graph/api/driveitem-get-content',
+        homepage_url='https://www.microsoft.com/microsoft-365/word',
+        tags=('document', 'microsoft'),
     )
 
     def __init__(
@@ -76,7 +76,7 @@ class MicrosoftWordToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         self.connection = connection
-        self._drive_root = f"drives/{drive_id}" if drive_id else "me/drive"
+        self._drive_root = f'drives/{drive_id}' if drive_id else 'me/drive'
         self._client: HttpClient = make_graph_client(token, transport=transport)
 
     @property
@@ -90,7 +90,7 @@ class MicrosoftWordToolSet:
         Accepts a raw item id or a Graph item dict.
         """
         item_id = _extract_word_item_id(item_id)
-        return self._client.get(f"/{self._drive_root}/items/{item_id}").json()
+        return self._client.get(f'/{self._drive_root}/items/{item_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def download_content(self, item_id: Any) -> dict[str, Any]:
@@ -100,15 +100,15 @@ class MicrosoftWordToolSet:
         ``{"item_id": ..., "status": ..., "body": <bytes>}``.
         """
         item_id = _extract_word_item_id(item_id)
-        response = self._client.get(f"/{self._drive_root}/items/{item_id}/content")
-        return {"item_id": item_id, "status": response.status, "body": response.body}
+        response = self._client.get(f'/{self._drive_root}/items/{item_id}/content')
+        return {'item_id': item_id, 'status': response.status, 'body': response.body}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def convert_to(
         self,
         item_id: Any,
         *,
-        format: str = "pdf",
+        format: str = 'pdf',
         width: int | None = None,
         height: int | None = None,
     ) -> dict[str, Any]:
@@ -121,23 +121,23 @@ class MicrosoftWordToolSet:
         Accepts a raw item id or a Graph item dict.
         """
         item_id = _extract_word_item_id(item_id)
-        if format not in {"pdf", "html", "jpg"}:
-            raise ValueError("format must be pdf/html/jpg")
-        params: dict[str, Any] = {"format": format}
-        if format == "jpg":
+        if format not in {'pdf', 'html', 'jpg'}:
+            raise ValueError('format must be pdf/html/jpg')
+        params: dict[str, Any] = {'format': format}
+        if format == 'jpg':
             if width is None or height is None:
-                raise ValueError("width and height are required when format=jpg")
-            params["width"] = width
-            params["height"] = height
+                raise ValueError('width and height are required when format=jpg')
+            params['width'] = width
+            params['height'] = height
         response = self._client.get(
-            f"/{self._drive_root}/items/{item_id}/content",
+            f'/{self._drive_root}/items/{item_id}/content',
             params=params,
         )
         return {
-            "item_id": item_id,
-            "format": format,
-            "status": response.status,
-            "body": response.body,
+            'item_id': item_id,
+            'format': format,
+            'status': response.status,
+            'body': response.body,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -155,13 +155,13 @@ class MicrosoftWordToolSet:
         """
         item_id = _extract_word_item_id(item_id)
         if not content_bytes:
-            raise ValueError("content_bytes must be non-empty")
+            raise ValueError('content_bytes must be non-empty')
         return self._client.put(
-            f"/{self._drive_root}/items/{item_id}/content",
+            f'/{self._drive_root}/items/{item_id}/content',
             data=content_bytes,
             headers={
-                "Content-Type": (
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                'Content-Type': (
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                 ),
             },
         ).json()
@@ -181,15 +181,15 @@ class MicrosoftWordToolSet:
         driveItem resource.
         """
         if not path:
-            raise ValueError("path must be a non-empty string")
+            raise ValueError('path must be a non-empty string')
         if not content_bytes:
-            raise ValueError("content_bytes must be non-empty")
+            raise ValueError('content_bytes must be non-empty')
         return self._client.put(
-            f"/{self._drive_root}/root:/{path}:/content",
+            f'/{self._drive_root}/root:/{path}:/content',
             data=content_bytes,
             headers={
-                "Content-Type": (
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                'Content-Type': (
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                 ),
             },
         ).json()

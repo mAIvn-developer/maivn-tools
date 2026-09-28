@@ -16,7 +16,7 @@ from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 
 
-@toolset(prefix="airtable")
+@toolset(prefix='airtable')
 class AirtableToolSet:
     """A connector for the Airtable Web + Meta APIs.
 
@@ -27,19 +27,19 @@ class AirtableToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="airtable",
-        display_name="Airtable",
-        version="0.1.0",
-        description="Bases, tables, records, comments, attachments, and webhooks.",
+        name='airtable',
+        display_name='Airtable',
+        version='0.1.0',
+        description='Bases, tables, records, comments, attachments, and webhooks.',
         auth_modes=(AuthMode.BEARER, AuthMode.OAUTH2_AUTH_CODE),
         scopes={
-            "data.records:read": "Read records.",
-            "data.records:write": "Create / update / delete records.",
-            "data.recordComments:read": "Read record comments.",
-            "data.recordComments:write": "Post record comments.",
-            "schema.bases:read": "Read base schemas.",
-            "schema.bases:write": "Create / modify table schemas.",
-            "webhook:manage": "Manage webhooks.",
+            'data.records:read': 'Read records.',
+            'data.records:write': 'Create / update / delete records.',
+            'data.recordComments:read': 'Read record comments.',
+            'data.recordComments:write': 'Post record comments.',
+            'schema.bases:read': 'Read base schemas.',
+            'schema.bases:write': 'Create / modify table schemas.',
+            'webhook:manage': 'Manage webhooks.',
         },
         capabilities=frozenset(
             {
@@ -49,29 +49,29 @@ class AirtableToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://airtable.com/developers/web/api/introduction",
-        homepage_url="https://airtable.com/",
-        tags=("database", "productivity", "no-code"),
+        documentation_url='https://airtable.com/developers/web/api/introduction',
+        homepage_url='https://airtable.com/',
+        tags=('database', 'productivity', 'no-code'),
     )
 
     def __init__(
         self,
         *,
         access_token: str,
-        base_url: str = "https://api.airtable.com",
+        base_url: str = 'https://api.airtable.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(access_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -95,9 +95,9 @@ class AirtableToolSet:
         """
         params: dict[str, Any] = {}
         if offset is not None:
-            params["offset"] = offset
+            params['offset'] = offset
         return self._client.get(
-            "/v0/meta/bases",
+            '/v0/meta/bases',
             params=params or None,
         ).json()
 
@@ -115,12 +115,12 @@ class AirtableToolSet:
         :meth:`list_records`.
         """
         if not base_id:
-            raise ValueError("base_id is required")
+            raise ValueError('base_id is required')
         params: dict[str, Any] = {}
         if include is not None:
-            params["include"] = include
+            params['include'] = include
         return self._client.get(
-            f"/v0/meta/bases/{base_id}/tables",
+            f'/v0/meta/bases/{base_id}/tables',
             params=params or None,
         ).json()
 
@@ -138,12 +138,12 @@ class AirtableToolSet:
         Returns the new table resource (``id``, ``name``, ``fields``).
         """
         if not base_id or not name or not fields:
-            raise ValueError("base_id, name, and fields are required")
-        body: dict[str, Any] = {"name": name, "fields": fields}
+            raise ValueError('base_id, name, and fields are required')
+        body: dict[str, Any] = {'name': name, 'fields': fields}
         if description is not None:
-            body["description"] = description
+            body['description'] = description
         return self._client.post(
-            f"/v0/meta/bases/{base_id}/tables",
+            f'/v0/meta/bases/{base_id}/tables',
             json=body,
         ).json()
 
@@ -163,14 +163,14 @@ class AirtableToolSet:
         Returns the new field resource (``id``, ``name``, ``type``).
         """
         if not base_id or not table_id or not name or not field_type:
-            raise ValueError("base_id, table_id, name, and field_type are required")
-        body: dict[str, Any] = {"name": name, "type": field_type}
+            raise ValueError('base_id, table_id, name, and field_type are required')
+        body: dict[str, Any] = {'name': name, 'type': field_type}
         if options is not None:
-            body["options"] = options
+            body['options'] = options
         if description is not None:
-            body["description"] = description
+            body['description'] = description
         return self._client.post(
-            f"/v0/meta/bases/{base_id}/tables/{table_id}/fields",
+            f'/v0/meta/bases/{base_id}/tables/{table_id}/fields',
             json=body,
         ).json()
 
@@ -189,7 +189,7 @@ class AirtableToolSet:
         max_records: int | None = None,
         page_size: int = 100,
         offset: str | None = None,
-        cell_format: str = "json",
+        cell_format: str = 'json',
         time_zone: str | None = None,
         user_locale: str | None = None,
         return_fields_by_field_id: bool = False,
@@ -211,60 +211,60 @@ class AirtableToolSet:
         instead. Pagination is preserved via the ``offset`` cursor.
         """
         if not base_id or not table_id_or_name:
-            raise ValueError("base_id and table_id_or_name are required")
-        if cell_format not in {"json", "string"}:
-            raise ValueError("cell_format must be json or string")
-        if cell_format == "string" and (time_zone is None or user_locale is None):
+            raise ValueError('base_id and table_id_or_name are required')
+        if cell_format not in {'json', 'string'}:
+            raise ValueError('cell_format must be json or string')
+        if cell_format == 'string' and (time_zone is None or user_locale is None):
             raise ValueError("time_zone and user_locale are required when cell_format is 'string'")
         params: dict[str, Any] = {
-            "pageSize": page_size,
-            "cellFormat": cell_format,
-            "returnFieldsByFieldId": str(return_fields_by_field_id).lower(),
+            'pageSize': page_size,
+            'cellFormat': cell_format,
+            'returnFieldsByFieldId': str(return_fields_by_field_id).lower(),
         }
         if view is not None:
-            params["view"] = view
+            params['view'] = view
         if fields is not None:
-            params["fields[]"] = fields
+            params['fields[]'] = fields
         if filter_by_formula is not None:
-            params["filterByFormula"] = filter_by_formula
+            params['filterByFormula'] = filter_by_formula
         if sort is not None:
             for i, s in enumerate(sort):
-                if "field" in s:
-                    params[f"sort[{i}][field]"] = s["field"]
-                if "direction" in s:
-                    params[f"sort[{i}][direction]"] = s["direction"]
+                if 'field' in s:
+                    params[f'sort[{i}][field]'] = s['field']
+                if 'direction' in s:
+                    params[f'sort[{i}][direction]'] = s['direction']
         if max_records is not None:
-            params["maxRecords"] = max_records
+            params['maxRecords'] = max_records
         if offset is not None:
-            params["offset"] = offset
+            params['offset'] = offset
         if time_zone is not None:
-            params["timeZone"] = time_zone
+            params['timeZone'] = time_zone
         if user_locale is not None:
-            params["userLocale"] = user_locale
+            params['userLocale'] = user_locale
         payload: dict[str, Any] = self._client.get(
-            f"/v0/{base_id}/{quote(table_id_or_name, safe='')}",
+            f'/v0/{base_id}/{quote(table_id_or_name, safe="")}',
             params=params,
         ).json()
         if not include_metadata:
             return payload
 
-        raw_records: list[Any] = payload.get("records", []) or []
+        raw_records: list[Any] = payload.get('records', []) or []
         summaries: list[dict[str, Any]] = []
         for index, record in enumerate(raw_records, start=1):
             if not isinstance(record, dict):
                 continue
-            record_dict = cast("dict[str, Any]", record)
+            record_dict = cast('dict[str, Any]', record)
             summary: dict[str, Any] = {
-                "record_ref": f"record_{index}",
-                "fields": record_dict.get("fields") or {},
-                "created_time": record_dict.get("createdTime", ""),
+                'record_ref': f'record_{index}',
+                'fields': record_dict.get('fields') or {},
+                'created_time': record_dict.get('createdTime', ''),
             }
             if include_ids:
-                summary["record_id"] = record_dict.get("id", "")
+                summary['record_id'] = record_dict.get('id', '')
             summaries.append(summary)
-        result: dict[str, Any] = {"records": summaries}
-        if payload.get("offset"):
-            result["offset"] = payload["offset"]
+        result: dict[str, Any] = {'records': summaries}
+        if payload.get('offset'):
+            result['offset'] = payload['offset']
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -282,9 +282,9 @@ class AirtableToolSet:
         ``include_ids=True`` to retrieve it).
         """
         if not base_id or not table_id_or_name or not record_id:
-            raise ValueError("base_id, table_id_or_name, and record_id are required")
+            raise ValueError('base_id, table_id_or_name, and record_id are required')
         return self._client.get(
-            f"/v0/{base_id}/{quote(table_id_or_name, safe='')}/{record_id}",
+            f'/v0/{base_id}/{quote(table_id_or_name, safe="")}/{record_id}',
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -303,15 +303,15 @@ class AirtableToolSet:
         Airtable response with created record IDs.
         """
         if not base_id or not table_id_or_name or not records:
-            raise ValueError("base_id, table_id_or_name, and records are required")
+            raise ValueError('base_id, table_id_or_name, and records are required')
         if len(records) > 10:
-            raise ValueError("Airtable accepts at most 10 records per create call")
+            raise ValueError('Airtable accepts at most 10 records per create call')
         return self._client.post(
-            f"/v0/{base_id}/{quote(table_id_or_name, safe='')}",
+            f'/v0/{base_id}/{quote(table_id_or_name, safe="")}',
             json={
-                "records": records,
-                "typecast": typecast,
-                "returnFieldsByFieldId": return_fields_by_field_id,
+                'records': records,
+                'typecast': typecast,
+                'returnFieldsByFieldId': return_fields_by_field_id,
             },
         ).json()
 
@@ -335,13 +335,13 @@ class AirtableToolSet:
         ``fieldsToMergeOn`` key).
         """
         if not base_id or not table_id_or_name or not records:
-            raise ValueError("base_id, table_id_or_name, and records are required")
+            raise ValueError('base_id, table_id_or_name, and records are required')
         if len(records) > 10:
-            raise ValueError("Airtable accepts at most 10 records per update call")
-        body: dict[str, Any] = {"records": records, "typecast": typecast}
+            raise ValueError('Airtable accepts at most 10 records per update call')
+        body: dict[str, Any] = {'records': records, 'typecast': typecast}
         if perform_upsert is not None:
-            body["performUpsert"] = perform_upsert
-        path = f"/v0/{base_id}/{quote(table_id_or_name, safe='')}"
+            body['performUpsert'] = perform_upsert
+        path = f'/v0/{base_id}/{quote(table_id_or_name, safe="")}'
         response = (
             self._client.put(path, json=body) if replace else self._client.patch(path, json=body)
         )
@@ -363,13 +363,13 @@ class AirtableToolSet:
         or a mixed list.
         """
         if not base_id or not table_id_or_name or not record_ids:
-            raise ValueError("base_id, table_id_or_name, and record_ids are required")
+            raise ValueError('base_id, table_id_or_name, and record_ids are required')
         resolved = [self._extract_record_id(candidate) for candidate in record_ids]
         if len(resolved) > 10:
-            raise ValueError("Airtable accepts at most 10 record IDs per delete call")
+            raise ValueError('Airtable accepts at most 10 record IDs per delete call')
         return self._client.delete(
-            f"/v0/{base_id}/{quote(table_id_or_name, safe='')}",
-            params={"records[]": resolved},
+            f'/v0/{base_id}/{quote(table_id_or_name, safe="")}',
+            params={'records[]': resolved},
         ).json()
 
     # MARK: - Comments
@@ -390,12 +390,12 @@ class AirtableToolSet:
         ``id``, ``text``, ``author``, and ``createdTime``.
         """
         if not base_id or not table_id_or_name or not record_id:
-            raise ValueError("base_id, table_id_or_name, and record_id are required")
-        params: dict[str, Any] = {"pageSize": page_size}
+            raise ValueError('base_id, table_id_or_name, and record_id are required')
+        params: dict[str, Any] = {'pageSize': page_size}
         if offset is not None:
-            params["offset"] = offset
+            params['offset'] = offset
         return self._client.get(
-            f"/v0/{base_id}/{quote(table_id_or_name, safe='')}/{record_id}/comments",
+            f'/v0/{base_id}/{quote(table_id_or_name, safe="")}/{record_id}/comments',
             params=params,
         ).json()
 
@@ -413,10 +413,10 @@ class AirtableToolSet:
         Returns the new comment resource.
         """
         if not base_id or not table_id_or_name or not record_id or not text:
-            raise ValueError("base_id, table_id_or_name, record_id, and text are required")
+            raise ValueError('base_id, table_id_or_name, record_id, and text are required')
         return self._client.post(
-            f"/v0/{base_id}/{quote(table_id_or_name, safe='')}/{record_id}/comments",
-            json={"text": text},
+            f'/v0/{base_id}/{quote(table_id_or_name, safe="")}/{record_id}/comments',
+            json={'text': text},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -434,14 +434,14 @@ class AirtableToolSet:
         first.
         """
         if not base_id or not table_id_or_name or not record_id or not comment_id:
-            raise ValueError("base_id, table_id_or_name, record_id, and comment_id are required")
+            raise ValueError('base_id, table_id_or_name, record_id, and comment_id are required')
         response = self._client.delete(
-            f"/v0/{base_id}/{quote(table_id_or_name, safe='')}/{record_id}/comments/{comment_id}",
+            f'/v0/{base_id}/{quote(table_id_or_name, safe="")}/{record_id}/comments/{comment_id}',
         )
         return {
-            "comment_id": comment_id,
-            "deleted": True,
-            "status": response.status,
+            'comment_id': comment_id,
+            'deleted': True,
+            'status': response.status,
         }
 
     # MARK: - Webhooks
@@ -453,9 +453,9 @@ class AirtableToolSet:
         Returns ``{"webhooks": [{"id": ..., "notificationUrl": ...}]}``.
         """
         if not base_id:
-            raise ValueError("base_id is required")
+            raise ValueError('base_id is required')
         return self._client.get(
-            f"/v0/bases/{base_id}/webhooks",
+            f'/v0/bases/{base_id}/webhooks',
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -472,12 +472,12 @@ class AirtableToolSet:
         returned once; persist it before responding.
         """
         if not base_id or not notification_url or not specification:
-            raise ValueError("base_id, notification_url, and specification are required")
+            raise ValueError('base_id, notification_url, and specification are required')
         return self._client.post(
-            f"/v0/bases/{base_id}/webhooks",
+            f'/v0/bases/{base_id}/webhooks',
             json={
-                "notificationUrl": notification_url,
-                "specification": specification,
+                'notificationUrl': notification_url,
+                'specification': specification,
             },
         ).json()
 
@@ -493,14 +493,14 @@ class AirtableToolSet:
         Destructive: webhook deliveries stop immediately.
         """
         if not base_id or not webhook_id:
-            raise ValueError("base_id and webhook_id are required")
+            raise ValueError('base_id and webhook_id are required')
         response = self._client.delete(
-            f"/v0/bases/{base_id}/webhooks/{webhook_id}",
+            f'/v0/bases/{base_id}/webhooks/{webhook_id}',
         )
         return {
-            "webhook_id": webhook_id,
-            "deleted": True,
-            "status": response.status,
+            'webhook_id': webhook_id,
+            'deleted': True,
+            'status': response.status,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -514,14 +514,14 @@ class AirtableToolSet:
     ) -> dict[str, Any]:
         """Fetch pending webhook payloads."""
         if not base_id or not webhook_id:
-            raise ValueError("base_id and webhook_id are required")
+            raise ValueError('base_id and webhook_id are required')
         params: dict[str, Any] = {}
         if cursor is not None:
-            params["cursor"] = cursor
+            params['cursor'] = cursor
         if limit is not None:
-            params["limit"] = limit
+            params['limit'] = limit
         return self._client.get(
-            f"/v0/bases/{base_id}/webhooks/{webhook_id}/payloads",
+            f'/v0/bases/{base_id}/webhooks/{webhook_id}/payloads',
             params=params or None,
         ).json()
 
@@ -533,7 +533,7 @@ class AirtableToolSet:
         verify the token has the required scopes before issuing other
         calls.
         """
-        return self._client.get("/v0/meta/whoami").json()
+        return self._client.get('/v0/meta/whoami').json()
 
     # MARK: - Internal
 
@@ -548,11 +548,11 @@ class AirtableToolSet:
         """
         if isinstance(candidate, str):
             if not candidate:
-                raise ValueError("record id must be a non-empty string")
+                raise ValueError('record id must be a non-empty string')
             return candidate
         if isinstance(candidate, dict):
-            candidate_dict = cast("dict[Any, Any]", candidate)
-            for key in ("record_id", "id"):
+            candidate_dict = cast('dict[Any, Any]', candidate)
+            for key in ('record_id', 'id'):
                 value: Any = candidate_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
@@ -563,10 +563,10 @@ class AirtableToolSet:
                     except ValueError:
                         continue
         if isinstance(candidate, list | tuple):
-            candidate_seq = cast("list[Any] | tuple[Any, ...]", candidate)
+            candidate_seq = cast('list[Any] | tuple[Any, ...]', candidate)
             for item in candidate_seq:
                 try:
                     return AirtableToolSet._extract_record_id(item)
                 except ValueError:
                     continue
-        raise ValueError(f"could not extract Airtable record id from: {candidate!r}")
+        raise ValueError(f'could not extract Airtable record id from: {candidate!r}')

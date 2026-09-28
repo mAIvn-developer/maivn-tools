@@ -1,11 +1,11 @@
 # Agent-Ready ToolSet Pattern Spec
 
-**Reference implementation:** `src/maivn_tools/connectors/google_workspace/gmail.py` (GmailToolSet).
-**Reference demo:** `apps/maivn-demos/demos/custom_toolset_demo.py` (FleetOpsToolSet).
+**Reference implementation:** `src/maivn_tools/connectors/google_workspace/gmail.py` (`GmailToolSet`).
+**Public tutorial:** [`toolsets.md`](toolsets.md).
 
 A developer should be able to plug any ToolSet into an Agent with
 `agent.add_toolset(MyToolSet(...))` and get useful behavior from ordinary
-user prompts — no custom graph wiring, no demo-specific wrappers, no
+user prompts: no custom graph wiring, no demo-specific wrappers, no
 long system prompts.
 
 ---
@@ -14,7 +14,7 @@ long system prompts.
 
 Every `@toolify` method must declare a `PermissionSet`:
 
-```python
+```text
 @toolify(permissions=PermissionSet(PermissionFlag.READ))
 def list_records(self, ...) -> ...:
     ...
@@ -64,7 +64,7 @@ For broad search/list tools:
 
 Example pattern:
 
-```python
+```text
 @toolify(permissions=PermissionSet(PermissionFlag.READ))
 def list_records(
     self,
@@ -136,9 +136,9 @@ Do not bake demo-specific behavior into provider toolsets. Use the SDK
 - toolsets: `agent.add_toolset(toolset, overrides={"method_name": ToolOverride(...)})`
 - MCP servers: `MCPServer(..., tool_overrides={"raw_tool_name": ToolOverride(...)})`
 
-Use overrides for: app-specific descriptions, default args,
-always-execute/final-tool behavior, app-specific dependencies, renamed
-public tool names.
+Use overrides for the descriptions, default args, always-execute or
+final-tool behavior, dependencies, and renamed public tool names that belong
+to one app.
 
 ## 8. Demo prompts
 

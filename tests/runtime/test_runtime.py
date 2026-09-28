@@ -1,8 +1,10 @@
 # pyright: strict
 from __future__ import annotations
 
+import urllib.error
+import urllib.request
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any, NoReturn, cast
 
 import pytest
 
@@ -33,7 +35,7 @@ from maivn_tools.testing import MockResponse, MockTransport, json_response, text
 
 def _client(transport: MockTransport, **kwargs: Any) -> HttpClient:
     return HttpClient(
-        base_url="https://api.example.test",
+        base_url='https://api.example.test',
         transport=transport,
         sleep=lambda _: None,
         **kwargs,
@@ -45,61 +47,75 @@ def test_urllib_transport_rejects_non_http_schemes() -> None:
     reject any non-http(s) scheme before opening the URL."""
     transport = UrllibTransport()
     for url in (
-        "file:///etc/passwd",
-        "ftp://example.test/secret",
-        "data:text/plain;base64,aGk=",
+        'file:///etc/passwd',
+        'ftp://example.test/secret',
+        'data:text/plain;base64,aGk=',
     ):
         with pytest.raises(ValueError):
-            transport.send(HttpRequest(method="GET", url=url))
+            transport.send(HttpRequest(method='GET', url=url))
 
 
-def test_urllib_transport_allows_http_scheme_past_guard() -> None:
-    """Regression: a valid http(s) scheme must pass the guard and proceed to
-    the network layer -- it fails there with TransportError (unreachable port),
-    NOT with the ValueError the scheme guard raises."""
+@pytest.mark.parametrize('scheme', ['http', 'https'])
+def test_urllib_transport_allows_http_scheme_past_guard(
+    monkeypatch: pytest.MonkeyPatch, scheme: str
+) -> None:
+    """A supported scheme reaches the opener and normalizes its network failure."""
+    opened: list[str] = []
+
+    def unavailable(
+        _opener: object, request: urllib.request.Request, *, timeout: float
+    ) -> NoReturn:
+        opened.append(request.full_url)
+        assert timeout == 0.5
+        reason = 'offline fixture'
+        raise urllib.error.URLError(reason)
+
+    monkeypatch.setattr(urllib.request.OpenerDirector, 'open', unavailable)
     transport = UrllibTransport()
-    with pytest.raises(TransportError):
-        transport.send(HttpRequest(method="GET", url="http://127.0.0.1:9/never", timeout=0.5))
+    url = f'{scheme}://api.example.test/never'
+    with pytest.raises(TransportError, match='offline fixture'):
+        transport.send(HttpRequest(method='GET', url=url, timeout=0.5))
+    assert opened == [url]
 
 
 def test_http_client_requires_base_url_for_relative_paths() -> None:
     transport = MockTransport([MockResponse(response=json_response({}))])
     client = HttpClient(transport=transport, sleep=lambda _: None)
     with pytest.raises(ValueError):
-        client.get("/relative")
+        client.get('/relative')
 
 
 def test_http_client_attaches_auth_and_correlation_headers() -> None:
-    transport = MockTransport([MockResponse(response=json_response({"ok": True}))])
-    client = _client(transport, auth=BearerTokenAuth("tok"))
-    response = client.get("/ping", correlation_id="abc")
-    assert response.json() == {"ok": True}
+    transport = MockTransport([MockResponse(response=json_response({'ok': True}))])
+    client = _client(transport, auth=BearerTokenAuth('tok'))
+    response = client.get('/ping', correlation_id='abc')
+    assert response.json() == {'ok': True}
     request = transport.requests[0]
-    assert request.headers["Authorization"] == "Bearer tok"
-    assert request.headers["X-Request-ID"] == "abc"
+    assert request.headers['Authorization'] == 'Bearer tok'
+    assert request.headers['X-Request-ID'] == 'abc'
 
 
 def test_http_client_appends_params_and_idempotency() -> None:
-    transport = MockTransport([MockResponse(response=text_response("ok"))])
+    transport = MockTransport([MockResponse(response=text_response('ok'))])
     client = _client(transport)
-    client.post("/widgets", params={"a": 1}, json={"x": 2}, idempotency_key="key-1")
+    client.post('/widgets', params={'a': 1}, json={'x': 2}, idempotency_key='key-1')
     request = transport.requests[0]
-    assert request.url.endswith("/widgets")
-    assert request.params == {"a": 1}
-    assert request.headers["Idempotency-Key"] == "key-1"
-    assert request.json_body == {"x": 2}
+    assert request.url.endswith('/widgets')
+    assert request.params == {'a': 1}
+    assert request.headers['Idempotency-Key'] == 'key-1'
+    assert request.json_body == {'x': 2}
 
 
 def test_http_client_retries_on_5xx_then_succeeds() -> None:
     transport = MockTransport()
     transport.enqueue(MockResponse(response=lambda _: json_response({}, status=500)))
-    transport.enqueue(json_response({"ok": True}))
+    transport.enqueue(json_response({'ok': True}))
     client = _client(
         transport,
         retry=RetryPolicy(max_attempts=2, initial_backoff_seconds=0, jitter=False),
     )
-    response = client.get("/ping")
-    assert response.json() == {"ok": True}
+    response = client.get('/ping')
+    assert response.json() == {'ok': True}
     assert len(transport.requests) == 2
 
 
@@ -112,7 +128,7 @@ def test_http_client_raises_after_max_attempts() -> None:
         retry=RetryPolicy(max_attempts=2, initial_backoff_seconds=0, jitter=False),
     )
     with pytest.raises(RetryableError):
-        client.get("/ping")
+        client.get('/ping')
     assert len(transport.requests) == 2
 
 
@@ -134,7 +150,7 @@ def test_http_client_normalizes_known_statuses() -> None:
             retry=RetryPolicy(max_attempts=1, initial_backoff_seconds=0, jitter=False),
         )
         with pytest.raises(exc_type):
-            client.get("/ping")
+            client.get('/ping')
 
 
 def test_http_client_honors_retry_after_header() -> None:
@@ -142,29 +158,29 @@ def test_http_client_honors_retry_after_header() -> None:
     transport = MockTransport()
     transport.enqueue(
         MockResponse(
-            response=lambda _: json_response({}, status=429, headers={"Retry-After": "0.25"})
+            response=lambda _: json_response({}, status=429, headers={'Retry-After': '0.25'})
         )
     )
-    transport.enqueue(json_response({"ok": True}))
+    transport.enqueue(json_response({'ok': True}))
 
     client = HttpClient(
-        base_url="https://api.example.test",
+        base_url='https://api.example.test',
         transport=transport,
         retry=RetryPolicy(
             max_attempts=2, initial_backoff_seconds=5, jitter=False, max_backoff_seconds=10
         ),
         sleep=sleeps.append,
     )
-    client.get("/ping")
+    client.get('/ping')
     assert sleeps == [0.25]
 
 
 def test_normalize_status_error_default_5xx_is_retryable() -> None:
-    err = normalize_status_error(503, "down")
+    err = normalize_status_error(503, 'down')
     assert isinstance(err, RetryableError)
-    other = normalize_status_error(418, "teapot")
+    other = normalize_status_error(418, 'teapot')
     assert isinstance(other, ProviderError)
-    rate = normalize_status_error(429, "stop", retry_after_seconds=2.0)
+    rate = normalize_status_error(429, 'stop', retry_after_seconds=2.0)
     assert isinstance(rate, RateLimitError)
     assert rate.retry_after_seconds == 2.0
 
@@ -184,9 +200,9 @@ def test_retry_policy_validation_and_backoff() -> None:
     assert policy.backoff_seconds(3) == 4.0
     assert policy.backoff_seconds(99) == 10.0
     assert policy.backoff_seconds(5, retry_after_seconds=20.0) == 10.0
-    assert policy.should_retry(1, TransportError("x")) is True
-    assert policy.should_retry(99, TransportError("x")) is False
-    assert policy.should_retry(1, ValueError("x")) is False
+    assert policy.should_retry(1, TransportError('x')) is True
+    assert policy.should_retry(99, TransportError('x')) is False
+    assert policy.should_retry(1, ValueError('x')) is False
 
 
 def test_token_bucket_consumes_and_recovers() -> None:
@@ -218,13 +234,13 @@ def test_rate_limit_policy_validation() -> None:
     with pytest.raises(ValueError):
         RateLimitPolicy(requests_per_second=1, burst=0)
     with pytest.raises(ValueError):
-        RateLimitPolicy(requests_per_second=1, burst=1, scope="")
+        RateLimitPolicy(requests_per_second=1, burst=1, scope='')
 
 
 def test_cursor_paginator_walks_until_none() -> None:
     pages: list[tuple[dict[str, Any], Any]] = [
-        ({"items": [1, 2]}, "c2"),
-        ({"items": [3]}, None),
+        ({'items': [1, 2]}, 'c2'),
+        ({'items': [3]}, None),
     ]
     iterator = iter(pages)
 
@@ -237,8 +253,8 @@ def test_cursor_paginator_walks_until_none() -> None:
 
 def test_offset_paginator_stops_on_short_page() -> None:
     pages: list[dict[str, Any]] = [
-        {"items": [1, 2]},
-        {"items": [3]},
+        {'items': [1, 2]},
+        {'items': [3]},
     ]
     iterator = iter(pages)
 
@@ -251,20 +267,20 @@ def test_offset_paginator_stops_on_short_page() -> None:
 
 def test_offset_paginator_honors_total_key() -> None:
     pages: list[dict[str, Any]] = [
-        {"items": [1, 2], "total": 3},
-        {"items": [3], "total": 3},
+        {'items': [1, 2], 'total': 3},
+        {'items': [3], 'total': 3},
     ]
     iterator = iter(pages)
     paginator = OffsetPaginator(
-        lambda offset, limit: next(iterator), page_size=2, total_key="total"
+        lambda offset, limit: next(iterator), page_size=2, total_key='total'
     )
     assert list(paginator.iter_items()) == [1, 2, 3]
 
 
 def test_page_token_paginator() -> None:
     pages: list[dict[str, Any]] = [
-        {"items": [1], "next_page_token": "t"},
-        {"items": [2], "next_page_token": ""},
+        {'items': [1], 'next_page_token': 't'},
+        {'items': [2], 'next_page_token': ''},
     ]
     iterator = iter(pages)
     paginator = PageTokenPaginator(lambda _: next(iterator))
@@ -273,22 +289,22 @@ def test_page_token_paginator() -> None:
 
 def test_delta_token_paginator_captures_final_token() -> None:
     pages: list[dict[str, Any]] = [
-        {"items": [1], "next_link": "/next"},
-        {"items": [2], "delta_token": "d-1"},
+        {'items': [1], 'next_link': '/next'},
+        {'items': [2], 'delta_token': 'd-1'},
     ]
     iterator = iter(pages)
     paginator = DeltaTokenPaginator(lambda _: next(iterator))
     assert list(paginator.iter_items()) == [1, 2]
-    assert paginator.final_delta_token == "d-1"
+    assert paginator.final_delta_token == 'd-1'
 
 
 def test_mock_transport_records_requests_and_raises_when_empty() -> None:
     transport = MockTransport([MockResponse(response=json_response({}))])
     client = _client(transport)
-    client.get("/x")
-    assert transport.requests[0].method == "GET"
+    client.get('/x')
+    assert transport.requests[0].method == 'GET'
     with pytest.raises(AssertionError):
-        client.get("/x")
+        client.get('/x')
 
 
 def test_mock_response_validates_inputs() -> None:
@@ -302,11 +318,11 @@ def test_mock_response_match_predicate() -> None:
     transport = MockTransport(
         [
             MockResponse(
-                response=json_response({"ok": True}),
-                match=lambda req: req.method == "POST",
+                response=json_response({'ok': True}),
+                match=lambda req: req.method == 'POST',
             )
         ]
     )
     client = _client(transport)
     with pytest.raises(AssertionError):
-        client.get("/x")
+        client.get('/x')

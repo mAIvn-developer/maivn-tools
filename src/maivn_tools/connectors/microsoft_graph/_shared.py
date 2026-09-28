@@ -15,7 +15,7 @@ from ...runtime.http import HttpClient, HttpTransport
 
 # MARK: - Constants
 
-GRAPH_API_URL = "https://graph.microsoft.com/v1.0"
+GRAPH_API_URL = 'https://graph.microsoft.com/v1.0'
 
 TokenSource = OAuth2TokenProvider | OAuth2Token | str
 
@@ -34,7 +34,7 @@ def make_graph_client(
         base_url=base_url,
         auth=OAuth2BearerAuth(_normalize_token_provider(token)),
         transport=transport,
-        default_headers={"Accept": "application/json"},
+        default_headers={'Accept': 'application/json'},
     )
 
 
@@ -44,7 +44,7 @@ def make_graph_client(
 def _normalize_token_provider(token: TokenSource) -> OAuth2TokenProvider:
     if isinstance(token, str):
         if not token:
-            raise ValueError("Token string must be non-empty")
+            raise ValueError('Token string must be non-empty')
         constant = OAuth2Token(access_token=token)
         return lambda: constant
     if isinstance(token, OAuth2Token):
@@ -52,4 +52,4 @@ def _normalize_token_provider(token: TokenSource) -> OAuth2TokenProvider:
         return lambda: captured
     if callable(token):
         return token
-    raise TypeError("Token must be an OAuth2TokenProvider callable, OAuth2Token, or string")
+    raise TypeError('Token must be an OAuth2TokenProvider callable, OAuth2Token, or string')

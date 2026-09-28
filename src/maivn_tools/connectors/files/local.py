@@ -28,6 +28,7 @@ from maivn import toolify, toolset
 
 from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
+from ...files.mime import guess_mime_type
 
 
 class PathOutsideRootError(ValueError):
@@ -52,24 +53,24 @@ def _extract_local_path(candidate: Any) -> str:
     if isinstance(candidate, str):
         return candidate
     if isinstance(candidate, dict):
-        mapping = cast("dict[object, object]", candidate)
-        for key in ("path", "file_path", "destination", "source"):
+        mapping = cast('dict[object, object]', candidate)
+        for key in ('path', 'file_path', 'destination', 'source'):
             value = mapping.get(key)
             if isinstance(value, str):
                 return value
-        raise ValueError("dict candidate has no path")
+        raise ValueError('dict candidate has no path')
     if isinstance(candidate, (list, tuple)):
-        sequence = cast("tuple[object, ...] | list[object]", candidate)
+        sequence = cast('tuple[object, ...] | list[object]', candidate)
         for item in sequence:
             try:
                 return _extract_local_path(item)
             except ValueError:
                 continue
-        raise ValueError("no usable path in candidate sequence")
-    raise ValueError("path must be a string or a file dict")
+        raise ValueError('no usable path in candidate sequence')
+    raise ValueError('path must be a string or a file dict')
 
 
-@toolset(prefix="local_files")
+@toolset(prefix='local_files')
 class LocalFilesToolSet:
     """A connector that exposes read/write tools over a sandboxed local directory.
 
@@ -84,10 +85,10 @@ class LocalFilesToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="local_files",
-        display_name="Local Filesystem",
-        version="0.1.0",
-        description="Read and write a sandboxed local directory tree.",
+        name='local_files',
+        display_name='Local Filesystem',
+        version='0.1.0',
+        description='Read and write a sandboxed local directory tree.',
         auth_modes=(AuthMode.NONE,),
         capabilities=frozenset(
             {
@@ -96,7 +97,7 @@ class LocalFilesToolSet:
                 ProviderCapability.SEARCH,
             }
         ),
-        tags=("files", "local"),
+        tags=('files', 'local'),
     )
 
     def __init__(
@@ -109,11 +110,11 @@ class LocalFilesToolSet:
     ) -> None:
         resolved = Path(root).expanduser().resolve(strict=True)
         if not resolved.is_dir():
-            raise NotADirectoryError(f"root must be a directory: {resolved}")
+            raise NotADirectoryError(f'root must be a directory: {resolved}')
         if max_read_bytes < 1:
-            raise ValueError("max_read_bytes must be at least 1")
+            raise ValueError('max_read_bytes must be at least 1')
         if max_write_bytes < 1:
-            raise ValueError("max_write_bytes must be at least 1")
+            raise ValueError('max_write_bytes must be at least 1')
         self._root = resolved
         self._follow_symlinks = follow_symlinks
         self._max_read_bytes = max_read_bytes
@@ -130,7 +131,7 @@ class LocalFilesToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_directory(
         self,
-        path: Any = "",
+        path: Any = '',
         pattern: str | None = None,
         *,
         max_results: int = 25,
@@ -150,11 +151,11 @@ class LocalFilesToolSet:
         opaque IDs.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         path = _extract_local_path(path) if not isinstance(path, str) else path
         target = self._safe_path(path)
         if not target.is_dir():
-            raise NotADirectoryError(f"Not a directory: {self._relative_str(target)}")
+            raise NotADirectoryError(f'Not a directory: {self._relative_str(target)}')
         entries: list[_FileEntry] = []
         for child in sorted(target.iterdir()):
             if pattern and not fnmatch.fnmatch(child.name, pattern):
@@ -165,10 +166,10 @@ class LocalFilesToolSet:
         if not include_metadata:
             return [
                 {
-                    "path": entry.path,
-                    "is_dir": entry.is_dir,
-                    "size": entry.size,
-                    "mime_hint": entry.mime_hint,
+                    'path': entry.path,
+                    'is_dir': entry.is_dir,
+                    'size': entry.size,
+                    'mime_hint': entry.mime_hint,
                 }
                 for entry in entries
             ]
@@ -178,21 +179,21 @@ class LocalFilesToolSet:
         _ = include_ids
         summaries: list[dict[str, Any]] = []
         for index, entry in enumerate(entries, start=1):
-            ref_prefix = "folder" if entry.is_dir else "file"
+            ref_prefix = 'folder' if entry.is_dir else 'file'
             summary: dict[str, Any] = {
-                f"{ref_prefix}_ref": f"{ref_prefix}_{index}",
-                "name": Path(entry.path).name,
-                "path": entry.path,
-                "kind": "folder" if entry.is_dir else "file",
-                "size": entry.size,
-                "modified_at": entry.modified_at,
-                "mime_hint": entry.mime_hint,
+                f'{ref_prefix}_ref': f'{ref_prefix}_{index}',
+                'name': Path(entry.path).name,
+                'path': entry.path,
+                'kind': 'folder' if entry.is_dir else 'file',
+                'size': entry.size,
+                'modified_at': entry.modified_at,
+                'mime_hint': entry.mime_hint,
             }
             summaries.append(summary)
         return summaries
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
-    def read_text_file(self, path: Any, encoding: str = "utf-8") -> dict[str, Any]:
+    def read_text_file(self, path: Any, encoding: str = 'utf-8') -> dict[str, Any]:
         """Read ``path`` as text and return its content plus metadata.
 
         Accepts a relative path string or a file dict from
@@ -210,11 +211,11 @@ class LocalFilesToolSet:
             raw = raw[: self._max_read_bytes]
             truncated = True
         return {
-            "path": self._relative_str(target),
-            "encoding": encoding,
-            "content": raw.decode(encoding, errors="replace"),
-            "truncated": truncated,
-            "size": target.stat().st_size,
+            'path': self._relative_str(target),
+            'encoding': encoding,
+            'content': raw.decode(encoding, errors='replace'),
+            'truncated': truncated,
+            'size': target.stat().st_size,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -222,8 +223,8 @@ class LocalFilesToolSet:
         self,
         query: str,
         *,
-        path: Any = "",
-        pattern: str = "*",
+        path: Any = '',
+        pattern: str = '*',
         max_results: int = 25,
     ) -> list[dict[str, Any]]:
         """Substring-search ``query`` across files matching ``pattern``.
@@ -234,15 +235,15 @@ class LocalFilesToolSet:
         ``max_results`` cautiously for noisy patterns.
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         path = _extract_local_path(path) if not isinstance(path, str) else path
         target = self._safe_path(path)
         if not target.is_dir():
-            raise NotADirectoryError(f"Not a directory: {self._relative_str(target)}")
+            raise NotADirectoryError(f'Not a directory: {self._relative_str(target)}')
         results: list[dict[str, Any]] = []
-        needle = query.encode("utf-8")
+        needle = query.encode('utf-8')
         for file_path in self._walk_files(target, pattern):
             try:
                 contents = file_path.read_bytes()
@@ -251,18 +252,18 @@ class LocalFilesToolSet:
             idx = contents.find(needle)
             if idx == -1:
                 continue
-            line_no = contents[:idx].count(b"\n") + 1
-            line_start = contents.rfind(b"\n", 0, idx) + 1
-            line_end = contents.find(b"\n", idx)
+            line_no = contents[:idx].count(b'\n') + 1
+            line_start = contents.rfind(b'\n', 0, idx) + 1
+            line_end = contents.find(b'\n', idx)
             if line_end == -1:
                 line_end = len(contents)
-            snippet = contents[line_start:line_end].decode("utf-8", errors="replace").strip()
+            snippet = contents[line_start:line_end].decode('utf-8', errors='replace').strip()
             results.append(
                 {
-                    "match_ref": f"match_{len(results) + 1}",
-                    "path": self._relative_str(file_path),
-                    "line": line_no,
-                    "snippet": snippet,
+                    'match_ref': f'match_{len(results) + 1}',
+                    'path': self._relative_str(file_path),
+                    'line': line_no,
+                    'snippet': snippet,
                 }
             )
             if len(results) >= max_results:
@@ -285,18 +286,18 @@ class LocalFilesToolSet:
             raw = raw[: self._max_read_bytes]
             truncated = True
         return {
-            "path": self._relative_str(target),
-            "content_base64": base64.b64encode(raw).decode("ascii"),
-            "truncated": truncated,
-            "size": target.stat().st_size,
+            'path': self._relative_str(target),
+            'content_base64': base64.b64encode(raw).decode('ascii'),
+            'truncated': truncated,
+            'size': target.stat().st_size,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_tree(
         self,
-        path: Any = "",
+        path: Any = '',
         *,
-        pattern: str = "*",
+        pattern: str = '*',
         max_depth: int = 5,
         max_results: int = 1000,
     ) -> list[dict[str, Any]]:
@@ -308,13 +309,13 @@ class LocalFilesToolSet:
         guardrail for large trees.
         """
         if max_depth < 0:
-            raise ValueError("max_depth must be >= 0")
+            raise ValueError('max_depth must be >= 0')
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         path = _extract_local_path(path) if not isinstance(path, str) else path
         target = self._safe_path(path)
         if not target.is_dir():
-            raise NotADirectoryError(f"Not a directory: {self._relative_str(target)}")
+            raise NotADirectoryError(f'Not a directory: {self._relative_str(target)}')
         results: list[dict[str, Any]] = []
         base_depth = len(target.parts)
         for current, dirs, files in os.walk(target, followlinks=self._follow_symlinks):
@@ -325,7 +326,7 @@ class LocalFilesToolSet:
             dirs.sort()
             files.sort()
             for name in files:
-                if pattern != "*" and not fnmatch.fnmatch(name, pattern):
+                if pattern != '*' and not fnmatch.fnmatch(name, pattern):
                     continue
                 file_path = Path(current) / name
                 try:
@@ -335,10 +336,10 @@ class LocalFilesToolSet:
                 entry = self._describe(file_path)
                 results.append(
                     {
-                        "path": entry.path,
-                        "is_dir": entry.is_dir,
-                        "size": entry.size,
-                        "mime_hint": entry.mime_hint,
+                        'path': entry.path,
+                        'is_dir': entry.is_dir,
+                        'size': entry.size,
+                        'mime_hint': entry.mime_hint,
                     }
                 )
                 if len(results) >= max_results:
@@ -354,10 +355,10 @@ class LocalFilesToolSet:
         target = self._safe_path(_extract_local_path(path))
         exists = target.exists()
         return {
-            "path": self._relative_str(target),
-            "exists": exists,
-            "is_dir": target.is_dir() if exists else False,
-            "is_file": target.is_file() if exists else False,
+            'path': self._relative_str(target),
+            'exists': exists,
+            'is_dir': target.is_dir() if exists else False,
+            'is_file': target.is_file() if exists else False,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -371,12 +372,12 @@ class LocalFilesToolSet:
             raise FileNotFoundError(self._relative_str(target))
         st = target.stat()
         return {
-            "path": self._relative_str(target),
-            "is_dir": target.is_dir(),
-            "is_file": target.is_file(),
-            "size": st.st_size,
-            "modified_at": datetime.fromtimestamp(st.st_mtime, tz=timezone.utc).isoformat(),
-            "created_at": datetime.fromtimestamp(st.st_ctime, tz=timezone.utc).isoformat(),
+            'path': self._relative_str(target),
+            'is_dir': target.is_dir(),
+            'is_file': target.is_file(),
+            'size': st.st_size,
+            'modified_at': datetime.fromtimestamp(st.st_mtime, tz=timezone.utc).isoformat(),
+            'created_at': datetime.fromtimestamp(st.st_ctime, tz=timezone.utc).isoformat(),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -385,7 +386,7 @@ class LocalFilesToolSet:
         path: Any,
         content: str,
         *,
-        encoding: str = "utf-8",
+        encoding: str = 'utf-8',
         overwrite: bool = False,
         create_parents: bool = False,
     ) -> dict[str, Any]:
@@ -414,7 +415,7 @@ class LocalFilesToolSet:
         try:
             data = base64.b64decode(content_base64, validate=True)
         except (ValueError, TypeError) as exc:
-            raise ValueError(f"content_base64 must be valid base64: {exc}") from exc
+            raise ValueError(f'content_base64 must be valid base64: {exc}') from exc
         target = self._safe_path(_extract_local_path(path))
         return self._write_bytes(target, data, overwrite=overwrite, create_parents=create_parents)
 
@@ -424,7 +425,7 @@ class LocalFilesToolSet:
         path: Any,
         content: str,
         *,
-        encoding: str = "utf-8",
+        encoding: str = 'utf-8',
     ) -> dict[str, Any]:
         """Append ``content`` to an existing file (creates if missing).
 
@@ -435,14 +436,14 @@ class LocalFilesToolSet:
         existing_size = target.stat().st_size if target.is_file() else 0
         total = existing_size + len(data)
         if total > self._max_write_bytes:
-            raise ValueError(f"append would exceed max_write_bytes ({self._max_write_bytes})")
+            raise ValueError(f'append would exceed max_write_bytes ({self._max_write_bytes})')
         target.parent.mkdir(parents=True, exist_ok=True)
-        with target.open("ab") as fh:
+        with target.open('ab') as fh:
             fh.write(data)
         return {
-            "path": self._relative_str(target),
-            "appended_bytes": len(data),
-            "size": target.stat().st_size,
+            'path': self._relative_str(target),
+            'appended_bytes': len(data),
+            'size': target.stat().st_size,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -456,9 +457,9 @@ class LocalFilesToolSet:
         """Create a directory (and intermediate parents when ``parents=True``)."""
         target = self._safe_path(path)
         if target == self._root:
-            raise ValueError("Refusing to recreate the connector root")
+            raise ValueError('Refusing to recreate the connector root')
         target.mkdir(parents=parents, exist_ok=exist_ok)
-        return {"path": self._relative_str(target), "created": True}
+        return {'path': self._relative_str(target), 'created': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def copy_file(
@@ -481,9 +482,9 @@ class LocalFilesToolSet:
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
         return {
-            "source": self._relative_str(src),
-            "destination": self._relative_str(dst),
-            "size": dst.stat().st_size,
+            'source': self._relative_str(src),
+            'destination': self._relative_str(dst),
+            'size': dst.stat().st_size,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -512,8 +513,8 @@ class LocalFilesToolSet:
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(src), str(dst))
         return {
-            "source": self._relative_str(src),
-            "destination": self._relative_str(dst),
+            'source': self._relative_str(src),
+            'destination': self._relative_str(dst),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -525,13 +526,13 @@ class LocalFilesToolSet:
         """
         target = self._safe_path(_extract_local_path(path))
         if target == self._root:
-            raise ValueError("Refusing to delete the connector root")
+            raise ValueError('Refusing to delete the connector root')
         if not target.exists():
             raise FileNotFoundError(self._relative_str(target))
         if target.is_dir():
             raise IsADirectoryError(self._relative_str(target))
         target.unlink()
-        return {"path": self._relative_str(target), "deleted": True}
+        return {'path': self._relative_str(target), 'deleted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def remove_directory(
@@ -547,14 +548,14 @@ class LocalFilesToolSet:
         """
         target = self._safe_path(_extract_local_path(path))
         if target == self._root:
-            raise ValueError("Refusing to remove the connector root")
+            raise ValueError('Refusing to remove the connector root')
         if not target.is_dir():
             raise NotADirectoryError(self._relative_str(target))
         if recursive:
             shutil.rmtree(target)
         else:
             target.rmdir()
-        return {"path": self._relative_str(target), "removed": True}
+        return {'path': self._relative_str(target), 'removed': True}
 
     # MARK: - Internal helpers (not tools)
 
@@ -567,7 +568,7 @@ class LocalFilesToolSet:
         create_parents: bool,
     ) -> dict[str, Any]:
         if len(data) > self._max_write_bytes:
-            raise ValueError(f"payload exceeds max_write_bytes ({self._max_write_bytes})")
+            raise ValueError(f'payload exceeds max_write_bytes ({self._max_write_bytes})')
         if target == self._root:
             raise IsADirectoryError(self._relative_str(target))
         if target.exists() and not overwrite:
@@ -578,9 +579,9 @@ class LocalFilesToolSet:
             raise FileNotFoundError(self._relative_str(target.parent))
         target.write_bytes(data)
         return {
-            "path": self._relative_str(target),
-            "bytes_written": len(data),
-            "size": target.stat().st_size,
+            'path': self._relative_str(target),
+            'bytes_written': len(data),
+            'size': target.stat().st_size,
         }
 
     def _walk_files(self, start: Path, pattern: str) -> Iterable[Path]:
@@ -588,7 +589,7 @@ class LocalFilesToolSet:
             dirs.sort()
             files.sort()
             for name in files:
-                if pattern != "*" and not fnmatch.fnmatch(name, pattern):
+                if pattern != '*' and not fnmatch.fnmatch(name, pattern):
                     continue
                 file_path = Path(current) / name
                 try:
@@ -608,12 +609,12 @@ class LocalFilesToolSet:
             candidate.relative_to(self._root)
         except ValueError as exc:
             raise PathOutsideRootError(
-                f"Path {candidate} escapes the connector root {self._root}"
+                f'Path {candidate} escapes the connector root {self._root}'
             ) from exc
 
     def _relative_str(self, path: Path) -> str:
         try:
-            return str(path.relative_to(self._root)).replace(os.sep, "/")
+            return str(path.relative_to(self._root)).replace(os.sep, '/')
         except ValueError:
             return str(path)
 
@@ -630,8 +631,6 @@ class LocalFilesToolSet:
         except OSError:
             pass
         if not is_dir:
-            from ...files.mime import guess_mime_type
-
             mime_hint = guess_mime_type(path)
         return _FileEntry(
             path=self._relative_str(path),

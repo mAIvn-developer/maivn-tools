@@ -65,17 +65,22 @@ require_permissions(
 
 ## Declaring tool permissions
 
-Tool callables produced by generic adapters expose `permissions` and
-`destructive` attributes. When you write a tool by hand, set them on the
-callable so hosts can inspect them:
+Generic adapters expose permission attributes for host inspection. For SDK
+registration, declare custom-tool metadata with `@toolify`:
 
 ```python
+@toolify(
+    permissions=PermissionSet(PermissionFlag.WRITE | PermissionFlag.DELETE),
+    destructive=True,
+)
 def archive_message(message_id: str) -> dict:
-    ...
-
-archive_message.permissions = PermissionSet(PermissionFlag.WRITE | PermissionFlag.DELETE)
-archive_message.destructive = True
+    return provider_api.archive(message_id)
 ```
+
+Metadata describes intended behavior; it does not enforce provider authorization.
+An `include_tags=["read"]` filter also matches tools tagged with both READ and
+WRITE. Generic query or workflow tools can perform operations beyond their tag.
+For read-only use, choose explicit methods and restrict provider credentials.
 
 `destructive=True` is a coarser hint than `permissions`. It is the right
 signal for a host UI to warn users; `permissions` is the right signal for
@@ -118,7 +123,7 @@ tests can discover which tools honor the contract without executing them.
 
 ## Recommended defaults
 
-- All tools begin life as `PermissionSet(PermissionFlag.READ)`.
+- Declare permissions for each tool; do not rely on a default READ marker to establish safety.
 - Write tools opt in to `WRITE` only.
 - Delete, export, import, and admin tools opt in **explicitly** to those
   flags **in addition to** `destructive=True`.

@@ -1,6 +1,6 @@
 # HTTP runtime
 
-Every connector in `maivn-tools` eventually talks to a provider over HTTP,
+HTTP connectors in `maivn-tools` talk to providers over HTTP,
 and every provider fails differently: some throttle you, some return cryptic
 5xx errors, some want a `Retry-After` honored to the millisecond. The runtime
 layer exists so connector authors never re-solve those problems. Write the
@@ -24,12 +24,12 @@ class HttpTransport(ABC):
 
 Two implementations ship out of the box:
 
-- `UrllibTransport` — the default; uses `urllib.request` so the package has
-  no required third-party dependency.
+- `UrllibTransport` — the default; uses `urllib.request` without an additional HTTP-client dependency.
+  The package itself has required SDK and artifact dependencies.
 - `MockTransport` — in `maivn_tools.testing`; queues canned responses and
   records every request.
 
-Custom transports (e.g. `httpx`, `requests`, async) implement the same
+Custom synchronous transports (e.g. `httpx` or `requests`) implement the same
 interface and plug directly into `HttpClient`.
 
 ## HttpClient
@@ -81,9 +81,10 @@ print(response.json())
 Retries fire on `RetryableError`, `RateLimitError`, and `TransportError` by
 default. Override `retry_on` to add provider-specific exceptions.
 
-When a response includes a `Retry-After` header, the client honors it
-instead of computing the next backoff. Values are clipped to
-`max_backoff_seconds`.
+For HTTP 429, the client accepts a numeric `Retry-After` delay and clips it to
+`max_backoff_seconds`. HTTP-date values and headers on other statuses do not
+override backoff. Retries apply to writes too; use provider-supported idempotency
+keys or disable retries where repeating a request could duplicate an action.
 
 ### Rate limits
 

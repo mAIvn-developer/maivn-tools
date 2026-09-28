@@ -20,75 +20,75 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _PROJECT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "project_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "description": {"type": "string"},
-        "created_at": {"type": "string"},
-        "project_slug": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'project_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'description': {'type': 'string'},
+        'created_at': {'type': 'string'},
+        'project_slug': {'type': 'string'},
     },
-    "required": ["project_ref", "name"],
+    'required': ['project_ref', 'name'],
 }
 
 _CONFIG_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "config_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "environment": {"type": "string"},
-        "root": {"type": "boolean"},
-        "locked": {"type": "boolean"},
-        "config_slug": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'config_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'environment': {'type': 'string'},
+        'root': {'type': 'boolean'},
+        'locked': {'type': 'boolean'},
+        'config_slug': {'type': 'string'},
     },
-    "required": ["config_ref", "name"],
+    'required': ['config_ref', 'name'],
 }
 
 _SECRET_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "secret_ref": {"type": "string"},
-        "key": {"type": "string"},
-        "value_type": {"type": "string"},
-        "note": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'secret_ref': {'type': 'string'},
+        'key': {'type': 'string'},
+        'value_type': {'type': 'string'},
+        'note': {'type': 'string'},
     },
-    "required": ["secret_ref", "key"],
+    'required': ['secret_ref', 'key'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_PROJECTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "projects": {"type": "array", "items": _PROJECT_SUMMARY},
-        "page": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'projects': {'type': 'array', 'items': _PROJECT_SUMMARY},
+        'page': {'type': 'integer'},
     },
-    "required": ["projects"],
+    'required': ['projects'],
 }
 
 LIST_CONFIGS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "configs": {"type": "array", "items": _CONFIG_SUMMARY},
-        "project": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'configs': {'type': 'array', 'items': _CONFIG_SUMMARY},
+        'project': {'type': 'string'},
     },
-    "required": ["configs"],
+    'required': ['configs'],
 }
 
 LIST_SECRETS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "secrets": {"type": "array", "items": _SECRET_SUMMARY},
-        "project": {"type": "string"},
-        "config": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'secrets': {'type': 'array', 'items': _SECRET_SUMMARY},
+        'project': {'type': 'string'},
+        'config': {'type': 'string'},
     },
-    "required": ["secrets"],
+    'required': ['secrets'],
 }
 
 
 __all__ = [
-    "LIST_CONFIGS_OUTPUT",
-    "LIST_PROJECTS_OUTPUT",
-    "LIST_SECRETS_OUTPUT",
+    'LIST_CONFIGS_OUTPUT',
+    'LIST_PROJECTS_OUTPUT',
+    'LIST_SECRETS_OUTPUT',
 ]

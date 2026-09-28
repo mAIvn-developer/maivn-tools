@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import AmazonCloudWatchLogsToolSet
 
-__all__ = ["AmazonCloudWatchLogsToolSet"]
+__all__ = ['AmazonCloudWatchLogsToolSet']

@@ -49,16 +49,16 @@ class ZapierConnector:
     """
 
     metadata = ProviderMetadata(
-        name="zapier",
-        display_name="Zapier",
-        version="0.1.0",
-        description="Trigger Zapier webhooks.",
+        name='zapier',
+        display_name='Zapier',
+        version='0.1.0',
+        description='Trigger Zapier webhooks.',
         auth_modes=(AuthMode.NONE,),
         scopes={},
         capabilities=frozenset({ProviderCapability.WRITE}),
-        documentation_url="https://platform.zapier.com",
-        homepage_url="https://zapier.com",
-        tags=("partner", "automation"),
+        documentation_url='https://platform.zapier.com',
+        homepage_url='https://zapier.com',
+        tags=('partner', 'automation'),
     )
 
     def __init__(
@@ -88,17 +88,17 @@ class ZapierConnector:
             # ``__doc__``).
             body = payload or {}
             response = self._webhook_client.post(url, json=body)
-            return {"status": response.status, "url": url, "delivered": True}
+            return {'status': response.status, 'url': url, 'delivered': True}
 
-        trigger.__name__ = f"trigger_{name}"
+        trigger.__name__ = f'trigger_{name}'
         trigger.__qualname__ = trigger.__name__
         trigger.__doc__ = (
-            f"Trigger the {name!r} Zapier webhook by POSTing the payload.\n\n"
+            f'Trigger the {name!r} Zapier webhook by POSTing the payload.\n\n'
             f'Returns ``{{"status": <http_status>, "url": <webhook_url>, '
             f'"delivered": True}}``. ``payload`` is the JSON body sent to '
-            f"the Zap; pass ``None`` to send an empty object. Use this when "
-            f"the user asks to fire the {name!r} Zap. The Zap definition "
-            f"itself lives in Zapier — this tool just delivers the payload."
+            f'the Zap; pass ``None`` to send an empty object. Use this when '
+            f'the user asks to fire the {name!r} Zap. The Zap definition '
+            f'itself lives in Zapier — this tool just delivers the payload.'
         )
         _mark_tool(trigger, PermissionFlag.WRITE)
         return trigger
@@ -113,5 +113,5 @@ def _mark_tool(tool: Callable[..., Any], flag: PermissionFlag) -> None:
     Used only by the builder-style Zapier connector; toolset-based
     connectors use ``@toolify`` instead and don't need this.
     """
-    setattr(tool, "permissions", PermissionSet(flag))  # noqa: B010
-    setattr(tool, "destructive", False)  # noqa: B010
+    setattr(tool, 'permissions', PermissionSet(flag))  # noqa: B010
+    setattr(tool, 'destructive', False)  # noqa: B010

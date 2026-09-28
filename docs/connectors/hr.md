@@ -8,7 +8,7 @@ write inputs).
 ## Agent-ready behavior (overview)
 
 All list tools across this category return compact summaries with
-stable display refs (`worker_ref`, `employee_ref`, `candidate_ref`,
+response-local display refs (`worker_ref`, `employee_ref`, `candidate_ref`,
 `job_ref`, `opportunity_ref`, `contract_ref`, `user_ref`). Raw
 provider IDs (Workday WIDs, BambooHR numeric IDs, Rippling employee
 UUIDs, Gusto employee UUIDs, Greenhouse numeric job/candidate IDs,

@@ -6,11 +6,13 @@ constructor and the headline tool surface.
 
 > Tip: most agents only need read access (browse + analytics).
 > Register with `add_toolset(..., include_tags=["read"])` or
-> `exclude_tags=["destructive"]` to drop publish / delete tools.
+> `exclude_tags=["destructive"]` to drop methods carrying that tag.
+> Publishing methods can be ordinary WRITE tools; use an explicit read-method
+> allowlist when publishing must be unavailable.
 
 > **Agent-ready pattern.** Across these connectors, broad list /
 > search / feed tools return compact human-readable summaries by
-> default with a stable `_ref` field (`tweet_ref`, `post_ref`,
+> default with a response-local `_ref` field (`tweet_ref`, `post_ref`,
 > `media_ref`, `video_ref`, `status_ref`, `comment_ref`, ...) and a
 > small default page size (usually 10-25). Raw provider IDs are hidden
 > unless you pass `include_ids=True`; pass `include_metadata=False` to
@@ -604,7 +606,7 @@ This connector does not expose a hard delete; `hide_reply` (with
 ```python
 from maivn_tools import BufferToolSet
 
-connector = BufferToolSet(access_token=secrets["BUFFER_TOKEN"])
+connector = BufferToolSet(api_key=secrets["BUFFER_TOKEN"])
 ```
 
 Buffer Publish + Profiles API for cross-network scheduling. Tools:

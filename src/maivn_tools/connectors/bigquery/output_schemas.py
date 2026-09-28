@@ -19,55 +19,55 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _DATASET_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "dataset_ref": {"type": "string"},
-        "dataset_id": {"type": "string"},
-        "project_id": {"type": "string"},
-        "location": {"type": "string"},
-        "friendly_name": {"type": "string"},
-        "labels": {"type": "object"},
+    'type': 'object',
+    'properties': {
+        'dataset_ref': {'type': 'string'},
+        'dataset_id': {'type': 'string'},
+        'project_id': {'type': 'string'},
+        'location': {'type': 'string'},
+        'friendly_name': {'type': 'string'},
+        'labels': {'type': 'object'},
     },
-    "required": ["dataset_ref", "dataset_id"],
+    'required': ['dataset_ref', 'dataset_id'],
 }
 
 _TABLE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "table_ref": {"type": "string"},
-        "table_id": {"type": "string"},
-        "dataset_id": {"type": "string"},
-        "project_id": {"type": "string"},
-        "type": {"type": "string"},
-        "friendly_name": {"type": "string"},
-        "labels": {"type": "object"},
+    'type': 'object',
+    'properties': {
+        'table_ref': {'type': 'string'},
+        'table_id': {'type': 'string'},
+        'dataset_id': {'type': 'string'},
+        'project_id': {'type': 'string'},
+        'type': {'type': 'string'},
+        'friendly_name': {'type': 'string'},
+        'labels': {'type': 'object'},
     },
-    "required": ["table_ref", "table_id"],
+    'required': ['table_ref', 'table_id'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_DATASETS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "datasets": {"type": "array", "items": _DATASET_SUMMARY},
-        "nextPageToken": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'datasets': {'type': 'array', 'items': _DATASET_SUMMARY},
+        'nextPageToken': {'type': 'string'},
     },
-    "required": ["datasets"],
+    'required': ['datasets'],
 }
 
 LIST_TABLES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "tables": {"type": "array", "items": _TABLE_SUMMARY},
-        "nextPageToken": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'tables': {'type': 'array', 'items': _TABLE_SUMMARY},
+        'nextPageToken': {'type': 'string'},
     },
-    "required": ["tables"],
+    'required': ['tables'],
 }
 
 
 __all__ = [
-    "LIST_DATASETS_OUTPUT",
-    "LIST_TABLES_OUTPUT",
+    'LIST_DATASETS_OUTPUT',
+    'LIST_TABLES_OUTPUT',
 ]

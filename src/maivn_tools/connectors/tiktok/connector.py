@@ -16,7 +16,7 @@ from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_VIDEOS_OUTPUT
 
 
-@toolset(prefix="tiktok")
+@toolset(prefix='tiktok')
 class TikTokToolSet:
     """A connector for TikTok's Content Posting + Display APIs.
 
@@ -27,43 +27,43 @@ class TikTokToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="tiktok",
-        display_name="TikTok",
-        version="0.1.0",
-        description="Creator info, content upload, video management, and user info.",
+        name='tiktok',
+        display_name='TikTok',
+        version='0.1.0',
+        description='Creator info, content upload, video management, and user info.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "user.info.basic": "Basic user profile.",
-            "user.info.profile": "Full profile.",
-            "user.info.stats": "Follower / video stats.",
-            "video.list": "Read the user's videos.",
-            "video.upload": "Upload videos.",
-            "video.publish": "Publish videos.",
+            'user.info.basic': 'Basic user profile.',
+            'user.info.profile': 'Full profile.',
+            'user.info.stats': 'Follower / video stats.',
+            'video.list': "Read the user's videos.",
+            'video.upload': 'Upload videos.',
+            'video.publish': 'Publish videos.',
         },
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developers.tiktok.com/doc/login-kit-web",
-        homepage_url="https://www.tiktok.com/",
-        tags=("social-media", "video"),
+        documentation_url='https://developers.tiktok.com/doc/login-kit-web',
+        homepage_url='https://www.tiktok.com/',
+        tags=('social-media', 'video'),
     )
 
     def __init__(
         self,
         *,
         access_token: str,
-        base_url: str = "https://open.tiktokapis.com",
+        base_url: str = 'https://open.tiktokapis.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(access_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -81,25 +81,25 @@ class TikTokToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        username = video.get("username", "")
-        video_id = video.get("id", "")
-        share_url = video.get("share_url", "")
+        username = video.get('username', '')
+        video_id = video.get('id', '')
+        share_url = video.get('share_url', '')
         if not share_url and username and video_id:
-            share_url = f"https://www.tiktok.com/@{username}/video/{video_id}"
+            share_url = f'https://www.tiktok.com/@{username}/video/{video_id}'
         summary: dict[str, Any] = {
-            "video_ref": f"video_{index}",
-            "title": video.get("title", "") or video.get("video_description", ""),
-            "author": username,
-            "posted_at": video.get("create_time", ""),
-            "view_count": video.get("view_count", 0),
-            "like_count": video.get("like_count", 0),
-            "comment_count": video.get("comment_count", 0),
-            "share_count": video.get("share_count", 0),
-            "duration": video.get("duration", 0),
-            "url": share_url,
+            'video_ref': f'video_{index}',
+            'title': video.get('title', '') or video.get('video_description', ''),
+            'author': username,
+            'posted_at': video.get('create_time', ''),
+            'view_count': video.get('view_count', 0),
+            'like_count': video.get('like_count', 0),
+            'comment_count': video.get('comment_count', 0),
+            'share_count': video.get('share_count', 0),
+            'duration': video.get('duration', 0),
+            'url': share_url,
         }
         if include_ids:
-            summary["video_id"] = video_id
+            summary['video_id'] = video_id
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -112,9 +112,9 @@ class TikTokToolSet:
         """
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = ",".join(fields)
+            params['fields'] = ','.join(fields)
         return self._client.get(
-            "/v2/user/info/",
+            '/v2/user/info/',
             params=params or None,
         ).json()
 
@@ -140,49 +140,49 @@ class TikTokToolSet:
         TikTok response. ``max_count`` is capped at 20 by the TikTok API.
         """
         if max_count < 1 or max_count > 20:
-            raise ValueError("max_count must be between 1 and 20")
+            raise ValueError('max_count must be between 1 and 20')
         merged_fields = list(fields) if fields else []
         if include_metadata:
             for needed in (
-                "id",
-                "title",
-                "video_description",
-                "username",
-                "create_time",
-                "view_count",
-                "like_count",
-                "comment_count",
-                "share_count",
-                "duration",
-                "share_url",
+                'id',
+                'title',
+                'video_description',
+                'username',
+                'create_time',
+                'view_count',
+                'like_count',
+                'comment_count',
+                'share_count',
+                'duration',
+                'share_url',
             ):
                 if needed not in merged_fields:
                     merged_fields.append(needed)
         if not merged_fields:
-            raise ValueError("fields must be non-empty")
+            raise ValueError('fields must be non-empty')
         payload: dict[str, Any] = self._client.post(
-            "/v2/video/list/",
-            params={"fields": ",".join(merged_fields)},
-            json={"cursor": cursor, "max_count": max_count},
+            '/v2/video/list/',
+            params={'fields': ','.join(merged_fields)},
+            json={'cursor': cursor, 'max_count': max_count},
         ).json()
         if not include_metadata:
             return payload
-        raw_data: Any = payload.get("data") or {}
+        raw_data: Any = payload.get('data') or {}
         data: dict[str, Any] = (
-            cast("dict[str, Any]", raw_data) if isinstance(raw_data, dict) else {}
+            cast('dict[str, Any]', raw_data) if isinstance(raw_data, dict) else {}
         )
-        raw_videos: Any = data.get("videos", [])
-        videos: list[Any] = cast("list[Any]", raw_videos) if isinstance(raw_videos, list) else []
+        raw_videos: Any = data.get('videos', [])
+        videos: list[Any] = cast('list[Any]', raw_videos) if isinstance(raw_videos, list) else []
         summaries: list[dict[str, Any]] = []
         for index, video in enumerate(videos, start=1):
             if not isinstance(video, dict):
                 continue
-            video_dict: dict[str, Any] = cast("dict[str, Any]", video)
+            video_dict: dict[str, Any] = cast('dict[str, Any]', video)
             summaries.append(self._video_summary(video_dict, index=index, include_ids=include_ids))
         return {
-            "videos": summaries,
-            "cursor": data.get("cursor"),
-            "has_more": data.get("has_more"),
+            'videos': summaries,
+            'cursor': data.get('cursor'),
+            'has_more': data.get('has_more'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -199,13 +199,13 @@ class TikTokToolSet:
         responses with ``include_ids=True``).
         """
         if not video_ids:
-            raise ValueError("video_ids must be non-empty")
+            raise ValueError('video_ids must be non-empty')
         if not fields:
-            raise ValueError("fields must be non-empty")
+            raise ValueError('fields must be non-empty')
         return self._client.post(
-            "/v2/video/query/",
-            params={"fields": ",".join(fields)},
-            json={"filters": {"video_ids": video_ids}},
+            '/v2/video/query/',
+            params={'fields': ','.join(fields)},
+            json={'filters': {'video_ids': video_ids}},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -216,7 +216,7 @@ class TikTokToolSet:
         ``init_video_upload`` to honour the creator's allowed
         ``privacy_level`` values and posting rate limits.
         """
-        return self._client.post("/v2/post/publish/creator_info/query/", json={}).json()
+        return self._client.post('/v2/post/publish/creator_info/query/', json={}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def init_video_upload(
@@ -232,10 +232,10 @@ class TikTokToolSet:
         and publishing.
         """
         if not post_info or not source_info:
-            raise ValueError("post_info and source_info must be non-empty")
+            raise ValueError('post_info and source_info must be non-empty')
         return self._client.post(
-            "/v2/post/publish/video/init/",
-            json={"post_info": post_info, "source_info": source_info},
+            '/v2/post/publish/video/init/',
+            json={'post_info': post_info, 'source_info': source_info},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -247,10 +247,10 @@ class TikTokToolSet:
         publish.
         """
         if not source_info:
-            raise ValueError("source_info must be non-empty")
+            raise ValueError('source_info must be non-empty')
         return self._client.post(
-            "/v2/post/publish/inbox/video/init/",
-            json={"source_info": source_info},
+            '/v2/post/publish/inbox/video/init/',
+            json={'source_info': source_info},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -262,10 +262,10 @@ class TikTokToolSet:
         considering the upload complete.
         """
         if not publish_id:
-            raise ValueError("publish_id must be a non-empty string")
+            raise ValueError('publish_id must be a non-empty string')
         return self._client.post(
-            "/v2/post/publish/status/fetch/",
-            json={"publish_id": publish_id},
+            '/v2/post/publish/status/fetch/',
+            json={'publish_id': publish_id},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -282,17 +282,17 @@ class TikTokToolSet:
         ``get_publish_status`` with the returned ``publish_id``.
         """
         if not post_info or not photo_images:
-            raise ValueError("post_info and photo_images must be non-empty")
+            raise ValueError('post_info and photo_images must be non-empty')
         return self._client.post(
-            "/v2/post/publish/content/init/",
+            '/v2/post/publish/content/init/',
             json={
-                "post_info": post_info,
-                "source_info": {
-                    "source": "PULL_FROM_URL",
-                    "photo_images": photo_images,
-                    "photo_cover_index": 0,
+                'post_info': post_info,
+                'source_info': {
+                    'source': 'PULL_FROM_URL',
+                    'photo_images': photo_images,
+                    'photo_cover_index': 0,
                 },
-                "post_mode": "DIRECT_POST",
-                "media_type": "PHOTO",
+                'post_mode': 'DIRECT_POST',
+                'media_type': 'PHOTO',
             },
         ).json()

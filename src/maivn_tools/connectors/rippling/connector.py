@@ -16,7 +16,7 @@ from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_EMPLOYEES_OUTPUT
 
 
-@toolset(prefix="rippling")
+@toolset(prefix='rippling')
 class RipplingToolSet:
     """A connector for the Rippling Platform API.
 
@@ -26,35 +26,35 @@ class RipplingToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="rippling",
-        display_name="Rippling",
-        version="0.1.0",
-        description="Employees, departments, work locations, leave, and groups.",
+        name='rippling',
+        display_name='Rippling',
+        version='0.1.0',
+        description='Employees, departments, work locations, leave, and groups.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developer.rippling.com/docs",
-        homepage_url="https://www.rippling.com/",
-        tags=("hr", "people-ops"),
+        documentation_url='https://developer.rippling.com/docs',
+        homepage_url='https://www.rippling.com/',
+        tags=('hr', 'people-ops'),
     )
 
     def __init__(
         self,
         *,
         access_token: str,
-        base_url: str = "https://api.rippling.com",
+        base_url: str = 'https://api.rippling.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(access_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -71,28 +71,28 @@ class RipplingToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        first = employee.get("firstName", "")
-        last = employee.get("lastName", "")
+        first = employee.get('firstName', '')
+        last = employee.get('lastName', '')
         name = (
-            employee.get("preferredFirstName")
-            or f"{first} {last}".strip()
-            or employee.get("displayName", "")
+            employee.get('preferredFirstName')
+            or f'{first} {last}'.strip()
+            or employee.get('displayName', '')
         )
-        raw_department: object = employee.get("department")
+        raw_department: object = employee.get('department')
         department: dict[str, Any] = (
-            cast("dict[str, Any]", raw_department) if isinstance(raw_department, dict) else {}
+            cast('dict[str, Any]', raw_department) if isinstance(raw_department, dict) else {}
         )
         summary: dict[str, Any] = {
-            "employee_ref": f"employee_{index}",
-            "name": name,
-            "email": employee.get("workEmail", "") or employee.get("personalEmail", ""),
-            "title": employee.get("title", "") or employee.get("jobTitle", ""),
-            "department": department.get("name", ""),
-            "hire_date": employee.get("startDate", "") or employee.get("hireDate", ""),
-            "status": employee.get("status", "") or employee.get("employmentStatus", ""),
+            'employee_ref': f'employee_{index}',
+            'name': name,
+            'email': employee.get('workEmail', '') or employee.get('personalEmail', ''),
+            'title': employee.get('title', '') or employee.get('jobTitle', ''),
+            'department': department.get('name', ''),
+            'hire_date': employee.get('startDate', '') or employee.get('hireDate', ''),
+            'status': employee.get('status', '') or employee.get('employmentStatus', ''),
         }
         if include_ids:
-            summary["employee_id"] = employee.get("id", "") or employee.get("roleId", "")
+            summary['employee_id'] = employee.get('id', '') or employee.get('roleId', '')
         return summary
 
     # MARK: - Tools
@@ -103,7 +103,7 @@ class RipplingToolSet:
 
         Use once at startup to confirm the token works.
         """
-        return self._client.get("/platform/api/companies/current").json()
+        return self._client.get('/platform/api/companies/current').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_EMPLOYEES_OUTPUT)
@@ -125,36 +125,36 @@ class RipplingToolSet:
         they are internal handles needed only by follow-up tools like
         :meth:`get_employee`.
         """
-        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        params: dict[str, Any] = {'limit': limit, 'offset': offset}
         if status is not None:
-            params["status"] = status
+            params['status'] = status
         if employment_type is not None:
-            params["employmentType"] = employment_type
-        payload: object = self._client.get("/platform/api/employees", params=params).json()
+            params['employmentType'] = employment_type
+        payload: object = self._client.get('/platform/api/employees', params=params).json()
         employees: list[Any] | None = (
-            cast("list[Any]", payload) if isinstance(payload, list) else None
+            cast('list[Any]', payload) if isinstance(payload, list) else None
         )
         if employees is None and isinstance(payload, dict):
-            payload_dict = cast("dict[str, Any]", payload)
-            for key in ("employees", "data", "results"):
+            payload_dict = cast('dict[str, Any]', payload)
+            for key in ('employees', 'data', 'results'):
                 value: object = payload_dict.get(key)
                 if isinstance(value, list):
-                    employees = cast("list[Any]", value)
+                    employees = cast('list[Any]', value)
                     break
         if employees is None and isinstance(payload, dict):
-            return cast("dict[str, Any]", payload)
+            return cast('dict[str, Any]', payload)
         if employees is None:
-            return {"items": payload}
+            return {'items': payload}
         summaries: list[dict[str, Any]] = [
             self._employee_summary(
-                cast("dict[str, Any]", employee), index=index, include_ids=include_ids
+                cast('dict[str, Any]', employee), index=index, include_ids=include_ids
             )
             for index, employee in enumerate(employees, start=1)
             if isinstance(employee, dict)
         ]
         return {
-            "employees": summaries,
-            "totalAvailable": len(employees),
+            'employees': summaries,
+            'totalAvailable': len(employees),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -166,8 +166,8 @@ class RipplingToolSet:
         and should not appear in final answers.
         """
         if not employee_id:
-            raise ValueError("employee_id is required")
-        return self._client.get(f"/platform/api/employees/{employee_id}").json()
+            raise ValueError('employee_id is required')
+        return self._client.get(f'/platform/api/employees/{employee_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_departments(
@@ -181,8 +181,8 @@ class RipplingToolSet:
         Returns the raw Rippling department list.
         """
         return self._client.get(
-            "/platform/api/departments",
-            params={"limit": limit, "offset": offset},
+            '/platform/api/departments',
+            params={'limit': limit, 'offset': offset},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -197,8 +197,8 @@ class RipplingToolSet:
         Returns the raw Rippling work-location list.
         """
         return self._client.get(
-            "/platform/api/work_locations",
-            params={"limit": limit, "offset": offset},
+            '/platform/api/work_locations',
+            params={'limit': limit, 'offset': offset},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -213,8 +213,8 @@ class RipplingToolSet:
         Returns the raw Rippling group list.
         """
         return self._client.get(
-            "/platform/api/groups",
-            params={"limit": limit, "offset": offset},
+            '/platform/api/groups',
+            params={'limit': limit, 'offset': offset},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -231,12 +231,12 @@ class RipplingToolSet:
         Optionally filter by ``employee_id`` and/or ``status``
         (``PENDING``/``APPROVED``/``REJECTED``).
         """
-        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        params: dict[str, Any] = {'limit': limit, 'offset': offset}
         if employee_id is not None:
-            params["role"] = employee_id
+            params['role'] = employee_id
         if status is not None:
-            params["status"] = status
-        return self._client.get("/platform/api/leave_requests", params=params).json()
+            params['status'] = status
+        return self._client.get('/platform/api/leave_requests', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_compensations(self, employee_id: str) -> dict[str, Any]:
@@ -250,8 +250,8 @@ class RipplingToolSet:
         ``list_employees(include_ids=True)``.
         """
         if not employee_id:
-            raise ValueError("employee_id is required")
-        return self._client.get(f"/platform/api/employees/{employee_id}").json()
+            raise ValueError('employee_id is required')
+        return self._client.get(f'/platform/api/employees/{employee_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_teams(
@@ -265,6 +265,6 @@ class RipplingToolSet:
         Returns the raw Rippling team list.
         """
         return self._client.get(
-            "/platform/api/teams",
-            params={"limit": limit, "offset": offset},
+            '/platform/api/teams',
+            params={'limit': limit, 'offset': offset},
         ).json()

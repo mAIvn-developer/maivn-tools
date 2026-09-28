@@ -44,7 +44,7 @@ for one-off scripts.
 
 > **Agent-ready pattern (Gmail is the reference implementation).**
 > Across all three connectors, list / search / lookup tools return
-> compact human-readable summaries by default with a stable `_ref`
+> compact human-readable summaries by default with a response-local `_ref`
 > field (`message_ref`, `calendar_ref`, `event_ref`, `file_ref`,
 > `folder_ref`). Raw Google IDs are hidden unless you pass
 > `include_ids=True`; pass `include_metadata=False` to get the raw
@@ -97,7 +97,7 @@ for one-off scripts.
 
 `search_messages` is the canonical reference for the agent-ready
 pattern. By default it returns compact summaries: each match gets a
-stable `message_ref` (`message_1`, `message_2`, ...), `sender`, `to`,
+response-local `message_ref` (`message_1`, `message_2`, ...), `sender`, `to`,
 `subject`, `received_at` (Date header), `snippet`, and `label_ids`.
 Summary mode caps `max_results` at 10 because each candidate requires
 a per-message `format=metadata` fetch — set `include_metadata=False`
@@ -231,7 +231,7 @@ with the user.
 ### Agent-ready behavior (Drive)
 
 `search_files` returns compact summaries by default: each item has a
-stable `file_ref` (or `folder_ref` for folders), `name`, `mime_type`,
+response-local `file_ref` (or `folder_ref` for folders), `name`, `mime_type`,
 `modified_time`, `size`, and `owner`. Default `page_size` is 25. Raw
 Drive IDs are hidden unless `include_ids=True` (needed for
 `download_file`, `delete_file`, `update_file_metadata`, etc.);

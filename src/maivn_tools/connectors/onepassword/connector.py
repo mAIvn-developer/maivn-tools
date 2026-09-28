@@ -21,7 +21,7 @@ from .output_schemas import (
 )
 
 
-@toolset(prefix="onepassword")
+@toolset(prefix='onepassword')
 class OnePasswordToolSet:
     """A connector for the 1Password Connect REST API.
 
@@ -32,15 +32,15 @@ class OnePasswordToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="onepassword",
-        display_name="1Password Connect",
-        version="0.1.0",
-        description="Vaults and items via 1Password Connect.",
+        name='onepassword',
+        display_name='1Password Connect',
+        version='0.1.0',
+        description='Vaults and items via 1Password Connect.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developer.1password.com/docs/connect/",
-        homepage_url="https://1password.com/",
-        tags=("security", "secrets", "passwords"),
+        documentation_url='https://developer.1password.com/docs/connect/',
+        homepage_url='https://1password.com/',
+        tags=('security', 'secrets', 'passwords'),
     )
 
     def __init__(
@@ -52,15 +52,15 @@ class OnePasswordToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not base_url or not access_token:
-            raise ValueError("base_url and access_token are required")
+            raise ValueError('base_url and access_token are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(access_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -75,8 +75,8 @@ class OnePasswordToolSet:
         """Coerce a JSON payload into a list of dicts, dropping non-dicts."""
         if not isinstance(payload, list):
             return []
-        items = cast("list[object]", payload)
-        return [cast("dict[str, Any]", entry) for entry in items if isinstance(entry, dict)]
+        items = cast('list[object]', payload)
+        return [cast('dict[str, Any]', entry) for entry in items if isinstance(entry, dict)]
 
     @staticmethod
     def _vault_summary(
@@ -86,14 +86,14 @@ class OnePasswordToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "vault_ref": f"vault_{index}",
-            "name": vault.get("name", ""),
-            "description": vault.get("description", ""),
-            "type": vault.get("type", ""),
-            "item_count": vault.get("items", 0),
+            'vault_ref': f'vault_{index}',
+            'name': vault.get('name', ''),
+            'description': vault.get('description', ''),
+            'type': vault.get('type', ''),
+            'item_count': vault.get('items', 0),
         }
         if include_ids:
-            summary["vault_id"] = vault.get("id", "")
+            summary['vault_id'] = vault.get('id', '')
         return summary
 
     @staticmethod
@@ -106,24 +106,24 @@ class OnePasswordToolSet:
         # Strip any value-bearing fields if they leak in — list endpoints
         # only return metadata, but be defensive.
         summary: dict[str, Any] = {
-            "item_ref": f"item_{index}",
-            "title": item.get("title", ""),
-            "category": item.get("category", ""),
-            "tags": list(item.get("tags", []) or []),
-            "updated_at": item.get("updatedAt", ""),
+            'item_ref': f'item_{index}',
+            'title': item.get('title', ''),
+            'category': item.get('category', ''),
+            'tags': list(item.get('tags', []) or []),
+            'updated_at': item.get('updatedAt', ''),
         }
-        urls: object = item.get("urls")
+        urls: object = item.get('urls')
         if isinstance(urls, list) and urls:
-            first: object = cast("list[object]", urls)[0]
+            first: object = cast('list[object]', urls)[0]
             if isinstance(first, dict):
-                first_dict = cast("dict[str, Any]", first)
-                summary["primary_url"] = first_dict.get("href", "")
+                first_dict = cast('dict[str, Any]', first)
+                summary['primary_url'] = first_dict.get('href', '')
         if include_ids:
-            summary["item_id"] = item.get("id", "")
-            vault_meta: object = item.get("vault")
+            summary['item_id'] = item.get('id', '')
+            vault_meta: object = item.get('vault')
             if isinstance(vault_meta, dict):
-                vault_meta_dict = cast("dict[str, Any]", vault_meta)
-                summary["vault_id"] = vault_meta_dict.get("id", "")
+                vault_meta_dict = cast('dict[str, Any]', vault_meta)
+                summary['vault_id'] = vault_meta_dict.get('id', '')
         return summary
 
     @staticmethod
@@ -131,8 +131,8 @@ class OnePasswordToolSet:
         if isinstance(vault_or_id, str) and vault_or_id:
             return vault_or_id
         if isinstance(vault_or_id, dict):
-            vault_dict = cast("dict[str, Any]", vault_or_id)
-            for key in ("vault_id", "id"):
+            vault_dict = cast('dict[str, Any]', vault_or_id)
+            for key in ('vault_id', 'id'):
                 value: object = vault_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
@@ -143,8 +143,8 @@ class OnePasswordToolSet:
         if isinstance(item_or_id, str) and item_or_id:
             return item_or_id
         if isinstance(item_or_id, dict):
-            item_dict = cast("dict[str, Any]", item_or_id)
-            for key in ("item_id", "id"):
+            item_dict = cast('dict[str, Any]', item_or_id)
+            for key in ('item_id', 'id'):
                 value: object = item_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
@@ -166,13 +166,13 @@ class OnePasswordToolSet:
         values are omitted by default — set ``include_ids=True`` when a
         follow-up tool needs them.
         """
-        payload: object = self._client.get("/v1/vaults").json()
+        payload: object = self._client.get('/v1/vaults').json()
         raw_vaults = self._dict_list(payload)
         summaries = [
             self._vault_summary(vault, index=index, include_ids=include_ids)
             for index, vault in enumerate(raw_vaults, start=1)
         ]
-        return {"vaults": summaries}
+        return {'vaults': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_vault(self, vault_id: str) -> dict[str, Any]:
@@ -182,8 +182,8 @@ class OnePasswordToolSet:
         ``attributeVersion``, ``contentVersion``, ``items``).
         """
         if not vault_id:
-            raise ValueError("vault_id is required")
-        return self._client.get(f"/v1/vaults/{vault_id}").json()
+            raise ValueError('vault_id is required')
+        return self._client.get(f'/v1/vaults/{vault_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_ITEMS_OUTPUT)
@@ -206,16 +206,16 @@ class OnePasswordToolSet:
         resolved_id = self._resolve_vault_id(vault_id)
         params: dict[str, Any] = {}
         if filter is not None:
-            params["filter"] = filter
+            params['filter'] = filter
         payload: object = self._client.get(
-            f"/v1/vaults/{resolved_id}/items", params=params or None
+            f'/v1/vaults/{resolved_id}/items', params=params or None
         ).json()
         raw_items = self._dict_list(payload)
         summaries = [
             self._item_summary(item, index=index, include_ids=include_ids)
             for index, item in enumerate(raw_items, start=1)
         ]
-        return {"items": summaries, "vault_id": resolved_id}
+        return {'items': summaries, 'vault_id': resolved_id}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_item(self, *, vault_id: Any, item_id: Any) -> dict[str, Any]:
@@ -227,7 +227,7 @@ class OnePasswordToolSet:
         """
         resolved_vault_id = self._resolve_vault_id(vault_id)
         resolved_item_id = self._resolve_item_id(item_id)
-        return self._client.get(f"/v1/vaults/{resolved_vault_id}/items/{resolved_item_id}").json()
+        return self._client.get(f'/v1/vaults/{resolved_vault_id}/items/{resolved_item_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_item(
@@ -243,8 +243,8 @@ class OnePasswordToolSet:
         """
         resolved_vault_id = self._resolve_vault_id(vault_id)
         if not item:
-            raise ValueError("item is required")
-        return self._client.post(f"/v1/vaults/{resolved_vault_id}/items", json=item).json()
+            raise ValueError('item is required')
+        return self._client.post(f'/v1/vaults/{resolved_vault_id}/items', json=item).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_item(
@@ -262,9 +262,9 @@ class OnePasswordToolSet:
         resolved_vault_id = self._resolve_vault_id(vault_id)
         resolved_item_id = self._resolve_item_id(item_id)
         if not item:
-            raise ValueError("item is required")
+            raise ValueError('item is required')
         return self._client.put(
-            f"/v1/vaults/{resolved_vault_id}/items/{resolved_item_id}", json=item
+            f'/v1/vaults/{resolved_vault_id}/items/{resolved_item_id}', json=item
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -283,9 +283,9 @@ class OnePasswordToolSet:
         resolved_vault_id = self._resolve_vault_id(vault_id)
         resolved_item_id = self._resolve_item_id(item_id)
         if not ops:
-            raise ValueError("ops is required")
+            raise ValueError('ops is required')
         return self._client.patch(
-            f"/v1/vaults/{resolved_vault_id}/items/{resolved_item_id}",
+            f'/v1/vaults/{resolved_vault_id}/items/{resolved_item_id}',
             json=ops,
         ).json()
 
@@ -299,8 +299,8 @@ class OnePasswordToolSet:
         """
         resolved_vault_id = self._resolve_vault_id(vault_id)
         resolved_item_id = self._resolve_item_id(item_id)
-        response = self._client.delete(f"/v1/vaults/{resolved_vault_id}/items/{resolved_item_id}")
-        return {"item_id": resolved_item_id, "deleted": True, "status": response.status}
+        response = self._client.delete(f'/v1/vaults/{resolved_vault_id}/items/{resolved_item_id}')
+        return {'item_id': resolved_item_id, 'deleted': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_item_files(
@@ -317,7 +317,7 @@ class OnePasswordToolSet:
         resolved_vault_id = self._resolve_vault_id(vault_id)
         resolved_item_id = self._resolve_item_id(item_id)
         return self._client.get(
-            f"/v1/vaults/{resolved_vault_id}/items/{resolved_item_id}/files"
+            f'/v1/vaults/{resolved_vault_id}/items/{resolved_item_id}/files'
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -328,5 +328,5 @@ class OnePasswordToolSet:
         Returns ``{"status": ..., "alive": bool}``. Useful as a quick
         connectivity check.
         """
-        response = self._client.get("/heartbeat")
-        return {"status": response.status, "alive": response.status < 400}
+        response = self._client.get('/heartbeat')
+        return {'status': response.status, 'alive': response.status < 400}

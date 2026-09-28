@@ -28,47 +28,47 @@ from ...runtime.http import HttpClient, HttpTransport
 
 # MARK: - Constants
 
-SLACK_API_URL = "https://slack.com/api"
+SLACK_API_URL = 'https://slack.com/api'
 _DEFAULT_LIST_LIMIT = 25
 _DEFAULT_HISTORY_LIMIT = 20
 _DEFAULT_SEARCH_COUNT = 20
 
 _SLACK_CHANNEL_STRING_SCHEMA: dict[str, object] = {
-    "type": "string",
-    "minLength": 1,
-    "description": "Friendly channel name such as 'incidents' or raw Slack channel ID.",
+    'type': 'string',
+    'minLength': 1,
+    'description': "Friendly channel name such as 'incidents' or raw Slack channel ID.",
 }
 _SLACK_CHANNEL_OBJECT_SCHEMA: dict[str, object] = {
-    "type": "object",
-    "description": "Channel-summary object returned by list_channels.",
-    "properties": {
-        "channel_id": {"type": "string", "minLength": 1},
-        "id": {"type": "string", "minLength": 1},
-        "channel": {"type": "string", "minLength": 1},
-        "name": {"type": "string", "minLength": 1},
+    'type': 'object',
+    'description': 'Channel-summary object returned by list_channels.',
+    'properties': {
+        'channel_id': {'type': 'string', 'minLength': 1},
+        'id': {'type': 'string', 'minLength': 1},
+        'channel': {'type': 'string', 'minLength': 1},
+        'name': {'type': 'string', 'minLength': 1},
     },
-    "anyOf": [
-        {"type": "object", "required": ["channel_id"]},
-        {"type": "object", "required": ["id"]},
-        {"type": "object", "required": ["channel"]},
-        {"type": "object", "required": ["name"]},
+    'anyOf': [
+        {'type': 'object', 'required': ['channel_id']},
+        {'type': 'object', 'required': ['id']},
+        {'type': 'object', 'required': ['channel']},
+        {'type': 'object', 'required': ['name']},
     ],
-    "additionalProperties": True,
+    'additionalProperties': True,
 }
 _SLACK_CHANNEL_INPUT_SCHEMA: dict[str, object] = {
-    "description": (
-        "A Slack channel reference: friendly channel name, raw channel ID, "
-        "channel-summary dict from list_channels, or single-item list containing one."
+    'description': (
+        'A Slack channel reference: friendly channel name, raw channel ID, '
+        'channel-summary dict from list_channels, or single-item list containing one.'
     ),
-    "anyOf": [
+    'anyOf': [
         _SLACK_CHANNEL_STRING_SCHEMA,
         _SLACK_CHANNEL_OBJECT_SCHEMA,
         {
-            "type": "array",
-            "minItems": 1,
-            "maxItems": 1,
-            "items": {
-                "anyOf": [
+            'type': 'array',
+            'minItems': 1,
+            'maxItems': 1,
+            'items': {
+                'anyOf': [
                     _SLACK_CHANNEL_STRING_SCHEMA,
                     _SLACK_CHANNEL_OBJECT_SCHEMA,
                 ]
@@ -77,82 +77,83 @@ _SLACK_CHANNEL_INPUT_SCHEMA: dict[str, object] = {
     ],
 }
 _SLACK_MESSAGE_TS_STRING_SCHEMA: dict[str, object] = {
-    "type": "string",
-    "minLength": 1,
-    "description": "Raw Slack message timestamp string.",
+    'type': 'string',
+    'minLength': 1,
+    'description': 'Raw Slack message timestamp string.',
 }
 _SLACK_MESSAGE_TS_OBJECT_SCHEMA: dict[str, object] = {
-    "type": "object",
-    "description": "Message-summary object returned by channel_history or post_message.",
-    "properties": {
-        "ts": {"type": "string", "minLength": 1},
-        "timestamp": {"type": "string", "minLength": 1},
-        "message_ts": {"type": "string", "minLength": 1},
+    'type': 'object',
+    'description': 'Message-summary object returned by channel_history or post_message.',
+    'properties': {
+        'ts': {'type': 'string', 'minLength': 1},
+        'timestamp': {'type': 'string', 'minLength': 1},
+        'message_ts': {'type': 'string', 'minLength': 1},
     },
-    "anyOf": [
-        {"type": "object", "required": ["ts"]},
-        {"type": "object", "required": ["timestamp"]},
-        {"type": "object", "required": ["message_ts"]},
+    'anyOf': [
+        {'type': 'object', 'required': ['ts']},
+        {'type': 'object', 'required': ['timestamp']},
+        {'type': 'object', 'required': ['message_ts']},
     ],
-    "additionalProperties": True,
+    'additionalProperties': True,
 }
 _SLACK_MESSAGE_TS_INPUT_SCHEMA: dict[str, object] = {
-    "description": "A Slack message timestamp string or message-summary dict containing ts.",
-    "anyOf": [
+    'description': 'A Slack message timestamp string or message-summary dict containing ts.',
+    'anyOf': [
         _SLACK_MESSAGE_TS_STRING_SCHEMA,
         _SLACK_MESSAGE_TS_OBJECT_SCHEMA,
     ],
 }
 _SLACK_CHANNEL_SUMMARY_OUTPUT_SCHEMA: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "channel_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "topic": {"type": "string"},
-        "num_members": {"type": "integer"},
-        "is_member": {"type": "boolean"},
-        "is_private": {"type": "boolean"},
+    'type': 'object',
+    'properties': {
+        'channel_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'topic': {'type': 'string'},
+        'num_members': {'type': 'integer'},
+        'is_member': {'type': 'boolean'},
+        'is_private': {'type': 'boolean'},
     },
-    "required": ["channel_ref", "name"],
+    'required': ['channel_ref', 'name'],
 }
 _SLACK_MESSAGE_SUMMARY_OUTPUT_SCHEMA: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "message_ref": {"type": "string"},
-        "channel_name": {"type": "string"},
-        "username": {"type": "string"},
-        "text": {"type": "string"},
-        "ts": {"type": "string"},
-        "permalink": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'message_ref': {'type': 'string'},
+        'channel_name': {'type': 'string'},
+        'username': {'type': 'string'},
+        'text': {'type': 'string'},
+        'ts': {'type': 'string'},
+        'permalink': {'type': 'string'},
     },
-    "required": ["message_ref", "text"],
+    'required': ['message_ref', 'text'],
 }
 _SLACK_LIST_CHANNELS_OUTPUT_SCHEMA: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "channels": {"type": "array", "items": _SLACK_CHANNEL_SUMMARY_OUTPUT_SCHEMA},
-        "next_cursor": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'channels': {'type': 'array', 'items': _SLACK_CHANNEL_SUMMARY_OUTPUT_SCHEMA},
+        'next_cursor': {'type': 'string'},
     },
-    "required": ["channels"],
+    'required': ['channels'],
 }
 _SLACK_CHANNEL_HISTORY_OUTPUT_SCHEMA: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "channel": {"type": "string"},
-        "messages": {"type": "array", "items": _SLACK_MESSAGE_SUMMARY_OUTPUT_SCHEMA},
-        "has_more": {"type": "boolean"},
-        "next_cursor": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'channel': {'type': 'string'},
+        'channel_name': {'type': 'string'},
+        'messages': {'type': 'array', 'items': _SLACK_MESSAGE_SUMMARY_OUTPUT_SCHEMA},
+        'has_more': {'type': 'boolean'},
+        'next_cursor': {'type': 'string'},
     },
-    "required": ["messages"],
+    'required': ['messages'],
 }
 _SLACK_SEARCH_MESSAGES_OUTPUT_SCHEMA: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "messages": {"type": "array", "items": _SLACK_MESSAGE_SUMMARY_OUTPUT_SCHEMA},
-        "total": {"type": "integer"},
-        "page": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'messages': {'type': 'array', 'items': _SLACK_MESSAGE_SUMMARY_OUTPUT_SCHEMA},
+        'total': {'type': 'integer'},
+        'page': {'type': 'integer'},
     },
-    "required": ["messages"],
+    'required': ['messages'],
 }
 
 SlackChannelInput: TypeAlias = Annotated[
@@ -170,12 +171,12 @@ SlackMessageTsInput: TypeAlias = Annotated[
 
 def _as_dict(value: object) -> dict[str, Any] | None:
     """Return ``value`` as a ``dict[str, Any]`` if it is a mapping, else ``None``."""
-    return cast("dict[str, Any]", value) if isinstance(value, dict) else None
+    return cast('dict[str, Any]', value) if isinstance(value, dict) else None
 
 
 def _as_list(value: object) -> list[Any]:
     """Return ``value`` as a ``list[Any]`` if it is a list, else an empty list."""
-    return cast("list[Any]", value) if isinstance(value, list) else []
+    return cast('list[Any]', value) if isinstance(value, list) else []
 
 
 # MARK: - Errors
@@ -185,7 +186,7 @@ class SlackApiError(ProviderError):
     """Raised when Slack returns ``ok=false`` in the response body."""
 
 
-@toolset(prefix="slack")
+@toolset(prefix='slack')
 class SlackToolSet:
     """A connector for the Slack Web API.
 
@@ -197,17 +198,17 @@ class SlackToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="slack",
-        display_name="Slack",
-        version="0.1.0",
-        description="Search channels, post messages, and look up users in Slack workspaces.",
+        name='slack',
+        display_name='Slack',
+        version='0.1.0',
+        description='Search channels, post messages, and look up users in Slack workspaces.',
         auth_modes=(AuthMode.BEARER,),
         scopes={
-            "channels:read": "List public channels.",
-            "channels:history": "Read messages in public channels.",
-            "chat:write": "Post messages as the bot or user.",
-            "search:read": "Search messages.",
-            "users:read": "Look up users by ID or email.",
+            'channels:read': 'List public channels.',
+            'channels:history': 'Read messages in public channels.',
+            'chat:write': 'Post messages as the bot or user.',
+            'search:read': 'Search messages.',
+            'users:read': 'Look up users by ID or email.',
         },
         capabilities=frozenset(
             {
@@ -217,9 +218,9 @@ class SlackToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://api.slack.com/web",
-        homepage_url="https://slack.com",
-        tags=("messaging", "collaboration"),
+        documentation_url='https://api.slack.com/web',
+        homepage_url='https://slack.com',
+        tags=('messaging', 'collaboration'),
     )
 
     def __init__(
@@ -231,13 +232,13 @@ class SlackToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not token:
-            raise ValueError("token must be a non-empty string")
+            raise ValueError('token must be a non-empty string')
         self.connection = connection
         self._client = HttpClient(
             base_url=base_url,
             auth=BearerTokenAuth(token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
         # Local name->id channel cache populated by ``list_channels``. Used to
         # let write tools accept a friendly channel name in place of ``C123``.
@@ -258,7 +259,7 @@ class SlackToolSet:
         the bot's user ID and team. Returns the Slack ``auth.test`` payload
         (``user``, ``user_id``, ``team``, ``team_id``, ``url``).
         """
-        return self._call("POST", "/auth.test")
+        return self._call('POST', '/auth.test')
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def user_lookup(
@@ -276,8 +277,8 @@ class SlackToolSet:
         if (user_id is None) == (email is None):
             raise ValueError("Specify exactly one of 'user_id' or 'email'")
         if user_id is not None:
-            return self._call("GET", "/users.info", params={"user": user_id})
-        return self._call("GET", "/users.lookupByEmail", params={"email": email})
+            return self._call('GET', '/users.info', params={'user': user_id})
+        return self._call('GET', '/users.lookupByEmail', params={'email': email})
 
     # MARK: - Channels and messages
 
@@ -286,7 +287,7 @@ class SlackToolSet:
     def list_channels(
         self,
         *,
-        types: str = "public_channel",
+        types: str = 'public_channel',
         exclude_archived: bool = True,
         limit: int = _DEFAULT_LIST_LIMIT,
         cursor: str | None = None,
@@ -304,44 +305,44 @@ class SlackToolSet:
         raw Slack response with every field.
         """
         params: dict[str, Any] = {
-            "types": types,
-            "exclude_archived": str(exclude_archived).lower(),
-            "limit": limit,
+            'types': types,
+            'exclude_archived': str(exclude_archived).lower(),
+            'limit': limit,
         }
         if cursor is not None:
-            params["cursor"] = cursor
-        payload = self._call("GET", "/conversations.list", params=params)
+            params['cursor'] = cursor
+        payload = self._call('GET', '/conversations.list', params=params)
         if not include_metadata:
             return payload
 
         channels: list[dict[str, Any]] = []
-        raw_channels = _as_list(payload.get("channels", []) or [])
+        raw_channels = _as_list(payload.get('channels', []) or [])
         for index, channel in enumerate(raw_channels, start=1):
             channel_obj = _as_dict(channel)
             if channel_obj is None:
                 continue
-            name = channel_obj.get("name") or channel_obj.get("name_normalized") or ""
-            channel_id = channel_obj.get("id", "")
+            name = channel_obj.get('name') or channel_obj.get('name_normalized') or ''
+            channel_id = channel_obj.get('id', '')
             if isinstance(name, str) and name and isinstance(channel_id, str) and channel_id:
                 self._channel_name_cache[name] = channel_id
-            topic = _as_dict(channel_obj.get("topic"))
-            topic_value = topic.get("value", "") if topic is not None else ""
+            topic = _as_dict(channel_obj.get('topic'))
+            topic_value = topic.get('value', '') if topic is not None else ''
             summary: dict[str, Any] = {
-                "channel_ref": f"channel_{index}",
-                "name": name,
-                "is_private": bool(channel_obj.get("is_private")),
-                "is_member": bool(channel_obj.get("is_member")),
-                "topic": topic_value,
-                "num_members": channel_obj.get("num_members"),
+                'channel_ref': f'channel_{index}',
+                'name': name,
+                'is_private': bool(channel_obj.get('is_private')),
+                'is_member': bool(channel_obj.get('is_member')),
+                'topic': topic_value,
+                'num_members': channel_obj.get('num_members'),
             }
             if include_ids:
-                summary["channel_id"] = channel_id
+                summary['channel_id'] = channel_id
             channels.append(summary)
-        metadata = _as_dict(payload.get("response_metadata"))
-        next_cursor = metadata.get("next_cursor") if metadata is not None else None
+        metadata = _as_dict(payload.get('response_metadata'))
+        next_cursor = metadata.get('next_cursor') if metadata is not None else None
         result: dict[str, Any] = {
-            "channels": channels,
-            "next_cursor": next_cursor,
+            'channels': channels,
+            'next_cursor': next_cursor,
         }
         return result
 
@@ -369,44 +370,51 @@ class SlackToolSet:
         message timestamp string Slack uses to reference messages in followups
         (update_message, delete_message, add_reaction). Set
         ``include_metadata=False`` to get the raw Slack response.
+        A channel name already learned from Slack is retained as ``channel_name``
+        even when raw channel IDs are hidden.
         """
         resolved = self._resolve_channel(channel)
-        params: dict[str, Any] = {"channel": resolved, "limit": limit}
+        params: dict[str, Any] = {'channel': resolved, 'limit': limit}
         if cursor is not None:
-            params["cursor"] = cursor
+            params['cursor'] = cursor
         if oldest is not None:
-            params["oldest"] = oldest
+            params['oldest'] = oldest
         if latest is not None:
-            params["latest"] = latest
-        payload = self._call("GET", "/conversations.history", params=params)
+            params['latest'] = latest
+        payload = self._call('GET', '/conversations.history', params=params)
         if not include_metadata:
             return payload
 
         summaries: list[dict[str, Any]] = []
-        raw_messages = _as_list(payload.get("messages", []) or [])
+        raw_messages = _as_list(payload.get('messages', []) or [])
         for index, message in enumerate(raw_messages, start=1):
             message_obj = _as_dict(message)
             if message_obj is None:
                 continue
             summary: dict[str, Any] = {
-                "message_ref": f"message_{index}",
-                "user_id": message_obj.get("user", ""),
-                "text": message_obj.get("text", ""),
-                "ts": message_obj.get("ts", ""),
-                "thread_ts": message_obj.get("thread_ts"),
-                "reply_count": message_obj.get("reply_count", 0),
+                'message_ref': f'message_{index}',
+                'user_id': message_obj.get('user', ''),
+                'text': message_obj.get('text', ''),
+                'ts': message_obj.get('ts', ''),
+                'thread_ts': message_obj.get('thread_ts'),
+                'reply_count': message_obj.get('reply_count', 0),
             }
             if include_ids:
-                summary["channel_id"] = resolved
+                summary['channel_id'] = resolved
             summaries.append(summary)
-        metadata = _as_dict(payload.get("response_metadata"))
-        next_cursor = metadata.get("next_cursor") if metadata is not None else None
-        return {
-            "channel": resolved if include_ids else None,
-            "messages": summaries,
-            "has_more": payload.get("has_more", False),
-            "next_cursor": next_cursor,
+        metadata = _as_dict(payload.get('response_metadata'))
+        next_cursor = metadata.get('next_cursor') if metadata is not None else None
+        result = {
+            'channel': resolved if include_ids else None,
+            'messages': summaries,
+            'has_more': payload.get('has_more', False),
+            'next_cursor': next_cursor,
         }
+        for name, channel_id in self._channel_name_cache.items():
+            if channel_id == resolved:
+                result['channel_name'] = name
+                break
+        return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def post_message(
@@ -429,15 +437,15 @@ class SlackToolSet:
         """
         resolved = self._resolve_channel(channel)
         if not text and not blocks:
-            raise ValueError("text or blocks must be supplied")
-        payload: dict[str, Any] = {"channel": resolved}
+            raise ValueError('text or blocks must be supplied')
+        payload: dict[str, Any] = {'channel': resolved}
         if text is not None:
-            payload["text"] = text
+            payload['text'] = text
         if blocks is not None:
-            payload["blocks"] = blocks
+            payload['blocks'] = blocks
         if thread_ts is not None:
-            payload["thread_ts"] = thread_ts
-        return self._call("POST", "/chat.postMessage", json=payload)
+            payload['thread_ts'] = thread_ts
+        return self._call('POST', '/chat.postMessage', json=payload)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(_SLACK_SEARCH_MESSAGES_OUTPUT_SCHEMA)
@@ -445,8 +453,8 @@ class SlackToolSet:
         self,
         query: str,
         *,
-        sort: str = "timestamp",
-        sort_dir: str = "desc",
+        sort: str = 'timestamp',
+        sort_dir: str = 'desc',
         count: int = _DEFAULT_SEARCH_COUNT,
         page: int = 1,
         include_metadata: bool = True,
@@ -462,48 +470,48 @@ class SlackToolSet:
         Slack ``search.messages`` payload.
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         payload = self._call(
-            "GET",
-            "/search.messages",
+            'GET',
+            '/search.messages',
             params={
-                "query": query,
-                "sort": sort,
-                "sort_dir": sort_dir,
-                "count": count,
-                "page": page,
+                'query': query,
+                'sort': sort,
+                'sort_dir': sort_dir,
+                'count': count,
+                'page': page,
             },
         )
         if not include_metadata:
             return payload
 
-        messages_obj = _as_dict(payload.get("messages")) or {}
-        matches = _as_list(messages_obj.get("matches", []))
+        messages_obj = _as_dict(payload.get('messages')) or {}
+        matches = _as_list(messages_obj.get('matches', []))
         summaries: list[dict[str, Any]] = []
         for index, match in enumerate(matches, start=1):
             match_obj = _as_dict(match)
             if match_obj is None:
                 continue
-            channel_dict = _as_dict(match_obj.get("channel"))
+            channel_dict = _as_dict(match_obj.get('channel'))
             summary: dict[str, Any] = {
-                "message_ref": f"message_{index}",
-                "username": match_obj.get("username", ""),
-                "channel_name": channel_dict.get("name", "") if channel_dict is not None else "",
-                "text": match_obj.get("text", ""),
-                "ts": match_obj.get("ts", ""),
-                "permalink": match_obj.get("permalink"),
+                'message_ref': f'message_{index}',
+                'username': match_obj.get('username', ''),
+                'channel_name': channel_dict.get('name', '') if channel_dict is not None else '',
+                'text': match_obj.get('text', ''),
+                'ts': match_obj.get('ts', ''),
+                'permalink': match_obj.get('permalink'),
             }
             if include_ids:
-                summary["user_id"] = match_obj.get("user", "")
-                channel_id = channel_dict.get("id", "") if channel_dict is not None else ""
-                summary["channel_id"] = channel_id
+                summary['user_id'] = match_obj.get('user', '')
+                channel_id = channel_dict.get('id', '') if channel_dict is not None else ''
+                summary['channel_id'] = channel_id
             summaries.append(summary)
-        pagination = messages_obj.get("pagination")
+        pagination = messages_obj.get('pagination')
         return {
-            "messages": summaries,
-            "total": messages_obj.get("total", len(summaries)),
-            "page": page,
-            "pagination": pagination,
+            'messages': summaries,
+            'total': messages_obj.get('total', len(summaries)),
+            'page': page,
+            'pagination': pagination,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -521,11 +529,11 @@ class SlackToolSet:
         :meth:`delete_file`.
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         return self._call(
-            "GET",
-            "/search.files",
-            params={"query": query, "count": count, "page": page},
+            'GET',
+            '/search.files',
+            params={'query': query, 'count': count, 'page': page},
         )
 
     # MARK: - Users
@@ -544,12 +552,12 @@ class SlackToolSet:
         user IDs for tools that take a Slack ``U...`` ID directly.
         """
         params: dict[str, Any] = {
-            "limit": limit,
-            "include_locale": str(include_locale).lower(),
+            'limit': limit,
+            'include_locale': str(include_locale).lower(),
         }
         if cursor is not None:
-            params["cursor"] = cursor
-        return self._call("GET", "/users.list", params=params)
+            params['cursor'] = cursor
+        return self._call('GET', '/users.list', params=params)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_user_profile(
@@ -563,18 +571,18 @@ class SlackToolSet:
         Returns the Slack ``users.profile.get`` payload.
         """
         if not user_id:
-            raise ValueError("user_id must be a non-empty string")
+            raise ValueError('user_id must be a non-empty string')
         return self._call(
-            "GET",
-            "/users.profile.get",
-            params={"user": user_id, "include_labels": str(include_labels).lower()},
+            'GET',
+            '/users.profile.get',
+            params={'user': user_id, 'include_labels': str(include_labels).lower()},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def set_user_status(
         self,
         status_text: str,
-        status_emoji: str = "",
+        status_emoji: str = '',
         *,
         status_expiration: int = 0,
     ) -> dict[str, Any]:
@@ -583,18 +591,18 @@ class SlackToolSet:
         ``status_expiration`` is a Unix epoch second (0 = no expiry).
         """
         profile = {
-            "status_text": status_text,
-            "status_emoji": status_emoji,
-            "status_expiration": status_expiration,
+            'status_text': status_text,
+            'status_emoji': status_emoji,
+            'status_expiration': status_expiration,
         }
-        return self._call("POST", "/users.profile.set", json={"profile": profile})
+        return self._call('POST', '/users.profile.set', json={'profile': profile})
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_user_presence(self, user_id: str) -> dict[str, Any]:
         """Return a user's presence status (``active`` / ``away``)."""
         if not user_id:
-            raise ValueError("user_id must be a non-empty string")
-        return self._call("GET", "/users.getPresence", params={"user": user_id})
+            raise ValueError('user_id must be a non-empty string')
+        return self._call('GET', '/users.getPresence', params={'user': user_id})
 
     # MARK: - Channels / conversations
 
@@ -613,12 +621,12 @@ class SlackToolSet:
         """
         resolved = self._resolve_channel(channel)
         return self._call(
-            "GET",
-            "/conversations.info",
+            'GET',
+            '/conversations.info',
             params={
-                "channel": resolved,
-                "include_locale": str(include_locale).lower(),
-                "include_num_members": str(include_num_members).lower(),
+                'channel': resolved,
+                'include_locale': str(include_locale).lower(),
+                'include_num_members': str(include_num_members).lower(),
             },
         )
 
@@ -637,10 +645,10 @@ class SlackToolSet:
         IDs).
         """
         resolved = self._resolve_channel(channel)
-        params: dict[str, Any] = {"channel": resolved, "limit": limit}
+        params: dict[str, Any] = {'channel': resolved, 'limit': limit}
         if cursor is not None:
-            params["cursor"] = cursor
-        return self._call("GET", "/conversations.members", params=params)
+            params['cursor'] = cursor
+        return self._call('GET', '/conversations.members', params=params)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def thread_replies(
@@ -658,11 +666,11 @@ class SlackToolSet:
         """
         resolved = self._resolve_channel(channel)
         if not thread_ts:
-            raise ValueError("thread_ts must be non-empty")
-        params: dict[str, Any] = {"channel": resolved, "ts": thread_ts, "limit": limit}
+            raise ValueError('thread_ts must be non-empty')
+        params: dict[str, Any] = {'channel': resolved, 'ts': thread_ts, 'limit': limit}
         if cursor is not None:
-            params["cursor"] = cursor
-        return self._call("GET", "/conversations.replies", params=params)
+            params['cursor'] = cursor
+        return self._call('GET', '/conversations.replies', params=params)
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_channel(
@@ -677,17 +685,17 @@ class SlackToolSet:
         for friendly-name resolution in subsequent calls.
         """
         if not name:
-            raise ValueError("name must be a non-empty string")
+            raise ValueError('name must be a non-empty string')
         result = self._call(
-            "POST",
-            "/conversations.create",
-            json={"name": name, "is_private": is_private},
+            'POST',
+            '/conversations.create',
+            json={'name': name, 'is_private': is_private},
         )
-        channel: object = result.get("channel") or {}
+        channel: object = result.get('channel') or {}
         if isinstance(channel, dict):
-            channel_obj = cast("dict[str, Any]", channel)
-            channel_id: object = channel_obj.get("id")
-            channel_name: object = channel_obj.get("name") or name
+            channel_obj = cast('dict[str, Any]', channel)
+            channel_id: object = channel_obj.get('id')
+            channel_name: object = channel_obj.get('name') or name
             if (
                 isinstance(channel_id, str)
                 and channel_id
@@ -705,11 +713,11 @@ class SlackToolSet:
         """
         resolved = self._resolve_channel(channel)
         if not name:
-            raise ValueError("name must be non-empty")
+            raise ValueError('name must be non-empty')
         return self._call(
-            "POST",
-            "/conversations.rename",
-            json={"channel": resolved, "name": name},
+            'POST',
+            '/conversations.rename',
+            json={'channel': resolved, 'name': name},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -717,9 +725,9 @@ class SlackToolSet:
         """Set the topic on a channel."""
         resolved = self._resolve_channel(channel)
         return self._call(
-            "POST",
-            "/conversations.setTopic",
-            json={"channel": resolved, "topic": topic},
+            'POST',
+            '/conversations.setTopic',
+            json={'channel': resolved, 'topic': topic},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -727,33 +735,33 @@ class SlackToolSet:
         """Set the purpose/description on a channel."""
         resolved = self._resolve_channel(channel)
         return self._call(
-            "POST",
-            "/conversations.setPurpose",
-            json={"channel": resolved, "purpose": purpose},
+            'POST',
+            '/conversations.setPurpose',
+            json={'channel': resolved, 'purpose': purpose},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def join_channel(self, channel: SlackChannelInput) -> dict[str, Any]:
         """Join a public channel."""
         resolved = self._resolve_channel(channel)
-        return self._call("POST", "/conversations.join", json={"channel": resolved})
+        return self._call('POST', '/conversations.join', json={'channel': resolved})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def leave_channel(self, channel: SlackChannelInput) -> dict[str, Any]:
         """Leave a channel."""
         resolved = self._resolve_channel(channel)
-        return self._call("POST", "/conversations.leave", json={"channel": resolved})
+        return self._call('POST', '/conversations.leave', json={'channel': resolved})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def invite_to_channel(self, channel: SlackChannelInput, users: list[str]) -> dict[str, Any]:
         """Invite one or more users (Slack user IDs) to a channel."""
         resolved = self._resolve_channel(channel)
         if not users:
-            raise ValueError("users must be non-empty")
+            raise ValueError('users must be non-empty')
         return self._call(
-            "POST",
-            "/conversations.invite",
-            json={"channel": resolved, "users": ",".join(users)},
+            'POST',
+            '/conversations.invite',
+            json={'channel': resolved, 'users': ','.join(users)},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -761,24 +769,24 @@ class SlackToolSet:
         """Kick a user from a channel."""
         resolved = self._resolve_channel(channel)
         if not user:
-            raise ValueError("user must be non-empty")
+            raise ValueError('user must be non-empty')
         return self._call(
-            "POST",
-            "/conversations.kick",
-            json={"channel": resolved, "user": user},
+            'POST',
+            '/conversations.kick',
+            json={'channel': resolved, 'user': user},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def archive_channel(self, channel: SlackChannelInput) -> dict[str, Any]:
         """Archive a channel (recoverable)."""
         resolved = self._resolve_channel(channel)
-        return self._call("POST", "/conversations.archive", json={"channel": resolved})
+        return self._call('POST', '/conversations.archive', json={'channel': resolved})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def unarchive_channel(self, channel: SlackChannelInput) -> dict[str, Any]:
         """Unarchive a channel."""
         resolved = self._resolve_channel(channel)
-        return self._call("POST", "/conversations.unarchive", json={"channel": resolved})
+        return self._call('POST', '/conversations.unarchive', json={'channel': resolved})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def open_im(self, users: list[str], *, return_im: bool = True) -> dict[str, Any]:
@@ -788,11 +796,11 @@ class SlackToolSet:
         passed straight into :meth:`post_message`.
         """
         if not users:
-            raise ValueError("users must contain at least one id")
+            raise ValueError('users must contain at least one id')
         return self._call(
-            "POST",
-            "/conversations.open",
-            json={"users": ",".join(users), "return_im": return_im},
+            'POST',
+            '/conversations.open',
+            json={'users': ','.join(users), 'return_im': return_im},
         )
 
     # MARK: - Messages (modify / pin / react)
@@ -809,15 +817,15 @@ class SlackToolSet:
         """Post an ephemeral message visible only to ``user``."""
         resolved = self._resolve_channel(channel)
         if not user:
-            raise ValueError("user must be non-empty")
+            raise ValueError('user must be non-empty')
         if not text and not blocks:
-            raise ValueError("text or blocks must be supplied")
-        payload: dict[str, Any] = {"channel": resolved, "user": user}
+            raise ValueError('text or blocks must be supplied')
+        payload: dict[str, Any] = {'channel': resolved, 'user': user}
         if text is not None:
-            payload["text"] = text
+            payload['text'] = text
         if blocks is not None:
-            payload["blocks"] = blocks
-        return self._call("POST", "/chat.postEphemeral", json=payload)
+            payload['blocks'] = blocks
+        return self._call('POST', '/chat.postEphemeral', json=payload)
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_message(
@@ -837,13 +845,13 @@ class SlackToolSet:
         resolved = self._resolve_channel(channel)
         resolved_ts = self._resolve_message_ts(ts)
         if not text and not blocks:
-            raise ValueError("text or blocks must be supplied")
-        payload: dict[str, Any] = {"channel": resolved, "ts": resolved_ts}
+            raise ValueError('text or blocks must be supplied')
+        payload: dict[str, Any] = {'channel': resolved, 'ts': resolved_ts}
         if text is not None:
-            payload["text"] = text
+            payload['text'] = text
         if blocks is not None:
-            payload["blocks"] = blocks
-        return self._call("POST", "/chat.update", json=payload)
+            payload['blocks'] = blocks
+        return self._call('POST', '/chat.update', json=payload)
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_message(self, channel: SlackChannelInput, ts: SlackMessageTsInput) -> dict[str, Any]:
@@ -854,7 +862,7 @@ class SlackToolSet:
         """
         resolved = self._resolve_channel(channel)
         resolved_ts = self._resolve_message_ts(ts)
-        return self._call("POST", "/chat.delete", json={"channel": resolved, "ts": resolved_ts})
+        return self._call('POST', '/chat.delete', json={'channel': resolved, 'ts': resolved_ts})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def schedule_message(
@@ -869,13 +877,13 @@ class SlackToolSet:
         """
         resolved = self._resolve_channel(channel)
         if not text:
-            raise ValueError("text must be non-empty")
+            raise ValueError('text must be non-empty')
         if post_at <= 0:
-            raise ValueError("post_at must be a positive Unix timestamp")
+            raise ValueError('post_at must be a positive Unix timestamp')
         return self._call(
-            "POST",
-            "/chat.scheduleMessage",
-            json={"channel": resolved, "post_at": post_at, "text": text},
+            'POST',
+            '/chat.scheduleMessage',
+            json={'channel': resolved, 'post_at': post_at, 'text': text},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -889,9 +897,9 @@ class SlackToolSet:
         resolved = self._resolve_channel(channel)
         resolved_ts = self._resolve_message_ts(message_ts)
         return self._call(
-            "GET",
-            "/chat.getPermalink",
-            params={"channel": resolved, "message_ts": resolved_ts},
+            'GET',
+            '/chat.getPermalink',
+            params={'channel': resolved, 'message_ts': resolved_ts},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -909,11 +917,11 @@ class SlackToolSet:
         resolved = self._resolve_channel(channel)
         resolved_ts = self._resolve_message_ts(timestamp)
         if not name:
-            raise ValueError("name must be non-empty")
+            raise ValueError('name must be non-empty')
         return self._call(
-            "POST",
-            "/reactions.add",
-            json={"channel": resolved, "timestamp": resolved_ts, "name": name},
+            'POST',
+            '/reactions.add',
+            json={'channel': resolved, 'timestamp': resolved_ts, 'name': name},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -927,11 +935,11 @@ class SlackToolSet:
         resolved = self._resolve_channel(channel)
         resolved_ts = self._resolve_message_ts(timestamp)
         if not name:
-            raise ValueError("name must be non-empty")
+            raise ValueError('name must be non-empty')
         return self._call(
-            "POST",
-            "/reactions.remove",
-            json={"channel": resolved, "timestamp": resolved_ts, "name": name},
+            'POST',
+            '/reactions.remove',
+            json={'channel': resolved, 'timestamp': resolved_ts, 'name': name},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -942,9 +950,9 @@ class SlackToolSet:
         resolved = self._resolve_channel(channel)
         resolved_ts = self._resolve_message_ts(timestamp)
         return self._call(
-            "POST",
-            "/pins.add",
-            json={"channel": resolved, "timestamp": resolved_ts},
+            'POST',
+            '/pins.add',
+            json={'channel': resolved, 'timestamp': resolved_ts},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -955,16 +963,16 @@ class SlackToolSet:
         resolved = self._resolve_channel(channel)
         resolved_ts = self._resolve_message_ts(timestamp)
         return self._call(
-            "POST",
-            "/pins.remove",
-            json={"channel": resolved, "timestamp": resolved_ts},
+            'POST',
+            '/pins.remove',
+            json={'channel': resolved, 'timestamp': resolved_ts},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_pins(self, channel: SlackChannelInput) -> dict[str, Any]:
         """List pinned items in a channel."""
         resolved = self._resolve_channel(channel)
-        return self._call("GET", "/pins.list", params={"channel": resolved})
+        return self._call('GET', '/pins.list', params={'channel': resolved})
 
     # MARK: - Files
 
@@ -978,19 +986,19 @@ class SlackToolSet:
         page: int = 1,
     ) -> dict[str, Any]:
         """List files (optionally filtered by channel/user)."""
-        params: dict[str, Any] = {"count": count, "page": page}
+        params: dict[str, Any] = {'count': count, 'page': page}
         if channel is not None:
-            params["channel"] = self._resolve_channel(channel)
+            params['channel'] = self._resolve_channel(channel)
         if user is not None:
-            params["user"] = user
-        return self._call("GET", "/files.list", params=params)
+            params['user'] = user
+        return self._call('GET', '/files.list', params=params)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def file_info(self, file_id: str) -> dict[str, Any]:
         """Return metadata for a single file."""
         if not file_id:
-            raise ValueError("file_id must be a non-empty string")
-        return self._call("GET", "/files.info", params={"file": file_id})
+            raise ValueError('file_id must be a non-empty string')
+        return self._call('GET', '/files.info', params={'file': file_id})
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_file(self, file_id: str) -> dict[str, Any]:
@@ -1000,8 +1008,8 @@ class SlackToolSet:
         with the user first.
         """
         if not file_id:
-            raise ValueError("file_id must be a non-empty string")
-        return self._call("POST", "/files.delete", json={"file": file_id})
+            raise ValueError('file_id must be a non-empty string')
+        return self._call('POST', '/files.delete', json={'file': file_id})
 
     # MARK: - Reminders, emoji, team
 
@@ -1019,16 +1027,16 @@ class SlackToolSet:
         second as a string.
         """
         if not text or not time:
-            raise ValueError("text and time must be non-empty")
-        payload: dict[str, Any] = {"text": text, "time": time}
+            raise ValueError('text and time must be non-empty')
+        payload: dict[str, Any] = {'text': text, 'time': time}
         if user is not None:
-            payload["user"] = user
-        return self._call("POST", "/reminders.add", json=payload)
+            payload['user'] = user
+        return self._call('POST', '/reminders.add', json=payload)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_reminders(self) -> dict[str, Any]:
         """List reminders set by the token's user."""
-        return self._call("GET", "/reminders.list")
+        return self._call('GET', '/reminders.list')
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_reminder(self, reminder_id: str) -> dict[str, Any]:
@@ -1037,18 +1045,18 @@ class SlackToolSet:
         Destructive: the reminder cannot be recovered.
         """
         if not reminder_id:
-            raise ValueError("reminder_id must be a non-empty string")
-        return self._call("POST", "/reminders.delete", json={"reminder": reminder_id})
+            raise ValueError('reminder_id must be a non-empty string')
+        return self._call('POST', '/reminders.delete', json={'reminder': reminder_id})
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def emoji_list(self) -> dict[str, Any]:
         """List custom emoji in the workspace."""
-        return self._call("GET", "/emoji.list")
+        return self._call('GET', '/emoji.list')
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def team_info(self) -> dict[str, Any]:
         """Return workspace/team metadata."""
-        return self._call("GET", "/team.info")
+        return self._call('GET', '/team.info')
 
     # MARK: - Internal
 
@@ -1064,17 +1072,17 @@ class SlackToolSet:
         - single-item lists of any of the above
         """
         if isinstance(channel, list):
-            channel_list = cast("list[Any]", channel)
+            channel_list = cast('list[Any]', channel)
             if not channel_list:
-                raise ValueError("channel must be non-empty")
+                raise ValueError('channel must be non-empty')
             channel = channel_list[0]
         if isinstance(channel, dict):
-            channel_dict = cast("dict[str, Any]", channel)
-            for key in ("channel_id", "id", "channel"):
+            channel_dict = cast('dict[str, Any]', channel)
+            for key in ('channel_id', 'id', 'channel'):
                 value: object = channel_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
-            name: object = channel_dict.get("name")
+            name: object = channel_dict.get('name')
             if isinstance(name, str) and name:
                 resolved = self._channel_name_cache.get(name)
                 if resolved:
@@ -1082,18 +1090,18 @@ class SlackToolSet:
                 # Falling back to the name itself; Slack accepts ``#general``
                 # style references for some endpoints.
                 return name
-            raise ValueError("channel dict must contain channel_id, id, or name")
+            raise ValueError('channel dict must contain channel_id, id, or name')
         if isinstance(channel, str):
             if not channel:
-                raise ValueError("channel must be a non-empty string")
-            if channel.startswith(("C", "D", "G")) and len(channel) >= 9:
+                raise ValueError('channel must be a non-empty string')
+            if channel.startswith(('C', 'D', 'G')) and len(channel) >= 9:
                 return channel
-            stripped = channel.lstrip("#")
+            stripped = channel.lstrip('#')
             cached = self._channel_name_cache.get(stripped)
             if cached:
                 return cached
             return channel
-        raise ValueError("channel must be a string, dict, or list")
+        raise ValueError('channel must be a string, dict, or list')
 
     @staticmethod
     def _resolve_message_ts(ts: Any) -> str:
@@ -1104,26 +1112,26 @@ class SlackToolSet:
         ``ts`` field).
         """
         if isinstance(ts, dict):
-            ts_dict = cast("dict[str, Any]", ts)
+            ts_dict = cast('dict[str, Any]', ts)
             value: object = (
-                ts_dict.get("ts") or ts_dict.get("timestamp") or ts_dict.get("message_ts")
+                ts_dict.get('ts') or ts_dict.get('timestamp') or ts_dict.get('message_ts')
             )
             if isinstance(value, str) and value:
                 return value
-            message: object = ts_dict.get("message")
+            message: object = ts_dict.get('message')
             if isinstance(message, dict):
-                message_dict = cast("dict[str, Any]", message)
-                value = message_dict.get("ts")
+                message_dict = cast('dict[str, Any]', message)
+                value = message_dict.get('ts')
                 if isinstance(value, str) and value:
                     return value
             raise ValueError("ts dict must contain a 'ts' field")
         if isinstance(ts, str):
             if not ts:
-                raise ValueError("ts must be a non-empty string")
+                raise ValueError('ts must be a non-empty string')
             return ts
         if isinstance(ts, int | float):
             return str(ts)
-        raise ValueError("ts must be a string or message dict")
+        raise ValueError('ts must be a string or message dict')
 
     def _call(
         self,
@@ -1138,15 +1146,15 @@ class SlackToolSet:
             path,
             params=params,
             json=json,
-            headers={"Content-Type": "application/json; charset=utf-8"} if json else None,
+            headers={'Content-Type': 'application/json; charset=utf-8'} if json else None,
         )
         raw: object = response.json()
-        data: dict[str, Any] | None = cast("dict[str, Any]", raw) if isinstance(raw, dict) else None
-        if data is None or not data.get("ok", False):
-            error: object = data.get("error") if data is not None else "unknown_error"
-            detail: dict[str, Any] = data if data is not None else {"raw": raw}
+        data: dict[str, Any] | None = cast('dict[str, Any]', raw) if isinstance(raw, dict) else None
+        if data is None or not data.get('ok', False):
+            error: object = data.get('error') if data is not None else 'unknown_error'
+            detail: dict[str, Any] = data if data is not None else {'raw': raw}
             raise SlackApiError(
-                f"Slack API call {path} failed: {error}",
+                f'Slack API call {path} failed: {error}',
                 detail=detail,
                 status=response.status,
             )

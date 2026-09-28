@@ -7,8 +7,7 @@ raw IDs, tolerant write inputs).
 
 ## Agent-ready behavior (overview)
 
-List tools across this category return compact summaries with stable
-display refs (`campaign_ref`, `list_ref`, `template_ref`,
+List tools across this category return compact summaries with response-local display refs (`campaign_ref`, `list_ref`, `template_ref`,
 `canvas_ref`, `account_ref`, `ad_set_ref`, `ad_ref`, `creative_ref`,
 `segment_ref`, `audience_ref`, `ad_group_ref`). Raw provider IDs
 (numeric Marketo IDs, Iterable list IDs, Braze campaign UUIDs, Meta
@@ -177,8 +176,8 @@ Tools: `list_ad_accounts`, `get_ad_account`, `list_campaigns`,
   removes ad sets and ads).
 
 ```python
-camps = connector.list_campaigns(account_id="act_123", include_ids=True)
-connector.update_campaign(camps["campaigns"][0], status="PAUSED")
+camps = connector.list_campaigns(ad_account_id="act_123", include_ids=True)
+connector.update_campaign(camps["campaigns"][0], fields={"status": "PAUSED"})
 ```
 
 ## LinkedInAdsToolSet

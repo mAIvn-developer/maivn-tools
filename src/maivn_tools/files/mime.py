@@ -15,19 +15,19 @@ text, and JSON. Anything else can be plugged in by extending the
 from __future__ import annotations
 
 import mimetypes
-from enum import Enum
+from enum import StrEnum
 from os import PathLike
 
 # MARK: Constants
 
-DEFAULT_MIME_TYPE = "application/octet-stream"
+DEFAULT_MIME_TYPE = 'application/octet-stream'
 
 
 # MARK: Magic-number table
 
 
 class _MagicEntry:
-    __slots__ = ("offset", "magic", "mime")
+    __slots__ = ('offset', 'magic', 'mime')
 
     def __init__(self, offset: int, magic: bytes, mime: str) -> None:
         self.offset = offset
@@ -36,36 +36,36 @@ class _MagicEntry:
 
 
 _MAGIC_TABLE: list[_MagicEntry] = [
-    _MagicEntry(0, b"%PDF-", "application/pdf"),
-    _MagicEntry(0, b"PK\x03\x04", "application/zip"),
-    _MagicEntry(0, b"\x1f\x8b", "application/gzip"),
-    _MagicEntry(0, b"BZh", "application/x-bzip2"),
-    _MagicEntry(0, b"\x89PNG\r\n\x1a\n", "image/png"),
-    _MagicEntry(0, b"GIF87a", "image/gif"),
-    _MagicEntry(0, b"GIF89a", "image/gif"),
-    _MagicEntry(0, b"\xff\xd8\xff", "image/jpeg"),
-    _MagicEntry(0, b"RIFF", "image/webp"),
-    _MagicEntry(0, b"<svg", "image/svg+xml"),
-    _MagicEntry(0, b"<?xml", "application/xml"),
-    _MagicEntry(0, b"{\\rtf", "application/rtf"),
-    _MagicEntry(0, b"MZ", "application/x-msdownload"),
-    _MagicEntry(0, b"\x7fELF", "application/x-elf"),
-    _MagicEntry(0, b"OggS", "audio/ogg"),
-    _MagicEntry(0, b"ID3", "audio/mpeg"),
-    _MagicEntry(0, b"fLaC", "audio/flac"),
-    _MagicEntry(4, b"ftypmp4", "video/mp4"),
-    _MagicEntry(4, b"ftypisom", "video/mp4"),
-    _MagicEntry(4, b"ftypqt", "video/quicktime"),
+    _MagicEntry(0, b'%PDF-', 'application/pdf'),
+    _MagicEntry(0, b'PK\x03\x04', 'application/zip'),
+    _MagicEntry(0, b'\x1f\x8b', 'application/gzip'),
+    _MagicEntry(0, b'BZh', 'application/x-bzip2'),
+    _MagicEntry(0, b'\x89PNG\r\n\x1a\n', 'image/png'),
+    _MagicEntry(0, b'GIF87a', 'image/gif'),
+    _MagicEntry(0, b'GIF89a', 'image/gif'),
+    _MagicEntry(0, b'\xff\xd8\xff', 'image/jpeg'),
+    _MagicEntry(0, b'RIFF', 'image/webp'),
+    _MagicEntry(0, b'<svg', 'image/svg+xml'),
+    _MagicEntry(0, b'<?xml', 'application/xml'),
+    _MagicEntry(0, b'{\\rtf', 'application/rtf'),
+    _MagicEntry(0, b'MZ', 'application/x-msdownload'),
+    _MagicEntry(0, b'\x7fELF', 'application/x-elf'),
+    _MagicEntry(0, b'OggS', 'audio/ogg'),
+    _MagicEntry(0, b'ID3', 'audio/mpeg'),
+    _MagicEntry(0, b'fLaC', 'audio/flac'),
+    _MagicEntry(4, b'ftypmp4', 'video/mp4'),
+    _MagicEntry(4, b'ftypisom', 'video/mp4'),
+    _MagicEntry(4, b'ftypqt', 'video/quicktime'),
 ]
 
 
 _OOXML_PARTS: dict[str, str] = {
-    "word/document.xml": (
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    'word/document.xml': (
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ),
-    "xl/workbook.xml": ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
-    "ppt/presentation.xml": (
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    'xl/workbook.xml': ('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+    'ppt/presentation.xml': (
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     ),
 }
 
@@ -73,43 +73,43 @@ _OOXML_PARTS: dict[str, str] = {
 # MARK: Kind classification
 
 
-class _Kind(str, Enum):
-    DOCUMENT = "document"
-    SPREADSHEET = "spreadsheet"
-    PRESENTATION = "presentation"
-    PDF = "pdf"
-    IMAGE = "image"
-    AUDIO = "audio"
-    VIDEO = "video"
-    ARCHIVE = "archive"
-    TEXT = "text"
-    DATA = "data"
-    OTHER = "other"
+class _Kind(StrEnum):
+    DOCUMENT = 'document'
+    SPREADSHEET = 'spreadsheet'
+    PRESENTATION = 'presentation'
+    PDF = 'pdf'
+    IMAGE = 'image'
+    AUDIO = 'audio'
+    VIDEO = 'video'
+    ARCHIVE = 'archive'
+    TEXT = 'text'
+    DATA = 'data'
+    OTHER = 'other'
 
 
 _KIND_PREFIXES: list[tuple[str, _Kind]] = [
-    ("image/", _Kind.IMAGE),
-    ("audio/", _Kind.AUDIO),
-    ("video/", _Kind.VIDEO),
-    ("text/", _Kind.TEXT),
+    ('image/', _Kind.IMAGE),
+    ('audio/', _Kind.AUDIO),
+    ('video/', _Kind.VIDEO),
+    ('text/', _Kind.TEXT),
 ]
 
 
 _KIND_EXACT: dict[str, _Kind] = {
-    "application/pdf": _Kind.PDF,
-    "application/zip": _Kind.ARCHIVE,
-    "application/gzip": _Kind.ARCHIVE,
-    "application/x-bzip2": _Kind.ARCHIVE,
-    "application/x-tar": _Kind.ARCHIVE,
-    "application/json": _Kind.DATA,
-    "application/xml": _Kind.DATA,
-    "application/rtf": _Kind.DOCUMENT,
-    "application/msword": _Kind.DOCUMENT,
-    "application/vnd.ms-excel": _Kind.SPREADSHEET,
-    "application/vnd.ms-powerpoint": _Kind.PRESENTATION,
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": _Kind.DOCUMENT,
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": _Kind.SPREADSHEET,
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation": (
+    'application/pdf': _Kind.PDF,
+    'application/zip': _Kind.ARCHIVE,
+    'application/gzip': _Kind.ARCHIVE,
+    'application/x-bzip2': _Kind.ARCHIVE,
+    'application/x-tar': _Kind.ARCHIVE,
+    'application/json': _Kind.DATA,
+    'application/xml': _Kind.DATA,
+    'application/rtf': _Kind.DOCUMENT,
+    'application/msword': _Kind.DOCUMENT,
+    'application/vnd.ms-excel': _Kind.SPREADSHEET,
+    'application/vnd.ms-powerpoint': _Kind.PRESENTATION,
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': _Kind.DOCUMENT,
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': _Kind.SPREADSHEET,
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': (
         _Kind.PRESENTATION
     ),
 }
@@ -134,7 +134,7 @@ def detect_mime_type(
     if data:
         magic_hit = _scan_magic(data)
         if magic_hit is not None:
-            if magic_hit == "application/zip":
+            if magic_hit == 'application/zip':
                 return _classify_zip_container(data) or magic_hit
             return magic_hit
     if filename is not None:
@@ -173,6 +173,6 @@ def _scan_magic(data: bytes) -> str | None:
 def _classify_zip_container(data: bytes) -> str | None:
     snippet = data[: min(len(data), 65536)]
     for part, mime in _OOXML_PARTS.items():
-        if part.encode("ascii") in snippet:
+        if part.encode('ascii') in snippet:
             return mime
     return None

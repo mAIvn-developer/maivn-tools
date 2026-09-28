@@ -8,7 +8,7 @@ is exposed as Agent-ready tools.
 
 | Connector | Trigger style | Auth |
 | --- | --- | --- |
-| `ZapierConnector` | Webhooks + Natural Language Actions | Webhook URLs (no auth) and/or NLA API key |
+| `ZapierConnector` | Configured webhook triggers | Secret webhook URLs |
 | `WorkatoToolSet` | Recipe metadata + on-demand triggers | Workato API token |
 | `PipedreamToolSet` | Workflow metadata + HTTP triggers | Pipedream bearer token |
 | `MakeToolSet` | Scenario metadata + webhook URLs | Make API token |
@@ -19,7 +19,7 @@ is exposed as Agent-ready tools.
 
 The five method-based toolsets (Workato, Pipedream, Make, n8n,
 Composio) use the standard summary pattern -- list tools return
-compact summaries with stable display refs (`recipe_ref`, `job_ref`,
+compact summaries with response-local display refs (`recipe_ref`, `job_ref`,
 `workflow_ref`, `execution_ref`, `scenario_ref`, `app_ref`,
 `action_ref`, `connection_ref`). Raw provider IDs are hidden by
 default and exposed via `include_ids=True` when a follow-up tool
@@ -33,8 +33,9 @@ the matching list tool. Webhook-trigger tools (`run_recipe_trigger`,
 `invoke_http_trigger`, `trigger_webhook` for Make / n8n) take the
 trigger URL directly -- they bypass the catalog by design.
 
-No destructive tools across this group -- workflow / recipe deletes
-go through the provider UI, not the API.
+These connectors do not mark their trigger tools destructive. A triggered
+workflow can still create, change or delete data through its configured steps.
+Review the workflow and restrict provider credentials before registering it.
 
 ## ZapierConnector
 
@@ -49,12 +50,11 @@ zapier = ZapierConnector(
         "new_lead": "https://hooks.zapier.com/hooks/catch/123/abc",
         "deal_won": "https://hooks.zapier.com/hooks/catch/123/def",
     },
-    nla_api_key=secrets["ZAPIER_NLA_KEY"],  # optional
 )
 ```
 
-If `nla_api_key` is supplied the connector also exposes `list_actions`
-and `run_action` against Zapier's Natural Language Actions endpoint.
+The current connector exposes the configured webhook triggers. It does not
+accept an `nla_api_key` or expose Natural Language Actions methods.
 
 **Agent-ready behavior**
 
@@ -72,14 +72,9 @@ docstrings**:
   - documents the `payload` argument and the meaning of `None`,
   - explains that the Zap definition lives in Zapier -- this tool
     just delivers the payload.
-- The NLA `list_actions` docstring calls out that action IDs are
-  internal Zapier handles -- they should be passed straight into
-  `run_action` and not shown in final answers.
-- The NLA `run_action` docstring documents `action_id` (from
-  `list_actions`), `instructions`, and the `params` pin-field map.
 
 There is no summary stripper because there is nothing to summarize --
-each tool's signature already takes one trigger URL or one action ID.
+each generated tool sends a payload to its configured webhook URL.
 
 ## WorkatoToolSet
 

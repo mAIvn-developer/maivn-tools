@@ -34,15 +34,15 @@ class RateLimitPolicy:
 
     requests_per_second: float
     burst: int
-    scope: str = "per_connection"
+    scope: str = 'per_connection'
 
     def __post_init__(self) -> None:
         if self.requests_per_second <= 0:
-            raise ValueError("requests_per_second must be positive")
+            raise ValueError('requests_per_second must be positive')
         if self.burst < 1:
-            raise ValueError("burst must be at least 1")
+            raise ValueError('burst must be at least 1')
         if not self.scope:
-            raise ValueError("scope must be a non-empty string")
+            raise ValueError('scope must be a non-empty string')
 
 
 # MARK: Token bucket
@@ -96,7 +96,7 @@ class TokenBucket:
     def try_acquire(self, tokens: int = 1) -> bool:
         """Attempt to take ``tokens`` from the bucket without blocking."""
         if tokens < 1:
-            raise ValueError("tokens must be at least 1")
+            raise ValueError('tokens must be at least 1')
         with self._lock:
             self._refill_locked()
             if self._tokens >= tokens:
@@ -107,7 +107,7 @@ class TokenBucket:
     def time_until_available(self, tokens: int = 1) -> float:
         """Return the seconds until ``tokens`` will be available."""
         if tokens < 1:
-            raise ValueError("tokens must be at least 1")
+            raise ValueError('tokens must be at least 1')
         with self._lock:
             self._refill_locked()
             deficit = tokens - self._tokens

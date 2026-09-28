@@ -20,53 +20,53 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _POST_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "post_ref": {"type": "string"},
-        "message": {"type": "string"},
-        "posted_at": {"type": "string"},
-        "permalink_url": {"type": "string"},
-        "post_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'post_ref': {'type': 'string'},
+        'message': {'type': 'string'},
+        'posted_at': {'type': 'string'},
+        'permalink_url': {'type': 'string'},
+        'post_id': {'type': 'string'},
     },
-    "required": ["post_ref"],
+    'required': ['post_ref'],
 }
 
 _COMMENT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "comment_ref": {"type": "string"},
-        "author": {"type": "string"},
-        "message": {"type": "string"},
-        "posted_at": {"type": "string"},
-        "like_count": {"type": "integer"},
-        "comment_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'comment_ref': {'type': 'string'},
+        'author': {'type': 'string'},
+        'message': {'type': 'string'},
+        'posted_at': {'type': 'string'},
+        'like_count': {'type': 'integer'},
+        'comment_id': {'type': 'string'},
     },
-    "required": ["comment_ref"],
+    'required': ['comment_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_PAGE_POSTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "posts": {"type": "array", "items": _POST_SUMMARY},
-        "paging": {"type": ["object", "null"]},
+    'type': 'object',
+    'properties': {
+        'posts': {'type': 'array', 'items': _POST_SUMMARY},
+        'paging': {'type': ['object', 'null']},
     },
-    "required": ["posts"],
+    'required': ['posts'],
 }
 
 LIST_POST_COMMENTS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "comments": {"type": "array", "items": _COMMENT_SUMMARY},
-        "paging": {"type": ["object", "null"]},
+    'type': 'object',
+    'properties': {
+        'comments': {'type': 'array', 'items': _COMMENT_SUMMARY},
+        'paging': {'type': ['object', 'null']},
     },
-    "required": ["comments"],
+    'required': ['comments'],
 }
 
 
 __all__ = [
-    "LIST_PAGE_POSTS_OUTPUT",
-    "LIST_POST_COMMENTS_OUTPUT",
+    'LIST_PAGE_POSTS_OUTPUT',
+    'LIST_POST_COMMENTS_OUTPUT',
 ]

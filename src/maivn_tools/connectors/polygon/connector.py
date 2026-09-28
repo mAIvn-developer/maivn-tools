@@ -25,29 +25,29 @@ from ...runtime.http import HttpClient, HttpTransport
 def _as_dict(value: object) -> dict[str, Any]:
     """Return ``value`` as a ``dict`` mapping, or an empty dict otherwise."""
     if isinstance(value, dict):
-        return cast("dict[str, Any]", value)
+        return cast('dict[str, Any]', value)
     return {}
 
 
 def _results(payload: object) -> list[dict[str, Any]]:
     """Extract the Polygon ``results`` list of dict items from a payload."""
     container = _as_dict(payload)
-    raw_items: object = container.get("results")
+    raw_items: object = container.get('results')
     if not isinstance(raw_items, list):
         return []
-    items: list[object] = cast("list[object]", raw_items)
-    return [cast("dict[str, Any]", item) for item in items if isinstance(item, dict)]
+    items: list[object] = cast('list[object]', raw_items)
+    return [cast('dict[str, Any]', item) for item in items if isinstance(item, dict)]
 
 
 def _next_url(payload: object) -> Any:
     """Return the Polygon ``next_url`` pagination token, if present."""
-    return _as_dict(payload).get("next_url")
+    return _as_dict(payload).get('next_url')
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="polygon")
+@toolset(prefix='polygon')
 class PolygonToolSet:
     """A connector for Polygon.io market data.
 
@@ -56,33 +56,33 @@ class PolygonToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="polygon",
-        display_name="Polygon.io",
-        version="0.1.0",
-        description="Stocks/options/forex/crypto market data: aggregates, tickers, news.",
+        name='polygon',
+        display_name='Polygon.io',
+        version='0.1.0',
+        description='Stocks/options/forex/crypto market data: aggregates, tickers, news.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.SEARCH}),
-        documentation_url="https://polygon.io/docs",
-        homepage_url="https://polygon.io/",
-        tags=("market-data", "finance"),
+        documentation_url='https://polygon.io/docs',
+        homepage_url='https://polygon.io/',
+        tags=('market-data', 'finance'),
     )
 
     def __init__(
         self,
         *,
         api_key: str,
-        base_url: str = "https://api.polygon.io",
+        base_url: str = 'https://api.polygon.io',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(api_key, query_param="apiKey"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(api_key, query_param='apiKey'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -112,35 +112,35 @@ class PolygonToolSet:
         for the unmodified Polygon response.
         """
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
-        params: dict[str, Any] = {"active": str(active).lower(), "limit": limit}
+            raise ValueError('limit must be between 1 and 1000')
+        params: dict[str, Any] = {'active': str(active).lower(), 'limit': limit}
         if ticker is not None:
-            params["ticker"] = ticker
+            params['ticker'] = ticker
         if market is not None:
-            params["market"] = market
+            params['market'] = market
         if cursor is not None:
-            params["cursor"] = cursor
-        payload: Any = self._client.get("/v3/reference/tickers", params=params).json()
+            params['cursor'] = cursor
+        payload: Any = self._client.get('/v3/reference/tickers', params=params).json()
         if raw:
             return payload
         summaries: list[dict[str, Any]] = []
         for index, item in enumerate(_results(payload), start=1):
             summaries.append(
                 {
-                    "ticker_ref": f"ticker_{index}",
-                    "ticker": item.get("ticker", ""),
-                    "name": item.get("name", ""),
-                    "market": item.get("market", ""),
-                    "primary_exchange": item.get("primary_exchange", ""),
-                    "locale": item.get("locale", ""),
-                    "currency": item.get("currency_name", ""),
-                    "active": item.get("active"),
+                    'ticker_ref': f'ticker_{index}',
+                    'ticker': item.get('ticker', ''),
+                    'name': item.get('name', ''),
+                    'market': item.get('market', ''),
+                    'primary_exchange': item.get('primary_exchange', ''),
+                    'locale': item.get('locale', ''),
+                    'currency': item.get('currency_name', ''),
+                    'active': item.get('active'),
                 }
             )
         return {
-            "tickers": summaries,
-            "count": len(summaries),
-            "next_url": _next_url(payload),
+            'tickers': summaries,
+            'count': len(summaries),
+            'next_url': _next_url(payload),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -152,8 +152,8 @@ class PolygonToolSet:
         date, branding.
         """
         if not ticker:
-            raise ValueError("ticker must be a non-empty string")
-        return self._client.get(f"/v3/reference/tickers/{ticker}").json()
+            raise ValueError('ticker must be a non-empty string')
+        return self._client.get(f'/v3/reference/tickers/{ticker}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_aggregates(
@@ -165,7 +165,7 @@ class PolygonToolSet:
         from_date: str,
         to_date: str,
         adjusted: bool = True,
-        sort: str = "asc",
+        sort: str = 'asc',
         limit: int = 5000,
     ) -> dict[str, Any]:
         """Return historical OHLCV aggregate bars for a ticker.
@@ -177,15 +177,15 @@ class PolygonToolSet:
         ``{"results": [...], "resultsCount": N}`` payload.
         """
         if not ticker or not timespan or not from_date or not to_date:
-            raise ValueError("ticker, timespan, from_date, and to_date are required")
+            raise ValueError('ticker, timespan, from_date, and to_date are required')
         if limit < 1 or limit > 50_000:
-            raise ValueError("limit must be between 1 and 50000")
+            raise ValueError('limit must be between 1 and 50000')
         return self._client.get(
-            f"/v2/aggs/ticker/{ticker}/range/{multiplier}/{timespan}/{from_date}/{to_date}",
+            f'/v2/aggs/ticker/{ticker}/range/{multiplier}/{timespan}/{from_date}/{to_date}',
             params={
-                "adjusted": str(adjusted).lower(),
-                "sort": sort,
-                "limit": limit,
+                'adjusted': str(adjusted).lower(),
+                'sort': sort,
+                'limit': limit,
             },
         ).json()
 
@@ -197,8 +197,8 @@ class PolygonToolSet:
         "x": exchange}}``.
         """
         if not ticker:
-            raise ValueError("ticker must be a non-empty string")
-        return self._client.get(f"/v2/last/trade/{ticker}").json()
+            raise ValueError('ticker must be a non-empty string')
+        return self._client.get(f'/v2/last/trade/{ticker}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_last_quote(self, ticker: str) -> dict[str, Any]:
@@ -208,8 +208,8 @@ class PolygonToolSet:
         bid size, "t": timestamp}}``.
         """
         if not ticker:
-            raise ValueError("ticker must be a non-empty string")
-        return self._client.get(f"/v2/last/nbbo/{ticker}").json()
+            raise ValueError('ticker must be a non-empty string')
+        return self._client.get(f'/v2/last/nbbo/{ticker}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_daily_open_close(
@@ -225,10 +225,10 @@ class PolygonToolSet:
         "volume": ..., "afterHours": ..., "preMarket": ...}``.
         """
         if not ticker or not date:
-            raise ValueError("ticker and date must be non-empty")
+            raise ValueError('ticker and date must be non-empty')
         return self._client.get(
-            f"/v1/open-close/{ticker}/{date}",
-            params={"adjusted": str(adjusted).lower()},
+            f'/v1/open-close/{ticker}/{date}',
+            params={'adjusted': str(adjusted).lower()},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -244,10 +244,10 @@ class PolygonToolSet:
         low, "o": open, "v": volume, "vw": vwap}]}``.
         """
         if not ticker:
-            raise ValueError("ticker must be a non-empty string")
+            raise ValueError('ticker must be a non-empty string')
         return self._client.get(
-            f"/v2/aggs/ticker/{ticker}/prev",
-            params={"adjusted": str(adjusted).lower()},
+            f'/v2/aggs/ticker/{ticker}/prev',
+            params={'adjusted': str(adjusted).lower()},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -256,7 +256,7 @@ class PolygonToolSet:
         *,
         ticker: str | None = None,
         published_utc_gte: str | None = None,
-        order: str = "desc",
+        order: str = 'desc',
         limit: int = 10,
         raw: bool = False,
     ) -> dict[str, Any]:
@@ -271,37 +271,37 @@ class PolygonToolSet:
         for the unmodified response.
         """
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
-        params: dict[str, Any] = {"limit": limit, "order": order}
+            raise ValueError('limit must be between 1 and 1000')
+        params: dict[str, Any] = {'limit': limit, 'order': order}
         if ticker is not None:
-            params["ticker"] = ticker
+            params['ticker'] = ticker
         if published_utc_gte is not None:
-            params["published_utc.gte"] = published_utc_gte
+            params['published_utc.gte'] = published_utc_gte
         payload: Any = self._client.get(
-            "/v2/reference/news",
+            '/v2/reference/news',
             params=params,
         ).json()
         if raw:
             return payload
         summaries: list[dict[str, Any]] = []
         for index, item in enumerate(_results(payload), start=1):
-            publisher = _as_dict(item.get("publisher") or {})
+            publisher = _as_dict(item.get('publisher') or {})
             summaries.append(
                 {
-                    "article_ref": f"article_{index}",
-                    "title": item.get("title", ""),
-                    "publisher": publisher.get("name", ""),
-                    "author": item.get("author", ""),
-                    "published_utc": item.get("published_utc", ""),
-                    "article_url": item.get("article_url", ""),
-                    "description": item.get("description", ""),
-                    "tickers": item.get("tickers", []),
+                    'article_ref': f'article_{index}',
+                    'title': item.get('title', ''),
+                    'publisher': publisher.get('name', ''),
+                    'author': item.get('author', ''),
+                    'published_utc': item.get('published_utc', ''),
+                    'article_url': item.get('article_url', ''),
+                    'description': item.get('description', ''),
+                    'tickers': item.get('tickers', []),
                 }
             )
         return {
-            "articles": summaries,
-            "count": len(summaries),
-            "next_url": _next_url(payload),
+            'articles': summaries,
+            'count': len(summaries),
+            'next_url': _next_url(payload),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -311,7 +311,7 @@ class PolygonToolSet:
         Returns ``{"market": ..., "serverTime": ..., "exchanges":
         {...}, "currencies": {...}}``.
         """
-        return self._client.get("/v1/marketstatus/now").json()
+        return self._client.get('/v1/marketstatus/now').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_option_contracts(
@@ -335,19 +335,19 @@ class PolygonToolSet:
         unmodified Polygon response.
         """
         if not underlying_ticker:
-            raise ValueError("underlying_ticker must be a non-empty string")
+            raise ValueError('underlying_ticker must be a non-empty string')
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
+            raise ValueError('limit must be between 1 and 1000')
         params: dict[str, Any] = {
-            "underlying_ticker": underlying_ticker,
-            "limit": limit,
+            'underlying_ticker': underlying_ticker,
+            'limit': limit,
         }
         if expiration_date is not None:
-            params["expiration_date"] = expiration_date
+            params['expiration_date'] = expiration_date
         if contract_type is not None:
-            params["contract_type"] = contract_type
+            params['contract_type'] = contract_type
         payload: Any = self._client.get(
-            "/v3/reference/options/contracts",
+            '/v3/reference/options/contracts',
             params=params,
         ).json()
         if raw:
@@ -356,18 +356,18 @@ class PolygonToolSet:
         for index, item in enumerate(_results(payload), start=1):
             summaries.append(
                 {
-                    "contract_ref": f"contract_{index}",
-                    "ticker": item.get("ticker", ""),
-                    "underlying_ticker": item.get("underlying_ticker", ""),
-                    "contract_type": item.get("contract_type", ""),
-                    "strike_price": item.get("strike_price"),
-                    "expiration_date": item.get("expiration_date", ""),
-                    "exercise_style": item.get("exercise_style", ""),
-                    "shares_per_contract": item.get("shares_per_contract"),
+                    'contract_ref': f'contract_{index}',
+                    'ticker': item.get('ticker', ''),
+                    'underlying_ticker': item.get('underlying_ticker', ''),
+                    'contract_type': item.get('contract_type', ''),
+                    'strike_price': item.get('strike_price'),
+                    'expiration_date': item.get('expiration_date', ''),
+                    'exercise_style': item.get('exercise_style', ''),
+                    'shares_per_contract': item.get('shares_per_contract'),
                 }
             )
         return {
-            "contracts": summaries,
-            "count": len(summaries),
-            "next_url": _next_url(payload),
+            'contracts': summaries,
+            'count': len(summaries),
+            'next_url': _next_url(payload),
         }

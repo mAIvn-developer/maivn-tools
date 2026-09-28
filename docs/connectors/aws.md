@@ -10,7 +10,7 @@ in-process and don't require `boto3` as a runtime dependency.
 ## Agent-ready behavior (overview)
 
 All list / describe tools return compact summaries by default with a
-stable display ref (`bucket_ref`, `object_ref`, `function_ref`,
+response-local display ref (`bucket_ref`, `object_ref`, `function_ref`,
 `log_group_ref`, `log_stream_ref`, `user_ref`, `role_ref`,
 `policy_ref`). The user-facing identifier -- bucket name, object key,
 function name, log group name, IAM user/role/policy name -- is kept

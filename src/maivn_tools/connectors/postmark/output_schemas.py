@@ -18,57 +18,57 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _TEMPLATE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "template_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "alias": {"type": "string"},
-        "template_type": {"type": "string"},
-        "active": {"type": "boolean"},
-        "template_id": {"type": ["integer", "null"]},
+    'type': 'object',
+    'properties': {
+        'template_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'alias': {'type': 'string'},
+        'template_type': {'type': 'string'},
+        'active': {'type': 'boolean'},
+        'template_id': {'type': ['integer', 'null']},
     },
-    "required": ["template_ref"],
+    'required': ['template_ref'],
 }
 
 _MESSAGE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "message_ref": {"type": "string"},
-        "from_address": {"type": "string"},
-        "to": {"type": "array", "items": {"type": "string"}},
-        "subject": {"type": "string"},
-        "status": {"type": "string"},
-        "received_at": {"type": "string"},
-        "message_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'message_ref': {'type': 'string'},
+        'from_address': {'type': 'string'},
+        'to': {'type': 'array', 'items': {'type': 'string'}},
+        'subject': {'type': 'string'},
+        'status': {'type': 'string'},
+        'received_at': {'type': 'string'},
+        'message_id': {'type': 'string'},
     },
-    "required": ["message_ref"],
+    'required': ['message_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_TEMPLATES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "templates": {"type": "array", "items": _TEMPLATE_SUMMARY},
-        "count": {"type": "integer"},
-        "total_count": {"type": ["integer", "null"]},
+    'type': 'object',
+    'properties': {
+        'templates': {'type': 'array', 'items': _TEMPLATE_SUMMARY},
+        'count': {'type': 'integer'},
+        'total_count': {'type': ['integer', 'null']},
     },
-    "required": ["templates", "count"],
+    'required': ['templates', 'count'],
 }
 
 LIST_OUTBOUND_MESSAGES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "messages": {"type": "array", "items": _MESSAGE_SUMMARY},
-        "count": {"type": "integer"},
-        "total_count": {"type": ["integer", "null"]},
+    'type': 'object',
+    'properties': {
+        'messages': {'type': 'array', 'items': _MESSAGE_SUMMARY},
+        'count': {'type': 'integer'},
+        'total_count': {'type': ['integer', 'null']},
     },
-    "required": ["messages", "count"],
+    'required': ['messages', 'count'],
 }
 
 
 __all__ = [
-    "LIST_OUTBOUND_MESSAGES_OUTPUT",
-    "LIST_TEMPLATES_OUTPUT",
+    'LIST_OUTBOUND_MESSAGES_OUTPUT',
+    'LIST_TEMPLATES_OUTPUT',
 ]

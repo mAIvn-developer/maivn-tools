@@ -19,35 +19,35 @@ from pydantic import JsonValue
 # MARK: - Entity summary (mirrors the connector's ``_video_summary`` builder)
 
 _VIDEO_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "video_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "author": {"type": "string"},
-        "posted_at": {"type": ["string", "integer"]},
-        "view_count": {"type": "integer"},
-        "like_count": {"type": "integer"},
-        "comment_count": {"type": "integer"},
-        "share_count": {"type": "integer"},
-        "duration": {"type": "integer"},
-        "url": {"type": "string"},
-        "video_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'video_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'author': {'type': 'string'},
+        'posted_at': {'type': ['string', 'integer']},
+        'view_count': {'type': 'integer'},
+        'like_count': {'type': 'integer'},
+        'comment_count': {'type': 'integer'},
+        'share_count': {'type': 'integer'},
+        'duration': {'type': 'integer'},
+        'url': {'type': 'string'},
+        'video_id': {'type': 'string'},
     },
-    "required": ["video_ref"],
+    'required': ['video_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_VIDEOS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "videos": {"type": "array", "items": _VIDEO_SUMMARY},
-        "cursor": {"type": ["integer", "null"]},
-        "has_more": {"type": ["boolean", "null"]},
+    'type': 'object',
+    'properties': {
+        'videos': {'type': 'array', 'items': _VIDEO_SUMMARY},
+        'cursor': {'type': ['integer', 'null']},
+        'has_more': {'type': ['boolean', 'null']},
     },
-    "required": ["videos"],
+    'required': ['videos'],
 }
 
 
-__all__ = ["LIST_VIDEOS_OUTPUT"]
+__all__ = ['LIST_VIDEOS_OUTPUT']

@@ -16,19 +16,19 @@ from maivn_tools.connectors.mcp_bridge import (
 
 def test_mcp_server_spec_validates_inputs() -> None:
     with pytest.raises(ValueError):
-        MCPServerSpec(name="")
+        MCPServerSpec(name='')
     with pytest.raises(ValueError):
-        MCPServerSpec(name="x", rate_limit_per_minute=0)
+        MCPServerSpec(name='x', rate_limit_per_minute=0)
 
 
 def test_mcp_stdio_server_requires_command() -> None:
     with pytest.raises(ValueError):
-        MCPStdioServer(name="x")
+        MCPStdioServer(name='x')
 
 
 def test_mcp_http_server_requires_url() -> None:
     with pytest.raises(ValueError):
-        MCPHttpServer(name="x")
+        MCPHttpServer(name='x')
 
 
 def test_mcp_bridge_passes_kwargs_to_fake_mcp_server(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -38,26 +38,26 @@ def test_mcp_bridge_passes_kwargs_to_fake_mcp_server(monkeypatch: pytest.MonkeyP
         def __init__(self, **kwargs: Any) -> None:
             captured.append(kwargs)
 
-    fake_module = type("FakeMaivnModule", (), {"MCPServer": FakeMCPServer})
-    monkeypatch.setitem(sys.modules, "maivn", fake_module)
+    fake_module = type('FakeMaivnModule', (), {'MCPServer': FakeMCPServer})
+    monkeypatch.setitem(sys.modules, 'maivn', fake_module)
 
     bridge = MCPBridge(
         [
             MCPStdioServer(
-                name="fs",
-                command="uvx",
-                args=("mcp-filesystem",),
-                env={"FOO": "bar"},
-                prefix="fs.",
+                name='fs',
+                command='uvx',
+                args=('mcp-filesystem',),
+                env={'FOO': 'bar'},
+                prefix='fs.',
                 rate_limit_per_minute=10,
                 soft_error_retry=True,
-                default_args={"root": "/srv"},
+                default_args={'root': '/srv'},
             ),
             MCPHttpServer(
-                name="search",
-                url="https://mcp.example.com",
-                headers={"X-Tenant": "abc"},
-                bearer_token="token",
+                name='search',
+                url='https://mcp.example.com',
+                headers={'X-Tenant': 'abc'},
+                bearer_token='token',
             ),
         ]
     )
@@ -65,20 +65,20 @@ def test_mcp_bridge_passes_kwargs_to_fake_mcp_server(monkeypatch: pytest.MonkeyP
     assert len(servers) == 2
 
     stdio = captured[0]
-    assert stdio["transport"] == "stdio"
-    assert stdio["command"] == "uvx"
-    assert stdio["args"] == ["mcp-filesystem"]
-    assert stdio["env"] == {"FOO": "bar"}
-    assert stdio["prefix"] == "fs."
-    assert stdio["rate_limit_per_minute"] == 10
-    assert stdio["soft_error_retry"] is True
-    assert stdio["default_args"] == {"root": "/srv"}
+    assert stdio['transport'] == 'stdio'
+    assert stdio['command'] == 'uvx'
+    assert stdio['args'] == ['mcp-filesystem']
+    assert stdio['env'] == {'FOO': 'bar'}
+    assert stdio['tool_name_prefix'] == 'fs.'
+    assert stdio['max_calls_per_minute'] == 10
+    assert stdio['soft_error_handling'] == {'enabled': True}
+    assert stdio['default_tool_args'] == {'root': '/srv'}
 
     http = captured[1]
-    assert http["transport"] == "http"
-    assert http["url"] == "https://mcp.example.com"
-    assert http["headers"] == {"X-Tenant": "abc"}
-    assert http["bearer_token"] == "token"
+    assert http['transport'] == 'http'
+    assert http['url'] == 'https://mcp.example.com'
+    assert http['headers'] == {'X-Tenant': 'abc', 'Authorization': 'Bearer token'}
+    assert 'bearer_token' not in http
 
 
 def test_mcp_bridge_rejects_unknown_spec_subtype(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -86,9 +86,9 @@ def test_mcp_bridge_rejects_unknown_spec_subtype(monkeypatch: pytest.MonkeyPatch
         def __init__(self, **kwargs: Any) -> None:
             pass
 
-    fake_module = type("FakeMaivnModule", (), {"MCPServer": FakeMCPServer})
-    monkeypatch.setitem(sys.modules, "maivn", fake_module)
+    fake_module = type('FakeMaivnModule', (), {'MCPServer': FakeMCPServer})
+    monkeypatch.setitem(sys.modules, 'maivn', fake_module)
 
-    bridge = MCPBridge([MCPServerSpec(name="x")])
+    bridge = MCPBridge([MCPServerSpec(name='x')])
     with pytest.raises(TypeError):
         bridge.build()

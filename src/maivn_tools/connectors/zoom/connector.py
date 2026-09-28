@@ -17,7 +17,7 @@ from ...runtime.http import HttpClient, HttpTransport
 _DEFAULT_LIST_LIMIT = 25
 
 
-@toolset(prefix="zoom")
+@toolset(prefix='zoom')
 class ZoomToolSet:
     """A connector for the Zoom REST API v2.
 
@@ -28,18 +28,18 @@ class ZoomToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="zoom",
-        display_name="Zoom",
-        version="0.1.0",
-        description="Manage Zoom meetings, webinars, users, and recordings.",
+        name='zoom',
+        display_name='Zoom',
+        version='0.1.0',
+        description='Manage Zoom meetings, webinars, users, and recordings.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE, AuthMode.OAUTH2_CLIENT_CREDENTIALS),
         scopes={
-            "user:read": "Read users.",
-            "meeting:read": "Read meetings.",
-            "meeting:write": "Create and update meetings.",
-            "recording:read": "Read recordings.",
-            "webinar:read": "Read webinars.",
-            "webinar:write": "Manage webinars.",
+            'user:read': 'Read users.',
+            'meeting:read': 'Read meetings.',
+            'meeting:write': 'Create and update meetings.',
+            'recording:read': 'Read recordings.',
+            'webinar:read': 'Read webinars.',
+            'webinar:write': 'Manage webinars.',
         },
         capabilities=frozenset(
             {
@@ -48,27 +48,27 @@ class ZoomToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://developers.zoom.us/docs/api/",
-        homepage_url="https://zoom.us/",
-        tags=("video", "meetings"),
+        documentation_url='https://developers.zoom.us/docs/api/',
+        homepage_url='https://zoom.us/',
+        tags=('video', 'meetings'),
     )
 
     def __init__(
         self,
         *,
         token: str,
-        base_url: str = "https://api.zoom.us",
+        base_url: str = 'https://api.zoom.us',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not token:
-            raise ValueError("token is required")
+            raise ValueError('token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -91,23 +91,23 @@ class ZoomToolSet:
         Returns the raw Zoom ``users`` payload. ``status`` filters to
         ``active`` / ``inactive`` / ``pending`` accounts when supplied.
         """
-        if status is not None and status not in {"active", "inactive", "pending"}:
-            raise ValueError("status must be active/inactive/pending")
-        params: dict[str, Any] = {"page_size": page_size}
+        if status is not None and status not in {'active', 'inactive', 'pending'}:
+            raise ValueError('status must be active/inactive/pending')
+        params: dict[str, Any] = {'page_size': page_size}
         if status is not None:
-            params["status"] = status
+            params['status'] = status
         if page_number is not None:
-            params["page_number"] = page_number
+            params['page_number'] = page_number
         if next_page_token is not None:
-            params["next_page_token"] = next_page_token
-        return self._client.get("/v2/users", params=params).json()
+            params['next_page_token'] = next_page_token
+        return self._client.get('/v2/users', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
-    def get_user(self, user_id: str = "me") -> dict[str, Any]:
+    def get_user(self, user_id: str = 'me') -> dict[str, Any]:
         """Return a Zoom user. ``"me"`` returns the current user."""
         if not user_id:
-            raise ValueError("user_id must be a non-empty string")
-        return self._client.get(f"/v2/users/{user_id}").json()
+            raise ValueError('user_id must be a non-empty string')
+        return self._client.get(f'/v2/users/{user_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_user(
@@ -120,22 +120,22 @@ class ZoomToolSet:
         user_type: int = 1,
     ) -> dict[str, Any]:
         """Create a Zoom user."""
-        if action not in {"create", "autoCreate", "custCreate", "ssoCreate"}:
-            raise ValueError("invalid action")
+        if action not in {'create', 'autoCreate', 'custCreate', 'ssoCreate'}:
+            raise ValueError('invalid action')
         if not email:
-            raise ValueError("email must be a non-empty string")
-        user_info: dict[str, Any] = {"email": email, "type": user_type}
+            raise ValueError('email must be a non-empty string')
+        user_info: dict[str, Any] = {'email': email, 'type': user_type}
         if first_name is not None:
-            user_info["first_name"] = first_name
+            user_info['first_name'] = first_name
         if last_name is not None:
-            user_info["last_name"] = last_name
+            user_info['last_name'] = last_name
         return self._client.post(
-            "/v2/users",
-            json={"action": action, "user_info": user_info},
+            '/v2/users',
+            json={'action': action, 'user_info': user_info},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
-    def delete_user(self, user_id: str, *, action: str = "disassociate") -> dict[str, Any]:
+    def delete_user(self, user_id: str, *, action: str = 'disassociate') -> dict[str, Any]:
         """Delete or disassociate a user.
 
         Destructive: ``action="delete"`` permanently removes the user;
@@ -143,20 +143,20 @@ class ZoomToolSet:
         from the account.
         """
         if not user_id:
-            raise ValueError("user_id must be a non-empty string")
-        if action not in {"disassociate", "delete"}:
-            raise ValueError("action must be disassociate or delete")
-        self._client.delete(f"/v2/users/{user_id}", params={"action": action})
-        return {"id": user_id, "deleted": True, "action": action}
+            raise ValueError('user_id must be a non-empty string')
+        if action not in {'disassociate', 'delete'}:
+            raise ValueError('action must be disassociate or delete')
+        self._client.delete(f'/v2/users/{user_id}', params={'action': action})
+        return {'id': user_id, 'deleted': True, 'action': action}
 
     # MARK: - Meetings
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_meetings(
         self,
-        user_id: str = "me",
+        user_id: str = 'me',
         *,
-        type: str = "scheduled",
+        type: str = 'scheduled',
         page_size: int = _DEFAULT_LIST_LIMIT,
         next_page_token: str | None = None,
         include_metadata: bool = True,
@@ -174,41 +174,41 @@ class ZoomToolSet:
         Zoom response.
         """
         if not user_id:
-            raise ValueError("user_id must be a non-empty string")
-        if type not in {"scheduled", "live", "upcoming", "upcoming_meetings", "previous_meetings"}:
-            raise ValueError("invalid type")
-        params: dict[str, Any] = {"type": type, "page_size": page_size}
+            raise ValueError('user_id must be a non-empty string')
+        if type not in {'scheduled', 'live', 'upcoming', 'upcoming_meetings', 'previous_meetings'}:
+            raise ValueError('invalid type')
+        params: dict[str, Any] = {'type': type, 'page_size': page_size}
         if next_page_token is not None:
-            params["next_page_token"] = next_page_token
+            params['next_page_token'] = next_page_token
         payload: dict[str, Any] = self._client.get(
-            f"/v2/users/{user_id}/meetings", params=params
+            f'/v2/users/{user_id}/meetings', params=params
         ).json()
         if not include_metadata:
             return payload
 
         summaries: list[dict[str, Any]] = []
-        meetings_raw: object = payload.get("meetings", []) or []
+        meetings_raw: object = payload.get('meetings', []) or []
         meetings_list: list[Any] = (
-            cast("list[Any]", meetings_raw) if isinstance(meetings_raw, list) else []
+            cast('list[Any]', meetings_raw) if isinstance(meetings_raw, list) else []
         )
         for index, meeting in enumerate(meetings_list, start=1):
             if not isinstance(meeting, dict):
                 continue
-            meeting_dict = cast("dict[str, Any]", meeting)
+            meeting_dict = cast('dict[str, Any]', meeting)
             summary: dict[str, Any] = {
-                "meeting_ref": f"meeting_{index}",
-                "topic": meeting_dict.get("topic", ""),
-                "start_time": meeting_dict.get("start_time", ""),
-                "duration": meeting_dict.get("duration", 0),
-                "join_url": meeting_dict.get("join_url", ""),
+                'meeting_ref': f'meeting_{index}',
+                'topic': meeting_dict.get('topic', ''),
+                'start_time': meeting_dict.get('start_time', ''),
+                'duration': meeting_dict.get('duration', 0),
+                'join_url': meeting_dict.get('join_url', ''),
             }
             if include_ids:
-                summary["meeting_id"] = meeting_dict.get("id", "")
+                summary['meeting_id'] = meeting_dict.get('id', '')
             summaries.append(summary)
         return {
-            "meetings": summaries,
-            "next_page_token": payload.get("next_page_token"),
-            "page_size": payload.get("page_size"),
+            'meetings': summaries,
+            'next_page_token': payload.get('next_page_token'),
+            'page_size': payload.get('page_size'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -219,13 +219,13 @@ class ZoomToolSet:
         from :meth:`list_meetings` (with ``include_ids=True``).
         """
         resolved = self._resolve_meeting_id(meeting_id)
-        return self._client.get(f"/v2/meetings/{resolved}").json()
+        return self._client.get(f'/v2/meetings/{resolved}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_meeting(
         self,
         *,
-        user_id: str = "me",
+        user_id: str = 'me',
         topic: str,
         type: int = 2,
         start_time: str | None = None,
@@ -242,21 +242,21 @@ class ZoomToolSet:
         fixed time).
         """
         if not topic:
-            raise ValueError("topic must be a non-empty string")
-        body: dict[str, Any] = {"topic": topic, "type": type}
+            raise ValueError('topic must be a non-empty string')
+        body: dict[str, Any] = {'topic': topic, 'type': type}
         if start_time is not None:
-            body["start_time"] = start_time
+            body['start_time'] = start_time
         if duration is not None:
-            body["duration"] = duration
+            body['duration'] = duration
         if timezone is not None:
-            body["timezone"] = timezone
+            body['timezone'] = timezone
         if agenda is not None:
-            body["agenda"] = agenda
+            body['agenda'] = agenda
         if password is not None:
-            body["password"] = password
+            body['password'] = password
         if settings is not None:
-            body["settings"] = settings
-        return self._client.post(f"/v2/users/{user_id}/meetings", json=body).json()
+            body['settings'] = settings
+        return self._client.post(f'/v2/users/{user_id}/meetings', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_meeting(self, meeting_id: Any, fields: dict[str, Any]) -> dict[str, Any]:
@@ -266,9 +266,9 @@ class ZoomToolSet:
         """
         resolved = self._resolve_meeting_id(meeting_id)
         if not fields:
-            raise ValueError("fields must be a non-empty dict")
-        response = self._client.patch(f"/v2/meetings/{resolved}", json=fields)
-        return {"id": resolved, "updated": True, "status": response.status}
+            raise ValueError('fields must be a non-empty dict')
+        response = self._client.patch(f'/v2/meetings/{resolved}', json=fields)
+        return {'id': resolved, 'updated': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_meeting(
@@ -285,13 +285,13 @@ class ZoomToolSet:
         """
         resolved = self._resolve_meeting_id(meeting_id)
         self._client.delete(
-            f"/v2/meetings/{resolved}",
+            f'/v2/meetings/{resolved}',
             params={
-                "schedule_for_reminder": str(schedule_for_reminder).lower(),
-                "cancel_meeting_reminder": str(cancel_meeting_reminder).lower(),
+                'schedule_for_reminder': str(schedule_for_reminder).lower(),
+                'cancel_meeting_reminder': str(cancel_meeting_reminder).lower(),
             },
         )
-        return {"id": resolved, "deleted": True}
+        return {'id': resolved, 'deleted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_meeting_participants(
@@ -303,11 +303,11 @@ class ZoomToolSet:
     ) -> dict[str, Any]:
         """List participants of a meeting (reporting endpoint)."""
         resolved = self._resolve_meeting_id(meeting_id)
-        params: dict[str, Any] = {"page_size": page_size}
+        params: dict[str, Any] = {'page_size': page_size}
         if next_page_token is not None:
-            params["next_page_token"] = next_page_token
+            params['next_page_token'] = next_page_token
         return self._client.get(
-            f"/v2/report/meetings/{resolved}/participants",
+            f'/v2/report/meetings/{resolved}/participants',
             params=params,
         ).json()
 
@@ -321,11 +321,11 @@ class ZoomToolSet:
     ) -> dict[str, Any]:
         """List registrants for a meeting."""
         resolved = self._resolve_meeting_id(meeting_id)
-        params: dict[str, Any] = {"page_size": page_size}
+        params: dict[str, Any] = {'page_size': page_size}
         if status is not None:
-            params["status"] = status
+            params['status'] = status
         return self._client.get(
-            f"/v2/meetings/{resolved}/registrants",
+            f'/v2/meetings/{resolved}/registrants',
             params=params,
         ).json()
 
@@ -334,26 +334,26 @@ class ZoomToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_webinars(
         self,
-        user_id: str = "me",
+        user_id: str = 'me',
         *,
         page_size: int = _DEFAULT_LIST_LIMIT,
     ) -> dict[str, Any]:
         """List webinars owned by a user."""
         return self._client.get(
-            f"/v2/users/{user_id}/webinars",
-            params={"page_size": page_size},
+            f'/v2/users/{user_id}/webinars',
+            params={'page_size': page_size},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_webinar(self, webinar_id: str | int) -> dict[str, Any]:
         """Return one webinar by ID."""
-        return self._client.get(f"/v2/webinars/{webinar_id}").json()
+        return self._client.get(f'/v2/webinars/{webinar_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_webinar(
         self,
         *,
-        user_id: str = "me",
+        user_id: str = 'me',
         topic: str,
         type: int = 5,
         start_time: str | None = None,
@@ -363,24 +363,24 @@ class ZoomToolSet:
     ) -> dict[str, Any]:
         """Create a webinar."""
         if not topic:
-            raise ValueError("topic must be a non-empty string")
-        body: dict[str, Any] = {"topic": topic, "type": type}
+            raise ValueError('topic must be a non-empty string')
+        body: dict[str, Any] = {'topic': topic, 'type': type}
         if start_time is not None:
-            body["start_time"] = start_time
+            body['start_time'] = start_time
         if duration is not None:
-            body["duration"] = duration
+            body['duration'] = duration
         if timezone is not None:
-            body["timezone"] = timezone
+            body['timezone'] = timezone
         if agenda is not None:
-            body["agenda"] = agenda
-        return self._client.post(f"/v2/users/{user_id}/webinars", json=body).json()
+            body['agenda'] = agenda
+        return self._client.post(f'/v2/users/{user_id}/webinars', json=body).json()
 
     # MARK: - Recordings
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_recordings(
         self,
-        user_id: str = "me",
+        user_id: str = 'me',
         *,
         from_date: str | None = None,
         to_date: str | None = None,
@@ -388,27 +388,27 @@ class ZoomToolSet:
         next_page_token: str | None = None,
     ) -> dict[str, Any]:
         """List cloud recordings for a user."""
-        params: dict[str, Any] = {"page_size": page_size}
+        params: dict[str, Any] = {'page_size': page_size}
         if from_date is not None:
-            params["from"] = from_date
+            params['from'] = from_date
         if to_date is not None:
-            params["to"] = to_date
+            params['to'] = to_date
         if next_page_token is not None:
-            params["next_page_token"] = next_page_token
-        return self._client.get(f"/v2/users/{user_id}/recordings", params=params).json()
+            params['next_page_token'] = next_page_token
+        return self._client.get(f'/v2/users/{user_id}/recordings', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_meeting_recordings(self, meeting_id: Any) -> dict[str, Any]:
         """Return recordings for a single meeting."""
         resolved = self._resolve_meeting_id(meeting_id)
-        return self._client.get(f"/v2/meetings/{resolved}/recordings").json()
+        return self._client.get(f'/v2/meetings/{resolved}/recordings').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_meeting_recordings(
         self,
         meeting_id: Any,
         *,
-        action: str = "trash",
+        action: str = 'trash',
     ) -> dict[str, Any]:
         """Trash or permanently delete recordings.
 
@@ -417,31 +417,31 @@ class ZoomToolSet:
         the user first.
         """
         resolved = self._resolve_meeting_id(meeting_id)
-        if action not in {"trash", "delete"}:
-            raise ValueError("action must be trash or delete")
+        if action not in {'trash', 'delete'}:
+            raise ValueError('action must be trash or delete')
         self._client.delete(
-            f"/v2/meetings/{resolved}/recordings",
-            params={"action": action},
+            f'/v2/meetings/{resolved}/recordings',
+            params={'action': action},
         )
-        return {"id": resolved, "deleted": True, "action": action}
+        return {'id': resolved, 'deleted': True, 'action': action}
 
     # MARK: - Internal
 
     @staticmethod
     def _resolve_meeting_id(meeting: Any) -> str | int:
         if isinstance(meeting, dict):
-            meeting_dict = cast("dict[str, Any]", meeting)
-            for key in ("meeting_id", "id"):
+            meeting_dict = cast('dict[str, Any]', meeting)
+            for key in ('meeting_id', 'id'):
                 value: object = meeting_dict.get(key)
-                if isinstance(value, str | int) and value != "":
+                if isinstance(value, str | int) and value != '':
                     return value
-            raise ValueError("meeting dict must contain meeting_id or id")
+            raise ValueError('meeting dict must contain meeting_id or id')
         if isinstance(meeting, str):
             if not meeting:
-                raise ValueError("meeting_id is required")
+                raise ValueError('meeting_id is required')
             return meeting
         if isinstance(meeting, int):
             if not meeting:
-                raise ValueError("meeting_id is required")
+                raise ValueError('meeting_id is required')
             return meeting
-        raise ValueError("meeting_id must be a string, int, or dict")
+        raise ValueError('meeting_id must be a string, int, or dict')

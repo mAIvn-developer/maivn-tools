@@ -46,14 +46,14 @@ connector = MicrosoftExcelToolSet(token=token_cache)
   The connector reads `item_id` / `file_id` / `workbook_id` / `id`
   out of the dict.
 - `list_worksheets`, `get_used_range`, `list_tables`, and `get_table_rows`
-  return the raw Graph response (e.g. `{"value": [...]}`); they are
-  small enough that no summary mode is needed. Use `list_worksheets`
+  return the raw Graph response (e.g. `{"value": [...]}`); their size depends on the workbook. Use `list_worksheets`
   or `get_used_range` as a first call when you do not know a
   workbook's extent.
-- `create_session` returns ``{"id": <session_id>, ...}``. Pass that
-  ``id`` to subsequent calls via the ``Workbook-Session-Id`` header
-  for efficient batched edits, then call `close_session` to commit
-  or discard.
+- `create_session` returns `{"id": <session_id>, ...}` and selects persistence
+  with `persist_changes`. `close_session` accepts that ID. The current range
+  and worksheet methods do not accept a session ID or attach its header;
+  using the session for those requests requires a custom HTTP integration.
+  Closing a session is not a separate commit/discard choice.
 
 ```python
 file = files.search_files("Q4 forecast.xlsx", include_ids=True)["items"][0]
@@ -67,8 +67,7 @@ excel.get_used_range(file, worksheet="Plan", values_only=True)
 `destructive` and require `PermissionFlag.DELETE`. `clear_range`'s
 `apply_to` argument controls whether contents, formats, or both are
 cleared (`"All"` by default). Filter the destructive surface off the
-toolset with `exclude_tags=["destructive"]` for read-only / safe-edit
-agents.
+toolset with `exclude_tags=["destructive"]` to exclude tagged destructive methods.
 
 ## MicrosoftWordToolSet
 
@@ -85,7 +84,7 @@ toolset covers the surface that *does* exist.
 | --- | --- | --- |
 | `get_metadata(item_id)` | READ | DriveItem metadata. |
 | `download_content(item_id)` | READ | Raw `.docx` bytes. |
-| `convert_to(item_id, format)` | READ | Download in another format (`pdf`, `html`, `jpg`, `glb`). |
+| `convert_to(item_id, format)` | READ | Download in another format (connector accepts `pdf`, `html`, `jpg`; Graph support depends on the source format). |
 | `replace_content(item_id, content_bytes)` | WRITE | Overwrite the document. |
 | `upload_new(path, content_bytes)` | WRITE | Upload a new `.docx`. |
 
@@ -101,7 +100,7 @@ toolset covers the surface that *does* exist.
   on `convert_to`). The body is raw bytes, not base64 -- if you need
   to ship it through a JSON-only tool channel, base64-encode it
   yourself.
-- `replace_content` is limited to ~4 MB; for larger files use
+- `replace_content` sends the entire body in one request; for larger files use
   [`MicrosoftFilesToolSet.create_upload_session`](microsoft-graph.md).
 
 ```python
@@ -147,7 +146,7 @@ connector = MicrosoftPowerPointToolSet(token=token_cache)
   ``{"item_id": ..., "status": ..., "body": <bytes>}`` (with `format`
   on `convert_to`). The body is raw bytes; `convert_to` accepts
   ``pdf`` or ``jpg`` only.
-- `replace_content` is limited to ~4 MB; for larger files use
+- `replace_content` sends the entire body in one request; for larger files use
   [`MicrosoftFilesToolSet.create_upload_session`](microsoft-graph.md).
 
 ```python

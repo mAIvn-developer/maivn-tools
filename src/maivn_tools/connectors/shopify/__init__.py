@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import ShopifyToolSet
 
-__all__ = ["ShopifyToolSet"]
+__all__ = ['ShopifyToolSet']

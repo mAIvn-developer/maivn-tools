@@ -8,7 +8,7 @@ constructor.
 
 > **Agent-ready pattern.** Across these connectors, list / search
 > tools return compact human-readable summaries by default with a
-> stable `_ref` field (`template_ref`, `list_ref`, `contact_ref`,
+> response-local `_ref` field (`template_ref`, `list_ref`, `contact_ref`,
 > `domain_ref`, `identity_ref`, `campaign_ref`, `message_ref`,
 > `segment_ref`, `broadcast_ref`, `subscriber_ref`, `flow_ref`,
 > `profile_ref`). Raw provider IDs are hidden unless you pass

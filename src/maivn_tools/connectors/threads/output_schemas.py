@@ -20,55 +20,55 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _THREAD_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "post_ref": {"type": "string"},
-        "author": {"type": "string"},
-        "text": {"type": "string"},
-        "posted_at": {"type": "string"},
-        "media_type": {"type": "string"},
-        "permalink": {"type": "string"},
-        "post_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'post_ref': {'type': 'string'},
+        'author': {'type': 'string'},
+        'text': {'type': 'string'},
+        'posted_at': {'type': 'string'},
+        'media_type': {'type': 'string'},
+        'permalink': {'type': 'string'},
+        'post_id': {'type': 'string'},
     },
-    "required": ["post_ref"],
+    'required': ['post_ref'],
 }
 
 _REPLY_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "reply_ref": {"type": "string"},
-        "author": {"type": "string"},
-        "text": {"type": "string"},
-        "posted_at": {"type": "string"},
-        "permalink": {"type": "string"},
-        "reply_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'reply_ref': {'type': 'string'},
+        'author': {'type': 'string'},
+        'text': {'type': 'string'},
+        'posted_at': {'type': 'string'},
+        'permalink': {'type': 'string'},
+        'reply_id': {'type': 'string'},
     },
-    "required": ["reply_ref"],
+    'required': ['reply_ref'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_THREADS_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "posts": {"type": "array", "items": _THREAD_SUMMARY},
-        "paging": {"type": ["object", "null"]},
+    'type': 'object',
+    'properties': {
+        'posts': {'type': 'array', 'items': _THREAD_SUMMARY},
+        'paging': {'type': ['object', 'null']},
     },
-    "required": ["posts"],
+    'required': ['posts'],
 }
 
 LIST_REPLIES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "replies": {"type": "array", "items": _REPLY_SUMMARY},
-        "paging": {"type": ["object", "null"]},
+    'type': 'object',
+    'properties': {
+        'replies': {'type': 'array', 'items': _REPLY_SUMMARY},
+        'paging': {'type': ['object', 'null']},
     },
-    "required": ["replies"],
+    'required': ['replies'],
 }
 
 
 __all__ = [
-    "LIST_REPLIES_OUTPUT",
-    "LIST_THREADS_OUTPUT",
+    'LIST_REPLIES_OUTPUT',
+    'LIST_THREADS_OUTPUT',
 ]

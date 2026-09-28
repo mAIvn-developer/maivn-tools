@@ -26,24 +26,24 @@ def _coerce_id(candidate: Any, *, field: str) -> str:
     """Accept a string ID, a resource dict, or a list of such."""
     if isinstance(candidate, str):
         if not candidate:
-            raise ValueError(f"{field} is required")
+            raise ValueError(f'{field} is required')
         return candidate
     if isinstance(candidate, dict):
-        candidate_dict = cast("dict[str, Any]", candidate)
-        for key in (field, "id"):
+        candidate_dict = cast('dict[str, Any]', candidate)
+        for key in (field, 'id'):
             value: Any = candidate_dict.get(key)
             if isinstance(value, str) and value:
                 return value
     if isinstance(candidate, list) and candidate:
-        candidate_list = cast("list[Any]", candidate)
+        candidate_list = cast('list[Any]', candidate)
         return _coerce_id(candidate_list[0], field=field)
-    raise ValueError(f"{field} must be a non-empty string (or a resource dict)")
+    raise ValueError(f'{field} must be a non-empty string (or a resource dict)')
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="cloudflare")
+@toolset(prefix='cloudflare')
 class CloudflareToolSet:
     """A connector for the Cloudflare v4 REST API.
 
@@ -53,35 +53,35 @@ class CloudflareToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="cloudflare",
-        display_name="Cloudflare",
-        version="0.1.0",
-        description="Zones, DNS records, cache, WAF, workers, and R2.",
+        name='cloudflare',
+        display_name='Cloudflare',
+        version='0.1.0',
+        description='Zones, DNS records, cache, WAF, workers, and R2.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developers.cloudflare.com/api/",
-        homepage_url="https://www.cloudflare.com/",
-        tags=("cloud", "cdn", "dns"),
+        documentation_url='https://developers.cloudflare.com/api/',
+        homepage_url='https://www.cloudflare.com/',
+        tags=('cloud', 'cdn', 'dns'),
     )
 
     def __init__(
         self,
         *,
         api_token: str,
-        base_url: str = "https://api.cloudflare.com/client/v4",
+        base_url: str = 'https://api.cloudflare.com/client/v4',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_token:
-            raise ValueError("api_token is required")
+            raise ValueError('api_token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(api_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -97,7 +97,7 @@ class CloudflareToolSet:
         wrapped in the standard Cloudflare envelope. Use to sanity-check
         credentials.
         """
-        return self._client.get("/user/tokens/verify").json()
+        return self._client.get('/user/tokens/verify').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_zones(
@@ -119,35 +119,35 @@ class CloudflareToolSet:
         call (``list_dns_records``, ``purge_cache``) needs the zone ID.
         """
         if per_page < 1 or per_page > 50:
-            raise ValueError("per_page must be between 1 and 50")
+            raise ValueError('per_page must be between 1 and 50')
         if include_metadata:
             per_page = min(per_page, _SUMMARY_MAX)
-        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        params: dict[str, Any] = {'page': page, 'per_page': per_page}
         if name is not None:
-            params["name"] = name
+            params['name'] = name
         if status is not None:
-            params["status"] = status
-        payload: dict[str, Any] = self._client.get("/zones", params=params).json()
+            params['status'] = status
+        payload: dict[str, Any] = self._client.get('/zones', params=params).json()
         if not include_metadata:
             return payload
-        items: list[Any] = payload.get("result") or []
+        items: list[Any] = payload.get('result') or []
         summaries: list[dict[str, Any]] = []
         for index, zone in enumerate(items, start=1):
             if not isinstance(zone, dict):
                 continue
-            zone_data = cast("dict[str, Any]", zone)
-            raw_plan: Any = zone_data.get("plan") or {}
-            plan = cast("dict[str, Any]", raw_plan) if isinstance(raw_plan, dict) else {}
+            zone_data = cast('dict[str, Any]', zone)
+            raw_plan: Any = zone_data.get('plan') or {}
+            plan = cast('dict[str, Any]', raw_plan) if isinstance(raw_plan, dict) else {}
             summary: dict[str, Any] = {
-                "zone_ref": f"zone_{index}",
-                "name": zone_data.get("name", ""),
-                "status": zone_data.get("status", ""),
-                "plan": plan.get("name", ""),
+                'zone_ref': f'zone_{index}',
+                'name': zone_data.get('name', ''),
+                'status': zone_data.get('status', ''),
+                'plan': plan.get('name', ''),
             }
             if include_ids:
-                summary["zone_id"] = zone_data.get("id", "")
+                summary['zone_id'] = zone_data.get('id', '')
             summaries.append(summary)
-        return {"zones": summaries, "result_info": payload.get("result_info", {})}
+        return {'zones': summaries, 'result_info': payload.get('result_info', {})}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_zone(self, zone_id: Any) -> dict[str, Any]:
@@ -156,8 +156,8 @@ class CloudflareToolSet:
         ``zone_id`` accepts a string ID or a zone dict from
         ``list_zones(include_ids=True)``.
         """
-        zid = _coerce_id(zone_id, field="zone_id")
-        return self._client.get(f"/zones/{zid}").json()
+        zid = _coerce_id(zone_id, field='zone_id')
+        return self._client.get(f'/zones/{zid}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_dns_records(
@@ -182,41 +182,41 @@ class CloudflareToolSet:
 
         ``zone_id`` accepts a string ID or a zone dict.
         """
-        zid = _coerce_id(zone_id, field="zone_id")
+        zid = _coerce_id(zone_id, field='zone_id')
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         if include_metadata:
             per_page = min(per_page, _SUMMARY_MAX)
-        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        params: dict[str, Any] = {'page': page, 'per_page': per_page}
         if type is not None:
-            params["type"] = type
+            params['type'] = type
         if name is not None:
-            params["name"] = name
+            params['name'] = name
         if content is not None:
-            params["content"] = content
+            params['content'] = content
         payload: dict[str, Any] = self._client.get(
-            f"/zones/{zid}/dns_records", params=params
+            f'/zones/{zid}/dns_records', params=params
         ).json()
         if not include_metadata:
             return payload
-        items: list[Any] = payload.get("result") or []
+        items: list[Any] = payload.get('result') or []
         summaries: list[dict[str, Any]] = []
         for index, record in enumerate(items, start=1):
             if not isinstance(record, dict):
                 continue
-            record_data = cast("dict[str, Any]", record)
+            record_data = cast('dict[str, Any]', record)
             summary: dict[str, Any] = {
-                "record_ref": f"record_{index}",
-                "type": record_data.get("type", ""),
-                "name": record_data.get("name", ""),
-                "content": record_data.get("content", ""),
-                "ttl": record_data.get("ttl", 0),
-                "proxied": record_data.get("proxied", False),
+                'record_ref': f'record_{index}',
+                'type': record_data.get('type', ''),
+                'name': record_data.get('name', ''),
+                'content': record_data.get('content', ''),
+                'ttl': record_data.get('ttl', 0),
+                'proxied': record_data.get('proxied', False),
             }
             if include_ids:
-                summary["record_id"] = record_data.get("id", "")
+                summary['record_id'] = record_data.get('id', '')
             summaries.append(summary)
-        return {"records": summaries, "result_info": payload.get("result_info", {})}
+        return {'records': summaries, 'result_info': payload.get('result_info', {})}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_dns_record(
@@ -238,19 +238,19 @@ class CloudflareToolSet:
 
         ``zone_id`` accepts a string ID or a zone dict.
         """
-        zid = _coerce_id(zone_id, field="zone_id")
+        zid = _coerce_id(zone_id, field='zone_id')
         if not type or not name or not content:
-            raise ValueError("type, name, and content are required")
+            raise ValueError('type, name, and content are required')
         body: dict[str, Any] = {
-            "type": type,
-            "name": name,
-            "content": content,
-            "ttl": ttl,
-            "proxied": proxied,
+            'type': type,
+            'name': name,
+            'content': content,
+            'ttl': ttl,
+            'proxied': proxied,
         }
         if priority is not None:
-            body["priority"] = priority
-        return self._client.post(f"/zones/{zid}/dns_records", json=body).json()
+            body['priority'] = priority
+        return self._client.post(f'/zones/{zid}/dns_records', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_dns_record(
@@ -269,22 +269,22 @@ class CloudflareToolSet:
         Both ``zone_id`` and ``record_id`` accept either a string ID or
         a resource dict from the corresponding list call.
         """
-        zid = _coerce_id(zone_id, field="zone_id")
-        rid = _coerce_id(record_id, field="record_id")
+        zid = _coerce_id(zone_id, field='zone_id')
+        rid = _coerce_id(record_id, field='record_id')
         body: dict[str, Any] = {}
         if type is not None:
-            body["type"] = type
+            body['type'] = type
         if name is not None:
-            body["name"] = name
+            body['name'] = name
         if content is not None:
-            body["content"] = content
+            body['content'] = content
         if ttl is not None:
-            body["ttl"] = ttl
+            body['ttl'] = ttl
         if proxied is not None:
-            body["proxied"] = proxied
+            body['proxied'] = proxied
         if not body:
-            raise ValueError("at least one update field is required")
-        return self._client.patch(f"/zones/{zid}/dns_records/{rid}", json=body).json()
+            raise ValueError('at least one update field is required')
+        return self._client.patch(f'/zones/{zid}/dns_records/{rid}', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_dns_record(
@@ -298,9 +298,9 @@ class CloudflareToolSet:
         Destructive — confirm with the user first. Both IDs accept a
         string or a resource dict from the corresponding list call.
         """
-        zid = _coerce_id(zone_id, field="zone_id")
-        rid = _coerce_id(record_id, field="record_id")
-        return self._client.delete(f"/zones/{zid}/dns_records/{rid}").json()
+        zid = _coerce_id(zone_id, field='zone_id')
+        rid = _coerce_id(record_id, field='record_id')
+        return self._client.delete(f'/zones/{zid}/dns_records/{rid}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
     def purge_cache(
@@ -318,19 +318,19 @@ class CloudflareToolSet:
         cache repopulates. Pass ``purge_everything=True`` only when
         scoped purges (``files``/``tags``/``hosts``) are not enough.
         """
-        zid = _coerce_id(zone_id, field="zone_id")
+        zid = _coerce_id(zone_id, field='zone_id')
         if not purge_everything and not files and not tags and not hosts:
-            raise ValueError("Provide purge_everything=True, files, tags, or hosts")
+            raise ValueError('Provide purge_everything=True, files, tags, or hosts')
         body: dict[str, Any] = {}
         if purge_everything:
-            body["purge_everything"] = True
+            body['purge_everything'] = True
         if files is not None:
-            body["files"] = files
+            body['files'] = files
         if tags is not None:
-            body["tags"] = tags
+            body['tags'] = tags
         if hosts is not None:
-            body["hosts"] = hosts
-        return self._client.post(f"/zones/{zid}/purge_cache", json=body).json()
+            body['hosts'] = hosts
+        return self._client.post(f'/zones/{zid}/purge_cache', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_workers(
@@ -347,27 +347,27 @@ class CloudflareToolSet:
         ``include_ids=True`` for the raw script ID.
         """
         if not account_id:
-            raise ValueError("account_id is required")
-        payload: dict[str, Any] = self._client.get(f"/accounts/{account_id}/workers/scripts").json()
+            raise ValueError('account_id is required')
+        payload: dict[str, Any] = self._client.get(f'/accounts/{account_id}/workers/scripts').json()
         if not include_metadata:
             return payload
-        items: list[Any] = payload.get("result") or []
+        items: list[Any] = payload.get('result') or []
         summaries: list[dict[str, Any]] = []
         for index, worker in enumerate(items[:_SUMMARY_MAX], start=1):
             if not isinstance(worker, dict):
                 continue
-            worker_data = cast("dict[str, Any]", worker)
+            worker_data = cast('dict[str, Any]', worker)
             summary: dict[str, Any] = {
-                "worker_ref": f"worker_{index}",
-                "name": worker_data.get("id", ""),
-                "created_on": worker_data.get("created_on", ""),
-                "modified_on": worker_data.get("modified_on", ""),
-                "etag": worker_data.get("etag", ""),
+                'worker_ref': f'worker_{index}',
+                'name': worker_data.get('id', ''),
+                'created_on': worker_data.get('created_on', ''),
+                'modified_on': worker_data.get('modified_on', ''),
+                'etag': worker_data.get('etag', ''),
             }
             if include_ids:
-                summary["script_id"] = worker_data.get("id", "")
+                summary['script_id'] = worker_data.get('id', '')
             summaries.append(summary)
-        return {"workers": summaries}
+        return {'workers': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_r2_buckets(
@@ -383,16 +383,16 @@ class CloudflareToolSet:
         the primary identifier in R2; no separate ID is needed.
         """
         if not account_id:
-            raise ValueError("account_id is required")
-        payload: dict[str, Any] = self._client.get(f"/accounts/{account_id}/r2/buckets").json()
+            raise ValueError('account_id is required')
+        payload: dict[str, Any] = self._client.get(f'/accounts/{account_id}/r2/buckets').json()
         if not include_metadata:
             return payload
-        result: Any = payload.get("result") or {}
+        result: Any = payload.get('result') or {}
         raw_items: Any
         if isinstance(result, dict):
-            raw_items = cast("dict[str, Any]", result).get("buckets")
+            raw_items = cast('dict[str, Any]', result).get('buckets')
         elif isinstance(result, list):
-            raw_items = cast("list[Any]", result)
+            raw_items = cast('list[Any]', result)
         else:
             raw_items = []
         items: list[Any] = raw_items or []
@@ -400,16 +400,16 @@ class CloudflareToolSet:
         for index, bucket in enumerate(items[:_SUMMARY_MAX], start=1):
             if not isinstance(bucket, dict):
                 continue
-            bucket_data = cast("dict[str, Any]", bucket)
+            bucket_data = cast('dict[str, Any]', bucket)
             summaries.append(
                 {
-                    "bucket_ref": f"bucket_{index}",
-                    "name": bucket_data.get("name", ""),
-                    "creation_date": bucket_data.get("creation_date", ""),
-                    "location": bucket_data.get("location", ""),
+                    'bucket_ref': f'bucket_{index}',
+                    'name': bucket_data.get('name', ''),
+                    'creation_date': bucket_data.get('creation_date', ''),
+                    'location': bucket_data.get('location', ''),
                 }
             )
-        return {"buckets": summaries}
+        return {'buckets': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_r2_bucket(
@@ -426,8 +426,8 @@ class CloudflareToolSet:
         ``"WEUR"``) is advisory only.
         """
         if not account_id or not name:
-            raise ValueError("account_id and name are required")
-        body: dict[str, Any] = {"name": name}
+            raise ValueError('account_id and name are required')
+        body: dict[str, Any] = {'name': name}
         if location_hint is not None:
-            body["locationHint"] = location_hint
-        return self._client.post(f"/accounts/{account_id}/r2/buckets", json=body).json()
+            body['locationHint'] = location_hint
+        return self._client.post(f'/accounts/{account_id}/r2/buckets', json=body).json()

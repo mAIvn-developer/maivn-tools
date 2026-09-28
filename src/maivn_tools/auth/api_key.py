@@ -37,7 +37,7 @@ class ApiKeyAuth(AuthStrategy):
         prefix: str | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key must be a non-empty string")
+            raise ValueError('api_key must be a non-empty string')
         if (header is None) == (query_param is None):
             raise ValueError("Specify exactly one of 'header' or 'query_param'")
         self._api_key = api_key
@@ -46,22 +46,22 @@ class ApiKeyAuth(AuthStrategy):
         self._prefix = prefix
 
     def apply(self, request: dict[str, Any]) -> dict[str, Any]:
-        value = f"{self._prefix} {self._api_key}" if self._prefix else self._api_key
+        value = f'{self._prefix} {self._api_key}' if self._prefix else self._api_key
         if self._header is not None:
-            headers = dict(request.get("headers") or {})
+            headers = dict(request.get('headers') or {})
             headers[self._header] = value
-            request["headers"] = headers
+            request['headers'] = headers
         else:
-            params = dict(request.get("params") or {})
+            params = dict(request.get('params') or {})
             assert self._query_param is not None
             params[self._query_param] = value
-            request["params"] = params
+            request['params'] = params
         return request
 
     def describe(self) -> dict[str, Any]:
         return {
-            "mode": self.mode.value,
-            "location": "header" if self._header else "query",
-            "name": self._header or self._query_param,
-            "has_prefix": self._prefix is not None,
+            'mode': self.mode.value,
+            'location': 'header' if self._header else 'query',
+            'name': self._header or self._query_param,
+            'has_prefix': self._prefix is not None,
         }

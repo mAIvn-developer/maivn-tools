@@ -26,20 +26,20 @@ _DEFAULT_LIST_LIMIT = 25
 # MARK: ToolSet
 
 
-@toolset(prefix="bedrock")
+@toolset(prefix='bedrock')
 class BedrockToolSet:
     """A connector for AWS Bedrock + Bedrock Runtime."""
 
     metadata = ProviderMetadata(
-        name="bedrock",
-        display_name="AWS Bedrock",
-        version="0.1.0",
-        description="Models, model invocation, knowledge bases, agents, guardrails.",
+        name='bedrock',
+        display_name='AWS Bedrock',
+        version='0.1.0',
+        description='Models, model invocation, knowledge bases, agents, guardrails.',
         auth_modes=(AuthMode.CUSTOM,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://docs.aws.amazon.com/bedrock/",
-        homepage_url="https://aws.amazon.com/bedrock/",
-        tags=("ai", "llm", "aws"),
+        documentation_url='https://docs.aws.amazon.com/bedrock/',
+        homepage_url='https://aws.amazon.com/bedrock/',
+        tags=('ai', 'llm', 'aws'),
     )
 
     def __init__(
@@ -55,35 +55,35 @@ class BedrockToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not region:
-            raise ValueError("region is required")
+            raise ValueError('region is required')
         self.connection = connection
-        rt = runtime_url or f"https://bedrock-runtime.{region}.amazonaws.com"
-        ctl = control_url or f"https://bedrock.{region}.amazonaws.com"
-        agent = agent_url or f"https://bedrock-agent.{region}.amazonaws.com"
-        agent_rt = agent_runtime_url or f"https://bedrock-agent-runtime.{region}.amazonaws.com"
+        rt = runtime_url or f'https://bedrock-runtime.{region}.amazonaws.com'
+        ctl = control_url or f'https://bedrock.{region}.amazonaws.com'
+        agent = agent_url or f'https://bedrock-agent.{region}.amazonaws.com'
+        agent_rt = agent_runtime_url or f'https://bedrock-agent-runtime.{region}.amazonaws.com'
         self._runtime = HttpClient(
-            base_url=rt.rstrip("/"),
+            base_url=rt.rstrip('/'),
             auth=auth or NoAuth(),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
         self._control = HttpClient(
-            base_url=ctl.rstrip("/"),
+            base_url=ctl.rstrip('/'),
             auth=auth or NoAuth(),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
         self._agent = HttpClient(
-            base_url=agent.rstrip("/"),
+            base_url=agent.rstrip('/'),
             auth=auth or NoAuth(),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
         self._agent_runtime = HttpClient(
-            base_url=agent_rt.rstrip("/"),
+            base_url=agent_rt.rstrip('/'),
             auth=auth or NoAuth(),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -121,38 +121,38 @@ class BedrockToolSet:
         ``include_ids=True`` for the raw ``modelArn``. Default limit: 25.
         """
         if max_results < 1:
-            raise ValueError("max_results must be positive")
+            raise ValueError('max_results must be positive')
         params: dict[str, Any] = {}
         if by_provider is not None:
-            params["byProvider"] = by_provider
+            params['byProvider'] = by_provider
         if by_output_modality is not None:
-            params["byOutputModality"] = by_output_modality
+            params['byOutputModality'] = by_output_modality
         payload: dict[str, Any] = cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._control.get(
-                "/foundation-models",
+                '/foundation-models',
                 params=params or None,
             ).json(),
         )
-        raw_models: object = payload.get("modelSummaries", [])
-        models: list[Any] = cast("list[Any]", raw_models) if isinstance(raw_models, list) else []
+        raw_models: object = payload.get('modelSummaries', [])
+        models: list[Any] = cast('list[Any]', raw_models) if isinstance(raw_models, list) else []
         summaries: list[dict[str, Any]] = []
         for index, model in enumerate(models[:max_results], start=1):
             if not isinstance(model, dict):
                 continue
-            model_dict = cast("dict[str, Any]", model)
+            model_dict = cast('dict[str, Any]', model)
             summary: dict[str, Any] = {
-                "model_ref": f"model_{index}",
-                "model_name": model_dict.get("modelId", ""),
-                "provider": model_dict.get("providerName", ""),
-                "input_modalities": model_dict.get("inputModalities", []),
-                "output_modalities": model_dict.get("outputModalities", []),
-                "model_lifecycle": model_dict.get("modelLifecycle", {}),
+                'model_ref': f'model_{index}',
+                'model_name': model_dict.get('modelId', ''),
+                'provider': model_dict.get('providerName', ''),
+                'input_modalities': model_dict.get('inputModalities', []),
+                'output_modalities': model_dict.get('outputModalities', []),
+                'model_lifecycle': model_dict.get('modelLifecycle', {}),
             }
             if include_ids:
-                summary["model_arn"] = model_dict.get("modelArn", "")
+                summary['model_arn'] = model_dict.get('modelArn', '')
             summaries.append(summary)
-        return {"models": summaries, "total": len(models)}
+        return {'models': summaries, 'total': len(models)}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def converse(
@@ -172,18 +172,18 @@ class BedrockToolSet:
         ``"anthropic.claude-3-5-sonnet-20240620-v1:0"``).
         """
         if not model_id or not messages:
-            raise ValueError("model_id and messages must be non-empty")
-        body: dict[str, Any] = {"messages": messages}
+            raise ValueError('model_id and messages must be non-empty')
+        body: dict[str, Any] = {'messages': messages}
         if system is not None:
-            body["system"] = system
+            body['system'] = system
         if inference_config is not None:
-            body["inferenceConfig"] = inference_config
+            body['inferenceConfig'] = inference_config
         if tool_config is not None:
-            body["toolConfig"] = tool_config
+            body['toolConfig'] = tool_config
         return cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._runtime.post(
-                f"/model/{model_id}/converse",
+                f'/model/{model_id}/converse',
                 json=body,
             ).json(),
         )
@@ -194,7 +194,7 @@ class BedrockToolSet:
         *,
         model_id: str,
         body: dict[str, Any],
-        accept: str = "application/json",
+        accept: str = 'application/json',
     ) -> dict[str, Any]:
         """Invoke a model with the provider-native payload.
 
@@ -203,17 +203,17 @@ class BedrockToolSet:
         provider needs its native format.
         """
         if not model_id:
-            raise ValueError("model_id must be a non-empty string")
+            raise ValueError('model_id must be a non-empty string')
         response = self._runtime.post(
-            f"/model/{model_id}/invoke",
+            f'/model/{model_id}/invoke',
             json=body,
-            headers={"Accept": accept},
+            headers={'Accept': accept},
         )
         try:
             payload: Any = response.json()
         except ValueError:
             payload = response.text()
-        return {"status": response.status, "body": payload}
+        return {'status': response.status, 'body': payload}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_knowledge_bases(
@@ -231,35 +231,35 @@ class BedrockToolSet:
         the full raw ARN. Default limit: 10.
         """
         if max_results < 1:
-            raise ValueError("max_results must be positive")
+            raise ValueError('max_results must be positive')
         payload: dict[str, Any] = cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._agent.post(
-                "/knowledgebases/",
-                json={"maxResults": max_results},
+                '/knowledgebases/',
+                json={'maxResults': max_results},
             ).json(),
         )
-        raw_kbs: object = payload.get("knowledgeBaseSummaries", [])
-        kbs: list[Any] = cast("list[Any]", raw_kbs) if isinstance(raw_kbs, list) else []
+        raw_kbs: object = payload.get('knowledgeBaseSummaries', [])
+        kbs: list[Any] = cast('list[Any]', raw_kbs) if isinstance(raw_kbs, list) else []
         summaries: list[dict[str, Any]] = []
         for index, kb in enumerate(kbs, start=1):
             if not isinstance(kb, dict):
                 continue
-            kb_dict = cast("dict[str, Any]", kb)
+            kb_dict = cast('dict[str, Any]', kb)
             summary: dict[str, Any] = {
-                "kb_ref": f"kb_{index}",
-                "knowledge_base_id": kb_dict.get("knowledgeBaseId", ""),
-                "name": kb_dict.get("name", ""),
-                "description": kb_dict.get("description", ""),
-                "status": kb_dict.get("status", ""),
-                "updated_at": kb_dict.get("updatedAt"),
+                'kb_ref': f'kb_{index}',
+                'knowledge_base_id': kb_dict.get('knowledgeBaseId', ''),
+                'name': kb_dict.get('name', ''),
+                'description': kb_dict.get('description', ''),
+                'status': kb_dict.get('status', ''),
+                'updated_at': kb_dict.get('updatedAt'),
             }
             if include_ids:
-                summary["knowledge_base_arn"] = kb_dict.get("knowledgeBaseArn", "")
+                summary['knowledge_base_arn'] = kb_dict.get('knowledgeBaseArn', '')
             summaries.append(summary)
         return {
-            "knowledge_bases": summaries,
-            "nextToken": payload.get("nextToken"),
+            'knowledge_bases': summaries,
+            'nextToken': payload.get('nextToken'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -277,15 +277,15 @@ class BedrockToolSet:
         ``{"text": "your question"}``.
         """
         if not knowledge_base_id:
-            raise ValueError("knowledge_base_id must be a non-empty string")
+            raise ValueError('knowledge_base_id must be a non-empty string')
         return cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._agent_runtime.post(
-                f"/knowledgebases/{knowledge_base_id}/retrieve",
+                f'/knowledgebases/{knowledge_base_id}/retrieve',
                 json={
-                    "retrievalQuery": query,
-                    "retrievalConfiguration": {
-                        "vectorSearchConfiguration": {"numberOfResults": number_of_results}
+                    'retrievalQuery': query,
+                    'retrievalConfiguration': {
+                        'vectorSearchConfiguration': {'numberOfResults': number_of_results}
                     },
                 },
             ).json(),

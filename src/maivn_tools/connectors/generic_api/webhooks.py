@@ -36,7 +36,7 @@ class NormalizedWebhookEvent:
     event_type: str | None
     payload: Any
     headers: dict[str, str] = field(default_factory=dict)
-    raw: bytes = b""
+    raw: bytes = b''
 
 
 # MARK: Listener
@@ -63,7 +63,7 @@ class WebhookListener:
         normalize: Callable[[Any], Any] | None = None,
     ) -> None:
         if not provider:
-            raise ValueError("WebhookListener.provider is required")
+            raise ValueError('WebhookListener.provider is required')
         self._provider = provider
         self._verifier = verifier
         self._event_type_header = event_type_header
@@ -81,9 +81,9 @@ class WebhookListener:
         """
         self._verifier.verify(headers, body)
         try:
-            payload: Any = _json.loads(body.decode("utf-8")) if body else None
+            payload: Any = _json.loads(body.decode('utf-8')) if body else None
         except (UnicodeDecodeError, _json.JSONDecodeError):
-            payload = body.decode("latin-1", errors="replace")
+            payload = body.decode('latin-1', errors='replace')
         if self._normalize is not None:
             payload = self._normalize(payload)
         event_type: str | None = None
@@ -120,4 +120,4 @@ def _lookup_header(headers: Mapping[str, str], name: str) -> str | None:
     return None
 
 
-__all__ = ["NormalizedWebhookEvent", "WebhookListener"]
+__all__ = ['NormalizedWebhookEvent', 'WebhookListener']

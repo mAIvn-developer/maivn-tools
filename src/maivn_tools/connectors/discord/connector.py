@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from typing import Any, cast
+from urllib.parse import quote
 
 from maivn import toolify, toolset
 
@@ -23,7 +24,7 @@ _DEFAULT_MESSAGES_LIMIT = 20
 # MARK: - ToolSet
 
 
-@toolset(prefix="discord")
+@toolset(prefix='discord')
 class DiscordToolSet:
     """A connector for the Discord REST API.
 
@@ -35,15 +36,15 @@ class DiscordToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="discord",
-        display_name="Discord",
-        version="0.1.0",
-        description="Guilds, channels, messages, members, roles, and DMs.",
+        name='discord',
+        display_name='Discord',
+        version='0.1.0',
+        description='Guilds, channels, messages, members, roles, and DMs.',
         auth_modes=(AuthMode.API_KEY, AuthMode.OAUTH2_AUTH_CODE),
         scopes={
-            "identify": "Read the bot or user identity.",
-            "guilds": "List the user's guilds.",
-            "messages.read": "Read DM history.",
+            'identify': 'Read the bot or user identity.',
+            'guilds': "List the user's guilds.",
+            'messages.read': 'Read DM history.',
         },
         capabilities=frozenset(
             {
@@ -52,34 +53,34 @@ class DiscordToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://discord.com/developers/docs/intro",
-        homepage_url="https://discord.com/",
-        tags=("social-media", "chat"),
+        documentation_url='https://discord.com/developers/docs/intro',
+        homepage_url='https://discord.com/',
+        tags=('social-media', 'chat'),
     )
 
     def __init__(
         self,
         *,
         token: str,
-        token_type: str = "Bot",
-        api_version: str = "10",
-        base_url: str = "https://discord.com/api",
+        token_type: str = 'Bot',
+        api_version: str = '10',
+        base_url: str = 'https://discord.com/api',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not token:
-            raise ValueError("token is required")
-        if token_type not in {"Bot", "Bearer"}:
-            raise ValueError("token_type must be Bot or Bearer")
+            raise ValueError('token is required')
+        if token_type not in {'Bot', 'Bearer'}:
+            raise ValueError('token_type must be Bot or Bearer')
         self.connection = connection
         self._version = api_version
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(token, header="Authorization", prefix=token_type),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(token, header='Authorization', prefix=token_type),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
         # name -> id cache populated by ``list_guild_channels`` so write tools
@@ -91,7 +92,7 @@ class DiscordToolSet:
         return self._client
 
     def _v(self, suffix: str) -> str:
-        return f"/v{self._version}{suffix}"
+        return f'/v{self._version}{suffix}'
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_current_user(self) -> dict[str, Any]:
@@ -100,7 +101,7 @@ class DiscordToolSet:
         Best first call at startup to verify the bot token works and to
         discover the bot's Discord user ID.
         """
-        return self._client.get(self._v("/users/@me")).json()
+        return self._client.get(self._v('/users/@me')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_current_user_guilds(
@@ -122,12 +123,12 @@ class DiscordToolSet:
         :meth:`list_guild_channels` or :meth:`list_guild_members`. Set
         ``include_metadata=False`` for the raw Discord response.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if before is not None:
-            params["before"] = before
+            params['before'] = before
         if after is not None:
-            params["after"] = after
-        payload: Any = self._client.get(self._v("/users/@me/guilds"), params=params).json()
+            params['after'] = after
+        payload: Any = self._client.get(self._v('/users/@me/guilds'), params=params).json()
         if not include_metadata:
             return payload
 
@@ -138,15 +139,15 @@ class DiscordToolSet:
                 continue
             guild = cast(dict[str, Any], guild)
             summary: dict[str, Any] = {
-                "guild_ref": f"guild_{index}",
-                "name": guild.get("name", ""),
-                "owner": bool(guild.get("owner")),
-                "permissions": guild.get("permissions"),
+                'guild_ref': f'guild_{index}',
+                'name': guild.get('name', ''),
+                'owner': bool(guild.get('owner')),
+                'permissions': guild.get('permissions'),
             }
             if include_ids:
-                summary["guild_id"] = guild.get("id", "")
+                summary['guild_id'] = guild.get('id', '')
             guilds.append(summary)
-        return {"guilds": guilds}
+        return {'guilds': guilds}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_guild(self, guild_id: str) -> dict[str, Any]:
@@ -156,8 +157,8 @@ class DiscordToolSet:
         :meth:`list_current_user_guilds` with ``include_ids=True``.
         """
         if not guild_id:
-            raise ValueError("guild_id is required")
-        return self._client.get(self._v(f"/guilds/{guild_id}")).json()
+            raise ValueError('guild_id is required')
+        return self._client.get(self._v(f'/guilds/{guild_id}')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_guild_channels(
@@ -175,8 +176,8 @@ class DiscordToolSet:
         tools. ``include_metadata=False`` returns the raw response.
         """
         if not guild_id:
-            raise ValueError("guild_id is required")
-        payload: Any = self._client.get(self._v(f"/guilds/{guild_id}/channels")).json()
+            raise ValueError('guild_id is required')
+        payload: Any = self._client.get(self._v(f'/guilds/{guild_id}/channels')).json()
         if not include_metadata:
             return payload
 
@@ -186,21 +187,21 @@ class DiscordToolSet:
             if not isinstance(channel, dict):
                 continue
             channel = cast(dict[str, Any], channel)
-            name = channel.get("name", "")
-            channel_id = channel.get("id", "")
+            name = channel.get('name', '')
+            channel_id = channel.get('id', '')
             if name and channel_id:
                 self._channel_name_cache[name] = channel_id
             summary: dict[str, Any] = {
-                "channel_ref": f"channel_{index}",
-                "name": name,
-                "type": channel.get("type"),
-                "topic": channel.get("topic"),
-                "position": channel.get("position"),
+                'channel_ref': f'channel_{index}',
+                'name': name,
+                'type': channel.get('type'),
+                'topic': channel.get('topic'),
+                'position': channel.get('position'),
             }
             if include_ids:
-                summary["channel_id"] = channel_id
+                summary['channel_id'] = channel_id
             channels.append(summary)
-        return {"channels": channels}
+        return {'channels': channels}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_guild_members(
@@ -216,18 +217,18 @@ class DiscordToolSet:
         and ``roles``).
         """
         if not guild_id:
-            raise ValueError("guild_id is required")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('guild_id is required')
+        params: dict[str, Any] = {'limit': limit}
         if after is not None:
-            params["after"] = after
-        return self._client.get(self._v(f"/guilds/{guild_id}/members"), params=params).json()
+            params['after'] = after
+        return self._client.get(self._v(f'/guilds/{guild_id}/members'), params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_channel(self, channel_id: str) -> dict[str, Any]:
         """Return a channel's metadata."""
         if not channel_id:
-            raise ValueError("channel_id is required")
-        return self._client.get(self._v(f"/channels/{channel_id}")).json()
+            raise ValueError('channel_id is required')
+        return self._client.get(self._v(f'/channels/{channel_id}')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_messages(
@@ -253,15 +254,15 @@ class DiscordToolSet:
         ``include_metadata=False`` returns the raw Discord response.
         """
         resolved = self._resolve_channel(channel_id)
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if before is not None:
-            params["before"] = before
+            params['before'] = before
         if after is not None:
-            params["after"] = after
+            params['after'] = after
         if around is not None:
-            params["around"] = around
+            params['around'] = around
         payload: Any = self._client.get(
-            self._v(f"/channels/{resolved}/messages"), params=params
+            self._v(f'/channels/{resolved}/messages'), params=params
         ).json()
         if not include_metadata:
             return payload
@@ -272,22 +273,22 @@ class DiscordToolSet:
             if not isinstance(message, dict):
                 continue
             message = cast(dict[str, Any], message)
-            author_raw: Any = message.get("author") or {}
+            author_raw: Any = message.get('author') or {}
             author: dict[str, Any] = (
                 cast(dict[str, Any], author_raw) if isinstance(author_raw, dict) else {}
             )
             summary: dict[str, Any] = {
-                "message_ref": f"message_{index}",
-                "author": author.get("username", ""),
-                "content": message.get("content", ""),
-                "timestamp": message.get("timestamp", ""),
-                "has_attachments": bool(message.get("attachments")),
+                'message_ref': f'message_{index}',
+                'author': author.get('username', ''),
+                'content': message.get('content', ''),
+                'timestamp': message.get('timestamp', ''),
+                'has_attachments': bool(message.get('attachments')),
             }
             if include_ids:
-                summary["message_id"] = message.get("id", "")
-                summary["channel_id"] = resolved
+                summary['message_id'] = message.get('id', '')
+                summary['channel_id'] = resolved
             summaries.append(summary)
-        return {"messages": summaries}
+        return {'messages': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_message(self, *, channel_id: Any, message_id: Any) -> dict[str, Any]:
@@ -299,7 +300,7 @@ class DiscordToolSet:
         resolved_channel = self._resolve_channel(channel_id)
         resolved_message = self._resolve_message_id(message_id)
         return self._client.get(
-            self._v(f"/channels/{resolved_channel}/messages/{resolved_message}")
+            self._v(f'/channels/{resolved_channel}/messages/{resolved_message}')
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -322,17 +323,17 @@ class DiscordToolSet:
         """
         resolved = self._resolve_channel(channel_id)
         if not content and not embeds:
-            raise ValueError("content or embeds is required")
-        body: dict[str, Any] = {"tts": tts}
+            raise ValueError('content or embeds is required')
+        body: dict[str, Any] = {'tts': tts}
         if content is not None:
-            body["content"] = content
+            body['content'] = content
         if embeds is not None:
-            body["embeds"] = embeds
+            body['embeds'] = embeds
         if components is not None:
-            body["components"] = components
+            body['components'] = components
         if message_reference is not None:
-            body["message_reference"] = message_reference
-        return self._client.post(self._v(f"/channels/{resolved}/messages"), json=body).json()
+            body['message_reference'] = message_reference
+        return self._client.post(self._v(f'/channels/{resolved}/messages'), json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def edit_message(
@@ -352,13 +353,13 @@ class DiscordToolSet:
         resolved_message = self._resolve_message_id(message_id)
         body: dict[str, Any] = {}
         if content is not None:
-            body["content"] = content
+            body['content'] = content
         if embeds is not None:
-            body["embeds"] = embeds
+            body['embeds'] = embeds
         if not body:
-            raise ValueError("content or embeds is required")
+            raise ValueError('content or embeds is required')
         return self._client.patch(
-            self._v(f"/channels/{resolved_channel}/messages/{resolved_message}"), json=body
+            self._v(f'/channels/{resolved_channel}/messages/{resolved_message}'), json=body
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -371,9 +372,9 @@ class DiscordToolSet:
         resolved_channel = self._resolve_channel(channel_id)
         resolved_message = self._resolve_message_id(message_id)
         response = self._client.delete(
-            self._v(f"/channels/{resolved_channel}/messages/{resolved_message}")
+            self._v(f'/channels/{resolved_channel}/messages/{resolved_message}')
         )
-        return {"message_id": resolved_message, "deleted": True, "status": response.status}
+        return {'message_id': resolved_message, 'deleted': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_reaction(
@@ -390,16 +391,14 @@ class DiscordToolSet:
         resolved_channel = self._resolve_channel(channel_id)
         resolved_message = self._resolve_message_id(message_id)
         if not emoji:
-            raise ValueError("emoji is required")
-        from urllib.parse import quote
-
+            raise ValueError('emoji is required')
         response = self._client.put(
             self._v(
-                f"/channels/{resolved_channel}/messages/{resolved_message}/reactions/"
-                f"{quote(emoji, safe='')}/@me"
+                f'/channels/{resolved_channel}/messages/{resolved_message}/reactions/'
+                f'{quote(emoji, safe="")}/@me'
             )
         )
-        return {"status": response.status, "reacted": True}
+        return {'status': response.status, 'reacted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_dm(self, recipient_id: str) -> dict[str, Any]:
@@ -409,10 +408,10 @@ class DiscordToolSet:
         :meth:`create_message` to send the DM.
         """
         if not recipient_id:
-            raise ValueError("recipient_id is required")
+            raise ValueError('recipient_id is required')
         return self._client.post(
-            self._v("/users/@me/channels"),
-            json={"recipient_id": recipient_id},
+            self._v('/users/@me/channels'),
+            json={'recipient_id': recipient_id},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -425,11 +424,11 @@ class DiscordToolSet:
     ) -> dict[str, Any]:
         """Grant a role to a guild member."""
         if not guild_id or not user_id or not role_id:
-            raise ValueError("guild_id, user_id, and role_id are required")
+            raise ValueError('guild_id, user_id, and role_id are required')
         response = self._client.put(
-            self._v(f"/guilds/{guild_id}/members/{user_id}/roles/{role_id}")
+            self._v(f'/guilds/{guild_id}/members/{user_id}/roles/{role_id}')
         )
-        return {"status": response.status, "granted": True}
+        return {'status': response.status, 'granted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def remove_guild_member(
@@ -444,9 +443,9 @@ class DiscordToolSet:
         user before calling.
         """
         if not guild_id or not user_id:
-            raise ValueError("guild_id and user_id are required")
-        response = self._client.delete(self._v(f"/guilds/{guild_id}/members/{user_id}"))
-        return {"user_id": user_id, "removed": True, "status": response.status}
+            raise ValueError('guild_id and user_id are required')
+        response = self._client.delete(self._v(f'/guilds/{guild_id}/members/{user_id}'))
+        return {'user_id': user_id, 'removed': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def execute_webhook(
@@ -465,26 +464,26 @@ class DiscordToolSet:
         otherwise ``{"status": <http-status>}``.
         """
         if not webhook_id or not webhook_token:
-            raise ValueError("webhook_id and webhook_token are required")
+            raise ValueError('webhook_id and webhook_token are required')
         if not content and not embeds:
-            raise ValueError("content or embeds is required")
+            raise ValueError('content or embeds is required')
         body: dict[str, Any] = {}
         if content is not None:
-            body["content"] = content
+            body['content'] = content
         if embeds is not None:
-            body["embeds"] = embeds
+            body['embeds'] = embeds
         if username is not None:
-            body["username"] = username
+            body['username'] = username
         if avatar_url is not None:
-            body["avatar_url"] = avatar_url
+            body['avatar_url'] = avatar_url
         response = self._client.post(
-            self._v(f"/webhooks/{webhook_id}/{webhook_token}"),
+            self._v(f'/webhooks/{webhook_id}/{webhook_token}'),
             json=body,
         )
         try:
             return response.json()
         except ValueError:
-            return {"status": response.status}
+            return {'status': response.status}
 
     # MARK: - Internal
 
@@ -493,48 +492,48 @@ class DiscordToolSet:
         if isinstance(channel, list):
             channel_list = cast(list[Any], channel)
             if not channel_list:
-                raise ValueError("channel_id must be non-empty")
+                raise ValueError('channel_id must be non-empty')
             channel = channel_list[0]
         if isinstance(channel, dict):
             channel_dict = cast(dict[str, Any], channel)
-            for key in ("channel_id", "id"):
+            for key in ('channel_id', 'id'):
                 value: Any = channel_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
-            name: Any = channel_dict.get("name")
+            name: Any = channel_dict.get('name')
             if isinstance(name, str) and name:
                 cached = self._channel_name_cache.get(name)
                 if cached:
                     return cached
                 return name
-            raise ValueError("channel dict must contain channel_id, id, or name")
+            raise ValueError('channel dict must contain channel_id, id, or name')
         if isinstance(channel, str):
             if not channel:
-                raise ValueError("channel_id is required")
+                raise ValueError('channel_id is required')
             if channel.isdigit():
                 return channel
-            cached = self._channel_name_cache.get(channel.lstrip("#"))
+            cached = self._channel_name_cache.get(channel.lstrip('#'))
             if cached:
                 return cached
             return channel
         if isinstance(channel, int):
             return str(channel)
-        raise ValueError("channel_id must be a string, dict, or list")
+        raise ValueError('channel_id must be a string, dict, or list')
 
     @staticmethod
     def _resolve_message_id(message: Any) -> str:
         """Coerce a Discord message ID or message-summary dict into an ID."""
         if isinstance(message, dict):
             message_dict = cast(dict[str, Any], message)
-            for key in ("message_id", "id"):
+            for key in ('message_id', 'id'):
                 value: Any = message_dict.get(key)
                 if isinstance(value, str) and value:
                     return value
-            raise ValueError("message dict must contain message_id or id")
+            raise ValueError('message dict must contain message_id or id')
         if isinstance(message, str):
             if not message:
-                raise ValueError("message_id is required")
+                raise ValueError('message_id is required')
             return message
         if isinstance(message, int):
             return str(message)
-        raise ValueError("message_id must be a string or message dict")
+        raise ValueError('message_id must be a string or message dict')

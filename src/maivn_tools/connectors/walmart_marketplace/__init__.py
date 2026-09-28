@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import WalmartMarketplaceToolSet
 
-__all__ = ["WalmartMarketplaceToolSet"]
+__all__ = ['WalmartMarketplaceToolSet']

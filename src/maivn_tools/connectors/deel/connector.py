@@ -15,7 +15,7 @@ from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_CONTRACTS_OUTPUT, LIST_PEOPLE_OUTPUT
 
 
-@toolset(prefix="deel")
+@toolset(prefix='deel')
 class DeelToolSet:
     """A connector for the Deel REST API.
 
@@ -25,35 +25,35 @@ class DeelToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="deel",
-        display_name="Deel",
-        version="0.1.0",
-        description="People, contracts, invoices, time off, and payroll.",
+        name='deel',
+        display_name='Deel',
+        version='0.1.0',
+        description='People, contracts, invoices, time off, and payroll.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developer.deel.com/docs",
-        homepage_url="https://www.deel.com/",
-        tags=("hr", "people-ops", "global-payroll"),
+        documentation_url='https://developer.deel.com/docs',
+        homepage_url='https://www.deel.com/',
+        tags=('hr', 'people-ops', 'global-payroll'),
     )
 
     def __init__(
         self,
         *,
         api_token: str,
-        base_url: str = "https://api.letsdeel.com",
+        base_url: str = 'https://api.letsdeel.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_token:
-            raise ValueError("api_token is required")
+            raise ValueError('api_token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(api_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -70,32 +70,32 @@ class DeelToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        first = person.get("first_name", "")
-        last = person.get("last_name", "")
-        name = (person.get("full_name") or f"{first} {last}").strip()
-        emails_raw: object = person.get("emails", [])
-        emails: list[Any] = cast("list[Any]", emails_raw) if isinstance(emails_raw, list) else []
-        primary_email = ""
+        first = person.get('first_name', '')
+        last = person.get('last_name', '')
+        name = (person.get('full_name') or f'{first} {last}').strip()
+        emails_raw: object = person.get('emails', [])
+        emails: list[Any] = cast('list[Any]', emails_raw) if isinstance(emails_raw, list) else []
+        primary_email = ''
         if emails:
             first_email: Any = emails[0]
             if isinstance(first_email, dict):
-                first_email_dict = cast("dict[str, Any]", first_email)
-                value = first_email_dict.get("value", "")
-                primary_email = value if isinstance(value, str) else ""
+                first_email_dict = cast('dict[str, Any]', first_email)
+                value = first_email_dict.get('value', '')
+                primary_email = value if isinstance(value, str) else ''
             elif isinstance(first_email, str):
                 primary_email = first_email
         summary: dict[str, Any] = {
-            "employee_ref": f"employee_{index}",
-            "name": name,
-            "email": primary_email or person.get("email", "") or person.get("work_email", ""),
-            "title": person.get("job_title", "") or person.get("title", ""),
-            "department": person.get("department", "") or "",
-            "hiring_status": person.get("hiring_status", ""),
-            "hiring_type": person.get("hiring_type", ""),
-            "start_date": person.get("start_date", "") or person.get("hire_date", ""),
+            'employee_ref': f'employee_{index}',
+            'name': name,
+            'email': primary_email or person.get('email', '') or person.get('work_email', ''),
+            'title': person.get('job_title', '') or person.get('title', ''),
+            'department': person.get('department', '') or '',
+            'hiring_status': person.get('hiring_status', ''),
+            'hiring_type': person.get('hiring_type', ''),
+            'start_date': person.get('start_date', '') or person.get('hire_date', ''),
         }
         if include_ids:
-            summary["person_id"] = person.get("id", "")
+            summary['person_id'] = person.get('id', '')
         return summary
 
     @staticmethod
@@ -105,21 +105,21 @@ class DeelToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        worker_raw: object = contract.get("worker")
+        worker_raw: object = contract.get('worker')
         worker: dict[str, Any] = (
-            cast("dict[str, Any]", worker_raw) if isinstance(worker_raw, dict) else {}
+            cast('dict[str, Any]', worker_raw) if isinstance(worker_raw, dict) else {}
         )
         summary: dict[str, Any] = {
-            "contract_ref": f"contract_{index}",
-            "title": contract.get("title", "") or contract.get("job_title", ""),
-            "type": contract.get("type", "") or contract.get("contract_type", ""),
-            "status": contract.get("status", ""),
-            "worker_name": worker.get("full_name", ""),
-            "country": contract.get("country", "") or contract.get("country_code", ""),
-            "start_date": contract.get("start_date", ""),
+            'contract_ref': f'contract_{index}',
+            'title': contract.get('title', '') or contract.get('job_title', ''),
+            'type': contract.get('type', '') or contract.get('contract_type', ''),
+            'status': contract.get('status', ''),
+            'worker_name': worker.get('full_name', ''),
+            'country': contract.get('country', '') or contract.get('country_code', ''),
+            'start_date': contract.get('start_date', ''),
         }
         if include_ids:
-            summary["contract_id"] = contract.get("id", "")
+            summary['contract_id'] = contract.get('id', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -141,25 +141,25 @@ class DeelToolSet:
         ``include_ids=True`` — they are internal handles needed only by
         follow-up tools like :meth:`get_person`.
         """
-        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        params: dict[str, Any] = {'limit': limit, 'offset': offset}
         if hiring_types is not None:
-            params["hiring_types"] = ",".join(hiring_types)
-        raw: object = self._client.get("/rest/v2/people", params=params).json()
-        payload: dict[str, Any] = cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
-        data: object = payload.get("data")
+            params['hiring_types'] = ','.join(hiring_types)
+        raw: object = self._client.get('/rest/v2/people', params=params).json()
+        payload: dict[str, Any] = cast('dict[str, Any]', raw) if isinstance(raw, dict) else {}
+        data: object = payload.get('data')
         if not isinstance(data, list):
-            return cast("dict[str, Any]", raw)
-        data_list = cast("list[Any]", data)
+            return cast('dict[str, Any]', raw)
+        data_list = cast('list[Any]', data)
         summaries = [
             self._person_summary(
-                cast("dict[str, Any]", person), index=index, include_ids=include_ids
+                cast('dict[str, Any]', person), index=index, include_ids=include_ids
             )
             for index, person in enumerate(data_list, start=1)
             if isinstance(person, dict)
         ]
         return {
-            "employees": summaries,
-            "page": payload.get("page"),
+            'employees': summaries,
+            'page': payload.get('page'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -171,8 +171,8 @@ class DeelToolSet:
         and should not appear in final answers.
         """
         if not person_id:
-            raise ValueError("person_id is required")
-        return self._client.get(f"/rest/v2/people/{person_id}").json()
+            raise ValueError('person_id is required')
+        return self._client.get(f'/rest/v2/people/{person_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_CONTRACTS_OUTPUT)
@@ -192,27 +192,27 @@ class DeelToolSet:
         and start date. Raw Deel contract IDs are omitted unless
         ``include_ids=True``.
         """
-        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        params: dict[str, Any] = {'limit': limit, 'offset': offset}
         if types is not None:
-            params["types"] = ",".join(types)
+            params['types'] = ','.join(types)
         if statuses is not None:
-            params["statuses"] = ",".join(statuses)
-        raw: object = self._client.get("/rest/v2/contracts", params=params).json()
-        payload: dict[str, Any] = cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
-        data: object = payload.get("data")
+            params['statuses'] = ','.join(statuses)
+        raw: object = self._client.get('/rest/v2/contracts', params=params).json()
+        payload: dict[str, Any] = cast('dict[str, Any]', raw) if isinstance(raw, dict) else {}
+        data: object = payload.get('data')
         if not isinstance(data, list):
-            return cast("dict[str, Any]", raw)
-        data_list = cast("list[Any]", data)
+            return cast('dict[str, Any]', raw)
+        data_list = cast('list[Any]', data)
         summaries = [
             self._contract_summary(
-                cast("dict[str, Any]", contract), index=index, include_ids=include_ids
+                cast('dict[str, Any]', contract), index=index, include_ids=include_ids
             )
             for index, contract in enumerate(data_list, start=1)
             if isinstance(contract, dict)
         ]
         return {
-            "contracts": summaries,
-            "page": payload.get("page"),
+            'contracts': summaries,
+            'page': payload.get('page'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -223,8 +223,8 @@ class DeelToolSet:
         internal handle and should not appear in final answers.
         """
         if not contract_id:
-            raise ValueError("contract_id is required")
-        return self._client.get(f"/rest/v2/contracts/{contract_id}").json()
+            raise ValueError('contract_id is required')
+        return self._client.get(f'/rest/v2/contracts/{contract_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_invoice_adjustment(
@@ -234,7 +234,7 @@ class DeelToolSet:
         amount: float,
         date_submission: str,
         description: str,
-        adjustment_type: str = "bonus",
+        adjustment_type: str = 'bonus',
     ) -> dict[str, Any]:
         """Add an invoice adjustment to a contract.
 
@@ -242,15 +242,15 @@ class DeelToolSet:
         is ``YYYY-MM-DD``. Confirm with the user before calling.
         """
         if not contract_id or not amount or not date_submission or not description:
-            raise ValueError("contract_id, amount, date_submission, and description are required")
+            raise ValueError('contract_id, amount, date_submission, and description are required')
         return self._client.post(
-            "/rest/v2/invoice-adjustments",
+            '/rest/v2/invoice-adjustments',
             json={
-                "contract_id": contract_id,
-                "amount": amount,
-                "date_submission": date_submission,
-                "description": description,
-                "type": adjustment_type,
+                'contract_id': contract_id,
+                'amount': amount,
+                'date_submission': date_submission,
+                'description': description,
+                'type': adjustment_type,
             },
         ).json()
 
@@ -267,10 +267,10 @@ class DeelToolSet:
         Optionally filter by ``contract_id``. Returns the raw Deel
         adjustment list payload.
         """
-        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        params: dict[str, Any] = {'limit': limit, 'offset': offset}
         if contract_id is not None:
-            params["contract_id"] = contract_id
-        return self._client.get("/rest/v2/invoice-adjustments", params=params).json()
+            params['contract_id'] = contract_id
+        return self._client.get('/rest/v2/invoice-adjustments', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_time_off(
@@ -288,10 +288,10 @@ class DeelToolSet:
         payload.
         """
         if not hris_profile_id:
-            raise ValueError("hris_profile_id is required")
-        params: dict[str, Any] = {"limit": limit, "offset": offset}
+            raise ValueError('hris_profile_id is required')
+        params: dict[str, Any] = {'limit': limit, 'offset': offset}
         return self._client.get(
-            f"/rest/v2/time_offs/profile/{hris_profile_id}",
+            f'/rest/v2/time_offs/profile/{hris_profile_id}',
             params=params,
         ).json()
 
@@ -310,11 +310,11 @@ class DeelToolSet:
         ``approve=False`` to reject (status ``REJECTED``).
         """
         if not time_off_id:
-            raise ValueError("time_off_id is required")
-        status = "APPROVED" if approve else "REJECTED"
+            raise ValueError('time_off_id is required')
+        status = 'APPROVED' if approve else 'REJECTED'
         return self._client.post(
-            "/rest/v2/time_offs/review",
-            json={"data": {"ids": [time_off_id], "status": status}},
+            '/rest/v2/time_offs/review',
+            json={'data': {'ids': [time_off_id], 'status': status}},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -333,10 +333,10 @@ class DeelToolSet:
         Returns the raw Deel payroll-event list payload.
         """
         if not legal_entity_id:
-            raise ValueError("legal_entity_id is required")
+            raise ValueError('legal_entity_id is required')
         return self._client.get(
-            f"/rest/v2/gp/legal-entities/{legal_entity_id}/reports",
-            params={"limit": limit, "offset": offset},
+            f'/rest/v2/gp/legal-entities/{legal_entity_id}/reports',
+            params={'limit': limit, 'offset': offset},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -345,4 +345,4 @@ class DeelToolSet:
 
         Returns the raw Deel legal-entity list.
         """
-        return self._client.get("/rest/v2/legal-entities").json()
+        return self._client.get('/rest/v2/legal-entities').json()

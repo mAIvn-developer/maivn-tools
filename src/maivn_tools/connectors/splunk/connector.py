@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from typing import Any, cast
+from urllib.parse import quote
 
 from maivn import toolify, toolset
 
@@ -17,7 +18,7 @@ from ...runtime.http import HttpClient, HttpTransport
 _SUMMARY_MAX = 25
 
 
-@toolset(prefix="splunk")
+@toolset(prefix='splunk')
 class SplunkToolSet:
     """A connector for the Splunk Enterprise / Cloud REST API.
 
@@ -29,10 +30,10 @@ class SplunkToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="splunk",
-        display_name="Splunk",
-        version="0.1.0",
-        description="Search, jobs, indexes, saved searches, and HEC ingest.",
+        name='splunk',
+        display_name='Splunk',
+        version='0.1.0',
+        description='Search, jobs, indexes, saved searches, and HEC ingest.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset(
             {
@@ -42,10 +43,10 @@ class SplunkToolSet:
             }
         ),
         documentation_url=(
-            "https://docs.splunk.com/Documentation/Splunk/latest/RESTREF/RESTprolog"
+            'https://docs.splunk.com/Documentation/Splunk/latest/RESTREF/RESTprolog'
         ),
-        homepage_url="https://www.splunk.com/",
-        tags=("observability", "siem"),
+        homepage_url='https://www.splunk.com/',
+        tags=('observability', 'siem'),
     )
 
     def __init__(
@@ -57,13 +58,13 @@ class SplunkToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not token or not base_url:
-            raise ValueError("token and base_url are required")
+            raise ValueError('token and base_url are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -77,7 +78,7 @@ class SplunkToolSet:
         search: str,
         earliest_time: str | None = None,
         latest_time: str | None = None,
-        exec_mode: str = "normal",
+        exec_mode: str = 'normal',
     ) -> dict[str, Any]:
         """Create a search job.
 
@@ -87,19 +88,19 @@ class SplunkToolSet:
         results are returned immediately rather than via a job.
         """
         if not search:
-            raise ValueError("search is required")
-        if exec_mode not in {"normal", "blocking", "oneshot"}:
-            raise ValueError("exec_mode must be normal/blocking/oneshot")
+            raise ValueError('search is required')
+        if exec_mode not in {'normal', 'blocking', 'oneshot'}:
+            raise ValueError('exec_mode must be normal/blocking/oneshot')
         params: dict[str, Any] = {
-            "search": search,
-            "exec_mode": exec_mode,
-            "output_mode": "json",
+            'search': search,
+            'exec_mode': exec_mode,
+            'output_mode': 'json',
         }
         if earliest_time is not None:
-            params["earliest_time"] = earliest_time
+            params['earliest_time'] = earliest_time
         if latest_time is not None:
-            params["latest_time"] = latest_time
-        return self._client.post("/services/search/jobs", params=params).json()
+            params['latest_time'] = latest_time
+        return self._client.post('/services/search/jobs', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_search_job(self, sid: str) -> dict[str, Any]:
@@ -110,10 +111,10 @@ class SplunkToolSet:
         ``get_search_results``.
         """
         if not sid:
-            raise ValueError("sid is required")
+            raise ValueError('sid is required')
         return self._client.get(
-            f"/services/search/jobs/{sid}",
-            params={"output_mode": "json"},
+            f'/services/search/jobs/{sid}',
+            params={'output_mode': 'json'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -130,10 +131,10 @@ class SplunkToolSet:
         the SPL of the job that produced them.
         """
         if not sid:
-            raise ValueError("sid is required")
+            raise ValueError('sid is required')
         return self._client.get(
-            f"/services/search/v2/jobs/{sid}/results",
-            params={"output_mode": "json", "count": count, "offset": offset},
+            f'/services/search/v2/jobs/{sid}/results',
+            params={'output_mode': 'json', 'count': count, 'offset': offset},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -143,10 +144,10 @@ class SplunkToolSet:
         Destructive — the job results cannot be retrieved after cancel.
         """
         if not sid:
-            raise ValueError("sid is required")
+            raise ValueError('sid is required')
         return self._client.post(
-            f"/services/search/jobs/{sid}/control",
-            params={"action": "cancel"},
+            f'/services/search/jobs/{sid}/control',
+            params={'action': 'cancel'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -163,28 +164,28 @@ class SplunkToolSet:
         contains additional fields).
         """
         payload: dict[str, Any] = self._client.get(
-            "/services/data/indexes",
-            params={"output_mode": "json"},
+            '/services/data/indexes',
+            params={'output_mode': 'json'},
         ).json()
         if not include_metadata:
             return payload
-        items: list[Any] = payload.get("entry") or []
+        items: list[Any] = payload.get('entry') or []
         summaries: list[dict[str, Any]] = []
         for index, entry in enumerate(items[:_SUMMARY_MAX], start=1):
             if not isinstance(entry, dict):
                 continue
-            entry_dict = cast("dict[str, Any]", entry)
-            content: dict[str, Any] = entry_dict.get("content") or {}
+            entry_dict = cast('dict[str, Any]', entry)
+            content: dict[str, Any] = entry_dict.get('content') or {}
             summaries.append(
                 {
-                    "index_ref": f"index_{index}",
-                    "name": entry_dict.get("name", ""),
-                    "total_event_count": content.get("totalEventCount", 0),
-                    "current_db_size_mb": content.get("currentDBSizeMB", 0),
-                    "disabled": content.get("disabled", False),
+                    'index_ref': f'index_{index}',
+                    'name': entry_dict.get('name', ''),
+                    'total_event_count': content.get('totalEventCount', 0),
+                    'current_db_size_mb': content.get('currentDBSizeMB', 0),
+                    'disabled': content.get('disabled', False),
                 }
             )
-        return {"indexes": summaries}
+        return {'indexes': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_saved_searches(
@@ -199,28 +200,28 @@ class SplunkToolSet:
         are user-facing — use them for ``update_saved_search``.
         """
         payload: dict[str, Any] = self._client.get(
-            "/services/saved/searches",
-            params={"output_mode": "json"},
+            '/services/saved/searches',
+            params={'output_mode': 'json'},
         ).json()
         if not include_metadata:
             return payload
-        items: list[Any] = payload.get("entry") or []
+        items: list[Any] = payload.get('entry') or []
         summaries: list[dict[str, Any]] = []
         for index, entry in enumerate(items[:_SUMMARY_MAX], start=1):
             if not isinstance(entry, dict):
                 continue
-            entry_dict = cast("dict[str, Any]", entry)
-            content: dict[str, Any] = entry_dict.get("content") or {}
+            entry_dict = cast('dict[str, Any]', entry)
+            content: dict[str, Any] = entry_dict.get('content') or {}
             summaries.append(
                 {
-                    "search_ref": f"search_{index}",
-                    "name": entry_dict.get("name", ""),
-                    "search": content.get("search", ""),
-                    "is_scheduled": content.get("is_scheduled", False),
-                    "cron_schedule": content.get("cron_schedule", ""),
+                    'search_ref': f'search_{index}',
+                    'name': entry_dict.get('name', ''),
+                    'search': content.get('search', ''),
+                    'is_scheduled': content.get('is_scheduled', False),
+                    'cron_schedule': content.get('cron_schedule', ''),
                 }
             )
-        return {"saved_searches": summaries}
+        return {'saved_searches': summaries}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_saved_search(
@@ -238,16 +239,16 @@ class SplunkToolSet:
         scheduled execution.
         """
         if not name or not search:
-            raise ValueError("name and search are required")
+            raise ValueError('name and search are required')
         params: dict[str, Any] = {
-            "name": name,
-            "search": search,
-            "is_scheduled": "1" if is_scheduled else "0",
-            "output_mode": "json",
+            'name': name,
+            'search': search,
+            'is_scheduled': '1' if is_scheduled else '0',
+            'output_mode': 'json',
         }
         if cron_schedule is not None:
-            params["cron_schedule"] = cron_schedule
-        return self._client.post("/services/saved/searches", params=params).json()
+            params['cron_schedule'] = cron_schedule
+        return self._client.post('/services/saved/searches', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_saved_search(
@@ -264,19 +265,18 @@ class SplunkToolSet:
         Returns the updated entry.
         """
         if not name:
-            raise ValueError("name is required")
-        params: dict[str, Any] = {"output_mode": "json"}
+            raise ValueError('name is required')
+        params: dict[str, Any] = {'output_mode': 'json'}
         if search is not None:
-            params["search"] = search
+            params['search'] = search
         if cron_schedule is not None:
-            params["cron_schedule"] = cron_schedule
+            params['cron_schedule'] = cron_schedule
         if is_scheduled is not None:
-            params["is_scheduled"] = "1" if is_scheduled else "0"
+            params['is_scheduled'] = '1' if is_scheduled else '0'
         if len(params) == 1:
-            raise ValueError("at least one update field is required")
-        from urllib.parse import quote
+            raise ValueError('at least one update field is required')
 
         return self._client.post(
-            f"/services/saved/searches/{quote(name, safe='')}",
+            f'/services/saved/searches/{quote(name, safe="")}',
             params=params,
         ).json()

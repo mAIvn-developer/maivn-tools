@@ -19,33 +19,33 @@ from pydantic import JsonValue
 # MARK: - Entry summary (mirrors ``_dropbox_entry_summary``)
 
 _ENTRY_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "file_ref": {"type": "string"},
-        "folder_ref": {"type": "string"},
-        "entry_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "kind": {"type": "string"},
-        "path": {"type": "string"},
-        "size": {"type": "integer"},
-        "modified_time": {"type": "string"},
-        "id": {"type": "string"},
-        "rev": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'file_ref': {'type': 'string'},
+        'folder_ref': {'type': 'string'},
+        'entry_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'kind': {'type': 'string'},
+        'path': {'type': 'string'},
+        'size': {'type': 'integer'},
+        'modified_time': {'type': 'string'},
+        'id': {'type': 'string'},
+        'rev': {'type': 'string'},
     },
-    "required": ["name", "kind", "path"],
+    'required': ['name', 'kind', 'path'],
 }
 
 
 # MARK: - Tool output schema (mirrors ``_summarize_dropbox_entries``)
 
 _LISTING_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "items": {"type": "array", "items": _ENTRY_SUMMARY},
-        "has_more": {"type": "boolean"},
-        "cursor": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'items': {'type': 'array', 'items': _ENTRY_SUMMARY},
+        'has_more': {'type': 'boolean'},
+        'cursor': {'type': 'string'},
     },
-    "required": ["items"],
+    'required': ['items'],
 }
 
 LIST_FOLDER_OUTPUT: dict[str, JsonValue] = _LISTING_OUTPUT
@@ -54,7 +54,7 @@ SEARCH_OUTPUT: dict[str, JsonValue] = _LISTING_OUTPUT
 
 
 __all__ = [
-    "LIST_FOLDER_CONTINUE_OUTPUT",
-    "LIST_FOLDER_OUTPUT",
-    "SEARCH_OUTPUT",
+    'LIST_FOLDER_CONTINUE_OUTPUT',
+    'LIST_FOLDER_OUTPUT',
+    'SEARCH_OUTPUT',
 ]

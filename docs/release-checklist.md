@@ -4,21 +4,20 @@ A release of `maivn-tools` cannot ship until every box below is checked.
 
 ## Package
 
-- [ ] `pyproject.toml` version matches `src/maivn_tools/__version__.py`.
+- [ ] The version resolved from `src/maivn_tools/__version__.py` is the intended public version.
 - [ ] `CHANGELOG.md` has an entry for the release with **Added**,
       **Changed**, **Deprecated**, **Removed**, **Fixed**, **Security**
       sections as applicable.
-- [ ] `pyproject.toml` classifiers list every supported Python minor
-      version and no others.
+- [ ] `requires-python` agrees with the supported and tested interpreter matrix.
 - [ ] Optional dependencies and extras are declared explicitly and the
       docs reference the correct install command.
-- [ ] License files (`LICENSE`, `NOTICE`) ship in the sdist and wheel.
+- [ ] The chosen license metadata and required license files agree and ship in the sdist and wheel.
 
 ## Tests
 
 - [ ] `uv run --frozen pytest` is green.
 - [ ] `uv run --frozen ruff check src tests` is clean.
-- [ ] `uv run --frozen pyright src/maivn_tools` is clean.
+- [ ] `uv run --frozen basedpyright src/maivn_tools` is clean.
 - [ ] Coverage on `src/maivn_tools/connectors/` has no untested public
       tool callable.
 - [ ] Live-provider tests (see `docs/testing.md`) are either skipped by
@@ -59,7 +58,7 @@ A release of `maivn-tools` cannot ship until every box below is checked.
 
 ## Tag and publish
 
-- [ ] Git tag `vX.Y.Z` matches the version in `pyproject.toml`.
+- [ ] Git tag `vX.Y.Z` matches the version resolved from `src/maivn_tools/__version__.py`.
 - [ ] Release notes mirror the changelog entry for the version.
 - [ ] PyPI upload succeeds and `pip install maivn-tools==X.Y.Z` works in
       a clean virtualenv.

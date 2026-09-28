@@ -52,9 +52,9 @@ from .output_schemas import (
     SEARCH_REPOSITORIES_OUTPUT,
 )
 
-GITHUB_API_URL = "https://api.github.com"
-GITHUB_ACCEPT_HEADER = "application/vnd.github+json"
-GITHUB_API_VERSION = "2022-11-28"
+GITHUB_API_URL = 'https://api.github.com'
+GITHUB_ACCEPT_HEADER = 'application/vnd.github+json'
+GITHUB_API_VERSION = '2022-11-28'
 
 _SHA_DISPLAY_LEN = 7
 
@@ -63,7 +63,7 @@ _JsonObject = dict[str, Any]
 _JsonResponse = _JsonObject | list[Any]
 
 
-@toolset(prefix="github")
+@toolset(prefix='github')
 class GitHubToolSet:
     """A connector for GitHub REST API v3.
 
@@ -79,15 +79,15 @@ class GitHubToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="github",
-        display_name="GitHub",
-        version="0.1.0",
-        description="Read and write GitHub repositories, issues, and pull requests.",
+        name='github',
+        display_name='GitHub',
+        version='0.1.0',
+        description='Read and write GitHub repositories, issues, and pull requests.',
         auth_modes=(AuthMode.BEARER,),
         scopes={
-            "repo": "Full control of private repositories.",
-            "public_repo": "Access to public repositories.",
-            "read:org": "Read-only access to organization membership.",
+            'repo': 'Full control of private repositories.',
+            'public_repo': 'Access to public repositories.',
+            'read:org': 'Read-only access to organization membership.',
         },
         capabilities=frozenset(
             {
@@ -97,9 +97,9 @@ class GitHubToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://docs.github.com/en/rest",
-        homepage_url="https://github.com",
-        tags=("developer", "code", "git"),
+        documentation_url='https://docs.github.com/en/rest',
+        homepage_url='https://github.com',
+        tags=('developer', 'code', 'git'),
     )
 
     def __init__(
@@ -108,22 +108,22 @@ class GitHubToolSet:
         *,
         base_url: str = GITHUB_API_URL,
         transport: HttpTransport | None = None,
-        user_agent: str = "maivn-tools-github/0.1",
+        user_agent: str = 'maivn-tools-github/0.1',
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not token:
-            raise ValueError("token must be a non-empty string")
+            raise ValueError('token must be a non-empty string')
         if not user_agent:
-            raise ValueError("user_agent must be a non-empty string")
+            raise ValueError('user_agent must be a non-empty string')
         self.connection = connection
         self._client = HttpClient(
             base_url=base_url,
             auth=BearerTokenAuth(token),
             transport=transport,
             default_headers={
-                "Accept": GITHUB_ACCEPT_HEADER,
-                "X-GitHub-Api-Version": GITHUB_API_VERSION,
-                "User-Agent": user_agent,
+                'Accept': GITHUB_ACCEPT_HEADER,
+                'X-GitHub-Api-Version': GITHUB_API_VERSION,
+                'User-Agent': user_agent,
             },
         )
 
@@ -149,26 +149,26 @@ class GitHubToolSet:
         # Case 1: dict (repo object from list/search)
         if isinstance(owner, dict) and repo is None:
             owner_dict = GitHubToolSet._as_dict(owner)
-            full_name = owner_dict.get("full_name")
-            if isinstance(full_name, str) and "/" in full_name:
-                owner_part, repo_part = full_name.split("/", 1)
+            full_name = owner_dict.get('full_name')
+            if isinstance(full_name, str) and '/' in full_name:
+                owner_part, repo_part = full_name.split('/', 1)
                 return owner_part, repo_part
-            owner_obj: Any = owner_dict.get("owner")
+            owner_obj: Any = owner_dict.get('owner')
             owner_candidate: Any
             if isinstance(owner_obj, dict):
                 owner_obj_dict = GitHubToolSet._as_dict(owner_obj)
-                owner_candidate = owner_obj_dict.get("login") or owner_obj_dict.get("name")
+                owner_candidate = owner_obj_dict.get('login') or owner_obj_dict.get('name')
             else:
                 owner_candidate = owner_obj
-            repo_candidate: Any = owner_dict.get("name")
+            repo_candidate: Any = owner_dict.get('name')
             if isinstance(owner_candidate, str) and isinstance(repo_candidate, str):
                 return owner_candidate, repo_candidate
-            raise ValueError("repo dict must expose full_name or owner+name")
+            raise ValueError('repo dict must expose full_name or owner+name')
         # Case 2: full_name string in owner, repo omitted
         if isinstance(owner, str) and repo is None:
-            if "/" not in owner:
+            if '/' not in owner:
                 raise ValueError("owner string without repo must be 'owner/repo'")
-            owner_part, repo_part = owner.split("/", 1)
+            owner_part, repo_part = owner.split('/', 1)
             return owner_part, repo_part
         # Case 3: two strings
         if isinstance(owner, str) and isinstance(repo, str) and owner and repo:
@@ -182,7 +182,7 @@ class GitHubToolSet:
             return issue_or_number
         if isinstance(issue_or_number, dict):
             issue_dict = GitHubToolSet._as_dict(issue_or_number)
-            number = issue_dict.get("number") or issue_dict.get("issue_number")
+            number = issue_dict.get('number') or issue_dict.get('issue_number')
             if isinstance(number, int):
                 return number
         raise ValueError("expected an int or an issue/PR dict with a 'number' field")
@@ -194,7 +194,7 @@ class GitHubToolSet:
             return branch_or_dict
         if isinstance(branch_or_dict, dict):
             branch_dict = GitHubToolSet._as_dict(branch_or_dict)
-            name = branch_dict.get("name") or branch_dict.get("branch")
+            name = branch_dict.get('name') or branch_dict.get('branch')
             if isinstance(name, str) and name:
                 return name
         raise ValueError("expected a branch name string or a branch dict with 'name'")
@@ -205,16 +205,16 @@ class GitHubToolSet:
     def _short_sha(sha: Any) -> str:
         if isinstance(sha, str) and sha:
             return sha[:_SHA_DISPLAY_LEN]
-        return ""
+        return ''
 
     @staticmethod
     def _user_login(user: Any) -> str:
         if isinstance(user, dict):
             user_dict = GitHubToolSet._as_dict(user)
-            login = user_dict.get("login")
+            login = user_dict.get('login')
             if isinstance(login, str):
                 return login
-        return ""
+        return ''
 
     @staticmethod
     def _as_dict(value: Any) -> dict[str, Any]:
@@ -224,13 +224,13 @@ class GitHubToolSet:
         the cast restores the first-party ``dict[str, Any]`` shape used here.
         """
         if isinstance(value, dict):
-            return cast("dict[str, Any]", value)
+            return cast('dict[str, Any]', value)
         return {}
 
     @staticmethod
     def _label_name(label: Any) -> Any:
         if isinstance(label, dict):
-            return cast("dict[str, Any]", label).get("name", "")
+            return cast('dict[str, Any]', label).get('name', '')
         return str(label)
 
     @classmethod
@@ -242,24 +242,24 @@ class GitHubToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "repo_ref": f"repo_{index}",
-            "full_name": repo.get("full_name", ""),
-            "name": repo.get("name", ""),
-            "owner": cls._user_login(repo.get("owner")),
-            "private": repo.get("private", False),
-            "fork": repo.get("fork", False),
-            "default_branch": repo.get("default_branch", ""),
-            "description": repo.get("description") or "",
-            "language": repo.get("language") or "",
-            "stargazers_count": repo.get("stargazers_count", 0),
-            "forks_count": repo.get("forks_count", 0),
-            "open_issues_count": repo.get("open_issues_count", 0),
-            "updated_at": repo.get("updated_at", ""),
-            "html_url": repo.get("html_url", ""),
+            'repo_ref': f'repo_{index}',
+            'full_name': repo.get('full_name', ''),
+            'name': repo.get('name', ''),
+            'owner': cls._user_login(repo.get('owner')),
+            'private': repo.get('private', False),
+            'fork': repo.get('fork', False),
+            'default_branch': repo.get('default_branch', ''),
+            'description': repo.get('description') or '',
+            'language': repo.get('language') or '',
+            'stargazers_count': repo.get('stargazers_count', 0),
+            'forks_count': repo.get('forks_count', 0),
+            'open_issues_count': repo.get('open_issues_count', 0),
+            'updated_at': repo.get('updated_at', ''),
+            'html_url': repo.get('html_url', ''),
         }
         if include_ids:
-            summary["repo_id"] = repo.get("id")
-            summary["node_id"] = repo.get("node_id")
+            summary['repo_id'] = repo.get('id')
+            summary['node_id'] = repo.get('node_id')
         return summary
 
     @classmethod
@@ -270,27 +270,27 @@ class GitHubToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        labels_raw: list[Any] = issue.get("labels") or []
-        assignees_raw: list[Any] = issue.get("assignees") or []
+        labels_raw: list[Any] = issue.get('labels') or []
+        assignees_raw: list[Any] = issue.get('assignees') or []
         labels: list[Any] = [cls._label_name(label) for label in labels_raw]
         assignees: list[str] = [cls._user_login(a) for a in assignees_raw if isinstance(a, dict)]
         summary: dict[str, Any] = {
-            "issue_ref": f"issue_{index}",
-            "issue_number": issue.get("number"),
-            "title": issue.get("title", ""),
-            "state": issue.get("state", ""),
-            "author": cls._user_login(issue.get("user")),
-            "labels": labels,
-            "assignees": assignees,
-            "comments": issue.get("comments", 0),
-            "created_at": issue.get("created_at", ""),
-            "updated_at": issue.get("updated_at", ""),
-            "html_url": issue.get("html_url", ""),
-            "is_pull_request": "pull_request" in issue,
+            'issue_ref': f'issue_{index}',
+            'issue_number': issue.get('number'),
+            'title': issue.get('title', ''),
+            'state': issue.get('state', ''),
+            'author': cls._user_login(issue.get('user')),
+            'labels': labels,
+            'assignees': assignees,
+            'comments': issue.get('comments', 0),
+            'created_at': issue.get('created_at', ''),
+            'updated_at': issue.get('updated_at', ''),
+            'html_url': issue.get('html_url', ''),
+            'is_pull_request': 'pull_request' in issue,
         }
         if include_ids:
-            summary["issue_id"] = issue.get("id")
-            summary["node_id"] = issue.get("node_id")
+            summary['issue_id'] = issue.get('id')
+            summary['node_id'] = issue.get('node_id')
         return summary
 
     @classmethod
@@ -301,30 +301,30 @@ class GitHubToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        head = cls._as_dict(pr.get("head"))
-        base = cls._as_dict(pr.get("base"))
-        head_ref = head.get("ref", "")
-        base_ref = base.get("ref", "")
+        head = cls._as_dict(pr.get('head'))
+        base = cls._as_dict(pr.get('base'))
+        head_ref = head.get('ref', '')
+        base_ref = base.get('ref', '')
         summary: dict[str, Any] = {
-            "pr_ref": f"pr_{index}",
-            "pr_number": pr.get("number"),
-            "title": pr.get("title", ""),
-            "state": pr.get("state", ""),
-            "draft": pr.get("draft", False),
-            "author": cls._user_login(pr.get("user")),
-            "head": head_ref,
-            "base": base_ref,
-            "merged": pr.get("merged", False),
-            "mergeable_state": pr.get("mergeable_state"),
-            "comments": pr.get("comments", 0),
-            "review_comments": pr.get("review_comments", 0),
-            "created_at": pr.get("created_at", ""),
-            "updated_at": pr.get("updated_at", ""),
-            "html_url": pr.get("html_url", ""),
+            'pr_ref': f'pr_{index}',
+            'pr_number': pr.get('number'),
+            'title': pr.get('title', ''),
+            'state': pr.get('state', ''),
+            'draft': pr.get('draft', False),
+            'author': cls._user_login(pr.get('user')),
+            'head': head_ref,
+            'base': base_ref,
+            'merged': pr.get('merged', False),
+            'mergeable_state': pr.get('mergeable_state'),
+            'comments': pr.get('comments', 0),
+            'review_comments': pr.get('review_comments', 0),
+            'created_at': pr.get('created_at', ''),
+            'updated_at': pr.get('updated_at', ''),
+            'html_url': pr.get('html_url', ''),
         }
         if include_ids:
-            summary["pr_id"] = pr.get("id")
-            summary["node_id"] = pr.get("node_id")
+            summary['pr_id'] = pr.get('id')
+            summary['node_id'] = pr.get('node_id')
         return summary
 
     @classmethod
@@ -335,22 +335,22 @@ class GitHubToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        commit_obj = cls._as_dict(commit.get("commit"))
-        author: Any = commit_obj.get("author")
-        message: Any = commit_obj.get("message", "")
-        sha: Any = commit.get("sha") or ""
+        commit_obj = cls._as_dict(commit.get('commit'))
+        author: Any = commit_obj.get('author')
+        message: Any = commit_obj.get('message', '')
+        sha: Any = commit.get('sha') or ''
         author_dict = cls._as_dict(author)
         summary: dict[str, Any] = {
-            "commit_ref": f"commit_{index}",
-            "sha": sha,
-            "short_sha": cls._short_sha(sha),
-            "message": (message or "").splitlines()[0] if message else "",
-            "author": author_dict.get("name", "") if isinstance(author, dict) else "",
-            "authored_at": author_dict.get("date", "") if isinstance(author, dict) else "",
-            "html_url": commit.get("html_url", ""),
+            'commit_ref': f'commit_{index}',
+            'sha': sha,
+            'short_sha': cls._short_sha(sha),
+            'message': (message or '').splitlines()[0] if message else '',
+            'author': author_dict.get('name', '') if isinstance(author, dict) else '',
+            'authored_at': author_dict.get('date', '') if isinstance(author, dict) else '',
+            'html_url': commit.get('html_url', ''),
         }
         if include_ids:
-            summary["node_id"] = commit.get("node_id")
+            summary['node_id'] = commit.get('node_id')
         return summary
 
     @classmethod
@@ -361,17 +361,17 @@ class GitHubToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        commit = cls._as_dict(branch.get("commit"))
-        sha = commit.get("sha", "")
+        commit = cls._as_dict(branch.get('commit'))
+        sha = commit.get('sha', '')
         summary: dict[str, Any] = {
-            "branch_ref": f"branch_{index}",
-            "name": branch.get("name", ""),
-            "sha": sha,
-            "short_sha": cls._short_sha(sha),
-            "protected": branch.get("protected", False),
+            'branch_ref': f'branch_{index}',
+            'name': branch.get('name', ''),
+            'sha': sha,
+            'short_sha': cls._short_sha(sha),
+            'protected': branch.get('protected', False),
         }
         if include_ids:
-            summary["commit_node_id"] = commit.get("node_id")
+            summary['commit_node_id'] = commit.get('node_id')
         return summary
 
     @classmethod
@@ -383,17 +383,17 @@ class GitHubToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "workflow_ref": f"workflow_{index}",
-            "workflow_id": workflow.get("id"),
-            "name": workflow.get("name", ""),
-            "state": workflow.get("state", ""),
-            "path": workflow.get("path", ""),
-            "created_at": workflow.get("created_at", ""),
-            "updated_at": workflow.get("updated_at", ""),
-            "html_url": workflow.get("html_url", ""),
+            'workflow_ref': f'workflow_{index}',
+            'workflow_id': workflow.get('id'),
+            'name': workflow.get('name', ''),
+            'state': workflow.get('state', ''),
+            'path': workflow.get('path', ''),
+            'created_at': workflow.get('created_at', ''),
+            'updated_at': workflow.get('updated_at', ''),
+            'html_url': workflow.get('html_url', ''),
         }
         if include_ids:
-            summary["node_id"] = workflow.get("node_id")
+            summary['node_id'] = workflow.get('node_id')
         return summary
 
     @classmethod
@@ -404,27 +404,27 @@ class GitHubToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        sha = run.get("head_sha") or ""
+        sha = run.get('head_sha') or ''
         summary: dict[str, Any] = {
-            "run_ref": f"run_{index}",
-            "run_id": run.get("id"),
-            "name": run.get("name", ""),
-            "display_title": run.get("display_title", ""),
-            "status": run.get("status", ""),
-            "conclusion": run.get("conclusion"),
-            "event": run.get("event", ""),
-            "branch": run.get("head_branch", ""),
-            "short_sha": cls._short_sha(sha),
-            "run_number": run.get("run_number"),
-            "run_attempt": run.get("run_attempt"),
-            "actor": cls._user_login(run.get("actor")),
-            "created_at": run.get("created_at", ""),
-            "updated_at": run.get("updated_at", ""),
-            "html_url": run.get("html_url", ""),
+            'run_ref': f'run_{index}',
+            'run_id': run.get('id'),
+            'name': run.get('name', ''),
+            'display_title': run.get('display_title', ''),
+            'status': run.get('status', ''),
+            'conclusion': run.get('conclusion'),
+            'event': run.get('event', ''),
+            'branch': run.get('head_branch', ''),
+            'short_sha': cls._short_sha(sha),
+            'run_number': run.get('run_number'),
+            'run_attempt': run.get('run_attempt'),
+            'actor': cls._user_login(run.get('actor')),
+            'created_at': run.get('created_at', ''),
+            'updated_at': run.get('updated_at', ''),
+            'html_url': run.get('html_url', ''),
         }
         if include_ids:
-            summary["node_id"] = run.get("node_id")
-            summary["check_suite_id"] = run.get("check_suite_id")
+            summary['node_id'] = run.get('node_id')
+            summary['check_suite_id'] = run.get('check_suite_id')
         return summary
 
     @classmethod
@@ -436,19 +436,19 @@ class GitHubToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         summary: dict[str, Any] = {
-            "release_ref": f"release_{index}",
-            "tag_name": release.get("tag_name", ""),
-            "name": release.get("name", ""),
-            "draft": release.get("draft", False),
-            "prerelease": release.get("prerelease", False),
-            "author": cls._user_login(release.get("author")),
-            "created_at": release.get("created_at", ""),
-            "published_at": release.get("published_at", ""),
-            "html_url": release.get("html_url", ""),
+            'release_ref': f'release_{index}',
+            'tag_name': release.get('tag_name', ''),
+            'name': release.get('name', ''),
+            'draft': release.get('draft', False),
+            'prerelease': release.get('prerelease', False),
+            'author': cls._user_login(release.get('author')),
+            'created_at': release.get('created_at', ''),
+            'published_at': release.get('published_at', ''),
+            'html_url': release.get('html_url', ''),
         }
         if include_ids:
-            summary["release_id"] = release.get("id")
-            summary["node_id"] = release.get("node_id")
+            summary['release_id'] = release.get('id')
+            summary['node_id'] = release.get('node_id')
         return summary
 
     # MARK: - User
@@ -460,7 +460,7 @@ class GitHubToolSet:
         Best first call to confirm the token works and to discover the
         authenticated ``login``. Returns the raw GitHub user resource.
         """
-        return self._client.get("/user").json()
+        return self._client.get('/user').json()
 
     # MARK: - Repositories
 
@@ -468,8 +468,8 @@ class GitHubToolSet:
     @tool_output(LIST_REPOSITORIES_OUTPUT)
     def list_repositories(
         self,
-        type: str = "owner",
-        sort: str = "updated",
+        type: str = 'owner',
+        sort: str = 'updated',
         per_page: int = 10,
         page: int = 1,
         *,
@@ -490,10 +490,10 @@ class GitHubToolSet:
         not be shown in final answers.
         """
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         raw: _JsonResponse = self._client.get(
-            "/user/repos",
-            params={"type": type, "sort": sort, "per_page": per_page, "page": page},
+            '/user/repos',
+            params={'type': type, 'sort': sort, 'per_page': per_page, 'page': page},
         ).json()
         if not include_metadata or not isinstance(raw, list):
             return raw
@@ -502,7 +502,7 @@ class GitHubToolSet:
             for index, item in enumerate(raw, start=1)
             if isinstance(item, dict)
         ]
-        return {"repositories": summaries, "count": len(summaries), "page": page}
+        return {'repositories': summaries, 'count': len(summaries), 'page': page}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_repository(
@@ -517,7 +517,7 @@ class GitHubToolSet:
         Returns the raw GitHub repository resource.
         """
         owner_name, repo_name = self._resolve_repo(owner, repo)
-        return self._client.get(f"/repos/{owner_name}/{repo_name}").json()
+        return self._client.get(f'/repos/{owner_name}/{repo_name}').json()
 
     # MARK: - Issues
 
@@ -528,7 +528,7 @@ class GitHubToolSet:
         owner: str,
         repo: str | None = None,
         *,
-        state: str = "open",
+        state: str = 'open',
         labels: str | None = None,
         assignee: str | None = None,
         per_page: int = 10,
@@ -552,18 +552,18 @@ class GitHubToolSet:
         """
         owner_name, repo_name = self._resolve_repo(owner, repo)
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         params: dict[str, Any] = {
-            "state": state,
-            "per_page": per_page,
-            "page": page,
+            'state': state,
+            'per_page': per_page,
+            'page': page,
         }
         if labels is not None:
-            params["labels"] = labels
+            params['labels'] = labels
         if assignee is not None:
-            params["assignee"] = assignee
+            params['assignee'] = assignee
         raw: _JsonResponse = self._client.get(
-            f"/repos/{owner_name}/{repo_name}/issues", params=params
+            f'/repos/{owner_name}/{repo_name}/issues', params=params
         ).json()
         if not include_metadata or not isinstance(raw, list):
             return raw
@@ -573,10 +573,10 @@ class GitHubToolSet:
             if isinstance(item, dict)
         ]
         return {
-            "issues": summaries,
-            "count": len(summaries),
-            "page": page,
-            "state": state,
+            'issues': summaries,
+            'count': len(summaries),
+            'page': page,
+            'state': state,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -593,7 +593,7 @@ class GitHubToolSet:
         positionally. Returns the raw issue resource.
         """
         owner_name, repo_name, number = self._resolve_owner_repo_issue(owner, repo, issue_number)
-        return self._client.get(f"/repos/{owner_name}/{repo_name}/issues/{number}").json()
+        return self._client.get(f'/repos/{owner_name}/{repo_name}/issues/{number}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_issue(
@@ -614,15 +614,15 @@ class GitHubToolSet:
         """
         owner_name, repo_name = self._resolve_repo(owner, repo)
         if not title:
-            raise ValueError("title must be a non-empty string")
-        payload: dict[str, Any] = {"title": title}
+            raise ValueError('title must be a non-empty string')
+        payload: dict[str, Any] = {'title': title}
         if body is not None:
-            payload["body"] = body
+            payload['body'] = body
         if labels is not None:
-            payload["labels"] = list(labels)
+            payload['labels'] = list(labels)
         if assignees is not None:
-            payload["assignees"] = list(assignees)
-        return self._client.post(f"/repos/{owner_name}/{repo_name}/issues", json=payload).json()
+            payload['assignees'] = list(assignees)
+        return self._client.post(f'/repos/{owner_name}/{repo_name}/issues', json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def add_issue_comment(
@@ -638,10 +638,10 @@ class GitHubToolSet:
         ``created_at``).
         """
         if not body:
-            raise ValueError("body must be a non-empty string")
+            raise ValueError('body must be a non-empty string')
         return self._client.post(
-            f"/repos/{owner}/{repo}/issues/{issue_number}/comments",
-            json={"body": body},
+            f'/repos/{owner}/{repo}/issues/{issue_number}/comments',
+            json={'body': body},
         ).json()
 
     # MARK: - Pull requests
@@ -653,7 +653,7 @@ class GitHubToolSet:
         owner: str,
         repo: str | None = None,
         *,
-        state: str = "open",
+        state: str = 'open',
         base: str | None = None,
         head: str | None = None,
         per_page: int = 10,
@@ -676,14 +676,14 @@ class GitHubToolSet:
         """
         owner_name, repo_name = self._resolve_repo(owner, repo)
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
-        params: dict[str, Any] = {"state": state, "per_page": per_page, "page": page}
+            raise ValueError('per_page must be between 1 and 100')
+        params: dict[str, Any] = {'state': state, 'per_page': per_page, 'page': page}
         if base is not None:
-            params["base"] = base
+            params['base'] = base
         if head is not None:
-            params["head"] = head
+            params['head'] = head
         raw: _JsonResponse = self._client.get(
-            f"/repos/{owner_name}/{repo_name}/pulls", params=params
+            f'/repos/{owner_name}/{repo_name}/pulls', params=params
         ).json()
         if not include_metadata or not isinstance(raw, list):
             return raw
@@ -693,10 +693,10 @@ class GitHubToolSet:
             if isinstance(item, dict)
         ]
         return {
-            "pull_requests": summaries,
-            "count": len(summaries),
-            "page": page,
-            "state": state,
+            'pull_requests': summaries,
+            'count': len(summaries),
+            'page': page,
+            'state': state,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -712,7 +712,7 @@ class GitHubToolSet:
         Returns the raw pull request resource.
         """
         owner_name, repo_name, number = self._resolve_owner_repo_issue(owner, repo, pull_number)
-        return self._client.get(f"/repos/{owner_name}/{repo_name}/pulls/{number}").json()
+        return self._client.get(f'/repos/{owner_name}/{repo_name}/pulls/{number}').json()
 
     # MARK: - Files and search
 
@@ -731,8 +731,8 @@ class GitHubToolSet:
         branch. Returns the GitHub contents resource; ``content`` is
         base64-encoded.
         """
-        params = {"ref": ref} if ref else None
-        return self._client.get(f"/repos/{owner}/{repo}/contents/{path}", params=params).json()
+        params = {'ref': ref} if ref else None
+        return self._client.get(f'/repos/{owner}/{repo}/contents/{path}', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def search_code(
@@ -740,7 +740,7 @@ class GitHubToolSet:
         query: str,
         *,
         sort: str | None = None,
-        order: str = "desc",
+        order: str = 'desc',
         per_page: int = 10,
         page: int = 1,
     ) -> dict[str, Any]:
@@ -751,18 +751,18 @@ class GitHubToolSet:
         envelope ``{"total_count", "incomplete_results", "items"}``.
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         params: dict[str, Any] = {
-            "q": query,
-            "order": order,
-            "per_page": per_page,
-            "page": page,
+            'q': query,
+            'order': order,
+            'per_page': per_page,
+            'page': page,
         }
         if sort is not None:
-            params["sort"] = sort
-        return self._client.get("/search/code", params=params).json()
+            params['sort'] = sort
+        return self._client.get('/search/code', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(SEARCH_ISSUES_OUTPUT)
@@ -771,7 +771,7 @@ class GitHubToolSet:
         query: str,
         *,
         sort: str | None = None,
-        order: str = "desc",
+        order: str = 'desc',
         per_page: int = 10,
         page: int = 1,
         include_ids: bool = False,
@@ -787,35 +787,35 @@ class GitHubToolSet:
         ``issue_id`` / ``node_id``.
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         params: dict[str, Any] = {
-            "q": query,
-            "order": order,
-            "per_page": per_page,
-            "page": page,
+            'q': query,
+            'order': order,
+            'per_page': per_page,
+            'page': page,
         }
         if sort is not None:
-            params["sort"] = sort
-        raw: _JsonResponse = self._client.get("/search/issues", params=params).json()
+            params['sort'] = sort
+        raw: _JsonResponse = self._client.get('/search/issues', params=params).json()
         if not include_metadata:
-            return cast("dict[str, Any]", raw)
-        items: list[Any] = raw.get("items", []) if isinstance(raw, dict) else []
+            return cast('dict[str, Any]', raw)
+        items: list[Any] = raw.get('items', []) if isinstance(raw, dict) else []
         summaries = [
             self._issue_summary(self._as_dict(item), index=index, include_ids=include_ids)
             for index, item in enumerate(items, start=1)
             if isinstance(item, dict)
         ]
         return {
-            "issues": summaries,
-            "total_count": raw.get("total_count", len(summaries))
+            'issues': summaries,
+            'total_count': raw.get('total_count', len(summaries))
             if isinstance(raw, dict)
             else len(summaries),
-            "incomplete_results": raw.get("incomplete_results", False)
+            'incomplete_results': raw.get('incomplete_results', False)
             if isinstance(raw, dict)
             else False,
-            "page": page,
+            'page': page,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -825,7 +825,7 @@ class GitHubToolSet:
         query: str,
         *,
         sort: str | None = None,
-        order: str = "desc",
+        order: str = 'desc',
         per_page: int = 10,
         page: int = 1,
         include_ids: bool = False,
@@ -839,35 +839,35 @@ class GitHubToolSet:
         Set ``include_metadata=False`` for the raw search envelope.
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         params: dict[str, Any] = {
-            "q": query,
-            "order": order,
-            "per_page": per_page,
-            "page": page,
+            'q': query,
+            'order': order,
+            'per_page': per_page,
+            'page': page,
         }
         if sort is not None:
-            params["sort"] = sort
-        raw: _JsonResponse = self._client.get("/search/repositories", params=params).json()
+            params['sort'] = sort
+        raw: _JsonResponse = self._client.get('/search/repositories', params=params).json()
         if not include_metadata:
-            return cast("dict[str, Any]", raw)
-        items: list[Any] = raw.get("items", []) if isinstance(raw, dict) else []
+            return cast('dict[str, Any]', raw)
+        items: list[Any] = raw.get('items', []) if isinstance(raw, dict) else []
         summaries = [
             self._repo_summary(self._as_dict(item), index=index, include_ids=include_ids)
             for index, item in enumerate(items, start=1)
             if isinstance(item, dict)
         ]
         return {
-            "repositories": summaries,
-            "total_count": raw.get("total_count", len(summaries))
+            'repositories': summaries,
+            'total_count': raw.get('total_count', len(summaries))
             if isinstance(raw, dict)
             else len(summaries),
-            "incomplete_results": raw.get("incomplete_results", False)
+            'incomplete_results': raw.get('incomplete_results', False)
             if isinstance(raw, dict)
             else False,
-            "page": page,
+            'page': page,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -876,7 +876,7 @@ class GitHubToolSet:
         query: str,
         *,
         sort: str | None = None,
-        order: str = "desc",
+        order: str = 'desc',
         per_page: int = 10,
         page: int = 1,
     ) -> dict[str, Any]:
@@ -887,18 +887,18 @@ class GitHubToolSet:
         are stable and safe to show in final answers.
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         params: dict[str, Any] = {
-            "q": query,
-            "order": order,
-            "per_page": per_page,
-            "page": page,
+            'q': query,
+            'order': order,
+            'per_page': per_page,
+            'page': page,
         }
         if sort is not None:
-            params["sort"] = sort
-        return self._client.get("/search/users", params=params).json()
+            params['sort'] = sort
+        return self._client.get('/search/users', params=params).json()
 
     # MARK: - Issue mutations
 
@@ -937,9 +937,9 @@ class GitHubToolSet:
             repo = repo_name
             issue_number = number
         if not isinstance(patch, dict) or not patch:
-            raise ValueError("patch must contain at least one field")
+            raise ValueError('patch must contain at least one field')
         return self._client.patch(
-            f"/repos/{owner}/{repo}/issues/{issue_number}",
+            f'/repos/{owner}/{repo}/issues/{issue_number}',
             json=patch,
         ).json()
 
@@ -956,8 +956,8 @@ class GitHubToolSet:
         """
         owner_name, repo_name, number = self._resolve_owner_repo_issue(owner, repo, issue_number)
         return self._client.patch(
-            f"/repos/{owner_name}/{repo_name}/issues/{number}",
-            json={"state": "closed"},
+            f'/repos/{owner_name}/{repo_name}/issues/{number}',
+            json={'state': 'closed'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -973,8 +973,8 @@ class GitHubToolSet:
         """
         owner_name, repo_name, number = self._resolve_owner_repo_issue(owner, repo, issue_number)
         return self._client.patch(
-            f"/repos/{owner_name}/{repo_name}/issues/{number}",
-            json={"state": "open"},
+            f'/repos/{owner_name}/{repo_name}/issues/{number}',
+            json={'state': 'open'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -990,10 +990,10 @@ class GitHubToolSet:
         Returns the list of labels now on the issue.
         """
         if not labels:
-            raise ValueError("labels must contain at least one label")
+            raise ValueError('labels must contain at least one label')
         return self._client.post(
-            f"/repos/{owner}/{repo}/issues/{issue_number}/labels",
-            json={"labels": list(labels)},
+            f'/repos/{owner}/{repo}/issues/{issue_number}/labels',
+            json={'labels': list(labels)},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -1009,11 +1009,11 @@ class GitHubToolSet:
         Returns ``{"removed": <label>}`` on success.
         """
         if not label:
-            raise ValueError("label must be a non-empty string")
+            raise ValueError('label must be a non-empty string')
         self._client.delete(
-            f"/repos/{owner}/{repo}/issues/{issue_number}/labels/{label}",
+            f'/repos/{owner}/{repo}/issues/{issue_number}/labels/{label}',
         )
-        return {"removed": label}
+        return {'removed': label}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_issue_comments(
@@ -1031,8 +1031,8 @@ class GitHubToolSet:
         ``body``, and timestamps are the most useful fields.
         """
         return self._client.get(
-            f"/repos/{owner}/{repo}/issues/{issue_number}/comments",
-            params={"per_page": per_page, "page": page},
+            f'/repos/{owner}/{repo}/issues/{issue_number}/comments',
+            params={'per_page': per_page, 'page': page},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -1049,10 +1049,10 @@ class GitHubToolSet:
         :meth:`list_issue_comments`.
         """
         if not body:
-            raise ValueError("body must be a non-empty string")
+            raise ValueError('body must be a non-empty string')
         return self._client.patch(
-            f"/repos/{owner}/{repo}/issues/comments/{comment_id}",
-            json={"body": body},
+            f'/repos/{owner}/{repo}/issues/comments/{comment_id}',
+            json={'body': body},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -1066,8 +1066,8 @@ class GitHubToolSet:
 
         Returns ``{"id": ..., "deleted": True}``.
         """
-        self._client.delete(f"/repos/{owner}/{repo}/issues/comments/{comment_id}")
-        return {"id": comment_id, "deleted": True}
+        self._client.delete(f'/repos/{owner}/{repo}/issues/comments/{comment_id}')
+        return {'id': comment_id, 'deleted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def lock_issue(
@@ -1083,23 +1083,23 @@ class GitHubToolSet:
         ``lock_reason`` must be one of ``off-topic``, ``too heated``,
         ``resolved``, ``spam``.
         """
-        valid_reasons = {"off-topic", "too heated", "resolved", "spam"}
+        valid_reasons = {'off-topic', 'too heated', 'resolved', 'spam'}
         if lock_reason is not None and lock_reason not in valid_reasons:
-            raise ValueError("lock_reason must be off-topic, too heated, resolved, or spam")
+            raise ValueError('lock_reason must be off-topic, too heated, resolved, or spam')
         payload: dict[str, Any] = {}
         if lock_reason is not None:
-            payload["lock_reason"] = lock_reason
+            payload['lock_reason'] = lock_reason
         response = self._client.put(
-            f"/repos/{owner}/{repo}/issues/{issue_number}/lock",
+            f'/repos/{owner}/{repo}/issues/{issue_number}/lock',
             json=payload or None,
         )
-        return {"locked": True, "status": response.status}
+        return {'locked': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def unlock_issue(self, owner: str, repo: str, issue_number: int) -> dict[str, Any]:
         """Unlock conversation on an issue or PR."""
-        response = self._client.delete(f"/repos/{owner}/{repo}/issues/{issue_number}/lock")
-        return {"unlocked": True, "status": response.status}
+        response = self._client.delete(f'/repos/{owner}/{repo}/issues/{issue_number}/lock')
+        return {'unlocked': True, 'status': response.status}
 
     # MARK: - Pull request mutations & reviews
 
@@ -1124,17 +1124,17 @@ class GitHubToolSet:
         """
         owner_name, repo_name = self._resolve_repo(owner, repo)
         if not title or not head or not base:
-            raise ValueError("title, head, and base must be non-empty")
+            raise ValueError('title, head, and base must be non-empty')
         payload: dict[str, Any] = {
-            "title": title,
-            "head": head,
-            "base": base,
-            "draft": draft,
-            "maintainer_can_modify": maintainer_can_modify,
+            'title': title,
+            'head': head,
+            'base': base,
+            'draft': draft,
+            'maintainer_can_modify': maintainer_can_modify,
         }
         if body is not None:
-            payload["body"] = body
-        return self._client.post(f"/repos/{owner_name}/{repo_name}/pulls", json=payload).json()
+            payload['body'] = body
+        return self._client.post(f'/repos/{owner_name}/{repo_name}/pulls', json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_pull_request(
@@ -1149,9 +1149,9 @@ class GitHubToolSet:
         Returns the updated PR resource.
         """
         if not patch:
-            raise ValueError("patch must contain at least one field")
+            raise ValueError('patch must contain at least one field')
         return self._client.patch(
-            f"/repos/{owner}/{repo}/pulls/{pull_number}",
+            f'/repos/{owner}/{repo}/pulls/{pull_number}',
             json=patch,
         ).json()
 
@@ -1164,7 +1164,7 @@ class GitHubToolSet:
         *,
         commit_title: str | None = None,
         commit_message: str | None = None,
-        merge_method: str = "merge",
+        merge_method: str = 'merge',
     ) -> dict[str, Any]:
         """Merge a pull request. Destructive in effect — confirm with the user.
 
@@ -1174,15 +1174,15 @@ class GitHubToolSet:
         ``rebase``.
         """
         owner_name, repo_name, number = self._resolve_owner_repo_issue(owner, repo, pull_number)
-        if merge_method not in {"merge", "squash", "rebase"}:
-            raise ValueError("merge_method must be merge, squash, or rebase")
-        payload: dict[str, Any] = {"merge_method": merge_method}
+        if merge_method not in {'merge', 'squash', 'rebase'}:
+            raise ValueError('merge_method must be merge, squash, or rebase')
+        payload: dict[str, Any] = {'merge_method': merge_method}
         if commit_title is not None:
-            payload["commit_title"] = commit_title
+            payload['commit_title'] = commit_title
         if commit_message is not None:
-            payload["commit_message"] = commit_message
+            payload['commit_message'] = commit_message
         return self._client.put(
-            f"/repos/{owner_name}/{repo_name}/pulls/{number}/merge",
+            f'/repos/{owner_name}/{repo_name}/pulls/{number}/merge',
             json=payload,
         ).json()
 
@@ -1203,8 +1203,8 @@ class GitHubToolSet:
         ``changes``, and ``patch`` (for small files).
         """
         return self._client.get(
-            f"/repos/{owner}/{repo}/pulls/{pull_number}/files",
-            params={"per_page": per_page, "page": page},
+            f'/repos/{owner}/{repo}/pulls/{pull_number}/files',
+            params={'per_page': per_page, 'page': page},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -1223,8 +1223,8 @@ class GitHubToolSet:
         ``commit.message``, ``commit.author``, etc.
         """
         return self._client.get(
-            f"/repos/{owner}/{repo}/pulls/{pull_number}/commits",
-            params={"per_page": per_page, "page": page},
+            f'/repos/{owner}/{repo}/pulls/{pull_number}/commits',
+            params={'per_page': per_page, 'page': page},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -1243,8 +1243,8 @@ class GitHubToolSet:
         COMMENTED), ``user.login``, ``body``, and ``submitted_at``.
         """
         return self._client.get(
-            f"/repos/{owner}/{repo}/pulls/{pull_number}/reviews",
-            params={"per_page": per_page, "page": page},
+            f'/repos/{owner}/{repo}/pulls/{pull_number}/reviews',
+            params={'per_page': per_page, 'page': page},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -1264,19 +1264,19 @@ class GitHubToolSet:
         ``event`` must be ``APPROVE``, ``REQUEST_CHANGES``, ``COMMENT``,
         or ``PENDING`` (or omitted to leave the review pending).
         """
-        if event is not None and event not in {"APPROVE", "REQUEST_CHANGES", "COMMENT", "PENDING"}:
-            raise ValueError("event must be APPROVE, REQUEST_CHANGES, COMMENT, or PENDING")
+        if event is not None and event not in {'APPROVE', 'REQUEST_CHANGES', 'COMMENT', 'PENDING'}:
+            raise ValueError('event must be APPROVE, REQUEST_CHANGES, COMMENT, or PENDING')
         payload: dict[str, Any] = {}
         if body is not None:
-            payload["body"] = body
+            payload['body'] = body
         if event is not None:
-            payload["event"] = event
+            payload['event'] = event
         if comments is not None:
-            payload["comments"] = comments
+            payload['comments'] = comments
         if commit_id is not None:
-            payload["commit_id"] = commit_id
+            payload['commit_id'] = commit_id
         return self._client.post(
-            f"/repos/{owner}/{repo}/pulls/{pull_number}/reviews",
+            f'/repos/{owner}/{repo}/pulls/{pull_number}/reviews',
             json=payload,
         ).json()
 
@@ -1296,14 +1296,14 @@ class GitHubToolSet:
         ``team_reviewers``. At least one of the two is required.
         """
         if not reviewers and not team_reviewers:
-            raise ValueError("Provide at least one of reviewers or team_reviewers")
+            raise ValueError('Provide at least one of reviewers or team_reviewers')
         payload: dict[str, Any] = {}
         if reviewers:
-            payload["reviewers"] = list(reviewers)
+            payload['reviewers'] = list(reviewers)
         if team_reviewers:
-            payload["team_reviewers"] = list(team_reviewers)
+            payload['team_reviewers'] = list(team_reviewers)
         return self._client.post(
-            f"/repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers",
+            f'/repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers',
             json=payload,
         ).json()
 
@@ -1331,12 +1331,12 @@ class GitHubToolSet:
         """
         owner_name, repo_name = self._resolve_repo(owner, repo)
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
-        params: dict[str, Any] = {"per_page": per_page, "page": page}
+            raise ValueError('per_page must be between 1 and 100')
+        params: dict[str, Any] = {'per_page': per_page, 'page': page}
         if protected is not None:
-            params["protected"] = str(protected).lower()
+            params['protected'] = str(protected).lower()
         raw: _JsonResponse = self._client.get(
-            f"/repos/{owner_name}/{repo_name}/branches", params=params
+            f'/repos/{owner_name}/{repo_name}/branches', params=params
         ).json()
         if not include_metadata or not isinstance(raw, list):
             return raw
@@ -1345,7 +1345,7 @@ class GitHubToolSet:
             for index, item in enumerate(raw, start=1)
             if isinstance(item, dict)
         ]
-        return {"branches": summaries, "count": len(summaries), "page": page}
+        return {'branches': summaries, 'count': len(summaries), 'page': page}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_branch(self, owner: str, repo: str, branch: str) -> dict[str, Any]:
@@ -1354,8 +1354,8 @@ class GitHubToolSet:
         Returns the raw branch resource with ``commit`` and ``protected``.
         """
         if not branch:
-            raise ValueError("branch must be a non-empty string")
-        return self._client.get(f"/repos/{owner}/{repo}/branches/{branch}").json()
+            raise ValueError('branch must be a non-empty string')
+        return self._client.get(f'/repos/{owner}/{repo}/branches/{branch}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_branch(
@@ -1371,10 +1371,10 @@ class GitHubToolSet:
         Returns the new git ref resource.
         """
         if not branch or not sha:
-            raise ValueError("branch and sha must be non-empty")
+            raise ValueError('branch and sha must be non-empty')
         return self._client.post(
-            f"/repos/{owner}/{repo}/git/refs",
-            json={"ref": f"refs/heads/{branch}", "sha": sha},
+            f'/repos/{owner}/{repo}/git/refs',
+            json={'ref': f'refs/heads/{branch}', 'sha': sha},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -1400,8 +1400,8 @@ class GitHubToolSet:
         else:
             owner_name, repo_name = self._resolve_repo(owner, repo)
             branch_name = self._resolve_branch_name(branch)
-        self._client.delete(f"/repos/{owner_name}/{repo_name}/git/refs/heads/{branch_name}")
-        return {"branch": branch_name, "deleted": True}
+        self._client.delete(f'/repos/{owner_name}/{repo_name}/git/refs/heads/{branch_name}')
+        return {'branch': branch_name, 'deleted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_COMMITS_OUTPUT)
@@ -1430,19 +1430,19 @@ class GitHubToolSet:
         """
         owner_name, repo_name = self._resolve_repo(owner, repo)
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
-        params: dict[str, Any] = {"per_page": per_page, "page": page}
+            raise ValueError('per_page must be between 1 and 100')
+        params: dict[str, Any] = {'per_page': per_page, 'page': page}
         for name, value in (
-            ("sha", sha),
-            ("path", path),
-            ("author", author),
-            ("since", since),
-            ("until", until),
+            ('sha', sha),
+            ('path', path),
+            ('author', author),
+            ('since', since),
+            ('until', until),
         ):
             if value is not None:
                 params[name] = value
         raw: _JsonResponse = self._client.get(
-            f"/repos/{owner_name}/{repo_name}/commits", params=params
+            f'/repos/{owner_name}/{repo_name}/commits', params=params
         ).json()
         if not include_metadata or not isinstance(raw, list):
             return raw
@@ -1451,7 +1451,7 @@ class GitHubToolSet:
             for index, item in enumerate(raw, start=1)
             if isinstance(item, dict)
         ]
-        return {"commits": summaries, "count": len(summaries), "page": page}
+        return {'commits': summaries, 'count': len(summaries), 'page': page}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_commit(self, owner: str, repo: str, ref: str) -> dict[str, Any]:
@@ -1460,8 +1460,8 @@ class GitHubToolSet:
         Returns the raw commit resource with ``files`` and ``stats``.
         """
         if not ref:
-            raise ValueError("ref must be a non-empty string")
-        return self._client.get(f"/repos/{owner}/{repo}/commits/{ref}").json()
+            raise ValueError('ref must be a non-empty string')
+        return self._client.get(f'/repos/{owner}/{repo}/commits/{ref}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def compare_commits(
@@ -1477,8 +1477,8 @@ class GitHubToolSet:
         ``status``, ``commits``, ``files``.
         """
         if not base or not head:
-            raise ValueError("base and head must be non-empty")
-        return self._client.get(f"/repos/{owner}/{repo}/compare/{base}...{head}").json()
+            raise ValueError('base and head must be non-empty')
+        return self._client.get(f'/repos/{owner}/{repo}/compare/{base}...{head}').json()
 
     # MARK: - Repository contents
 
@@ -1503,18 +1503,18 @@ class GitHubToolSet:
         blob SHA returned by :meth:`get_file_contents`.
         """
         if not path or not message or not content_base64:
-            raise ValueError("path, message, and content_base64 must be non-empty")
-        payload: dict[str, Any] = {"message": message, "content": content_base64}
+            raise ValueError('path, message, and content_base64 must be non-empty')
+        payload: dict[str, Any] = {'message': message, 'content': content_base64}
         if branch is not None:
-            payload["branch"] = branch
+            payload['branch'] = branch
         if sha is not None:
-            payload["sha"] = sha
+            payload['sha'] = sha
         if committer is not None:
-            payload["committer"] = committer
+            payload['committer'] = committer
         if author is not None:
-            payload["author"] = author
+            payload['author'] = author
         return self._client.put(
-            f"/repos/{owner}/{repo}/contents/{path}",
+            f'/repos/{owner}/{repo}/contents/{path}',
             json=payload,
         ).json()
 
@@ -1535,12 +1535,12 @@ class GitHubToolSet:
         :meth:`get_file_contents`.
         """
         if not path or not message or not sha:
-            raise ValueError("path, message, and sha must be non-empty")
-        payload: dict[str, Any] = {"message": message, "sha": sha}
+            raise ValueError('path, message, and sha must be non-empty')
+        payload: dict[str, Any] = {'message': message, 'sha': sha}
         if branch is not None:
-            payload["branch"] = branch
+            payload['branch'] = branch
         return self._client.delete(
-            f"/repos/{owner}/{repo}/contents/{path}",
+            f'/repos/{owner}/{repo}/contents/{path}',
             json=payload,
         ).json()
 
@@ -1550,8 +1550,8 @@ class GitHubToolSet:
 
         Returns the contents resource (``content`` is base64-encoded).
         """
-        params = {"ref": ref} if ref else None
-        return self._client.get(f"/repos/{owner}/{repo}/readme", params=params).json()
+        params = {'ref': ref} if ref else None
+        return self._client.get(f'/repos/{owner}/{repo}/readme', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_tags(
@@ -1568,8 +1568,8 @@ class GitHubToolSet:
         ``zipball_url``, etc.
         """
         return self._client.get(
-            f"/repos/{owner}/{repo}/tags",
-            params={"per_page": per_page, "page": page},
+            f'/repos/{owner}/{repo}/tags',
+            params={'per_page': per_page, 'page': page},
         ).json()
 
     # MARK: - Releases
@@ -1596,10 +1596,10 @@ class GitHubToolSet:
         """
         owner_name, repo_name = self._resolve_repo(owner, repo)
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         raw: _JsonResponse = self._client.get(
-            f"/repos/{owner_name}/{repo_name}/releases",
-            params={"per_page": per_page, "page": page},
+            f'/repos/{owner_name}/{repo_name}/releases',
+            params={'per_page': per_page, 'page': page},
         ).json()
         if not include_metadata or not isinstance(raw, list):
             return raw
@@ -1608,7 +1608,7 @@ class GitHubToolSet:
             for index, item in enumerate(raw, start=1)
             if isinstance(item, dict)
         ]
-        return {"releases": summaries, "count": len(summaries), "page": page}
+        return {'releases': summaries, 'count': len(summaries), 'page': page}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_release(self, owner: str, repo: str, release_id: int) -> dict[str, Any]:
@@ -1617,12 +1617,12 @@ class GitHubToolSet:
         ``release_id`` is the opaque GitHub release ID from
         :meth:`list_releases` (with ``include_ids=True``).
         """
-        return self._client.get(f"/repos/{owner}/{repo}/releases/{release_id}").json()
+        return self._client.get(f'/repos/{owner}/{repo}/releases/{release_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_latest_release(self, owner: str, repo: str) -> dict[str, Any]:
         """Return the most recent published, non-draft release."""
-        return self._client.get(f"/repos/{owner}/{repo}/releases/latest").json()
+        return self._client.get(f'/repos/{owner}/{repo}/releases/latest').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_release(
@@ -1643,19 +1643,19 @@ class GitHubToolSet:
         Returns the new release resource.
         """
         if not tag_name:
-            raise ValueError("tag_name must be a non-empty string")
+            raise ValueError('tag_name must be a non-empty string')
         payload: dict[str, Any] = {
-            "tag_name": tag_name,
-            "draft": draft,
-            "prerelease": prerelease,
+            'tag_name': tag_name,
+            'draft': draft,
+            'prerelease': prerelease,
         }
         if target_commitish is not None:
-            payload["target_commitish"] = target_commitish
+            payload['target_commitish'] = target_commitish
         if name is not None:
-            payload["name"] = name
+            payload['name'] = name
         if body is not None:
-            payload["body"] = body
-        return self._client.post(f"/repos/{owner}/{repo}/releases", json=payload).json()
+            payload['body'] = body
+        return self._client.post(f'/repos/{owner}/{repo}/releases', json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_release(
@@ -1667,17 +1667,17 @@ class GitHubToolSet:
     ) -> dict[str, Any]:
         """Patch an existing release."""
         if not patch:
-            raise ValueError("patch must contain at least one field")
+            raise ValueError('patch must contain at least one field')
         return self._client.patch(
-            f"/repos/{owner}/{repo}/releases/{release_id}",
+            f'/repos/{owner}/{repo}/releases/{release_id}',
             json=patch,
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_release(self, owner: str, repo: str, release_id: int) -> dict[str, Any]:
         """Delete a release. Destructive — confirm with the user."""
-        self._client.delete(f"/repos/{owner}/{repo}/releases/{release_id}")
-        return {"id": release_id, "deleted": True}
+        self._client.delete(f'/repos/{owner}/{repo}/releases/{release_id}')
+        return {'id': release_id, 'deleted': True}
 
     # MARK: - Workflows & checks
 
@@ -1707,23 +1707,23 @@ class GitHubToolSet:
         """
         owner_name, repo_name = self._resolve_repo(owner, repo)
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         raw: _JsonResponse = self._client.get(
-            f"/repos/{owner_name}/{repo_name}/actions/workflows",
-            params={"per_page": per_page, "page": page},
+            f'/repos/{owner_name}/{repo_name}/actions/workflows',
+            params={'per_page': per_page, 'page': page},
         ).json()
         if not include_metadata or not isinstance(raw, dict):
-            return cast("dict[str, Any]", raw)
-        workflows: list[Any] = raw.get("workflows", [])
+            return cast('dict[str, Any]', raw)
+        workflows: list[Any] = raw.get('workflows', [])
         summaries = [
             self._workflow_summary(self._as_dict(item), index=index, include_ids=include_ids)
             for index, item in enumerate(workflows, start=1)
             if isinstance(item, dict)
         ]
         return {
-            "workflows": summaries,
-            "total_count": raw.get("total_count", len(summaries)),
-            "page": page,
+            'workflows': summaries,
+            'total_count': raw.get('total_count', len(summaries)),
+            'page': page,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -1753,29 +1753,29 @@ class GitHubToolSet:
         """
         owner_name, repo_name = self._resolve_repo(owner, repo)
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         suffix = (
-            f"/actions/workflows/{workflow_id}/runs" if workflow_id is not None else "/actions/runs"
+            f'/actions/workflows/{workflow_id}/runs' if workflow_id is not None else '/actions/runs'
         )
-        params: dict[str, Any] = {"per_page": per_page, "page": page}
-        for name, value in (("status", status), ("branch", branch), ("event", event)):
+        params: dict[str, Any] = {'per_page': per_page, 'page': page}
+        for name, value in (('status', status), ('branch', branch), ('event', event)):
             if value is not None:
                 params[name] = value
         raw: _JsonResponse = self._client.get(
-            f"/repos/{owner_name}/{repo_name}{suffix}", params=params
+            f'/repos/{owner_name}/{repo_name}{suffix}', params=params
         ).json()
         if not include_metadata or not isinstance(raw, dict):
-            return cast("dict[str, Any]", raw)
-        runs: list[Any] = raw.get("workflow_runs", [])
+            return cast('dict[str, Any]', raw)
+        runs: list[Any] = raw.get('workflow_runs', [])
         summaries = [
             self._run_summary(self._as_dict(item), index=index, include_ids=include_ids)
             for index, item in enumerate(runs, start=1)
             if isinstance(item, dict)
         ]
         return {
-            "workflow_runs": summaries,
-            "total_count": raw.get("total_count", len(summaries)),
-            "page": page,
+            'workflow_runs': summaries,
+            'total_count': raw.get('total_count', len(summaries)),
+            'page': page,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -1784,19 +1784,19 @@ class GitHubToolSet:
 
         Returns the raw run resource.
         """
-        return self._client.get(f"/repos/{owner}/{repo}/actions/runs/{run_id}").json()
+        return self._client.get(f'/repos/{owner}/{repo}/actions/runs/{run_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def cancel_workflow_run(self, owner: str, repo: str, run_id: int) -> dict[str, Any]:
         """Cancel a running workflow."""
-        response = self._client.post(f"/repos/{owner}/{repo}/actions/runs/{run_id}/cancel")
-        return {"cancelled": True, "status": response.status}
+        response = self._client.post(f'/repos/{owner}/{repo}/actions/runs/{run_id}/cancel')
+        return {'cancelled': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def rerun_workflow(self, owner: str, repo: str, run_id: int) -> dict[str, Any]:
         """Re-run a workflow run."""
-        response = self._client.post(f"/repos/{owner}/{repo}/actions/runs/{run_id}/rerun")
-        return {"rerun": True, "status": response.status}
+        response = self._client.post(f'/repos/{owner}/{repo}/actions/runs/{run_id}/rerun')
+        return {'rerun': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def dispatch_workflow(
@@ -1814,15 +1814,15 @@ class GitHubToolSet:
         ``ref`` is a branch name, tag, or SHA.
         """
         if not ref:
-            raise ValueError("ref must be a non-empty string")
-        payload: dict[str, Any] = {"ref": ref}
+            raise ValueError('ref must be a non-empty string')
+        payload: dict[str, Any] = {'ref': ref}
         if inputs is not None:
-            payload["inputs"] = inputs
+            payload['inputs'] = inputs
         response = self._client.post(
-            f"/repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches",
+            f'/repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches',
             json=payload,
         )
-        return {"dispatched": True, "status": response.status}
+        return {'dispatched': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_check_runs(
@@ -1839,10 +1839,10 @@ class GitHubToolSet:
         Returns the raw envelope ``{"total_count", "check_runs"}``.
         """
         if not ref:
-            raise ValueError("ref must be a non-empty string")
+            raise ValueError('ref must be a non-empty string')
         return self._client.get(
-            f"/repos/{owner}/{repo}/commits/{ref}/check-runs",
-            params={"per_page": per_page, "page": page},
+            f'/repos/{owner}/{repo}/commits/{ref}/check-runs',
+            params={'per_page': per_page, 'page': page},
         ).json()
 
     # MARK: - Collaborators, orgs, teams, forks
@@ -1861,11 +1861,11 @@ class GitHubToolSet:
 
         Returns raw user resources — ``login`` is the stable identifier.
         """
-        params: dict[str, Any] = {"per_page": per_page, "page": page}
+        params: dict[str, Any] = {'per_page': per_page, 'page': page}
         if affiliation is not None:
-            params["affiliation"] = affiliation
+            params['affiliation'] = affiliation
         return self._client.get(
-            f"/repos/{owner}/{repo}/collaborators",
+            f'/repos/{owner}/{repo}/collaborators',
             params=params,
         ).json()
 
@@ -1876,7 +1876,7 @@ class GitHubToolSet:
         repo: str,
         username: str,
         *,
-        permission: str = "push",
+        permission: str = 'push',
     ) -> dict[str, Any]:
         """Invite a collaborator to a repository.
 
@@ -1884,12 +1884,12 @@ class GitHubToolSet:
         ``maintain``, ``admin``.
         """
         if not username:
-            raise ValueError("username must be a non-empty string")
-        if permission not in {"pull", "triage", "push", "maintain", "admin"}:
-            raise ValueError("permission must be pull, triage, push, maintain, or admin")
+            raise ValueError('username must be a non-empty string')
+        if permission not in {'pull', 'triage', 'push', 'maintain', 'admin'}:
+            raise ValueError('permission must be pull, triage, push, maintain, or admin')
         return self._client.put(
-            f"/repos/{owner}/{repo}/collaborators/{username}",
-            json={"permission": permission},
+            f'/repos/{owner}/{repo}/collaborators/{username}',
+            json={'permission': permission},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -1904,16 +1904,16 @@ class GitHubToolSet:
         Returns ``{"username": ..., "removed": True}``.
         """
         if not username:
-            raise ValueError("username must be a non-empty string")
-        self._client.delete(f"/repos/{owner}/{repo}/collaborators/{username}")
-        return {"username": username, "removed": True}
+            raise ValueError('username must be a non-empty string')
+        self._client.delete(f'/repos/{owner}/{repo}/collaborators/{username}')
+        return {'username': username, 'removed': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_organization_repos(
         self,
         org: str,
         *,
-        type: str = "all",
+        type: str = 'all',
         per_page: int = 10,
         page: int = 1,
         include_ids: bool = False,
@@ -1926,12 +1926,12 @@ class GitHubToolSet:
         provider list.
         """
         if not org:
-            raise ValueError("org must be a non-empty string")
+            raise ValueError('org must be a non-empty string')
         if per_page < 1 or per_page > 100:
-            raise ValueError("per_page must be between 1 and 100")
+            raise ValueError('per_page must be between 1 and 100')
         raw: _JsonResponse = self._client.get(
-            f"/orgs/{org}/repos",
-            params={"type": type, "per_page": per_page, "page": page},
+            f'/orgs/{org}/repos',
+            params={'type': type, 'per_page': per_page, 'page': page},
         ).json()
         if not include_metadata or not isinstance(raw, list):
             return raw
@@ -1940,7 +1940,7 @@ class GitHubToolSet:
             for index, item in enumerate(raw, start=1)
             if isinstance(item, dict)
         ]
-        return {"repositories": summaries, "count": len(summaries), "page": page}
+        return {'repositories': summaries, 'count': len(summaries), 'page': page}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_organization_members(
@@ -1955,10 +1955,10 @@ class GitHubToolSet:
         Returns raw user resources — ``login`` is the stable identifier.
         """
         if not org:
-            raise ValueError("org must be a non-empty string")
+            raise ValueError('org must be a non-empty string')
         return self._client.get(
-            f"/orgs/{org}/members",
-            params={"per_page": per_page, "page": page},
+            f'/orgs/{org}/members',
+            params={'per_page': per_page, 'page': page},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -1974,10 +1974,10 @@ class GitHubToolSet:
         Returns raw team resources — ``slug`` is the stable identifier.
         """
         if not org:
-            raise ValueError("org must be a non-empty string")
+            raise ValueError('org must be a non-empty string')
         return self._client.get(
-            f"/orgs/{org}/teams",
-            params={"per_page": per_page, "page": page},
+            f'/orgs/{org}/teams',
+            params={'per_page': per_page, 'page': page},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -1986,7 +1986,7 @@ class GitHubToolSet:
         owner: str,
         repo: str,
         *,
-        sort: str = "newest",
+        sort: str = 'newest',
         per_page: int = 30,
         page: int = 1,
     ) -> list[dict[str, Any]]:
@@ -1995,8 +1995,8 @@ class GitHubToolSet:
         Returns raw repository resources for each fork.
         """
         return self._client.get(
-            f"/repos/{owner}/{repo}/forks",
-            params={"sort": sort, "per_page": per_page, "page": page},
+            f'/repos/{owner}/{repo}/forks',
+            params={'sort': sort, 'per_page': per_page, 'page': page},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -2014,11 +2014,11 @@ class GitHubToolSet:
         """
         payload: dict[str, Any] = {}
         if organization is not None:
-            payload["organization"] = organization
+            payload['organization'] = organization
         if name is not None:
-            payload["name"] = name
+            payload['name'] = name
         return self._client.post(
-            f"/repos/{owner}/{repo}/forks",
+            f'/repos/{owner}/{repo}/forks',
             json=payload or None,
         ).json()
 
@@ -2036,14 +2036,14 @@ class GitHubToolSet:
         Returns raw user resources — ``login`` is the stable identifier.
         """
         return self._client.get(
-            f"/repos/{owner}/{repo}/stargazers",
-            params={"per_page": per_page, "page": page},
+            f'/repos/{owner}/{repo}/stargazers',
+            params={'per_page': per_page, 'page': page},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_rate_limit(self) -> dict[str, Any]:
         """Return GitHub API rate-limit counters for the current token."""
-        return self._client.get("/rate_limit").json()
+        return self._client.get('/rate_limit').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_user(self, username: str) -> dict[str, Any]:
@@ -2052,8 +2052,8 @@ class GitHubToolSet:
         Returns the raw user resource.
         """
         if not username:
-            raise ValueError("username must be a non-empty string")
-        return self._client.get(f"/users/{username}").json()
+            raise ValueError('username must be a non-empty string')
+        return self._client.get(f'/users/{username}').json()
 
     # MARK: - Internal helpers
 
@@ -2076,7 +2076,7 @@ class GitHubToolSet:
             isinstance(owner, dict)
             and repo is None
             and issue_number is None
-            and ("number" in owner or "issue_number" in owner)
+            and ('number' in owner or 'issue_number' in owner)
         ):
             number = self._resolve_issue_number(owner)
             owner_name, repo_name = self._resolve_repo(owner)
@@ -2084,7 +2084,7 @@ class GitHubToolSet:
         # owner=str-with-slash, repo=int
         if (
             isinstance(owner, str)
-            and "/" in owner
+            and '/' in owner
             and isinstance(repo, int)
             and issue_number is None
         ):
@@ -2098,12 +2098,12 @@ class GitHubToolSet:
         if isinstance(owner, str) and isinstance(repo, str) and isinstance(issue_number, int):
             return owner, repo, issue_number
         raise ValueError(
-            "provide (owner, repo, issue_number), (full_name, number), or an issue dict"
+            'provide (owner, repo, issue_number), (full_name, number), or an issue dict'
         )
 
     @staticmethod
     def _resolve_repo_from_full_name(full_name: str) -> tuple[str, str]:
-        if "/" not in full_name:
+        if '/' not in full_name:
             raise ValueError("full_name must be 'owner/repo'")
-        owner, repo = full_name.split("/", 1)
+        owner, repo = full_name.split('/', 1)
         return owner, repo

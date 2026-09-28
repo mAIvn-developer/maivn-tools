@@ -29,37 +29,37 @@ def _extract_dropbox_path(candidate: Any) -> str:
     """
     if isinstance(candidate, str):
         if not candidate:
-            raise ValueError("path must be a non-empty string")
+            raise ValueError('path must be a non-empty string')
         return candidate
     if isinstance(candidate, dict):
         mapping = cast(dict[str, Any], candidate)
-        for key in ("path", "path_lower", "path_display", "id"):
+        for key in ('path', 'path_lower', 'path_display', 'id'):
             value: Any = mapping.get(key)
             if isinstance(value, str) and value:
                 return value
         # search_v2 returns matches with metadata nested
-        metadata: Any = mapping.get("metadata")
+        metadata: Any = mapping.get('metadata')
         if isinstance(metadata, dict):
             try:
                 return _extract_dropbox_path(metadata)
             except ValueError:
                 pass
-            inner: Any = cast(dict[str, Any], metadata).get("metadata")
+            inner: Any = cast(dict[str, Any], metadata).get('metadata')
             if isinstance(inner, dict):
                 try:
                     return _extract_dropbox_path(inner)
                 except ValueError:
                     pass
-        raise ValueError("dict candidate has no Dropbox path")
+        raise ValueError('dict candidate has no Dropbox path')
     if isinstance(candidate, (list, tuple)):
-        sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+        sequence = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in sequence:
             try:
                 return _extract_dropbox_path(item)
             except ValueError:
                 continue
-        raise ValueError("no usable Dropbox path in candidate sequence")
-    raise ValueError("path must be a string or a Dropbox entry dict")
+        raise ValueError('no usable Dropbox path in candidate sequence')
+    raise ValueError('path must be a string or a Dropbox entry dict')
 
 
 def _dropbox_entry_summary(
@@ -68,20 +68,20 @@ def _dropbox_entry_summary(
     index: int,
     include_ids: bool,
 ) -> dict[str, Any]:
-    tag = entry.get(".tag") or ""
-    ref_prefix = "folder" if tag == "folder" else ("file" if tag == "file" else "entry")
+    tag = entry.get('.tag') or ''
+    ref_prefix = 'folder' if tag == 'folder' else ('file' if tag == 'file' else 'entry')
     summary: dict[str, Any] = {
-        f"{ref_prefix}_ref": f"{ref_prefix}_{index}",
-        "name": entry.get("name", ""),
-        "kind": tag,
-        "path": entry.get("path_display") or entry.get("path_lower") or "",
-        "size": entry.get("size", 0),
-        "modified_time": entry.get("server_modified", "") or entry.get("client_modified", ""),
+        f'{ref_prefix}_ref': f'{ref_prefix}_{index}',
+        'name': entry.get('name', ''),
+        'kind': tag,
+        'path': entry.get('path_display') or entry.get('path_lower') or '',
+        'size': entry.get('size', 0),
+        'modified_time': entry.get('server_modified', '') or entry.get('client_modified', ''),
     }
-    if include_ids and entry.get("id"):
-        summary["id"] = entry["id"]
-        if entry.get("rev"):
-            summary["rev"] = entry["rev"]
+    if include_ids and entry.get('id'):
+        summary['id'] = entry['id']
+        if entry.get('rev'):
+            summary['rev'] = entry['rev']
     return summary
 
 
@@ -89,38 +89,38 @@ def _summarize_dropbox_entries(
     payload: dict[str, Any],
     *,
     include_ids: bool,
-    entries_key: str = "entries",
+    entries_key: str = 'entries',
 ) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     raw_entries: Any = payload.get(entries_key, []) or []
     if not isinstance(raw_entries, (list, tuple)):
         raw_entries = []
-    raw_sequence = cast("list[Any] | tuple[Any, ...]", raw_entries)
+    raw_sequence = cast('list[Any] | tuple[Any, ...]', raw_entries)
     for index, raw in enumerate(raw_sequence, start=1):
         if not isinstance(raw, dict):
             continue
         entry = cast(dict[str, Any], raw)
         # search_v2 results wrap entries
-        nested_meta: Any = entry.get("metadata")
-        if "metadata" in entry and isinstance(nested_meta, dict):
+        nested_meta: Any = entry.get('metadata')
+        if 'metadata' in entry and isinstance(nested_meta, dict):
             nested = cast(dict[str, Any], nested_meta)
-            inner_meta: Any = nested.get("metadata")
-            if "metadata" in nested and isinstance(inner_meta, dict):
+            inner_meta: Any = nested.get('metadata')
+            if 'metadata' in nested and isinstance(inner_meta, dict):
                 inner = cast(dict[str, Any], inner_meta)
                 items.append(_dropbox_entry_summary(inner, index=index, include_ids=include_ids))
             else:
                 items.append(_dropbox_entry_summary(nested, index=index, include_ids=include_ids))
         else:
             items.append(_dropbox_entry_summary(entry, index=index, include_ids=include_ids))
-    out: dict[str, Any] = {"items": items}
-    if payload.get("has_more"):
-        out["has_more"] = payload["has_more"]
-    if payload.get("cursor"):
-        out["cursor"] = payload["cursor"]
+    out: dict[str, Any] = {'items': items}
+    if payload.get('has_more'):
+        out['has_more'] = payload['has_more']
+    if payload.get('cursor'):
+        out['cursor'] = payload['cursor']
     return out
 
 
-@toolset(prefix="dropbox")
+@toolset(prefix='dropbox')
 class DropboxToolSet:
     """A connector for the Dropbox API v2.
 
@@ -131,16 +131,16 @@ class DropboxToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="dropbox",
-        display_name="Dropbox",
-        version="0.1.0",
-        description="Manage Dropbox files, folders, sharing links, and file requests.",
+        name='dropbox',
+        display_name='Dropbox',
+        version='0.1.0',
+        description='Manage Dropbox files, folders, sharing links, and file requests.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE, AuthMode.BEARER),
         scopes={
-            "files.metadata.read": "Read file and folder metadata.",
-            "files.content.read": "Download files.",
-            "files.content.write": "Create and update files.",
-            "sharing.write": "Manage shared links and team folders.",
+            'files.metadata.read': 'Read file and folder metadata.',
+            'files.content.read': 'Download files.',
+            'files.content.write': 'Create and update files.',
+            'sharing.write': 'Manage shared links and team folders.',
         },
         capabilities=frozenset(
             {
@@ -150,27 +150,27 @@ class DropboxToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://www.dropbox.com/developers/documentation/http/documentation",
-        homepage_url="https://www.dropbox.com/",
-        tags=("storage", "files"),
+        documentation_url='https://www.dropbox.com/developers/documentation/http/documentation',
+        homepage_url='https://www.dropbox.com/',
+        tags=('storage', 'files'),
     )
 
     def __init__(
         self,
         *,
         token: str,
-        base_url: str = "https://api.dropboxapi.com",
+        base_url: str = 'https://api.dropboxapi.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not token:
-            raise ValueError("token is required")
+            raise ValueError('token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -191,7 +191,7 @@ class DropboxToolSet:
         Returns the Dropbox account resource (``account_id``, ``name``,
         ``email``).
         """
-        return self._rpc("/2/users/get_current_account")
+        return self._rpc('/2/users/get_current_account')
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_space_usage(self) -> dict[str, Any]:
@@ -199,7 +199,7 @@ class DropboxToolSet:
 
         Returns ``{"used": <bytes>, "allocation": {...}}``.
         """
-        return self._rpc("/2/users/get_space_usage")
+        return self._rpc('/2/users/get_space_usage')
 
     # MARK: - Files (list and metadata)
 
@@ -207,7 +207,7 @@ class DropboxToolSet:
     @tool_output(LIST_FOLDER_OUTPUT)
     def list_folder(
         self,
-        path: Any = "",
+        path: Any = '',
         *,
         recursive: bool = False,
         include_deleted: bool = False,
@@ -230,13 +230,13 @@ class DropboxToolSet:
         if isinstance(path, (dict, list, tuple)):
             path = _extract_dropbox_path(path)
         payload: dict[str, Any] = {
-            "path": path,
-            "recursive": recursive,
-            "include_deleted": include_deleted,
+            'path': path,
+            'recursive': recursive,
+            'include_deleted': include_deleted,
         }
         if limit is not None:
-            payload["limit"] = limit
-        raw = self._rpc("/2/files/list_folder", payload)
+            payload['limit'] = limit
+        raw = self._rpc('/2/files/list_folder', payload)
         if not include_metadata:
             return raw
         return _summarize_dropbox_entries(raw, include_ids=include_ids)
@@ -256,8 +256,8 @@ class DropboxToolSet:
         as ``list_folder``.
         """
         if not cursor:
-            raise ValueError("cursor must be a non-empty string")
-        raw = self._rpc("/2/files/list_folder/continue", {"cursor": cursor})
+            raise ValueError('cursor must be a non-empty string')
+        raw = self._rpc('/2/files/list_folder/continue', {'cursor': cursor})
         if not include_metadata:
             return raw
         return _summarize_dropbox_entries(raw, include_ids=include_ids)
@@ -276,8 +276,8 @@ class DropboxToolSet:
         """
         path = _extract_dropbox_path(path)
         return self._rpc(
-            "/2/files/get_metadata",
-            {"path": path, "include_deleted": include_deleted},
+            '/2/files/get_metadata',
+            {'path': path, 'include_deleted': include_deleted},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -300,16 +300,16 @@ class DropboxToolSet:
         provider response.
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
+            raise ValueError('query must be a non-empty string')
         if max_results < 1 or max_results > 1000:
-            raise ValueError("max_results must be between 1 and 1000")
-        payload: dict[str, Any] = {"query": query, "options": {"max_results": max_results}}
+            raise ValueError('max_results must be between 1 and 1000')
+        payload: dict[str, Any] = {'query': query, 'options': {'max_results': max_results}}
         if path is not None:
-            payload["options"]["path"] = path
-        raw = self._rpc("/2/files/search_v2", payload)
+            payload['options']['path'] = path
+        raw = self._rpc('/2/files/search_v2', payload)
         if not include_metadata:
             return raw
-        return _summarize_dropbox_entries(raw, include_ids=include_ids, entries_key="matches")
+        return _summarize_dropbox_entries(raw, include_ids=include_ids, entries_key='matches')
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_temporary_link(self, path: Any) -> dict[str, Any]:
@@ -318,7 +318,7 @@ class DropboxToolSet:
         Accepts a Dropbox path or a file dict.
         """
         path = _extract_dropbox_path(path)
-        return self._rpc("/2/files/get_temporary_link", {"path": path})
+        return self._rpc('/2/files/get_temporary_link', {'path': path})
 
     # MARK: - Files (mutations)
 
@@ -330,10 +330,10 @@ class DropboxToolSet:
         Dropbox suffix the name if it already exists.
         """
         if not path:
-            raise ValueError("path must be a non-empty string")
+            raise ValueError('path must be a non-empty string')
         return self._rpc(
-            "/2/files/create_folder_v2",
-            {"path": path, "autorename": autorename},
+            '/2/files/create_folder_v2',
+            {'path': path, 'autorename': autorename},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -351,14 +351,14 @@ class DropboxToolSet:
         """
         from_path = _extract_dropbox_path(from_path)
         if not to_path:
-            raise ValueError("to_path must be non-empty")
+            raise ValueError('to_path must be non-empty')
         return self._rpc(
-            "/2/files/move_v2",
+            '/2/files/move_v2',
             {
-                "from_path": from_path,
-                "to_path": to_path,
-                "autorename": autorename,
-                "allow_shared_folder": allow_shared_folder,
+                'from_path': from_path,
+                'to_path': to_path,
+                'autorename': autorename,
+                'allow_shared_folder': allow_shared_folder,
             },
         )
 
@@ -376,10 +376,10 @@ class DropboxToolSet:
         """
         from_path = _extract_dropbox_path(from_path)
         if not to_path:
-            raise ValueError("to_path must be non-empty")
+            raise ValueError('to_path must be non-empty')
         return self._rpc(
-            "/2/files/copy_v2",
-            {"from_path": from_path, "to_path": to_path, "autorename": autorename},
+            '/2/files/copy_v2',
+            {'from_path': from_path, 'to_path': to_path, 'autorename': autorename},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -390,7 +390,7 @@ class DropboxToolSet:
         confirm with the user first.
         """
         path = _extract_dropbox_path(path)
-        return self._rpc("/2/files/delete_v2", {"path": path})
+        return self._rpc('/2/files/delete_v2', {'path': path})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def restore(self, *, path: str, rev: str) -> dict[str, Any]:
@@ -399,8 +399,8 @@ class DropboxToolSet:
         ``rev`` is the revision id from ``list_revisions``.
         """
         if not path or not rev:
-            raise ValueError("path and rev must be non-empty")
-        return self._rpc("/2/files/restore", {"path": path, "rev": rev})
+            raise ValueError('path and rev must be non-empty')
+        return self._rpc('/2/files/restore', {'path': path, 'rev': rev})
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_revisions(self, path: Any, *, limit: int = 10) -> dict[str, Any]:
@@ -410,8 +410,8 @@ class DropboxToolSet:
         """
         path = _extract_dropbox_path(path)
         return self._rpc(
-            "/2/files/list_revisions",
-            {"path": path, "limit": limit, "mode": "path"},
+            '/2/files/list_revisions',
+            {'path': path, 'limit': limit, 'mode': 'path'},
         )
 
     # MARK: - Sharing
@@ -433,15 +433,15 @@ class DropboxToolSet:
         path = _extract_dropbox_path(path)
         settings: dict[str, Any] = {}
         if require_password:
-            settings["require_password"] = True
+            settings['require_password'] = True
         if link_password is not None:
-            settings["link_password"] = link_password
+            settings['link_password'] = link_password
         if audience is not None:
-            settings["audience"] = audience
-        payload: dict[str, Any] = {"path": path}
+            settings['audience'] = audience
+        payload: dict[str, Any] = {'path': path}
         if settings:
-            payload["settings"] = settings
-        return self._rpc("/2/sharing/create_shared_link_with_settings", payload)
+            payload['settings'] = settings
+        return self._rpc('/2/sharing/create_shared_link_with_settings', payload)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_shared_links(
@@ -456,25 +456,25 @@ class DropboxToolSet:
         """
         payload: dict[str, Any] = {}
         if path is not None:
-            payload["path"] = path
+            payload['path'] = path
         if cursor is not None:
-            payload["cursor"] = cursor
-        return self._rpc("/2/sharing/list_shared_links", payload)
+            payload['cursor'] = cursor
+        return self._rpc('/2/sharing/list_shared_links', payload)
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def revoke_shared_link(self, url: str) -> dict[str, Any]:
         """Revoke a shared link. Destructive — confirm with the user."""
         if not url:
-            raise ValueError("url must be a non-empty string")
-        self._rpc("/2/sharing/revoke_shared_link", {"url": url})
-        return {"url": url, "revoked": True}
+            raise ValueError('url must be a non-empty string')
+        self._rpc('/2/sharing/revoke_shared_link', {'url': url})
+        return {'url': url, 'revoked': True}
 
     # MARK: - File requests
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_file_requests(self, *, limit: int = 1000) -> dict[str, Any]:
         """List active file-upload requests."""
-        return self._rpc("/2/file_requests/list_v2", {"limit": limit})
+        return self._rpc('/2/file_requests/list_v2', {'limit': limit})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_file_request(
@@ -489,8 +489,8 @@ class DropboxToolSet:
         ``destination`` is the folder path where uploads land.
         """
         if not title or not destination:
-            raise ValueError("title and destination must be non-empty")
-        payload: dict[str, Any] = {"title": title, "destination": destination}
+            raise ValueError('title and destination must be non-empty')
+        payload: dict[str, Any] = {'title': title, 'destination': destination}
         if deadline_iso is not None:
-            payload["deadline"] = {"deadline": deadline_iso}
-        return self._rpc("/2/file_requests/create", payload)
+            payload['deadline'] = {'deadline': deadline_iso}
+        return self._rpc('/2/file_requests/create', payload)

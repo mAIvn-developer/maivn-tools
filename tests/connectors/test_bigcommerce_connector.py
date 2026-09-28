@@ -3,10 +3,8 @@ from __future__ import annotations
 
 from typing import cast
 
-from maivn._internal.api.agent import Agent
-from maivn._internal.api.client import Client
-from maivn._internal.utils.configuration import MaivnConfiguration, ServerConfiguration
-from maivn._internal.utils.toolset import get_toolify_options
+from maivn import Agent
+from maivn import toolify_options as get_toolify_options
 
 from maivn_tools.connectors.bigcommerce import BigCommerceToolSet
 from maivn_tools.testing import MockTransport
@@ -14,19 +12,12 @@ from maivn_tools.testing import MockTransport
 
 def _connector() -> tuple[BigCommerceToolSet, MockTransport]:
     transport = MockTransport()
-    connector = BigCommerceToolSet(store_hash="abc", access_token="tok", transport=transport)
+    connector = BigCommerceToolSet(store_hash='abc', access_token='tok', transport=transport)
     return connector, transport
 
 
 def _make_agent() -> Agent:
-    config = MaivnConfiguration(
-        server=ServerConfiguration(
-            base_url="http://example.com",
-            mock_base_url="http://example.com",
-        )
-    )
-    client = Client.from_configuration(api_key="key", configuration=config)
-    return Agent(name="t", client=client)
+    return Agent(name='t', api_key='key')
 
 
 def test_bigcommerce_list_tools_register_first_class_output_schemas() -> None:
@@ -37,16 +28,16 @@ def test_bigcommerce_list_tools_register_first_class_output_schemas() -> None:
     schemas_by_name = {tool.name: tool.output_schema for tool in tools}
     # (tool suffix, expected array property key)
     expected: dict[str, str] = {
-        "BIGCOMMERCE_list_products": "products",
-        "BIGCOMMERCE_list_orders": "orders",
-        "BIGCOMMERCE_list_customers": "customers",
+        'BIGCOMMERCE_list_products': 'products',
+        'BIGCOMMERCE_list_orders': 'orders',
+        'BIGCOMMERCE_list_customers': 'customers',
     }
     for name, array_key in expected.items():
         schema = schemas_by_name.get(name)
-        assert isinstance(schema, dict), f"{name} missing first-class output_schema"
-        properties = cast("dict[str, object]", schema["properties"])
-        array_prop = cast("dict[str, object]", properties[array_key])
-        assert array_prop["type"] == "array", f"{name}.{array_key} should be an array"
+        assert isinstance(schema, dict), f'{name} missing first-class output_schema'
+        properties = cast('dict[str, object]', schema['properties'])
+        array_prop = cast('dict[str, object]', properties[array_key])
+        assert array_prop['type'] == 'array', f'{name}.{array_key} should be an array'
 
 
 def test_bigcommerce_output_schemas_not_published_through_metadata() -> None:
@@ -54,4 +45,4 @@ def test_bigcommerce_output_schemas_not_published_through_metadata() -> None:
     for method in (connector.list_products, connector.list_orders, connector.list_customers):
         opts = get_toolify_options(method)
         assert opts is not None
-        assert "output_schema" not in opts.metadata
+        assert 'output_schema' not in opts.metadata

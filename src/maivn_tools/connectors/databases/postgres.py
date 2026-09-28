@@ -19,6 +19,7 @@ Mutating tools should live in a separate, explicitly destructive connector.
 
 from __future__ import annotations
 
+from importlib import import_module
 import re
 from collections.abc import Callable
 from contextlib import closing
@@ -45,7 +46,7 @@ from .output_schemas import (
 )
 
 _FORBIDDEN_KEYWORDS = re.compile(
-    r"\b(insert|update|delete|drop|alter|create|replace|truncate|grant|revoke|comment|vacuum|analyze|copy)\b",
+    r'\b(insert|update|delete|drop|alter|create|replace|truncate|grant|revoke|comment|vacuum|analyze|copy)\b',
     re.IGNORECASE,
 )
 
@@ -90,17 +91,17 @@ def _paginate_summary(
     slice_ = rows[:max_results]
     summaries: list[dict[str, Any]] = []
     for index, row in enumerate(slice_, start=1):
-        summary = {f"{ref_prefix}_ref": f"{ref_prefix}_{index}", **row}
+        summary = {f'{ref_prefix}_ref': f'{ref_prefix}_{index}', **row}
         summaries.append(summary)
     return {
         key: summaries,
-        "returned": len(summaries),
-        "total": total,
-        "truncated": total > len(summaries),
+        'returned': len(summaries),
+        'total': total,
+        'truncated': total > len(summaries),
     }
 
 
-@toolset(prefix="postgres")
+@toolset(prefix='postgres')
 class PostgresToolSet:
     """A read-only PostgreSQL connector built on DB-API 2.0.
 
@@ -118,13 +119,13 @@ class PostgresToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="postgres",
-        display_name="PostgreSQL",
-        version="0.1.0",
-        description="Read-only access to a PostgreSQL database.",
+        name='postgres',
+        display_name='PostgreSQL',
+        version='0.1.0',
+        description='Read-only access to a PostgreSQL database.',
         auth_modes=(AuthMode.BASIC,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.SEARCH}),
-        tags=("database", "postgres", "sql"),
+        tags=('database', 'postgres', 'sql'),
     )
 
     def __init__(
@@ -135,9 +136,9 @@ class PostgresToolSet:
         row_limit: int = 500,
     ) -> None:
         if row_limit < 1:
-            raise ValueError("row_limit must be at least 1")
+            raise ValueError('row_limit must be at least 1')
         if connection_factory is None and not dsn:
-            raise ValueError("Either dsn or connection_factory must be supplied")
+            raise ValueError('Either dsn or connection_factory must be supplied')
         self._dsn = dsn
         self._connection_factory = connection_factory
         self._row_limit = row_limit
@@ -149,7 +150,7 @@ class PostgresToolSet:
     @tool_output(PG_LIST_TABLES_OUTPUT)
     def list_tables(
         self,
-        schema: str = "public",
+        schema: str = 'public',
         *,
         max_results: int = _DEFAULT_LIST_LIMIT,
     ) -> dict[str, Any]:
@@ -164,21 +165,21 @@ class PostgresToolSet:
         :meth:`sample_table`.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         sql = (
-            "SELECT table_name AS name, table_type AS type "
-            "FROM information_schema.tables "
-            "WHERE table_schema = %s "
-            "ORDER BY table_name"
+            'SELECT table_name AS name, table_type AS type '
+            'FROM information_schema.tables '
+            'WHERE table_schema = %s '
+            'ORDER BY table_name'
         )
-        rows = _run_select(self._open(), sql, (schema,), self._row_limit)["rows"]
+        rows = _run_select(self._open(), sql, (schema,), self._row_limit)['rows']
         for row in rows:
-            row["schema"] = schema
-        return _paginate_summary(rows, key="tables", ref_prefix="table", max_results=max_results)
+            row['schema'] = schema
+        return _paginate_summary(rows, key='tables', ref_prefix='table', max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(PG_DESCRIBE_TABLE_OUTPUT)
-    def describe_table(self, name: str, schema: str = "public") -> dict[str, Any]:
+    def describe_table(self, name: str, schema: str = 'public') -> dict[str, Any]:
         """Return columns and primary-key columns for ``schema.name``.
 
         Run after :meth:`list_tables` to understand a table before writing
@@ -187,31 +188,31 @@ class PostgresToolSet:
         ``default``.
         """
         columns_sql = (
-            "SELECT column_name AS name, data_type AS type, "
+            'SELECT column_name AS name, data_type AS type, '
             "       is_nullable = 'YES' AS nullable, column_default AS default "
-            "FROM information_schema.columns "
-            "WHERE table_schema = %s AND table_name = %s "
-            "ORDER BY ordinal_position"
+            'FROM information_schema.columns '
+            'WHERE table_schema = %s AND table_name = %s '
+            'ORDER BY ordinal_position'
         )
         pk_sql = (
-            "SELECT kcu.column_name "
-            "FROM information_schema.table_constraints tc "
-            "JOIN information_schema.key_column_usage kcu "
-            "  ON tc.constraint_name = kcu.constraint_name "
-            " AND tc.table_schema = kcu.table_schema "
+            'SELECT kcu.column_name '
+            'FROM information_schema.table_constraints tc '
+            'JOIN information_schema.key_column_usage kcu '
+            '  ON tc.constraint_name = kcu.constraint_name '
+            ' AND tc.table_schema = kcu.table_schema '
             "WHERE tc.constraint_type = 'PRIMARY KEY' "
-            "  AND tc.table_schema = %s AND tc.table_name = %s "
-            "ORDER BY kcu.ordinal_position"
+            '  AND tc.table_schema = %s AND tc.table_name = %s '
+            'ORDER BY kcu.ordinal_position'
         )
         cols = _run_select(self._open(), columns_sql, (schema, name), self._row_limit)
-        if not cols["rows"]:
-            raise LookupError(f"Table {schema!r}.{name!r} does not exist")
+        if not cols['rows']:
+            raise LookupError(f'Table {schema!r}.{name!r} does not exist')
         pks = _run_select(self._open(), pk_sql, (schema, name), self._row_limit)
         return {
-            "name": name,
-            "schema": schema,
-            "columns": cols["rows"],
-            "primary_key": [row["column_name"] for row in pks["rows"]],
+            'name': name,
+            'schema': schema,
+            'columns': cols['rows'],
+            'primary_key': [row['column_name'] for row in pks['rows']],
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -225,23 +226,23 @@ class PostgresToolSet:
         :meth:`list_tables` to drill in.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         sql = (
-            "SELECT schema_name AS name "
-            "FROM information_schema.schemata "
+            'SELECT schema_name AS name '
+            'FROM information_schema.schemata '
             "WHERE schema_name NOT IN ('pg_catalog', 'information_schema') "
             "  AND schema_name NOT LIKE 'pg_toast%' "
             "  AND schema_name NOT LIKE 'pg_temp%' "
-            "ORDER BY schema_name"
+            'ORDER BY schema_name'
         )
-        rows = _run_select(self._open(), sql, None, self._row_limit)["rows"]
-        return _paginate_summary(rows, key="schemas", ref_prefix="schema", max_results=max_results)
+        rows = _run_select(self._open(), sql, None, self._row_limit)['rows']
+        return _paginate_summary(rows, key='schemas', ref_prefix='schema', max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(PG_LIST_VIEWS_OUTPUT)
     def list_views(
         self,
-        schema: str = "public",
+        schema: str = 'public',
         *,
         max_results: int = _DEFAULT_LIST_LIMIT,
     ) -> dict[str, Any]:
@@ -253,28 +254,28 @@ class PostgresToolSet:
         :meth:`sample_table` just like base tables.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         sql = (
-            "SELECT table_name AS name "
-            "FROM information_schema.views "
-            "WHERE table_schema = %s "
-            "UNION ALL "
-            "SELECT matviewname AS name "
-            "FROM pg_matviews "
-            "WHERE schemaname = %s "
-            "ORDER BY name"
+            'SELECT table_name AS name '
+            'FROM information_schema.views '
+            'WHERE table_schema = %s '
+            'UNION ALL '
+            'SELECT matviewname AS name '
+            'FROM pg_matviews '
+            'WHERE schemaname = %s '
+            'ORDER BY name'
         )
-        rows = _run_select(self._open(), sql, (schema, schema), self._row_limit)["rows"]
+        rows = _run_select(self._open(), sql, (schema, schema), self._row_limit)['rows']
         for row in rows:
-            row["schema"] = schema
-        return _paginate_summary(rows, key="views", ref_prefix="view", max_results=max_results)
+            row['schema'] = schema
+        return _paginate_summary(rows, key='views', ref_prefix='view', max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(PG_LIST_INDEXES_OUTPUT)
     def list_indexes(
         self,
         *,
-        schema: str = "public",
+        schema: str = 'public',
         table: str | None = None,
         max_results: int = _DEFAULT_LIST_LIMIT,
     ) -> dict[str, Any]:
@@ -286,34 +287,34 @@ class PostgresToolSet:
         ``definition`` DDL.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         if table is None:
             sql = (
-                "SELECT schemaname AS schema, tablename AS table, "
-                "       indexname AS name, indexdef AS definition "
-                "FROM pg_indexes "
-                "WHERE schemaname = %s "
-                "ORDER BY tablename, indexname"
+                'SELECT schemaname AS schema, tablename AS table, '
+                '       indexname AS name, indexdef AS definition '
+                'FROM pg_indexes '
+                'WHERE schemaname = %s '
+                'ORDER BY tablename, indexname'
             )
             params: Any = (schema,)
         else:
             sql = (
-                "SELECT schemaname AS schema, tablename AS table, "
-                "       indexname AS name, indexdef AS definition "
-                "FROM pg_indexes "
-                "WHERE schemaname = %s AND tablename = %s "
-                "ORDER BY indexname"
+                'SELECT schemaname AS schema, tablename AS table, '
+                '       indexname AS name, indexdef AS definition '
+                'FROM pg_indexes '
+                'WHERE schemaname = %s AND tablename = %s '
+                'ORDER BY indexname'
             )
             params = (schema, table)
-        rows = _run_select(self._open(), sql, params, self._row_limit)["rows"]
-        return _paginate_summary(rows, key="indexes", ref_prefix="index", max_results=max_results)
+        rows = _run_select(self._open(), sql, params, self._row_limit)['rows']
+        return _paginate_summary(rows, key='indexes', ref_prefix='index', max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(PG_LIST_FOREIGN_KEYS_OUTPUT)
     def list_foreign_keys(
         self,
         name: str,
-        schema: str = "public",
+        schema: str = 'public',
     ) -> list[dict[str, Any]]:
         """Return foreign-key constraints defined on ``schema.name``.
 
@@ -322,23 +323,23 @@ class PostgresToolSet:
         Useful for following joins when composing a query.
         """
         sql = (
-            "SELECT tc.constraint_name AS name, "
-            "       kcu.column_name AS column, "
-            "       ccu.table_schema AS foreign_schema, "
-            "       ccu.table_name AS foreign_table, "
-            "       ccu.column_name AS foreign_column "
-            "FROM information_schema.table_constraints tc "
-            "JOIN information_schema.key_column_usage kcu "
-            "  ON tc.constraint_name = kcu.constraint_name "
-            " AND tc.table_schema = kcu.table_schema "
-            "JOIN information_schema.constraint_column_usage ccu "
-            "  ON ccu.constraint_name = tc.constraint_name "
-            " AND ccu.table_schema = tc.table_schema "
+            'SELECT tc.constraint_name AS name, '
+            '       kcu.column_name AS column, '
+            '       ccu.table_schema AS foreign_schema, '
+            '       ccu.table_name AS foreign_table, '
+            '       ccu.column_name AS foreign_column '
+            'FROM information_schema.table_constraints tc '
+            'JOIN information_schema.key_column_usage kcu '
+            '  ON tc.constraint_name = kcu.constraint_name '
+            ' AND tc.table_schema = kcu.table_schema '
+            'JOIN information_schema.constraint_column_usage ccu '
+            '  ON ccu.constraint_name = tc.constraint_name '
+            ' AND ccu.table_schema = tc.table_schema '
             "WHERE tc.constraint_type = 'FOREIGN KEY' "
-            "  AND tc.table_schema = %s AND tc.table_name = %s "
-            "ORDER BY tc.constraint_name, kcu.ordinal_position"
+            '  AND tc.table_schema = %s AND tc.table_name = %s '
+            'ORDER BY tc.constraint_name, kcu.ordinal_position'
         )
-        return _run_select(self._open(), sql, (schema, name), self._row_limit)["rows"]
+        return _run_select(self._open(), sql, (schema, name), self._row_limit)['rows']
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(PG_LIST_EXTENSIONS_OUTPUT)
@@ -349,32 +350,32 @@ class PostgresToolSet:
         extension-specific queries (e.g. ``pg_trgm`` similarity,
         ``postgis`` geometry, ``vector`` embeddings).
         """
-        sql = "SELECT extname AS name, extversion AS version FROM pg_extension ORDER BY extname"
-        return _run_select(self._open(), sql, None, self._row_limit)["rows"]
+        sql = 'SELECT extname AS name, extversion AS version FROM pg_extension ORDER BY extname'
+        return _run_select(self._open(), sql, None, self._row_limit)['rows']
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(PG_GET_TABLE_SIZE_OUTPUT)
-    def get_table_size(self, name: str, schema: str = "public") -> dict[str, Any]:
+    def get_table_size(self, name: str, schema: str = 'public') -> dict[str, Any]:
         """Return total and table sizes (in bytes) for ``schema.name``.
 
         Returns ``{"schema", "name", "total_bytes", "table_bytes"}``.
         ``total_bytes`` includes indexes and TOAST; ``table_bytes`` is the
         heap only. Use this before sampling a massive table.
         """
-        qualified = f"{schema}.{name}"
+        qualified = f'{schema}.{name}'
         sql = (
-            "SELECT pg_total_relation_size(%s) AS total_bytes, "
-            "       pg_relation_size(%s) AS table_bytes"
+            'SELECT pg_total_relation_size(%s) AS total_bytes, '
+            '       pg_relation_size(%s) AS table_bytes'
         )
-        rows = _run_select(self._open(), sql, (qualified, qualified), 1)["rows"]
+        rows = _run_select(self._open(), sql, (qualified, qualified), 1)['rows']
         if not rows:
-            raise LookupError(f"Table {qualified!r} does not exist")
+            raise LookupError(f'Table {qualified!r} does not exist')
         first = rows[0]
         return {
-            "schema": schema,
-            "name": name,
-            "total_bytes": first.get("total_bytes"),
-            "table_bytes": first.get("table_bytes"),
+            'schema': schema,
+            'name': name,
+            'total_bytes': first.get('total_bytes'),
+            'table_bytes': first.get('table_bytes'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -395,14 +396,14 @@ class PostgresToolSet:
         _validate_read_only_sql(sql)
         if analyze:
             raise ValueError(
-                "EXPLAIN ANALYZE executes the query and may have side effects; "
-                "not allowed on a read-only connector."
+                'EXPLAIN ANALYZE executes the query and may have side effects; '
+                'not allowed on a read-only connector.'
             )
-        opts: list[str] = ["FORMAT JSON"]
+        opts: list[str] = ['FORMAT JSON']
         if verbose:
-            opts.append("VERBOSE")
-        prefix = "EXPLAIN (" + ", ".join(opts) + ")"
-        return _run_select(self._open(), f"{prefix} {sql}", None, self._row_limit)
+            opts.append('VERBOSE')
+        prefix = 'EXPLAIN (' + ', '.join(opts) + ')'
+        return _run_select(self._open(), f'{prefix} {sql}', None, self._row_limit)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(PG_SERVER_VERSION_OUTPUT)
@@ -412,9 +413,9 @@ class PostgresToolSet:
         Returns ``{"version": <server version string>, "database":
         <current database name>}``.
         """
-        sql = "SELECT version() AS version, current_database() AS database"
-        rows = _run_select(self._open(), sql, None, 1)["rows"]
-        return rows[0] if rows else {"version": None, "database": None}
+        sql = 'SELECT version() AS version, current_database() AS database'
+        rows = _run_select(self._open(), sql, None, 1)['rows']
+        return rows[0] if rows else {'version': None, 'database': None}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(PG_SAMPLE_TABLE_OUTPUT)
@@ -422,7 +423,7 @@ class PostgresToolSet:
         self,
         name: str,
         *,
-        schema: str = "public",
+        schema: str = 'public',
         limit: int = _DEFAULT_SAMPLE_LIMIT,
     ) -> dict[str, Any]:
         """Return up to ``limit`` rows from ``schema.name`` for quick inspection.
@@ -432,9 +433,9 @@ class PostgresToolSet:
         ``rows`` (list of column-keyed dicts), ``row_count``, ``truncated``.
         """
         if limit < 1 or limit > self._row_limit:
-            raise ValueError(f"limit must be between 1 and {self._row_limit}")
+            raise ValueError(f'limit must be between 1 and {self._row_limit}')
         if not _is_safe_identifier(schema) or not _is_safe_identifier(name):
-            raise ValueError(f"Invalid table reference: {schema!r}.{name!r}")
+            raise ValueError(f'Invalid table reference: {schema!r}.{name!r}')
         return self.run_query(
             f'SELECT * FROM "{schema}"."{name}" LIMIT %s',
             [limit],
@@ -443,7 +444,7 @@ class PostgresToolSet:
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(PG_COUNT_ROWS_OUTPUT)
-    def count_rows(self, name: str, schema: str = "public") -> dict[str, Any]:
+    def count_rows(self, name: str, schema: str = 'public') -> dict[str, Any]:
         """Return ``COUNT(*)`` for ``schema.name``.
 
         Returns ``{"schema", "name", "row_count"}``. Cheap on small or
@@ -451,14 +452,14 @@ class PostgresToolSet:
         :meth:`get_table_size` to estimate via reltuples instead.
         """
         if not _is_safe_identifier(schema) or not _is_safe_identifier(name):
-            raise ValueError(f"Invalid table reference: {schema!r}.{name!r}")
+            raise ValueError(f'Invalid table reference: {schema!r}.{name!r}')
         rows = _run_select(
             self._open(),
             f'SELECT COUNT(*) AS row_count FROM "{schema}"."{name}"',
             None,
             1,
-        )["rows"]
-        return {"schema": schema, "name": name, "row_count": rows[0]["row_count"] if rows else 0}
+        )['rows']
+        return {'schema': schema, 'name': name, 'row_count': rows[0]['row_count'] if rows else 0}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(PG_RUN_QUERY_OUTPUT)
@@ -491,7 +492,7 @@ class PostgresToolSet:
         effective_limit = min(self._row_limit, _DEFAULT_QUERY_LIMIT)
         limit = effective_limit if row_limit is None else int(row_limit)
         if limit < 1:
-            raise ValueError("row_limit must be at least 1")
+            raise ValueError('row_limit must be at least 1')
         if limit > self._row_limit:
             limit = self._row_limit
         params: Any
@@ -509,16 +510,19 @@ class PostgresToolSet:
         if self._connection_factory is not None:
             return self._connection_factory()
         try:
-            import psycopg  # type: ignore[import-not-found]
+            import psycopg  # noqa: PLC0415 - psycopg
+
+            psycopg_connect = cast('Callable[..., object]', psycopg.connect)
         except ImportError:
             try:
-                import psycopg2 as psycopg  # type: ignore[import-not-found, no-redef]
+                psycopg2 = import_module('psycopg2')
             except ImportError as exc:  # pragma: no cover - depends on env
                 raise RuntimeError(
                     "PostgresToolSet requires 'psycopg' or 'psycopg2' "
-                    "to be installed, or a custom connection_factory."
+                    'to be installed, or a custom connection_factory.'
                 ) from exc
-        return psycopg.connect(self._dsn)  # type: ignore[return-value]
+            psycopg_connect = cast('Callable[..., object]', cast(Any, psycopg2).connect)
+        return cast(PostgresConnection, psycopg_connect(self._dsn))
 
 
 def _is_safe_identifier(name: str) -> bool:
@@ -530,20 +534,20 @@ def _is_safe_identifier(name: str) -> bool:
     sqlite connector enforces; callers needing exotic identifiers can use
     ``run_query`` with proper quoting.
     """
-    return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name))
+    return bool(re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', name))
 
 
 def _validate_read_only_sql(sql: object) -> None:
     if not isinstance(sql, str) or not sql.strip():
-        raise ValueError("sql must be a non-empty string")
-    stripped = sql.strip().rstrip(";")
-    if ";" in stripped:
-        raise ValueError("Compound statements are not allowed")
+        raise ValueError('sql must be a non-empty string')
+    stripped = sql.strip().rstrip(';')
+    if ';' in stripped:
+        raise ValueError('Compound statements are not allowed')
     first_word = stripped.split(None, 1)[0].lower()
-    if first_word not in {"select", "with", "explain"}:
-        raise ValueError("Only SELECT, WITH, and EXPLAIN statements are allowed in run_query")
+    if first_word not in {'select', 'with', 'explain'}:
+        raise ValueError('Only SELECT, WITH, and EXPLAIN statements are allowed in run_query')
     if _FORBIDDEN_KEYWORDS.search(stripped):
-        raise ValueError("Query contains a forbidden mutation keyword")
+        raise ValueError('Query contains a forbidden mutation keyword')
 
 
 def _run_select(
@@ -554,7 +558,7 @@ def _run_select(
 ) -> dict[str, Any]:
     with closing(connection) as conn, closing(conn.cursor()) as cur:
         try:
-            cur.execute("SET TRANSACTION READ ONLY")
+            cur.execute('SET TRANSACTION READ ONLY')
         except Exception:  # noqa: BLE001 - some fake drivers do not support it
             pass
         if params is None:
@@ -570,18 +574,18 @@ def _run_select(
         else:
             rows = []
     return {
-        "columns": columns,
-        "rows": rows,
-        "row_count": len(rows),
-        "truncated": truncated,
+        'columns': columns,
+        'rows': rows,
+        'row_count': len(rows),
+        'truncated': truncated,
     }
 
 
 def _row_as_tuple(row: Any) -> tuple[Any, ...]:
     if isinstance(row, tuple):
-        return cast("tuple[Any, ...]", row)
+        return cast('tuple[Any, ...]', row)
     if isinstance(row, list):
-        return tuple(cast("list[Any]", row))
+        return tuple(cast('list[Any]', row))
     if isinstance(row, dict):
-        return tuple(cast("dict[Any, Any]", row).values())
+        return tuple(cast('dict[Any, Any]', row).values())
     return tuple(row)

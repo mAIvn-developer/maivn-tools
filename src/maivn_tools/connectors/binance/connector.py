@@ -42,7 +42,7 @@ def _select_id_from_value(
             return None
         return str(value)
     if isinstance(value, dict):
-        mapping = cast("dict[Any, Any]", value)
+        mapping = cast('dict[Any, Any]', value)
         for key in keys:
             candidate: Any = mapping.get(key)
             resolved = _select_id_from_value(candidate, keys)
@@ -55,7 +55,7 @@ def _select_id_from_value(
                     return resolved
         return None
     if isinstance(value, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", value)
+        sequence = cast('list[Any] | tuple[Any, ...]', value)
         for item in sequence:
             resolved = _select_id_from_value(item, keys)
             if resolved is not None:
@@ -66,7 +66,7 @@ def _select_id_from_value(
 # MARK: - Connector
 
 
-@toolset(prefix="binance")
+@toolset(prefix='binance')
 class BinanceToolSet:
     """A connector for the Binance Spot REST API.
 
@@ -78,15 +78,15 @@ class BinanceToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="binance",
-        display_name="Binance Spot",
-        version="0.1.0",
-        description="Account, balances, orders, trades, and market data.",
+        name='binance',
+        display_name='Binance Spot',
+        version='0.1.0',
+        description='Account, balances, orders, trades, and market data.',
         auth_modes=(AuthMode.API_KEY, AuthMode.CUSTOM),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developers.binance.com/docs/binance-spot-api-docs/rest-api",
-        homepage_url="https://www.binance.com/",
-        tags=("trading", "crypto"),
+        documentation_url='https://developers.binance.com/docs/binance-spot-api-docs/rest-api',
+        homepage_url='https://www.binance.com/',
+        tags=('trading', 'crypto'),
     )
 
     def __init__(
@@ -94,20 +94,20 @@ class BinanceToolSet:
         *,
         api_key: str,
         auth: AuthStrategy | None = None,
-        base_url: str = "https://api.binance.com",
+        base_url: str = 'https://api.binance.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not api_key:
-            raise ValueError("api_key is required")
+            raise ValueError('api_key is required')
         self.connection = connection
         # Always set X-MBX-APIKEY; callers can layer their own signer over
         # the params via a custom transport / auth.
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=auth or ApiKeyAuth(api_key, header="X-MBX-APIKEY"),
+            base_url=base_url.rstrip('/'),
+            auth=auth or ApiKeyAuth(api_key, header='X-MBX-APIKEY'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -120,7 +120,7 @@ class BinanceToolSet:
 
         Useful for clock-drift checks before issuing signed requests.
         """
-        return self._client.get("/api/v3/time").json()
+        return self._client.get('/api/v3/time').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def exchange_info(self, *, symbol: str | None = None) -> dict[str, Any]:
@@ -131,9 +131,9 @@ class BinanceToolSet:
         """
         params: dict[str, Any] = {}
         if symbol is not None:
-            params["symbol"] = symbol
+            params['symbol'] = symbol
         return self._client.get(
-            "/api/v3/exchangeInfo",
+            '/api/v3/exchangeInfo',
             params=params or None,
         ).json()
 
@@ -146,9 +146,9 @@ class BinanceToolSet:
         """
         params: dict[str, Any] = {}
         if symbol is not None:
-            params["symbol"] = symbol
+            params['symbol'] = symbol
         return self._client.get(
-            "/api/v3/ticker/price",
+            '/api/v3/ticker/price',
             params=params or None,
         ).json()
 
@@ -161,9 +161,9 @@ class BinanceToolSet:
         """
         params: dict[str, Any] = {}
         if symbol is not None:
-            params["symbol"] = symbol
+            params['symbol'] = symbol
         return self._client.get(
-            "/api/v3/ticker/24hr",
+            '/api/v3/ticker/24hr',
             params=params or None,
         ).json()
 
@@ -186,19 +186,19 @@ class BinanceToolSet:
         close_time, ...]`` arrays.
         """
         if not symbol or not interval:
-            raise ValueError("symbol and interval must be non-empty")
+            raise ValueError('symbol and interval must be non-empty')
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
+            raise ValueError('limit must be between 1 and 1000')
         params: dict[str, Any] = {
-            "symbol": symbol,
-            "interval": interval,
-            "limit": limit,
+            'symbol': symbol,
+            'interval': interval,
+            'limit': limit,
         }
         if start_time is not None:
-            params["startTime"] = start_time
+            params['startTime'] = start_time
         if end_time is not None:
-            params["endTime"] = end_time
-        return self._client.get("/api/v3/klines", params=params).json()
+            params['endTime'] = end_time
+        return self._client.get('/api/v3/klines', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def order_book(self, *, symbol: str, limit: int = 25) -> dict[str, Any]:
@@ -209,10 +209,10 @@ class BinanceToolSet:
         100, 500, 1000, 5000.
         """
         if not symbol:
-            raise ValueError("symbol must be a non-empty string")
+            raise ValueError('symbol must be a non-empty string')
         return self._client.get(
-            "/api/v3/depth",
-            params={"symbol": symbol, "limit": limit},
+            '/api/v3/depth',
+            params={'symbol': symbol, 'limit': limit},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -222,12 +222,12 @@ class BinanceToolSet:
         Default ``limit`` is 25; Binance max is 1000.
         """
         if not symbol:
-            raise ValueError("symbol must be a non-empty string")
+            raise ValueError('symbol must be a non-empty string')
         if limit < 1 or limit > 1000:
-            raise ValueError("limit must be between 1 and 1000")
+            raise ValueError('limit must be between 1 and 1000')
         return self._client.get(
-            "/api/v3/trades",
-            params={"symbol": symbol, "limit": limit},
+            '/api/v3/trades',
+            params={'symbol': symbol, 'limit': limit},
         ).json()
 
     # MARK: - Signed (private) endpoints
@@ -251,11 +251,11 @@ class BinanceToolSet:
         clock drift; when supplied it is sent as ``recvWindow`` and must
         be included in the signed payload (the HMAC) by the caller.
         """
-        params: dict[str, Any] = {"timestamp": timestamp, "signature": signature}
+        params: dict[str, Any] = {'timestamp': timestamp, 'signature': signature}
         if recv_window is not None:
-            params["recvWindow"] = recv_window
+            params['recvWindow'] = recv_window
         return self._client.get(
-            "/api/v3/account",
+            '/api/v3/account',
             params=params,
         ).json()
 
@@ -286,43 +286,43 @@ class BinanceToolSet:
         clock drift; when supplied it is sent as ``recvWindow`` and must
         be included in the signed payload (the HMAC) by the caller.
         """
-        params: dict[str, Any] = {"timestamp": timestamp, "signature": signature}
+        params: dict[str, Any] = {'timestamp': timestamp, 'signature': signature}
         if symbol is not None:
-            params["symbol"] = symbol
+            params['symbol'] = symbol
         if recv_window is not None:
-            params["recvWindow"] = recv_window
+            params['recvWindow'] = recv_window
         payload: Any = self._client.get(
-            "/api/v3/openOrders",
+            '/api/v3/openOrders',
             params=params,
         ).json()
         if raw:
             return payload
-        items: list[Any] = cast("list[Any]", payload) if isinstance(payload, list) else []
+        items: list[Any] = cast('list[Any]', payload) if isinstance(payload, list) else []
         summaries: list[dict[str, Any]] = []
         for index, order in enumerate(items, start=1):
             if not isinstance(order, dict):
                 continue
-            order_dict = cast("dict[Any, Any]", order)
+            order_dict = cast('dict[Any, Any]', order)
             summary: dict[str, Any] = {
-                "order_ref": f"order_{index}",
-                "symbol": order_dict.get("symbol", ""),
-                "side": order_dict.get("side"),
-                "type": order_dict.get("type"),
-                "status": order_dict.get("status"),
-                "orig_qty": order_dict.get("origQty"),
-                "executed_qty": order_dict.get("executedQty"),
-                "price": order_dict.get("price"),
-                "stop_price": order_dict.get("stopPrice"),
-                "time_in_force": order_dict.get("timeInForce"),
-                "time": order_dict.get("time"),
+                'order_ref': f'order_{index}',
+                'symbol': order_dict.get('symbol', ''),
+                'side': order_dict.get('side'),
+                'type': order_dict.get('type'),
+                'status': order_dict.get('status'),
+                'orig_qty': order_dict.get('origQty'),
+                'executed_qty': order_dict.get('executedQty'),
+                'price': order_dict.get('price'),
+                'stop_price': order_dict.get('stopPrice'),
+                'time_in_force': order_dict.get('timeInForce'),
+                'time': order_dict.get('time'),
             }
             if include_ids:
-                summary["order_id"] = order_dict.get("orderId")
-                summary["client_order_id"] = order_dict.get("clientOrderId", "")
+                summary['order_id'] = order_dict.get('orderId')
+                summary['client_order_id'] = order_dict.get('clientOrderId', '')
             summaries.append(summary)
         return {
-            "orders": summaries,
-            "count": len(summaries),
+            'orders': summaries,
+            'count': len(summaries),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -355,27 +355,27 @@ class BinanceToolSet:
         be included in the signed payload (the HMAC) by the caller.
         """
         if not symbol or not side or not type:
-            raise ValueError("symbol, side, and type are required")
-        if side not in {"BUY", "SELL"}:
-            raise ValueError("side must be BUY or SELL")
+            raise ValueError('symbol, side, and type are required')
+        if side not in {'BUY', 'SELL'}:
+            raise ValueError('side must be BUY or SELL')
         params: dict[str, Any] = {
-            "symbol": symbol,
-            "side": side,
-            "type": type,
-            "timestamp": timestamp,
-            "signature": signature,
+            'symbol': symbol,
+            'side': side,
+            'type': type,
+            'timestamp': timestamp,
+            'signature': signature,
         }
         if quantity is not None:
-            params["quantity"] = quantity
+            params['quantity'] = quantity
         if quote_order_qty is not None:
-            params["quoteOrderQty"] = quote_order_qty
+            params['quoteOrderQty'] = quote_order_qty
         if price is not None:
-            params["price"] = price
+            params['price'] = price
         if time_in_force is not None:
-            params["timeInForce"] = time_in_force
+            params['timeInForce'] = time_in_force
         if recv_window is not None:
-            params["recvWindow"] = recv_window
-        path = "/api/v3/order/test" if test else "/api/v3/order"
+            params['recvWindow'] = recv_window
+        path = '/api/v3/order/test' if test else '/api/v3/order'
         return self._client.post(path, params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -402,28 +402,28 @@ class BinanceToolSet:
         be included in the signed payload (the HMAC) by the caller.
         """
         if not symbol:
-            raise ValueError("symbol must be a non-empty string")
+            raise ValueError('symbol must be a non-empty string')
         if order is not None and order_id is None and orig_client_order_id is None:
-            resolved_id = _select_id_from_value(order, ("order_id", "orderId"))
+            resolved_id = _select_id_from_value(order, ('order_id', 'orderId'))
             if resolved_id and resolved_id.isdigit():
                 order_id = int(resolved_id)
             elif resolved_id:
                 orig_client_order_id = resolved_id
             else:
-                client_id = _select_id_from_value(order, ("client_order_id", "clientOrderId"))
+                client_id = _select_id_from_value(order, ('client_order_id', 'clientOrderId'))
                 if client_id:
                     orig_client_order_id = client_id
         if order_id is None and orig_client_order_id is None:
-            raise ValueError("provide order, order_id, or orig_client_order_id")
+            raise ValueError('provide order, order_id, or orig_client_order_id')
         params: dict[str, Any] = {
-            "symbol": symbol,
-            "timestamp": timestamp,
-            "signature": signature,
+            'symbol': symbol,
+            'timestamp': timestamp,
+            'signature': signature,
         }
         if order_id is not None:
-            params["orderId"] = order_id
+            params['orderId'] = order_id
         if orig_client_order_id is not None:
-            params["origClientOrderId"] = orig_client_order_id
+            params['origClientOrderId'] = orig_client_order_id
         if recv_window is not None:
-            params["recvWindow"] = recv_window
-        return self._client.delete("/api/v3/order", params=params).json()
+            params['recvWindow'] = recv_window
+        return self._client.delete('/api/v3/order', params=params).json()

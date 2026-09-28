@@ -17,7 +17,7 @@ IDs (GitHub `id`/`node_id`, GitLab numeric `project_id`, Bitbucket `uuid`,
 ADO GUIDs) are hidden unless `include_ids=True` is passed. User-facing
 identifiers like `issue_number`/`iid`, `pr_number`/`pull_request_id`,
 `full_name`/`path_with_namespace`/`slug`, `branch`, `tag_name`, and `sha`
-are always shown -- they are stable refs safe to render in final answers.
+are always shown -- they are display refs safe to render in final answers.
 Where the underlying list returns a wrapped envelope, an
 `include_metadata=False` flag returns the raw provider response.
 
@@ -32,7 +32,7 @@ from maivn import Agent
 from maivn_tools import GitHubToolSet, register_connector
 
 connector = GitHubToolSet(token="ghp_...")
-agent = Agent(model="auto")
+agent = Agent(name="github-agent", model="auto")
 register_connector(agent, connector)
 ```
 
@@ -100,7 +100,7 @@ GitHub returns standard HTTP status codes; the runtime maps them to the
   `list_branches`, `list_commits`, `list_releases`, `list_workflows`,
   `list_workflow_runs`, `list_organization_repos`, `search_issues`, and
   `search_repositories` return compact summaries by default. Each entry
-  carries a stable ordinal ref (`repo_ref`, `issue_ref`, `pr_ref`,
+  carries a response-local ordinal ref (`repo_ref`, `issue_ref`, `pr_ref`,
   `branch_ref`, `commit_ref`, `release_ref`, `workflow_ref`, `run_ref`)
   plus the user-facing identifier (`full_name`, `issue_number`,
   `pr_number`, `branch`, `sha` / `short_sha`, `tag_name`, `workflow_id`,
@@ -147,7 +147,7 @@ Tools: `get_current_user`, `list_users`, `list_projects`, `get_project`,
 
 - `list_projects`, `list_issues`, `list_merge_requests`,
   `list_pipelines`, `list_branches`, and `list_commits` return compact
-  summaries with stable refs (`project_ref`, `issue_ref`, `mr_ref`,
+  summaries with display refs (`project_ref`, `issue_ref`, `mr_ref`,
   `pipeline_ref`, `branch_ref`, `commit_ref`).
 - User-facing identifiers always shown: `path_with_namespace`, `iid`
   (the project-scoped issue / MR number), branch `name`, `short_sha`,
@@ -193,7 +193,7 @@ Tools: `get_current_user`, `list_workspaces`, `list_repositories`,
 
 - `list_repositories`, `list_pull_requests`, `list_issues`,
   `list_pipelines`, and `list_branches` return compact summaries with
-  stable refs (`repo_ref`, `pr_ref`, `issue_ref`, `pipeline_ref`,
+  display refs (`repo_ref`, `pr_ref`, `issue_ref`, `pipeline_ref`,
   `branch_ref`).
 - User-facing identifiers always shown: `full_name` / `slug`, `pr_id`,
   `issue_id`, pipeline `build_number`, branch `name`, `short_sha`.
@@ -239,7 +239,7 @@ Tools: `list_projects`, `get_project`, `list_repositories`,
 
 - `list_projects`, `list_repositories`, `list_pull_requests`,
   `list_branches`, `list_pipelines`, and `list_builds` return compact
-  summaries with stable refs (`project_ref`, `repo_ref`, `pr_ref`,
+  summaries with display refs (`project_ref`, `repo_ref`, `pr_ref`,
   `branch_ref`, `pipeline_ref`, `build_ref`).
 - User-facing identifiers always shown: project / repository `name`,
   `pull_request_id`, `work_item_id`, branch `name`, `pipeline_id`,

@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 import re
 from collections.abc import Callable
 from contextlib import closing
@@ -28,7 +29,7 @@ from .output_schemas import (
 # MARK: Constants
 
 _FORBIDDEN_KEYWORDS = re.compile(
-    r"\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|merge|exec|execute)\b",
+    r'\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|merge|exec|execute)\b',
     re.IGNORECASE,
 )
 
@@ -71,29 +72,29 @@ def _is_safe_identifier(name: str) -> bool:
     SQL. Restrict to the same strict shape the sqlite connector enforces;
     exotic identifiers can go through ``run_query`` with proper quoting.
     """
-    return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name))
+    return bool(re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', name))
 
 
 def _validate_read_only_sql(sql: object) -> None:
     if not isinstance(sql, str) or not sql.strip():
-        raise ValueError("sql must be a non-empty string")
-    stripped = sql.strip().rstrip(";")
-    if ";" in stripped:
-        raise ValueError("Compound statements are not allowed")
+        raise ValueError('sql must be a non-empty string')
+    stripped = sql.strip().rstrip(';')
+    if ';' in stripped:
+        raise ValueError('Compound statements are not allowed')
     first_word = stripped.split(None, 1)[0].lower()
-    if first_word not in {"select", "with"}:
-        raise ValueError("Only SELECT and WITH statements are allowed")
+    if first_word not in {'select', 'with'}:
+        raise ValueError('Only SELECT and WITH statements are allowed')
     if _FORBIDDEN_KEYWORDS.search(stripped):
-        raise ValueError("Query contains a forbidden mutation keyword")
+        raise ValueError('Query contains a forbidden mutation keyword')
 
 
 def _row_as_tuple(row: Any) -> tuple[Any, ...]:
     if isinstance(row, tuple):
-        return cast("tuple[Any, ...]", row)
+        return cast('tuple[Any, ...]', row)
     if isinstance(row, list):
-        return tuple(cast("list[Any]", row))
+        return tuple(cast('list[Any]', row))
     if isinstance(row, dict):
-        return tuple(cast("dict[Any, Any]", row).values())
+        return tuple(cast('dict[Any, Any]', row).values())
     return tuple(row)
 
 
@@ -105,7 +106,7 @@ def _run_select(
 ) -> dict[str, Any]:
     with closing(connection) as conn, closing(conn.cursor()) as cur:
         try:
-            cur.execute("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED")
+            cur.execute('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')
         except Exception:  # noqa: BLE001
             pass
         if params is None:
@@ -122,10 +123,10 @@ def _run_select(
             else []
         )
     return {
-        "columns": columns,
-        "rows": rows,
-        "row_count": len(rows),
-        "truncated": truncated,
+        'columns': columns,
+        'rows': rows,
+        'row_count': len(rows),
+        'truncated': truncated,
     }
 
 
@@ -141,20 +142,20 @@ def _paginate_summary(
     slice_ = rows[:max_results]
     summaries: list[dict[str, Any]] = []
     for index, row in enumerate(slice_, start=1):
-        summary: dict[str, Any] = {f"{ref_prefix}_ref": f"{ref_prefix}_{index}", **row}
+        summary: dict[str, Any] = {f'{ref_prefix}_ref': f'{ref_prefix}_{index}', **row}
         summaries.append(summary)
     return {
         key: summaries,
-        "returned": len(summaries),
-        "total": total,
-        "truncated": total > len(summaries),
+        'returned': len(summaries),
+        'total': total,
+        'truncated': total > len(summaries),
     }
 
 
 # MARK: ToolSet
 
 
-@toolset(prefix="sqlserver")
+@toolset(prefix='sqlserver')
 class SQLServerToolSet:
     """A read-only SQL Server connector built on DB-API 2.0 (pyodbc, pymssql, etc.).
 
@@ -173,13 +174,13 @@ class SQLServerToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="sqlserver",
-        display_name="SQL Server",
-        version="0.1.0",
-        description="Read-only access to a Microsoft SQL Server database.",
+        name='sqlserver',
+        display_name='SQL Server',
+        version='0.1.0',
+        description='Read-only access to a Microsoft SQL Server database.',
         auth_modes=(AuthMode.BASIC, AuthMode.CUSTOM),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.SEARCH}),
-        tags=("database", "mssql", "sql", "microsoft"),
+        tags=('database', 'mssql', 'sql', 'microsoft'),
     )
 
     def __init__(
@@ -191,9 +192,9 @@ class SQLServerToolSet:
         connect_kwargs: dict[str, Any] | None = None,
     ) -> None:
         if row_limit < 1:
-            raise ValueError("row_limit must be at least 1")
+            raise ValueError('row_limit must be at least 1')
         if connection_factory is None and not connection_string and not connect_kwargs:
-            raise ValueError("Provide connection_string, connect_kwargs, or connection_factory")
+            raise ValueError('Provide connection_string, connect_kwargs, or connection_factory')
         self._connection_string = connection_string
         self._factory = connection_factory
         self._connect_kwargs = connect_kwargs or {}
@@ -204,22 +205,22 @@ class SQLServerToolSet:
         if self._factory is not None:
             return self._factory()
         try:
-            import pyodbc  # type: ignore[import-not-found]
+            pyodbc = import_module('pyodbc')
         except ImportError:
             try:
-                import pymssql  # type: ignore[import-not-found, no-redef]
+                pymssql = import_module('pymssql')
             except ImportError as exc:  # pragma: no cover
                 raise RuntimeError("SQLServerToolSet requires 'pyodbc' or 'pymssql'.") from exc
             # Third-party drivers ship no type stubs; connect is an untyped callable.
-            pymssql_connect = cast("Callable[..., object]", cast(object, pymssql.connect))
-            return cast("SQLServerConnection", pymssql_connect(**self._connect_kwargs))
-        pyodbc_connect = cast("Callable[..., object]", cast(object, pyodbc.connect))
+            pymssql_connect = cast('Callable[..., object]', cast(Any, pymssql).connect)
+            return cast('SQLServerConnection', pymssql_connect(**self._connect_kwargs))
+        pyodbc_connect = cast('Callable[..., object]', cast(Any, pyodbc).connect)
         if self._connection_string:
             return cast(
-                "SQLServerConnection",
+                'SQLServerConnection',
                 pyodbc_connect(self._connection_string, **self._connect_kwargs),
             )
-        return cast("SQLServerConnection", pyodbc_connect(**self._connect_kwargs))
+        return cast('SQLServerConnection', pyodbc_connect(**self._connect_kwargs))
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(SQLSERVER_LIST_DATABASES_OUTPUT)
@@ -237,15 +238,15 @@ class SQLServerToolSet:
         name in queries.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         rows = _run_select(
             self._open(),
-            "SELECT name FROM sys.databases ORDER BY name",
+            'SELECT name FROM sys.databases ORDER BY name',
             None,
             self._row_limit,
-        )["rows"]
+        )['rows']
         return _paginate_summary(
-            rows, key="databases", ref_prefix="database", max_results=max_results
+            rows, key='databases', ref_prefix='database', max_results=max_results
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -262,21 +263,21 @@ class SQLServerToolSet:
         ``name`` as the ``schema`` argument of :meth:`list_tables`.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         rows = _run_select(
             self._open(),
-            "SELECT name FROM sys.schemas "
+            'SELECT name FROM sys.schemas '
             "WHERE name NOT IN ('sys', 'INFORMATION_SCHEMA') ORDER BY name",
             None,
             self._row_limit,
-        )["rows"]
-        return _paginate_summary(rows, key="schemas", ref_prefix="schema", max_results=max_results)
+        )['rows']
+        return _paginate_summary(rows, key='schemas', ref_prefix='schema', max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(SQLSERVER_LIST_TABLES_OUTPUT)
     def list_tables(
         self,
-        schema: str = "dbo",
+        schema: str = 'dbo',
         *,
         max_results: int = _DEFAULT_LIST_LIMIT,
     ) -> dict[str, Any]:
@@ -289,25 +290,25 @@ class SQLServerToolSet:
         to :meth:`describe_table` or :meth:`sample_table`.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         rows = _run_select(
             self._open(),
-            "SELECT table_name AS name, table_type AS type "
-            "FROM information_schema.tables WHERE table_schema = ? "
-            "ORDER BY table_name",
+            'SELECT table_name AS name, table_type AS type '
+            'FROM information_schema.tables WHERE table_schema = ? '
+            'ORDER BY table_name',
             (schema,),
             self._row_limit,
-        )["rows"]
+        )['rows']
         for row in rows:
-            row["schema"] = schema
-        return _paginate_summary(rows, key="tables", ref_prefix="table", max_results=max_results)
+            row['schema'] = schema
+        return _paginate_summary(rows, key='tables', ref_prefix='table', max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(SQLSERVER_DESCRIBE_TABLE_OUTPUT)
     def describe_table(
         self,
         name: str,
-        schema: str = "dbo",
+        schema: str = 'dbo',
     ) -> dict[str, Any]:
         """Return columns and primary key for a table.
 
@@ -317,40 +318,40 @@ class SQLServerToolSet:
         """
         cols = _run_select(
             self._open(),
-            "SELECT column_name AS name, data_type AS type, "
+            'SELECT column_name AS name, data_type AS type, '
             "       is_nullable = 'YES' AS nullable, column_default AS [default] "
-            "FROM information_schema.columns "
-            "WHERE table_schema = ? AND table_name = ? "
-            "ORDER BY ordinal_position",
+            'FROM information_schema.columns '
+            'WHERE table_schema = ? AND table_name = ? '
+            'ORDER BY ordinal_position',
             (schema, name),
             self._row_limit,
         )
-        if not cols["rows"]:
-            raise LookupError(f"Table {schema!r}.{name!r} does not exist")
+        if not cols['rows']:
+            raise LookupError(f'Table {schema!r}.{name!r} does not exist')
         pks = _run_select(
             self._open(),
-            "SELECT kcu.column_name AS name "
-            "FROM information_schema.table_constraints tc "
-            "JOIN information_schema.key_column_usage kcu "
-            "  ON tc.constraint_name = kcu.constraint_name "
+            'SELECT kcu.column_name AS name '
+            'FROM information_schema.table_constraints tc '
+            'JOIN information_schema.key_column_usage kcu '
+            '  ON tc.constraint_name = kcu.constraint_name '
             "WHERE tc.constraint_type = 'PRIMARY KEY' "
-            "  AND tc.table_schema = ? AND tc.table_name = ? "
-            "ORDER BY kcu.ordinal_position",
+            '  AND tc.table_schema = ? AND tc.table_name = ? '
+            'ORDER BY kcu.ordinal_position',
             (schema, name),
             self._row_limit,
         )
         return {
-            "schema": schema,
-            "name": name,
-            "columns": cols["rows"],
-            "primary_key": [r["name"] for r in pks["rows"]],
+            'schema': schema,
+            'name': name,
+            'columns': cols['rows'],
+            'primary_key': [r['name'] for r in pks['rows']],
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(SQLSERVER_LIST_VIEWS_OUTPUT)
     def list_views(
         self,
-        schema: str = "dbo",
+        schema: str = 'dbo',
         *,
         max_results: int = _DEFAULT_LIST_LIMIT,
     ) -> dict[str, Any]:
@@ -361,17 +362,17 @@ class SQLServerToolSet:
         be sampled with :meth:`sample_table`.
         """
         if max_results < 1:
-            raise ValueError("max_results must be at least 1")
+            raise ValueError('max_results must be at least 1')
         rows = _run_select(
             self._open(),
-            "SELECT table_name AS name FROM information_schema.views "
-            "WHERE table_schema = ? ORDER BY table_name",
+            'SELECT table_name AS name FROM information_schema.views '
+            'WHERE table_schema = ? ORDER BY table_name',
             (schema,),
             self._row_limit,
-        )["rows"]
+        )['rows']
         for row in rows:
-            row["schema"] = schema
-        return _paginate_summary(rows, key="views", ref_prefix="view", max_results=max_results)
+            row['schema'] = schema
+        return _paginate_summary(rows, key='views', ref_prefix='view', max_results=max_results)
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(SQLSERVER_SERVER_VERSION_OUTPUT)
@@ -383,11 +384,11 @@ class SQLServerToolSet:
         """
         rows = _run_select(
             self._open(),
-            "SELECT @@VERSION AS version, DB_NAME() AS [database]",
+            'SELECT @@VERSION AS version, DB_NAME() AS [database]',
             None,
             1,
-        )["rows"]
-        return rows[0] if rows else {"version": None, "database": None}
+        )['rows']
+        return rows[0] if rows else {'version': None, 'database': None}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(SQLSERVER_SAMPLE_TABLE_OUTPUT)
@@ -395,7 +396,7 @@ class SQLServerToolSet:
         self,
         name: str,
         *,
-        schema: str = "dbo",
+        schema: str = 'dbo',
         limit: int = _DEFAULT_SAMPLE_LIMIT,
     ) -> dict[str, Any]:
         """Return up to ``limit`` rows (default 5) using ``SELECT TOP``.
@@ -404,33 +405,33 @@ class SQLServerToolSet:
         as column-keyed dicts, ``row_count``, ``truncated``).
         """
         if limit < 1 or limit > self._row_limit:
-            raise ValueError(f"limit must be between 1 and {self._row_limit}")
+            raise ValueError(f'limit must be between 1 and {self._row_limit}')
         if not _is_safe_identifier(schema) or not _is_safe_identifier(name):
-            raise ValueError(f"Invalid table reference: {schema!r}.{name!r}")
+            raise ValueError(f'Invalid table reference: {schema!r}.{name!r}')
         return self.run_query(
-            f"SELECT TOP {int(limit)} * FROM [{schema}].[{name}]",
+            f'SELECT TOP {int(limit)} * FROM [{schema}].[{name}]',
             row_limit=limit,
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(SQLSERVER_COUNT_ROWS_OUTPUT)
-    def count_rows(self, name: str, schema: str = "dbo") -> dict[str, Any]:
+    def count_rows(self, name: str, schema: str = 'dbo') -> dict[str, Any]:
         """Return ``COUNT(*)`` for a table.
 
         Returns ``{"schema", "name", "row_count"}``.
         """
         if not _is_safe_identifier(schema) or not _is_safe_identifier(name):
-            raise ValueError(f"Invalid table reference: {schema!r}.{name!r}")
+            raise ValueError(f'Invalid table reference: {schema!r}.{name!r}')
         rows = _run_select(
             self._open(),
-            f"SELECT COUNT(*) AS row_count FROM [{schema}].[{name}]",
+            f'SELECT COUNT(*) AS row_count FROM [{schema}].[{name}]',
             None,
             1,
-        )["rows"]
+        )['rows']
         return {
-            "schema": schema,
-            "name": name,
-            "row_count": rows[0]["row_count"] if rows else 0,
+            'schema': schema,
+            'name': name,
+            'row_count': rows[0]['row_count'] if rows else 0,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -462,7 +463,7 @@ class SQLServerToolSet:
         effective_limit = min(self._row_limit, _DEFAULT_QUERY_LIMIT)
         limit = effective_limit if row_limit is None else int(row_limit)
         if limit < 1:
-            raise ValueError("row_limit must be at least 1")
+            raise ValueError('row_limit must be at least 1')
         if limit > self._row_limit:
             limit = self._row_limit
         params: Any

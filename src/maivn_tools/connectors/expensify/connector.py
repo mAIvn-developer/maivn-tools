@@ -20,7 +20,7 @@ from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 
 
-@toolset(prefix="expensify")
+@toolset(prefix='expensify')
 class ExpensifyToolSet:
     """A connector for the Expensify Integration Server.
 
@@ -30,15 +30,15 @@ class ExpensifyToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="expensify",
-        display_name="Expensify",
-        version="0.1.0",
-        description="Reports, expenses, policies, and exports via the Integration Server.",
+        name='expensify',
+        display_name='Expensify',
+        version='0.1.0',
+        description='Reports, expenses, policies, and exports via the Integration Server.',
         auth_modes=(AuthMode.API_KEY,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://integrations.expensify.com/Integration-Server/doc/",
-        homepage_url="https://www.expensify.com/",
-        tags=("expense", "finance"),
+        documentation_url='https://integrations.expensify.com/Integration-Server/doc/',
+        homepage_url='https://www.expensify.com/',
+        tags=('expense', 'finance'),
     )
 
     def __init__(
@@ -46,20 +46,20 @@ class ExpensifyToolSet:
         *,
         partner_user_id: str,
         partner_user_secret: str,
-        base_url: str = "https://integrations.expensify.com",
+        base_url: str = 'https://integrations.expensify.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not partner_user_id or not partner_user_secret:
-            raise ValueError("partner_user_id and partner_user_secret are required")
+            raise ValueError('partner_user_id and partner_user_secret are required')
         self.connection = connection
         self._partner_id = partner_user_id
         self._partner_secret = partner_user_secret
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=NoAuth(),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -73,11 +73,11 @@ class ExpensifyToolSet:
         template: str | None = None,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {
-            "requestJobDescription": _json.dumps(
+            'requestJobDescription': _json.dumps(
                 {
-                    "credentials": {
-                        "partnerUserID": self._partner_id,
-                        "partnerUserSecret": self._partner_secret,
+                    'credentials': {
+                        'partnerUserID': self._partner_id,
+                        'partnerUserSecret': self._partner_secret,
                     },
                     **job,
                 }
@@ -86,16 +86,16 @@ class ExpensifyToolSet:
         if template is not None:
             # Freemarker template required by the file-export job; the
             # Integration Server accepts it as a sibling form field.
-            params["template"] = template
+            params['template'] = template
         response = self._client.post(
-            "/Integration-Server/ExpensifyIntegrations",
+            '/Integration-Server/ExpensifyIntegrations',
             params=params,
         )
         try:
             body: Any = response.json()
         except ValueError:
             body = response.text()
-        return {"status": response.status, "body": body}
+        return {'status': response.status, 'body': body}
 
     # MARK: file-export helpers
 
@@ -103,11 +103,11 @@ class ExpensifyToolSet:
         """Issue the second-step ``download`` job to fetch exported bytes."""
         return self._submit(
             {
-                "type": "download",
-                "inputSettings": {
-                    "type": "file",
-                    "fileName": file_name,
-                    "fileSystem": "integrationServer",
+                'type': 'download',
+                'inputSettings': {
+                    'type': 'file',
+                    'fileName': file_name,
+                    'fileSystem': 'integrationServer',
                 },
             }
         )
@@ -115,15 +115,15 @@ class ExpensifyToolSet:
     @staticmethod
     def _extract_file_name(submit_result: dict[str, Any]) -> str | None:
         """Pull the generated random filename out of a ``file`` job response."""
-        body: Any = submit_result.get("body")
+        body: Any = submit_result.get('body')
         if isinstance(body, dict):
             mapping = cast(dict[str, Any], body)
-            name: Any = mapping.get("filename") or mapping.get("fileName")
+            name: Any = mapping.get('filename') or mapping.get('fileName')
             if isinstance(name, str) and name:
                 return name
         if isinstance(body, str):
             text = body.strip()
-            if text and "\n" not in text and "{" not in text:
+            if text and '\n' not in text and '{' not in text:
                 return text
         return None
 
@@ -134,7 +134,7 @@ class ExpensifyToolSet:
         self,
         *,
         report_id: str,
-        file_extension: str = "csv",
+        file_extension: str = 'csv',
         template_ftl: str,
     ) -> dict[str, Any]:
         """Export one or more Expensify reports in the requested format.
@@ -150,20 +150,20 @@ class ExpensifyToolSet:
         export), or the ``file`` job response if no filename was returned.
         """
         if not report_id:
-            raise ValueError("report_id must be a non-empty string")
-        if file_extension not in {"csv", "pdf", "xlsx"}:
-            raise ValueError("file_extension must be csv/pdf/xlsx")
+            raise ValueError('report_id must be a non-empty string')
+        if file_extension not in {'csv', 'pdf', 'xlsx'}:
+            raise ValueError('file_extension must be csv/pdf/xlsx')
         if not template_ftl:
-            raise ValueError("template_ftl must be a non-empty Freemarker template")
+            raise ValueError('template_ftl must be a non-empty Freemarker template')
         submit_result = self._submit(
             {
-                "type": "file",
-                "onReceive": {"immediateResponse": ["returnRandomFileName"]},
-                "inputSettings": {
-                    "type": "combinedReportData",
-                    "filters": {"reportIDList": report_id},
+                'type': 'file',
+                'onReceive': {'immediateResponse': ['returnRandomFileName']},
+                'inputSettings': {
+                    'type': 'combinedReportData',
+                    'filters': {'reportIDList': report_id},
                 },
-                "outputSettings": {"fileExtension": file_extension},
+                'outputSettings': {'fileExtension': file_extension},
             },
             template=template_ftl,
         )
@@ -178,7 +178,7 @@ class ExpensifyToolSet:
         *,
         report_state: str,
         template_ftl: str,
-        file_extension: str = "csv",
+        file_extension: str = 'csv',
         approved_after: str | None = None,
         approved_before: str | None = None,
         policy_id: str | None = None,
@@ -195,30 +195,30 @@ class ExpensifyToolSet:
         response if no filename was returned.
         """
         if not report_state:
-            raise ValueError("report_state must be a non-empty string")
+            raise ValueError('report_state must be a non-empty string')
         if not template_ftl:
-            raise ValueError("template_ftl must be a non-empty Freemarker template")
-        if file_extension not in {"csv", "pdf", "xlsx"}:
-            raise ValueError("file_extension must be csv/pdf/xlsx")
+            raise ValueError('template_ftl must be a non-empty Freemarker template')
+        if file_extension not in {'csv', 'pdf', 'xlsx'}:
+            raise ValueError('file_extension must be csv/pdf/xlsx')
         report_filters: dict[str, Any] = {}
         if approved_after is not None:
-            report_filters["approvedAfter"] = approved_after
+            report_filters['approvedAfter'] = approved_after
         if approved_before is not None:
-            report_filters["approvedBefore"] = approved_before
+            report_filters['approvedBefore'] = approved_before
         if policy_id is not None:
-            report_filters["policyIDList"] = [policy_id]
+            report_filters['policyIDList'] = [policy_id]
         input_settings: dict[str, Any] = {
-            "type": "combinedReportData",
-            "reportState": report_state,
+            'type': 'combinedReportData',
+            'reportState': report_state,
         }
         if report_filters:
-            input_settings["filters"] = report_filters
+            input_settings['filters'] = report_filters
         submit_result = self._submit(
             {
-                "type": "file",
-                "onReceive": {"immediateResponse": ["returnRandomFileName"]},
-                "inputSettings": input_settings,
-                "outputSettings": {"fileExtension": file_extension},
+                'type': 'file',
+                'onReceive': {'immediateResponse': ['returnRandomFileName']},
+                'inputSettings': input_settings,
+                'outputSettings': {'fileExtension': file_extension},
             },
             template=template_ftl,
         )
@@ -230,7 +230,7 @@ class ExpensifyToolSet:
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_policy_list(self) -> dict[str, Any]:
         """List Expensify policies. Returns the raw Integration Server response."""
-        return self._submit({"type": "get", "inputSettings": {"type": "policyList"}})
+        return self._submit({'type': 'get', 'inputSettings': {'type': 'policyList'}})
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_policy(
@@ -245,21 +245,21 @@ class ExpensifyToolSet:
         it. Defaults to the full set when omitted.
         """
         if not policy_id:
-            raise ValueError("policy_id must be a non-empty string")
+            raise ValueError('policy_id must be a non-empty string')
         requested_fields = fields or [
-            "categories",
-            "tags",
-            "tax",
-            "reportFields",
-            "employees",
+            'categories',
+            'tags',
+            'tax',
+            'reportFields',
+            'employees',
         ]
         return self._submit(
             {
-                "type": "get",
-                "inputSettings": {
-                    "type": "policy",
-                    "policyIDList": [policy_id],
-                    "fields": requested_fields,
+                'type': 'get',
+                'inputSettings': {
+                    'type': 'policy',
+                    'policyIDList': [policy_id],
+                    'fields': requested_fields,
                 },
             }
         )
@@ -284,11 +284,11 @@ class ExpensifyToolSet:
         is marked destructive. Returns the raw Integration Server response.
         """
         if not policy_id or not settings:
-            raise ValueError("policy_id and settings must be non-empty")
+            raise ValueError('policy_id and settings must be non-empty')
         return self._submit(
             {
-                "type": "update",
-                "inputSettings": {"type": "policy", "policyID": policy_id},
+                'type': 'update',
+                'inputSettings': {'type': 'policy', 'policyID': policy_id},
                 **settings,
             }
         )

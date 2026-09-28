@@ -17,7 +17,7 @@ from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_SUBREDDIT_POSTS_OUTPUT, SEARCH_OUTPUT
 
 
-@toolset(prefix="reddit")
+@toolset(prefix='reddit')
 class RedditToolSet:
     """A connector for the Reddit OAuth API.
 
@@ -28,20 +28,20 @@ class RedditToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="reddit",
-        display_name="Reddit",
-        version="0.1.0",
-        description="Subreddits, posts, comments, voting, and user feeds.",
+        name='reddit',
+        display_name='Reddit',
+        version='0.1.0',
+        description='Subreddits, posts, comments, voting, and user feeds.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "identity": "Account identity.",
-            "read": "Read posts and comments.",
-            "submit": "Submit posts.",
-            "edit": "Edit user content.",
-            "vote": "Cast votes.",
-            "subscribe": "Subscribe to subreddits.",
-            "history": "Read user history.",
-            "mysubreddits": "List subscribed subreddits.",
+            'identity': 'Account identity.',
+            'read': 'Read posts and comments.',
+            'submit': 'Submit posts.',
+            'edit': 'Edit user content.',
+            'vote': 'Cast votes.',
+            'subscribe': 'Subscribe to subreddits.',
+            'history': 'Read user history.',
+            'mysubreddits': 'List subscribed subreddits.',
         },
         capabilities=frozenset(
             {
@@ -51,9 +51,9 @@ class RedditToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://www.reddit.com/dev/api",
-        homepage_url="https://www.reddit.com/",
-        tags=("social-media", "discussion"),
+        documentation_url='https://www.reddit.com/dev/api',
+        homepage_url='https://www.reddit.com/',
+        tags=('social-media', 'discussion'),
     )
 
     def __init__(
@@ -61,22 +61,22 @@ class RedditToolSet:
         *,
         access_token: str,
         user_agent: str,
-        base_url: str = "https://oauth.reddit.com",
+        base_url: str = 'https://oauth.reddit.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         if not user_agent:
-            raise ValueError("user_agent is required")
+            raise ValueError('user_agent is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(access_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "User-Agent": user_agent,
+                'Accept': 'application/json',
+                'User-Agent': user_agent,
             },
         )
 
@@ -85,11 +85,11 @@ class RedditToolSet:
         return self._client
 
     def _post_form(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
-        body = urlencode(payload).encode("utf-8")
+        body = urlencode(payload).encode('utf-8')
         response = self._client.post(
             path,
             data=body,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
         )
         result: dict[str, Any] = response.json()
         return result
@@ -106,25 +106,25 @@ class RedditToolSet:
         """
         if isinstance(candidate, str):
             if not candidate:
-                raise ValueError("thing_id must be a non-empty string")
+                raise ValueError('thing_id must be a non-empty string')
             return candidate
         if isinstance(candidate, dict):
             mapping = cast(dict[str, Any], candidate)
-            for key in ("thing_id", "name", "fullname"):
+            for key in ('thing_id', 'name', 'fullname'):
                 value = mapping.get(key)
                 if isinstance(value, str) and value:
                     return value
-            data = mapping.get("data")
+            data = mapping.get('data')
             if isinstance(data, dict):
                 nested = cast(dict[str, Any], data)
-                for key in ("name", "thing_id", "fullname"):
+                for key in ('name', 'thing_id', 'fullname'):
                     value = nested.get(key)
                     if isinstance(value, str) and value:
                         return value
         if isinstance(candidate, list) and candidate:
             items = cast(list[Any], candidate)
             return RedditToolSet._select_thing_id(items[0])
-        raise ValueError("could not resolve thing_id from input")
+        raise ValueError('could not resolve thing_id from input')
 
     @classmethod
     def _post_summary(
@@ -134,23 +134,23 @@ class RedditToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        data: dict[str, Any] = listing_child.get("data") or {}
+        data: dict[str, Any] = listing_child.get('data') or {}
         summary: dict[str, Any] = {
-            "post_ref": f"post_{index}",
-            "title": data.get("title", ""),
-            "author": data.get("author", ""),
-            "subreddit": data.get("subreddit", ""),
-            "posted_at": data.get("created_utc", 0),
-            "score": data.get("score", 0),
-            "num_comments": data.get("num_comments", 0),
-            "url": f"https://www.reddit.com{data.get('permalink', '')}"
-            if data.get("permalink")
-            else data.get("url", ""),
-            "selftext": data.get("selftext", "")[:500] if data.get("selftext") else "",
+            'post_ref': f'post_{index}',
+            'title': data.get('title', ''),
+            'author': data.get('author', ''),
+            'subreddit': data.get('subreddit', ''),
+            'posted_at': data.get('created_utc', 0),
+            'score': data.get('score', 0),
+            'num_comments': data.get('num_comments', 0),
+            'url': f'https://www.reddit.com{data.get("permalink", "")}'
+            if data.get('permalink')
+            else data.get('url', ''),
+            'selftext': data.get('selftext', '')[:500] if data.get('selftext') else '',
         }
         if include_ids:
-            summary["thing_id"] = data.get("name", "")
-            summary["post_id"] = data.get("id", "")
+            summary['thing_id'] = data.get('name', '')
+            summary['post_id'] = data.get('id', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -160,7 +160,7 @@ class RedditToolSet:
         Returns ``{"name": ..., "id": ..., "icon_img": ..., ...}``. Cheap,
         useful as a connection sanity check.
         """
-        return self._client.get("/api/v1/me").json()
+        return self._client.get('/api/v1/me').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_subscribed_subreddits(
@@ -174,10 +174,10 @@ class RedditToolSet:
         Returns the raw Reddit listing response. Each child carries a
         ``data.display_name`` (the subreddit name) and ``data.url``.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if after is not None:
-            params["after"] = after
-        return self._client.get("/subreddits/mine/subscriber", params=params).json()
+            params['after'] = after
+        return self._client.get('/subreddits/mine/subscriber', params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_subreddit_about(self, subreddit: str) -> dict[str, Any]:
@@ -187,8 +187,8 @@ class RedditToolSet:
         public description, rules summary, etc.).
         """
         if not subreddit:
-            raise ValueError("subreddit must be a non-empty string")
-        return self._client.get(f"/r/{subreddit}/about").json()
+            raise ValueError('subreddit must be a non-empty string')
+        return self._client.get(f'/r/{subreddit}/about').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_SUBREDDIT_POSTS_OUTPUT)
@@ -196,7 +196,7 @@ class RedditToolSet:
         self,
         subreddit: str,
         *,
-        sort: str = "hot",
+        sort: str = 'hot',
         limit: int = 10,
         after: str | None = None,
         time: str | None = None,
@@ -215,20 +215,20 @@ class RedditToolSet:
         the raw Reddit listing.
         """
         if not subreddit:
-            raise ValueError("subreddit must be a non-empty string")
-        if sort not in {"hot", "new", "top", "rising", "controversial"}:
-            raise ValueError("sort must be hot/new/top/rising/controversial")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('subreddit must be a non-empty string')
+        if sort not in {'hot', 'new', 'top', 'rising', 'controversial'}:
+            raise ValueError('sort must be hot/new/top/rising/controversial')
+        params: dict[str, Any] = {'limit': limit}
         if after is not None:
-            params["after"] = after
+            params['after'] = after
         if time is not None:
-            params["t"] = time
-        payload: dict[str, Any] = self._client.get(f"/r/{subreddit}/{sort}", params=params).json()
+            params['t'] = time
+        payload: dict[str, Any] = self._client.get(f'/r/{subreddit}/{sort}', params=params).json()
         if not include_metadata:
             return payload
-        data_obj = payload.get("data")
+        data_obj = payload.get('data')
         data: dict[str, Any] = cast(dict[str, Any], data_obj) if isinstance(data_obj, dict) else {}
-        children: list[Any] = data.get("children", [])
+        children: list[Any] = data.get('children', [])
         summaries: list[dict[str, Any]] = []
         for index, child in enumerate(children, start=1):
             if not isinstance(child, dict):
@@ -236,9 +236,9 @@ class RedditToolSet:
             child_dict = cast(dict[str, Any], child)
             summaries.append(self._post_summary(child_dict, index=index, include_ids=include_ids))
         return {
-            "posts": summaries,
-            "after": data.get("after"),
-            "before": data.get("before"),
+            'posts': summaries,
+            'after': data.get('after'),
+            'before': data.get('before'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -248,7 +248,7 @@ class RedditToolSet:
         query: str,
         *,
         subreddit: str | None = None,
-        sort: str = "relevance",
+        sort: str = 'relevance',
         limit: int = 10,
         after: str | None = None,
         include_metadata: bool = True,
@@ -262,21 +262,21 @@ class RedditToolSet:
         ``include_metadata=False`` for the raw Reddit listing.
         """
         if not query:
-            raise ValueError("query must be a non-empty string")
-        if sort not in {"relevance", "hot", "top", "new", "comments"}:
-            raise ValueError("sort must be relevance/hot/top/new/comments")
-        params: dict[str, Any] = {"q": query, "sort": sort, "limit": limit}
+            raise ValueError('query must be a non-empty string')
+        if sort not in {'relevance', 'hot', 'top', 'new', 'comments'}:
+            raise ValueError('sort must be relevance/hot/top/new/comments')
+        params: dict[str, Any] = {'q': query, 'sort': sort, 'limit': limit}
         if after is not None:
-            params["after"] = after
-        path = f"/r/{subreddit}/search" if subreddit else "/search"
+            params['after'] = after
+        path = f'/r/{subreddit}/search' if subreddit else '/search'
         if subreddit:
-            params["restrict_sr"] = "true"
+            params['restrict_sr'] = 'true'
         payload: dict[str, Any] = self._client.get(path, params=params).json()
         if not include_metadata:
             return payload
-        data_obj = payload.get("data")
+        data_obj = payload.get('data')
         data: dict[str, Any] = cast(dict[str, Any], data_obj) if isinstance(data_obj, dict) else {}
-        children: list[Any] = data.get("children", [])
+        children: list[Any] = data.get('children', [])
         summaries: list[dict[str, Any]] = []
         for index, child in enumerate(children, start=1):
             if not isinstance(child, dict):
@@ -284,9 +284,9 @@ class RedditToolSet:
             child_dict = cast(dict[str, Any], child)
             summaries.append(self._post_summary(child_dict, index=index, include_ids=include_ids))
         return {
-            "posts": summaries,
-            "after": data.get("after"),
-            "before": data.get("before"),
+            'posts': summaries,
+            'after': data.get('after'),
+            'before': data.get('before'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -297,8 +297,8 @@ class RedditToolSet:
         the first is the post, the second is the top-level comment tree.
         """
         if not subreddit or not post_id:
-            raise ValueError("subreddit and post_id are required")
-        return self._client.get(f"/r/{subreddit}/comments/{post_id}").json()
+            raise ValueError('subreddit and post_id are required')
+        return self._client.get(f'/r/{subreddit}/comments/{post_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def submit_post(
@@ -306,7 +306,7 @@ class RedditToolSet:
         *,
         subreddit: str,
         title: str,
-        kind: str = "self",
+        kind: str = 'self',
         text: str | None = None,
         url: str | None = None,
     ) -> dict[str, Any]:
@@ -316,24 +316,24 @@ class RedditToolSet:
         requires ``text``; ``kind="link"`` requires ``url``.
         """
         if not subreddit or not title:
-            raise ValueError("subreddit and title are required")
-        if kind not in {"self", "link"}:
-            raise ValueError("kind must be self or link")
-        if kind == "self" and not text:
-            raise ValueError("text is required when kind=self")
-        if kind == "link" and not url:
-            raise ValueError("url is required when kind=link")
+            raise ValueError('subreddit and title are required')
+        if kind not in {'self', 'link'}:
+            raise ValueError('kind must be self or link')
+        if kind == 'self' and not text:
+            raise ValueError('text is required when kind=self')
+        if kind == 'link' and not url:
+            raise ValueError('url is required when kind=link')
         data: dict[str, Any] = {
-            "sr": subreddit,
-            "title": title,
-            "kind": kind,
-            "api_type": "json",
+            'sr': subreddit,
+            'title': title,
+            'kind': kind,
+            'api_type': 'json',
         }
         if text is not None:
-            data["text"] = text
+            data['text'] = text
         if url is not None:
-            data["url"] = url
-        return self._post_form("/api/submit", data)
+            data['url'] = url
+        return self._post_form('/api/submit', data)
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def submit_comment(
@@ -349,11 +349,11 @@ class RedditToolSet:
         ``name`` / ``data.name``).
         """
         if not text:
-            raise ValueError("text is required")
+            raise ValueError('text is required')
         parent_id = self._select_thing_id(parent)
         return self._post_form(
-            "/api/comment",
-            {"thing_id": parent_id, "text": text, "api_type": "json"},
+            '/api/comment',
+            {'thing_id': parent_id, 'text': text, 'api_type': 'json'},
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -370,9 +370,9 @@ class RedditToolSet:
         dict from listing endpoints.
         """
         if direction not in {1, 0, -1}:
-            raise ValueError("direction must be 1, 0, or -1")
+            raise ValueError('direction must be 1, 0, or -1')
         thing_id = self._select_thing_id(thing)
-        return self._post_form("/api/vote", {"id": thing_id, "dir": direction})
+        return self._post_form('/api/vote', {'id': thing_id, 'dir': direction})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def save(
@@ -386,10 +386,10 @@ class RedditToolSet:
         ``thing`` accepts a raw fullname or a post dict from listings.
         """
         thing_id = self._select_thing_id(thing)
-        payload: dict[str, Any] = {"id": thing_id}
+        payload: dict[str, Any] = {'id': thing_id}
         if category is not None:
-            payload["category"] = category
-        return self._post_form("/api/save", payload)
+            payload['category'] = category
+        return self._post_form('/api/save', payload)
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def unsave(self, thing: str | dict[str, Any]) -> dict[str, Any]:
@@ -398,7 +398,7 @@ class RedditToolSet:
         ``thing`` accepts a raw fullname or a post dict from listings.
         """
         thing_id = self._select_thing_id(thing)
-        return self._post_form("/api/unsave", {"id": thing_id})
+        return self._post_form('/api/unsave', {'id': thing_id})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def subscribe(self, subreddit: str, *, unsubscribe: bool = False) -> dict[str, Any]:
@@ -407,12 +407,12 @@ class RedditToolSet:
         Pass ``unsubscribe=True`` to unsubscribe instead.
         """
         if not subreddit:
-            raise ValueError("subreddit is required")
+            raise ValueError('subreddit is required')
         return self._post_form(
-            "/api/subscribe",
+            '/api/subscribe',
             {
-                "action": "unsub" if unsubscribe else "sub",
-                "sr_name": subreddit,
+                'action': 'unsub' if unsubscribe else 'sub',
+                'sr_name': subreddit,
             },
         )
 
@@ -424,4 +424,4 @@ class RedditToolSet:
         Destructive and not reversible — confirm with the user.
         """
         thing_id = self._select_thing_id(thing)
-        return self._post_form("/api/del", {"id": thing_id})
+        return self._post_form('/api/del', {'id': thing_id})

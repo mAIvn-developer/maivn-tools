@@ -15,12 +15,12 @@ from ...runtime.http import HttpTransport
 from ._shared import GRAPH_API_URL, TokenSource, make_graph_client
 from .output_schemas import LIST_FOLDERS_OUTPUT, LIST_MESSAGES_OUTPUT
 
-_DEFAULT_MESSAGE_SELECT = "id,subject,from,toRecipients,receivedDateTime,bodyPreview,isRead"
+_DEFAULT_MESSAGE_SELECT = 'id,subject,from,toRecipients,receivedDateTime,bodyPreview,isRead'
 _DEFAULT_FOLDER_LIST_TOP = 25
 _DEFAULT_MESSAGE_LIST_TOP = 25
 
 
-@toolset(prefix="outlook_mail")
+@toolset(prefix='outlook_mail')
 class OutlookMailToolSet:
     """A connector for Outlook / Microsoft 365 mail via Microsoft Graph.
 
@@ -33,15 +33,15 @@ class OutlookMailToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="outlook_mail",
-        display_name="Outlook Mail",
-        version="0.1.0",
-        description="Read, search, send, and label Outlook / Microsoft 365 messages.",
+        name='outlook_mail',
+        display_name='Outlook Mail',
+        version='0.1.0',
+        description='Read, search, send, and label Outlook / Microsoft 365 messages.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "Mail.Read": "Read mail.",
-            "Mail.Send": "Send mail.",
-            "Mail.ReadWrite": "Read, modify, and move mail.",
+            'Mail.Read': 'Read mail.',
+            'Mail.Send': 'Send mail.',
+            'Mail.ReadWrite': 'Read, modify, and move mail.',
         },
         capabilities=frozenset(
             {
@@ -51,22 +51,22 @@ class OutlookMailToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://learn.microsoft.com/graph/api/resources/mail-api-overview",
-        homepage_url="https://outlook.live.com",
-        tags=("email", "microsoft"),
+        documentation_url='https://learn.microsoft.com/graph/api/resources/mail-api-overview',
+        homepage_url='https://outlook.live.com',
+        tags=('email', 'microsoft'),
     )
 
     def __init__(
         self,
         token: TokenSource,
         *,
-        user: str = "me",
+        user: str = 'me',
         transport: HttpTransport | None = None,
         base_url: str = GRAPH_API_URL,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not user:
-            raise ValueError("user must be a non-empty string")
+            raise ValueError('user must be a non-empty string')
         self.connection = connection
         self._user = user
         self._client = make_graph_client(token, transport=transport, base_url=base_url)
@@ -91,31 +91,31 @@ class OutlookMailToolSet:
         :meth:`move_message` needs the raw ID.
         """
         if top < 1 or top > 1000:
-            raise ValueError("top must be between 1 and 1000")
+            raise ValueError('top must be between 1 and 1000')
         payload: dict[str, Any] = self._client.get(
-            self._user_path("/mailFolders"),
-            params={"$top": top},
+            self._user_path('/mailFolders'),
+            params={'$top': top},
         ).json()
         folders: list[dict[str, Any]] = []
-        raw_value: Any = payload.get("value", [])
+        raw_value: Any = payload.get('value', [])
         raw_folders: list[Any] = cast(list[Any], raw_value) if isinstance(raw_value, list) else []
         for index, folder in enumerate(raw_folders, start=1):
             if not isinstance(folder, dict):
                 continue
             folder_dict: dict[str, Any] = cast(dict[str, Any], folder)
             summary: dict[str, Any] = {
-                "folder_ref": f"folder_{index}",
-                "display_name": folder_dict.get("displayName", ""),
-                "total_item_count": folder_dict.get("totalItemCount", 0),
-                "unread_item_count": folder_dict.get("unreadItemCount", 0),
+                'folder_ref': f'folder_{index}',
+                'display_name': folder_dict.get('displayName', ''),
+                'total_item_count': folder_dict.get('totalItemCount', 0),
+                'unread_item_count': folder_dict.get('unreadItemCount', 0),
             }
             if include_ids:
-                summary["folder_id"] = folder_dict.get("id", "")
-                summary["parent_folder_id"] = folder_dict.get("parentFolderId", "")
+                summary['folder_id'] = folder_dict.get('id', '')
+                summary['parent_folder_id'] = folder_dict.get('parentFolderId', '')
             folders.append(summary)
         return {
-            "folders": folders,
-            "nextLink": payload.get("@odata.nextLink"),
+            'folders': folders,
+            'nextLink': payload.get('@odata.nextLink'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -127,7 +127,7 @@ class OutlookMailToolSet:
         filter: str | None = None,
         top: int = _DEFAULT_MESSAGE_LIST_TOP,
         select: str | None = _DEFAULT_MESSAGE_SELECT,
-        order_by: str | None = "receivedDateTime desc",
+        order_by: str | None = 'receivedDateTime desc',
         include_metadata: bool = True,
         include_ids: bool = False,
     ) -> dict[str, Any]:
@@ -144,19 +144,19 @@ class OutlookMailToolSet:
         every field present.
         """
         if top < 1 or top > 1000:
-            raise ValueError("top must be between 1 and 1000")
-        params: dict[str, Any] = {"$top": top}
+            raise ValueError('top must be between 1 and 1000')
+        params: dict[str, Any] = {'$top': top}
         if search is not None:
-            params["$search"] = f'"{search}"' if not search.startswith('"') else search
+            params['$search'] = f'"{search}"' if not search.startswith('"') else search
         if filter is not None:
-            params["$filter"] = filter
+            params['$filter'] = filter
         if select is not None:
-            params["$select"] = select
+            params['$select'] = select
         if order_by is not None and search is None:
             # $orderby cannot combine with $search in Graph.
-            params["$orderby"] = order_by
+            params['$orderby'] = order_by
         payload: dict[str, Any] = self._client.get(
-            self._user_path("/messages"), params=params
+            self._user_path('/messages'), params=params
         ).json()
         if not include_metadata:
             return payload
@@ -173,7 +173,7 @@ class OutlookMailToolSet:
         automatically).
         """
         resolved = _extract_message_id(message_id)
-        return self._client.get(self._user_path(f"/messages/{resolved}")).json()
+        return self._client.get(self._user_path(f'/messages/{resolved}')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def send_email(
@@ -194,28 +194,28 @@ class OutlookMailToolSet:
         an interactive agent loop.
         """
         if not to:
-            raise ValueError("to must contain at least one recipient")
+            raise ValueError('to must contain at least one recipient')
         if body_text is None and body_html is None:
-            raise ValueError("body_text or body_html must be supplied")
+            raise ValueError('body_text or body_html must be supplied')
         body: dict[str, Any]
         if body_html is not None:
-            body = {"contentType": "HTML", "content": body_html}
+            body = {'contentType': 'HTML', 'content': body_html}
         else:
-            body = {"contentType": "Text", "content": body_text or ""}
+            body = {'contentType': 'Text', 'content': body_text or ''}
         payload: dict[str, Any] = {
-            "message": {
-                "subject": subject,
-                "body": body,
-                "toRecipients": _addresses(to),
+            'message': {
+                'subject': subject,
+                'body': body,
+                'toRecipients': _addresses(to),
             },
-            "saveToSentItems": save_to_sent,
+            'saveToSentItems': save_to_sent,
         }
         if cc:
-            payload["message"]["ccRecipients"] = _addresses(cc)
+            payload['message']['ccRecipients'] = _addresses(cc)
         if bcc:
-            payload["message"]["bccRecipients"] = _addresses(bcc)
-        response = self._client.post(self._user_path("/sendMail"), json=payload)
-        return {"sent": True, "status": response.status}
+            payload['message']['bccRecipients'] = _addresses(bcc)
+        response = self._client.post(self._user_path('/sendMail'), json=payload)
+        return {'sent': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def move_message(self, message_id: Any, destination_folder_id: Any) -> dict[str, Any]:
@@ -229,8 +229,8 @@ class OutlookMailToolSet:
         resolved_message = _extract_message_id(message_id)
         resolved_folder = _extract_folder_id(destination_folder_id)
         return self._client.post(
-            self._user_path(f"/messages/{resolved_message}/move"),
-            json={"destinationId": resolved_folder},
+            self._user_path(f'/messages/{resolved_message}/move'),
+            json={'destinationId': resolved_folder},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -242,8 +242,8 @@ class OutlookMailToolSet:
         string or a message dict from a list response.
         """
         resolved = _extract_message_id(message_id)
-        response = self._client.delete(self._user_path(f"/messages/{resolved}"))
-        return {"deleted": True, "status": response.status}
+        response = self._client.delete(self._user_path(f'/messages/{resolved}'))
+        return {'deleted': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def copy_message(self, message_id: Any, destination_folder_id: Any) -> dict[str, Any]:
@@ -254,8 +254,8 @@ class OutlookMailToolSet:
         resolved_message = _extract_message_id(message_id)
         resolved_folder = _extract_folder_id(destination_folder_id)
         return self._client.post(
-            self._user_path(f"/messages/{resolved_message}/copy"),
-            json={"destinationId": resolved_folder},
+            self._user_path(f'/messages/{resolved_message}/copy'),
+            json={'destinationId': resolved_folder},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -266,10 +266,10 @@ class OutlookMailToolSet:
         the updated message resource.
         """
         if not patch:
-            raise ValueError("patch must contain at least one field")
+            raise ValueError('patch must contain at least one field')
         resolved = _extract_message_id(message_id)
         return self._client.patch(
-            self._user_path(f"/messages/{resolved}"),
+            self._user_path(f'/messages/{resolved}'),
             json=patch,
         ).json()
 
@@ -279,13 +279,13 @@ class OutlookMailToolSet:
 
         ``message_id`` accepts a raw ID string or a message dict.
         """
-        return self.update_message(message_id, {"isRead": is_read})
+        return self.update_message(message_id, {'isRead': is_read})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def flag_message(
         self,
         message_id: Any,
-        flag_status: str = "flagged",
+        flag_status: str = 'flagged',
     ) -> dict[str, Any]:
         """Set the follow-up flag on a message.
 
@@ -293,9 +293,9 @@ class OutlookMailToolSet:
         ``complete``. ``message_id`` accepts a raw ID string or a message
         dict.
         """
-        if flag_status not in {"notFlagged", "flagged", "complete"}:
-            raise ValueError("flag_status must be notFlagged, flagged, or complete")
-        return self.update_message(message_id, {"flag": {"flagStatus": flag_status}})
+        if flag_status not in {'notFlagged', 'flagged', 'complete'}:
+            raise ValueError('flag_status must be notFlagged, flagged, or complete')
+        return self.update_message(message_id, {'flag': {'flagStatus': flag_status}})
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def reply_to_message(
@@ -312,36 +312,36 @@ class OutlookMailToolSet:
         before sending.
         """
         resolved = _extract_message_id(message_id)
-        suffix = "/replyAll" if reply_all else "/reply"
+        suffix = '/replyAll' if reply_all else '/reply'
         response = self._client.post(
-            self._user_path(f"/messages/{resolved}{suffix}"),
-            json={"comment": comment},
+            self._user_path(f'/messages/{resolved}{suffix}'),
+            json={'comment': comment},
         )
-        return {"replied": True, "reply_all": reply_all, "status": response.status}
+        return {'replied': True, 'reply_all': reply_all, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def forward_message(
         self,
         message_id: Any,
         to: list[str],
-        comment: str = "",
+        comment: str = '',
     ) -> dict[str, Any]:
         """Forward a message to ``to`` with optional ``comment``.
 
         ``message_id`` accepts a raw ID string or a message dict.
         """
         if not to:
-            raise ValueError("to must contain at least one recipient")
+            raise ValueError('to must contain at least one recipient')
         resolved = _extract_message_id(message_id)
         payload: dict[str, Any] = {
-            "comment": comment,
-            "toRecipients": _addresses(to),
+            'comment': comment,
+            'toRecipients': _addresses(to),
         }
         response = self._client.post(
-            self._user_path(f"/messages/{resolved}/forward"),
+            self._user_path(f'/messages/{resolved}/forward'),
             json=payload,
         )
-        return {"forwarded": True, "status": response.status}
+        return {'forwarded': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_attachments(self, message_id: Any) -> dict[str, Any]:
@@ -350,7 +350,7 @@ class OutlookMailToolSet:
         ``message_id`` accepts a raw ID string or a message dict.
         """
         resolved = _extract_message_id(message_id)
-        return self._client.get(self._user_path(f"/messages/{resolved}/attachments")).json()
+        return self._client.get(self._user_path(f'/messages/{resolved}/attachments')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_attachment(self, message_id: Any, attachment_id: str) -> dict[str, Any]:
@@ -361,10 +361,10 @@ class OutlookMailToolSet:
         :meth:`list_attachments`.
         """
         if not attachment_id:
-            raise ValueError("attachment_id must be non-empty")
+            raise ValueError('attachment_id must be non-empty')
         resolved = _extract_message_id(message_id)
         return self._client.get(
-            self._user_path(f"/messages/{resolved}/attachments/{attachment_id}")
+            self._user_path(f'/messages/{resolved}/attachments/{attachment_id}')
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -374,7 +374,7 @@ class OutlookMailToolSet:
         *,
         name: str,
         content_base64: str,
-        content_type: str = "application/octet-stream",
+        content_type: str = 'application/octet-stream',
     ) -> dict[str, Any]:
         """Attach a file (base64) to an existing draft message.
 
@@ -382,16 +382,16 @@ class OutlookMailToolSet:
         :meth:`create_draft`.
         """
         if not name or not content_base64:
-            raise ValueError("name and content_base64 must be non-empty")
+            raise ValueError('name and content_base64 must be non-empty')
         resolved = _extract_message_id(message_id)
         payload = {
-            "@odata.type": "#microsoft.graph.fileAttachment",
-            "name": name,
-            "contentType": content_type,
-            "contentBytes": content_base64,
+            '@odata.type': '#microsoft.graph.fileAttachment',
+            'name': name,
+            'contentType': content_type,
+            'contentBytes': content_base64,
         }
         return self._client.post(
-            self._user_path(f"/messages/{resolved}/attachments"),
+            self._user_path(f'/messages/{resolved}/attachments'),
             json=payload,
         ).json()
 
@@ -414,24 +414,24 @@ class OutlookMailToolSet:
         :meth:`send_draft` to send it later.
         """
         if not to:
-            raise ValueError("to must contain at least one recipient")
+            raise ValueError('to must contain at least one recipient')
         if body_text is None and body_html is None:
-            raise ValueError("body_text or body_html must be supplied")
+            raise ValueError('body_text or body_html must be supplied')
         body: dict[str, Any]
         if body_html is not None:
-            body = {"contentType": "HTML", "content": body_html}
+            body = {'contentType': 'HTML', 'content': body_html}
         else:
-            body = {"contentType": "Text", "content": body_text or ""}
+            body = {'contentType': 'Text', 'content': body_text or ''}
         payload: dict[str, Any] = {
-            "subject": subject,
-            "body": body,
-            "toRecipients": _addresses(to),
+            'subject': subject,
+            'body': body,
+            'toRecipients': _addresses(to),
         }
         if cc:
-            payload["ccRecipients"] = _addresses(cc)
+            payload['ccRecipients'] = _addresses(cc)
         if bcc:
-            payload["bccRecipients"] = _addresses(bcc)
-        return self._client.post(self._user_path("/messages"), json=payload).json()
+            payload['bccRecipients'] = _addresses(bcc)
+        return self._client.post(self._user_path('/messages'), json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def send_draft(self, message_id: Any) -> dict[str, Any]:
@@ -441,8 +441,8 @@ class OutlookMailToolSet:
         by :meth:`create_draft`.
         """
         resolved = _extract_message_id(message_id)
-        response = self._client.post(self._user_path(f"/messages/{resolved}/send"))
-        return {"sent": True, "status": response.status}
+        response = self._client.post(self._user_path(f'/messages/{resolved}/send'))
+        return {'sent': True, 'status': response.status}
 
     # MARK: - Folders
 
@@ -454,7 +454,7 @@ class OutlookMailToolSet:
         :meth:`list_folders` (with ``include_ids=True``).
         """
         resolved = _extract_folder_id(folder_id)
-        return self._client.get(self._user_path(f"/mailFolders/{resolved}")).json()
+        return self._client.get(self._user_path(f'/mailFolders/{resolved}')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_MESSAGES_OUTPUT)
@@ -465,7 +465,7 @@ class OutlookMailToolSet:
         top: int = _DEFAULT_MESSAGE_LIST_TOP,
         filter: str | None = None,
         select: str | None = _DEFAULT_MESSAGE_SELECT,
-        order_by: str | None = "receivedDateTime desc",
+        order_by: str | None = 'receivedDateTime desc',
         include_metadata: bool = True,
         include_ids: bool = False,
     ) -> dict[str, Any]:
@@ -480,17 +480,17 @@ class OutlookMailToolSet:
         ``drafts`` are also accepted.
         """
         if top < 1 or top > 1000:
-            raise ValueError("top must be between 1 and 1000")
+            raise ValueError('top must be between 1 and 1000')
         resolved = _extract_folder_id(folder_id)
-        params: dict[str, Any] = {"$top": top}
+        params: dict[str, Any] = {'$top': top}
         if filter is not None:
-            params["$filter"] = filter
+            params['$filter'] = filter
         if select is not None:
-            params["$select"] = select
+            params['$select'] = select
         if order_by is not None:
-            params["$orderby"] = order_by
+            params['$orderby'] = order_by
         payload: dict[str, Any] = self._client.get(
-            self._user_path(f"/mailFolders/{resolved}/messages"),
+            self._user_path(f'/mailFolders/{resolved}/messages'),
             params=params,
         ).json()
         if not include_metadata:
@@ -510,14 +510,14 @@ class OutlookMailToolSet:
         from :meth:`list_folders`.
         """
         if not display_name:
-            raise ValueError("display_name must be a non-empty string")
-        suffix = "/mailFolders"
+            raise ValueError('display_name must be a non-empty string')
+        suffix = '/mailFolders'
         if parent_folder_id is not None:
             resolved = _extract_folder_id(parent_folder_id)
-            suffix = f"/mailFolders/{resolved}/childFolders"
+            suffix = f'/mailFolders/{resolved}/childFolders'
         return self._client.post(
             self._user_path(suffix),
-            json={"displayName": display_name},
+            json={'displayName': display_name},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -527,10 +527,10 @@ class OutlookMailToolSet:
         ``folder_id`` accepts a raw ID string or a folder dict.
         """
         if not patch:
-            raise ValueError("patch must contain at least one field")
+            raise ValueError('patch must contain at least one field')
         resolved = _extract_folder_id(folder_id)
         return self._client.patch(
-            self._user_path(f"/mailFolders/{resolved}"),
+            self._user_path(f'/mailFolders/{resolved}'),
             json=patch,
         ).json()
 
@@ -542,32 +542,32 @@ class OutlookMailToolSet:
         Destructive — confirm with the user first.
         """
         resolved = _extract_folder_id(folder_id)
-        self._client.delete(self._user_path(f"/mailFolders/{resolved}"))
-        return {"id": resolved, "deleted": True}
+        self._client.delete(self._user_path(f'/mailFolders/{resolved}'))
+        return {'id': resolved, 'deleted': True}
 
     # MARK: - Rules & categories
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_mail_rules(
         self,
-        folder_id: Any = "inbox",
+        folder_id: Any = 'inbox',
     ) -> dict[str, Any]:
         """List message rules attached to ``folder_id`` (defaults to Inbox)."""
         resolved = _extract_folder_id(folder_id)
-        return self._client.get(self._user_path(f"/mailFolders/{resolved}/messageRules")).json()
+        return self._client.get(self._user_path(f'/mailFolders/{resolved}/messageRules')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_mail_rule(
         self,
         rule: dict[str, Any],
-        folder_id: Any = "inbox",
+        folder_id: Any = 'inbox',
     ) -> dict[str, Any]:
         """Create a message rule on a folder (commonly Inbox)."""
         if not rule:
-            raise ValueError("rule must not be empty")
+            raise ValueError('rule must not be empty')
         resolved = _extract_folder_id(folder_id)
         return self._client.post(
-            self._user_path(f"/mailFolders/{resolved}/messageRules"),
+            self._user_path(f'/mailFolders/{resolved}/messageRules'),
             json=rule,
         ).json()
 
@@ -575,28 +575,28 @@ class OutlookMailToolSet:
     def delete_mail_rule(
         self,
         rule_id: str,
-        folder_id: Any = "inbox",
+        folder_id: Any = 'inbox',
     ) -> dict[str, Any]:
         """Delete a message rule.
 
         Destructive — confirm with the user first.
         """
         if not rule_id:
-            raise ValueError("rule_id must be a non-empty string")
+            raise ValueError('rule_id must be a non-empty string')
         resolved = _extract_folder_id(folder_id)
-        self._client.delete(self._user_path(f"/mailFolders/{resolved}/messageRules/{rule_id}"))
-        return {"id": rule_id, "deleted": True}
+        self._client.delete(self._user_path(f'/mailFolders/{resolved}/messageRules/{rule_id}'))
+        return {'id': rule_id, 'deleted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_categories(self) -> dict[str, Any]:
         """Return the user's master category list."""
-        return self._client.get(self._user_path("/outlook/masterCategories")).json()
+        return self._client.get(self._user_path('/outlook/masterCategories')).json()
 
     # MARK: - Internal
 
     def _user_path(self, suffix: str) -> str:
-        prefix = "/me" if self._user == "me" else f"/users/{self._user}"
-        return f"{prefix}{suffix}"
+        prefix = '/me' if self._user == 'me' else f'/users/{self._user}'
+        return f'{prefix}{suffix}'
 
     @staticmethod
     def _message_summary(
@@ -605,48 +605,48 @@ class OutlookMailToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        from_field: Any = message.get("from") or {}
+        from_field: Any = message.get('from') or {}
         from_addr: Any = (
-            cast(dict[str, Any], from_field).get("emailAddress")
+            cast(dict[str, Any], from_field).get('emailAddress')
             if isinstance(from_field, dict)
             else None
         )
-        sender: str = ""
+        sender: str = ''
         if isinstance(from_addr, dict):
             from_addr_dict: dict[str, Any] = cast(dict[str, Any], from_addr)
-            name: str = from_addr_dict.get("name") or ""
-            address: str = from_addr_dict.get("address") or ""
+            name: str = from_addr_dict.get('name') or ''
+            address: str = from_addr_dict.get('address') or ''
             if name and address:
-                sender = f"{name} <{address}>"
+                sender = f'{name} <{address}>'
             else:
                 sender = address or name
-        to_recipients: Any = message.get("toRecipients") or []
+        to_recipients: Any = message.get('toRecipients') or []
         to_list: list[str] = []
         if isinstance(to_recipients, list):
             recipients_list: list[Any] = cast(list[Any], to_recipients)
             for entry in recipients_list:
                 if isinstance(entry, dict):
                     entry_dict: dict[str, Any] = cast(dict[str, Any], entry)
-                    email_obj: Any = entry_dict.get("emailAddress") or {}
+                    email_obj: Any = entry_dict.get('emailAddress') or {}
                     if isinstance(email_obj, dict):
                         email_dict: dict[str, Any] = cast(dict[str, Any], email_obj)
-                        addr: Any = email_dict.get("address")
+                        addr: Any = email_dict.get('address')
                         if isinstance(addr, str):
                             to_list.append(addr)
         summary: dict[str, Any] = {
-            "message_ref": f"message_{index}",
-            "sender": sender,
-            "to": to_list,
-            "subject": message.get("subject", ""),
-            "received_at": message.get("receivedDateTime", ""),
-            "preview": message.get("bodyPreview", ""),
-            "is_read": message.get("isRead", False),
+            'message_ref': f'message_{index}',
+            'sender': sender,
+            'to': to_list,
+            'subject': message.get('subject', ''),
+            'received_at': message.get('receivedDateTime', ''),
+            'preview': message.get('bodyPreview', ''),
+            'is_read': message.get('isRead', False),
         }
         if include_ids:
-            summary["message_id"] = message.get("id", "")
-            conversation_id = message.get("conversationId")
+            summary['message_id'] = message.get('id', '')
+            conversation_id = message.get('conversationId')
             if conversation_id:
-                summary["conversation_id"] = conversation_id
+                summary['conversation_id'] = conversation_id
         return summary
 
     @classmethod
@@ -657,7 +657,7 @@ class OutlookMailToolSet:
         include_ids: bool,
     ) -> dict[str, Any]:
         messages: list[dict[str, Any]] = []
-        raw: Any = payload.get("value", [])
+        raw: Any = payload.get('value', [])
         if isinstance(raw, list):
             raw_messages: list[Any] = cast(list[Any], raw)
             for index, message in enumerate(raw_messages, start=1):
@@ -667,15 +667,15 @@ class OutlookMailToolSet:
                 messages.append(
                     cls._message_summary(message_dict, index=index, include_ids=include_ids)
                 )
-        result: dict[str, Any] = {"messages": messages}
-        next_link = payload.get("@odata.nextLink")
+        result: dict[str, Any] = {'messages': messages}
+        next_link = payload.get('@odata.nextLink')
         if next_link is not None:
-            result["nextLink"] = next_link
+            result['nextLink'] = next_link
         return result
 
 
 def _addresses(addresses: list[str]) -> list[dict[str, dict[str, str]]]:
-    return [{"emailAddress": {"address": addr}} for addr in addresses]
+    return [{'emailAddress': {'address': addr}} for addr in addresses]
 
 
 def _extract_message_id(candidate: Any) -> str:
@@ -686,11 +686,11 @@ def _extract_message_id(candidate: Any) -> str:
     """
     if isinstance(candidate, str):
         if not candidate:
-            raise ValueError("message_id must be a non-empty string")
+            raise ValueError('message_id must be a non-empty string')
         return candidate
     if isinstance(candidate, dict):
         candidate_dict: dict[str, Any] = cast(dict[str, Any], candidate)
-        for key in ("message_id", "id"):
+        for key in ('message_id', 'id'):
             value: Any = candidate_dict.get(key)
             if isinstance(value, str) and value:
                 return value
@@ -702,8 +702,8 @@ def _extract_message_id(candidate: Any) -> str:
                 return _extract_message_id(entry)
             except ValueError:
                 continue
-        raise ValueError("no valid message id found in list")
-    raise ValueError("message_id must be a string, dict, or list with an id")
+        raise ValueError('no valid message id found in list')
+    raise ValueError('message_id must be a string, dict, or list with an id')
 
 
 def _extract_folder_id(candidate: Any) -> str:
@@ -716,13 +716,13 @@ def _extract_folder_id(candidate: Any) -> str:
     """
     if isinstance(candidate, str):
         if not candidate:
-            raise ValueError("folder_id must be a non-empty string")
+            raise ValueError('folder_id must be a non-empty string')
         return candidate
     if isinstance(candidate, dict):
         candidate_dict: dict[str, Any] = cast(dict[str, Any], candidate)
-        for key in ("folder_id", "id"):
+        for key in ('folder_id', 'id'):
             value: Any = candidate_dict.get(key)
             if isinstance(value, str) and value:
                 return value
         raise ValueError("folder dict must contain a non-empty 'folder_id' or 'id'")
-    raise ValueError("folder_id must be a string or dict with an id")
+    raise ValueError('folder_id must be a string or dict with an id')

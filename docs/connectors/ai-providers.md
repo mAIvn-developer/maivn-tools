@@ -10,7 +10,7 @@ agent ergonomics; chat / completion / embedding / image / TTS tools are
 unchanged (they already return content, not lists). For each listing
 tool you get:
 
-- A compact summary array with a stable display ref
+- A compact summary array with a response-local display ref
   (`model_ref`, `file_ref`, `batch_ref`, `job_ref`, `store_ref`,
   `voice_ref`, `prediction_ref`, `deployment_ref`,
   `transcript_ref`, `project_ref`, `dataset_ref`, `kb_ref`) safe to

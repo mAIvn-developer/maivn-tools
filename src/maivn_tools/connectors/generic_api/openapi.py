@@ -28,8 +28,8 @@ from .http import HttpEndpoint
 
 # MARK: Constants
 
-_SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
-_DESTRUCTIVE_METHODS = {"DELETE"}
+_SAFE_METHODS = {'GET', 'HEAD', 'OPTIONS'}
+_DESTRUCTIVE_METHODS = {'DELETE'}
 
 
 # MARK: Operation metadata
@@ -64,11 +64,11 @@ class OpenAPIConnector:
         # parsed payloads at runtime; keep the defensive guard via ``object``.
         document_obj = cast(object, document)
         if not isinstance(document_obj, Mapping):
-            raise TypeError("OpenAPIConnector expects a mapping document")
-        document_map = cast("Mapping[str, Any]", document_obj)
-        version: object = document_map.get("openapi", "")
-        if not (isinstance(version, str) and version.startswith("3.")):
-            raise ValueError("OpenAPIConnector requires an OpenAPI 3.x document")
+            raise TypeError('OpenAPIConnector expects a mapping document')
+        document_map = cast('Mapping[str, Any]', document_obj)
+        version: object = document_map.get('openapi', '')
+        if not (isinstance(version, str) and version.startswith('3.')):
+            raise ValueError('OpenAPIConnector requires an OpenAPI 3.x document')
         self._document = document_map
         self._allow: set[str] | None = (
             set(operation_allowlist) if operation_allowlist is not None else None
@@ -80,19 +80,19 @@ class OpenAPIConnector:
     def operations(self) -> list[OpenAPIOperation]:
         """Return the operations the importer recognized."""
         out: list[OpenAPIOperation] = []
-        paths_obj: object = self._document.get("paths") or {}
+        paths_obj: object = self._document.get('paths') or {}
         if not isinstance(paths_obj, Mapping):
             return out
-        paths = cast("Mapping[str, Any]", paths_obj)
+        paths = cast('Mapping[str, Any]', paths_obj)
         for path, methods in paths.items():
             if not isinstance(methods, Mapping):
                 continue
-            methods_map = cast("Mapping[str, Any]", methods)
+            methods_map = cast('Mapping[str, Any]', methods)
             for method, op in methods_map.items():
                 if not isinstance(op, Mapping):
                     continue
-                op_map = cast("Mapping[str, Any]", op)
-                operation_id: object = op_map.get("operationId")
+                op_map = cast('Mapping[str, Any]', op)
+                operation_id: object = op_map.get('operationId')
                 if not operation_id:
                     continue
                 operation_id_str = str(operation_id)
@@ -100,12 +100,12 @@ class OpenAPIConnector:
                     continue
                 if operation_id_str in self._deny:
                     continue
-                raw_parameters: object = op_map.get("parameters") or []
+                raw_parameters: object = op_map.get('parameters') or []
                 parameters: tuple[Mapping[str, Any], ...]
                 if isinstance(raw_parameters, Iterable):
-                    items = cast("Iterable[object]", raw_parameters)
+                    items = cast('Iterable[object]', raw_parameters)
                     parameters = tuple(
-                        cast("Mapping[str, Any]", p) for p in items if isinstance(p, Mapping)
+                        cast('Mapping[str, Any]', p) for p in items if isinstance(p, Mapping)
                     )
                 else:
                     parameters = ()
@@ -114,10 +114,10 @@ class OpenAPIConnector:
                         operation_id=operation_id_str,
                         method=str(method).upper(),
                         path=str(path),
-                        summary=str(op_map.get("summary") or ""),
-                        description=str(op_map.get("description") or ""),
+                        summary=str(op_map.get('summary') or ''),
+                        description=str(op_map.get('description') or ''),
                         parameters=parameters,
-                        has_request_body=bool(op_map.get("requestBody")),
+                        has_request_body=bool(op_map.get('requestBody')),
                     )
                 )
         return out
@@ -136,7 +136,7 @@ class OpenAPIConnector:
             query_params, path_params = _split_parameters(operation.parameters)
             body_params: tuple[str, ...] = ()
             if operation.has_request_body and operation.method.upper() not in _SAFE_METHODS:
-                body_params = ("body",)
+                body_params = ('body',)
             endpoints.append(
                 HttpEndpoint(
                     name=operation.operation_id,
@@ -162,13 +162,13 @@ def _split_parameters(
     query: list[str] = []
     path: list[str] = []
     for param in parameters:
-        location: object = param.get("in")
-        name: object = param.get("name")
+        location: object = param.get('in')
+        name: object = param.get('name')
         if not name:
             continue
-        if location == "query":
+        if location == 'query':
             query.append(str(name))
-        elif location == "path":
+        elif location == 'path':
             path.append(str(name))
     return tuple(query), tuple(path)
 

@@ -31,7 +31,9 @@ Recommended usage::
 from __future__ import annotations
 
 import base64
-from email.message import EmailMessage
+from binascii import Error as BinasciiError
+from email.message import EmailMessage, Message
+from html.parser import HTMLParser
 from typing import Any, cast
 
 from maivn import tool_output, toolify, toolset
@@ -41,15 +43,192 @@ from ...core.metadata import AuthMode, ProviderCapability, ProviderMetadata
 from ...core.permissions import PermissionFlag, PermissionSet
 from ...runtime.http import HttpClient, HttpTransport
 from ._shared import TokenSource, make_bearer_auth
-from .output_schemas import SEARCH_MESSAGES_OUTPUT
+from .output_schemas import GET_MESSAGE_CONTENT_OUTPUT, SEARCH_MESSAGES_OUTPUT
 
 # MARK: - Constants
 
-GMAIL_API_URL = "https://gmail.googleapis.com/gmail/v1"
+GMAIL_API_URL = 'https://gmail.googleapis.com/gmail/v1'
 _METADATA_SUMMARY_MAX_RESULTS = 10
+_MESSAGE_CONTENT_DEFAULT_MAX_CHARS = 16_000
+_MESSAGE_CONTENT_MAX_CHARS = 100_000
+_HTML_BREAK_TAGS = frozenset({'address', 'article', 'blockquote', 'br', 'div', 'li', 'p', 'tr'})
 
 
-@toolset(prefix="gmail")
+class _HTMLTextExtractor(HTMLParser):
+    """Convert safe, visible HTML content into readable plain text."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._parts: list[str] = []
+        self._hidden_depth = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        del attrs
+        if tag in {'script', 'style'}:
+            self._hidden_depth += 1
+            return
+        if self._hidden_depth == 0 and tag in _HTML_BREAK_TAGS:
+            self._add_break()
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in {'script', 'style'} and self._hidden_depth:
+            self._hidden_depth -= 1
+            return
+        if self._hidden_depth == 0 and tag in _HTML_BREAK_TAGS:
+            self._add_break()
+
+    def handle_data(self, data: str) -> None:
+        if self._hidden_depth == 0:
+            self._parts.append(data)
+
+    def _add_break(self) -> None:
+        if self._parts and not self._parts[-1].endswith('\n'):
+            self._parts.append('\n')
+
+    def text(self) -> str:
+        return '\n'.join(
+            ' '.join(line.split()) for line in ''.join(self._parts).splitlines() if line.strip()
+        )
+
+
+def _payload_headers(payload: dict[str, Any]) -> dict[str, str]:
+    raw_headers: object = payload.get('headers', [])
+    if not isinstance(raw_headers, list):
+        return {}
+    result: dict[str, str] = {}
+    for header in cast('list[object]', raw_headers):
+        if not isinstance(header, dict):
+            continue
+        entry = cast('dict[str, object]', header)
+        name = entry.get('name')
+        value = entry.get('value')
+        if isinstance(name, str) and isinstance(value, str):
+            result[name.lower()] = value
+    return result
+
+
+def _part_charset(part: dict[str, Any]) -> str:
+    content_type = _payload_headers(part).get('content-type')
+    if not content_type:
+        return 'utf-8'
+    parsed = Message()
+    parsed['Content-Type'] = content_type
+    return parsed.get_content_charset() or 'utf-8'
+
+
+def _decode_gmail_text_part(part: dict[str, Any]) -> str | None:
+    body_obj: object = part.get('body')
+    if not isinstance(body_obj, dict):
+        return None
+    body = cast('dict[str, object]', body_obj)
+    data = body.get('data')
+    if data is None:
+        return None
+    if not isinstance(data, str):
+        raise ValueError('Gmail MIME body data must be a base64url string')
+    padded = data + ('=' * (-len(data) % 4))
+    try:
+        decoded = base64.b64decode(padded, altchars=b'-_', validate=True)
+    except (BinasciiError, ValueError) as error:
+        raise ValueError('Gmail MIME body data is not valid base64url') from error
+    charset = _part_charset(part)
+    try:
+        return decoded.decode(charset)
+    except (LookupError, UnicodeDecodeError) as error:
+        raise ValueError(f'Gmail MIME body cannot be decoded with charset {charset!r}') from error
+
+
+def _attachment_metadata(part: dict[str, Any], mime_type: str) -> dict[str, Any]:
+    filename_obj: object = part.get('filename')
+    filename = filename_obj if isinstance(filename_obj, str) and filename_obj else None
+    body_obj: object = part.get('body')
+    body = cast('dict[str, object]', body_obj) if isinstance(body_obj, dict) else {}
+    size_obj: object = body.get('size')
+    size = size_obj if isinstance(size_obj, int) and size_obj >= 0 else None
+    return {'filename': filename, 'mime_type': mime_type, 'size': size}
+
+
+def _omitted_part_metadata(part: dict[str, Any], mime_type: str) -> dict[str, Any]:
+    body_obj: object = part.get('body')
+    body = cast('dict[str, object]', body_obj) if isinstance(body_obj, dict) else {}
+    attachment_id_obj: object = body.get('attachmentId')
+    attachment_id = attachment_id_obj if isinstance(attachment_id_obj, str) else None
+    size_obj: object = body.get('size')
+    size = size_obj if isinstance(size_obj, int) and size_obj >= 0 else None
+    return {'mime_type': mime_type, 'attachment_id': attachment_id, 'size': size}
+
+
+def _html_to_text(html: str) -> str:
+    parser = _HTMLTextExtractor()
+    parser.feed(html)
+    parser.close()
+    return parser.text()
+
+
+def _readable_message_content(
+    payload: dict[str, Any],
+) -> tuple[str, str | None, list[dict[str, Any]], list[dict[str, Any]]]:
+    def visit(
+        part: dict[str, Any],
+    ) -> tuple[list[tuple[str, str]], list[dict[str, Any]], list[dict[str, Any]]]:
+        """Return readable branches, attachments, and referenced omitted text parts."""
+        mime_type_obj: object = part.get('mimeType')
+        mime_type = mime_type_obj.lower() if isinstance(mime_type_obj, str) else ''
+        headers = _payload_headers(part)
+        filename_obj: object = part.get('filename')
+        filename = filename_obj if isinstance(filename_obj, str) else ''
+        disposition = headers.get('content-disposition', '').lower()
+        if filename or disposition.startswith('attachment'):
+            return [], [_attachment_metadata(part, mime_type)], []
+        parts_obj: object = part.get('parts')
+        if isinstance(parts_obj, list):
+            branch_entries: list[tuple[str, str]] = []
+            attachments: list[dict[str, Any]] = []
+            omitted_parts: list[dict[str, Any]] = []
+            for child in cast('list[object]', parts_obj):
+                if isinstance(child, dict):
+                    entries, child_attachments, child_omitted_parts = visit(
+                        cast('dict[str, Any]', child)
+                    )
+                    branch_entries.extend(entries)
+                    attachments.extend(child_attachments)
+                    omitted_parts.extend(child_omitted_parts)
+            if mime_type == 'multipart/alternative':
+                plain_entries = [entry for entry in branch_entries if entry[0] == 'text/plain']
+                html_entries = [entry for entry in branch_entries if entry[0] == 'text/html']
+                branch_entries = plain_entries or html_entries or branch_entries
+            return branch_entries, attachments, omitted_parts
+        if mime_type == 'text/plain':
+            body_obj: object = part.get('body')
+            body = cast('dict[str, object]', body_obj) if isinstance(body_obj, dict) else {}
+            attachment_id = body.get('attachmentId')
+            if body.get('data') is None and isinstance(attachment_id, str) and attachment_id:
+                return [], [], [_omitted_part_metadata(part, mime_type)]
+            text = _decode_gmail_text_part(part)
+            if text is not None:
+                return [('text/plain', text)], [], []
+            return [], [], []
+        if mime_type == 'text/html':
+            body_obj = part.get('body')
+            body = cast('dict[str, object]', body_obj) if isinstance(body_obj, dict) else {}
+            attachment_id = body.get('attachmentId')
+            if body.get('data') is None and isinstance(attachment_id, str) and attachment_id:
+                return [], [], [_omitted_part_metadata(part, mime_type)]
+            html = _decode_gmail_text_part(part)
+            if html is not None:
+                return [('text/html', _html_to_text(html))], [], []
+            return [], [], []
+        return [], [_attachment_metadata(part, mime_type)], []
+
+    entries, attachments, omitted_parts = visit(payload)
+    if not entries:
+        return '', None, attachments, omitted_parts
+    sources = {source for source, _ in entries}
+    text_source = next(iter(sources)) if len(sources) == 1 else 'mixed'
+    return '\n\n'.join(text for _, text in entries), text_source, attachments, omitted_parts
+
+
+@toolset(prefix='gmail')
 class GmailToolSet:
     """A connector for Gmail.
 
@@ -63,15 +242,15 @@ class GmailToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="gmail",
-        display_name="Gmail",
-        version="0.1.0",
-        description="Read, search, label, and send Gmail messages.",
+        name='gmail',
+        display_name='Gmail',
+        version='0.1.0',
+        description='Read, search, label, and send Gmail messages.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "https://www.googleapis.com/auth/gmail.readonly": "Read mail and labels.",
-            "https://www.googleapis.com/auth/gmail.modify": "Read, modify, and send mail.",
-            "https://www.googleapis.com/auth/gmail.send": "Send mail only.",
+            'https://www.googleapis.com/auth/gmail.readonly': 'Read mail and labels.',
+            'https://www.googleapis.com/auth/gmail.modify': 'Read, modify, and send mail.',
+            'https://www.googleapis.com/auth/gmail.send': 'Send mail only.',
         },
         capabilities=frozenset(
             {
@@ -81,29 +260,29 @@ class GmailToolSet:
                 ProviderCapability.PAGINATION,
             }
         ),
-        documentation_url="https://developers.google.com/gmail/api",
-        homepage_url="https://mail.google.com",
-        tags=("email", "google"),
+        documentation_url='https://developers.google.com/gmail/api',
+        homepage_url='https://mail.google.com',
+        tags=('email', 'google'),
     )
 
     def __init__(
         self,
         token: TokenSource,
         *,
-        user: str = "me",
+        user: str = 'me',
         transport: HttpTransport | None = None,
         base_url: str = GMAIL_API_URL,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not user:
-            raise ValueError("user must be a non-empty string")
+            raise ValueError('user must be a non-empty string')
         self.connection = connection
         self._user = user
         self._client = HttpClient(
             base_url=base_url,
             auth=make_bearer_auth(token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -112,21 +291,21 @@ class GmailToolSet:
 
     @staticmethod
     def _headers_by_name(message: dict[str, Any]) -> dict[str, str]:
-        payload_obj: object = message.get("payload", {})
+        payload_obj: object = message.get('payload', {})
         payload: dict[str, Any] = (
-            cast("dict[str, Any]", payload_obj) if isinstance(payload_obj, dict) else {}
+            cast('dict[str, Any]', payload_obj) if isinstance(payload_obj, dict) else {}
         )
-        raw_headers: object = payload.get("headers", [])
+        raw_headers: object = payload.get('headers', [])
         if not isinstance(raw_headers, list):
             return {}
-        headers: list[object] = cast("list[object]", raw_headers)
+        headers: list[object] = cast('list[object]', raw_headers)
         result: dict[str, str] = {}
         for header in headers:
             if not isinstance(header, dict):
                 continue
-            entry: dict[str, object] = cast("dict[str, object]", header)
-            name: object = entry.get("name")
-            value: object = entry.get("value")
+            entry: dict[str, object] = cast('dict[str, object]', header)
+            name: object = entry.get('name')
+            value: object = entry.get('value')
             if isinstance(name, str) and isinstance(value, str):
                 result[name.lower()] = value
         return result
@@ -141,17 +320,17 @@ class GmailToolSet:
     ) -> dict[str, Any]:
         headers = cls._headers_by_name(message)
         summary: dict[str, Any] = {
-            "message_ref": f"message_{index}",
-            "sender": headers.get("from", ""),
-            "to": headers.get("to", ""),
-            "subject": headers.get("subject", ""),
-            "received_at": headers.get("date", ""),
-            "snippet": message.get("snippet", ""),
-            "label_ids": message.get("labelIds", []),
+            'message_ref': f'message_{index}',
+            'sender': headers.get('from', ''),
+            'to': headers.get('to', ''),
+            'subject': headers.get('subject', ''),
+            'received_at': headers.get('date', ''),
+            'snippet': message.get('snippet', ''),
+            'label_ids': message.get('labelIds', []),
         }
         if include_ids:
-            summary["message_id"] = message.get("id", "")
-            summary["thread_id"] = message.get("threadId", "")
+            summary['message_id'] = message.get('id', '')
+            summary['thread_id'] = message.get('threadId', '')
         return summary
 
     # MARK: - Tools
@@ -164,7 +343,7 @@ class GmailToolSet:
         ``threadsTotal``, ``historyId``. Use this once at startup to confirm
         the token has the right scopes before issuing other calls.
         """
-        return self._client.get(self._user_path("/profile")).json()
+        return self._client.get(self._user_path('/profile')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_labels(self) -> list[dict[str, Any]]:
@@ -175,15 +354,15 @@ class GmailToolSet:
         Pass an ``id`` from this list to label/thread operations — never
         invent label IDs.
         """
-        payload: dict[str, Any] = self._client.get(self._user_path("/labels")).json()
-        labels: object = payload.get("labels", [])
-        return cast("list[dict[str, Any]]", labels) if isinstance(labels, list) else []
+        payload: dict[str, Any] = self._client.get(self._user_path('/labels')).json()
+        labels: object = payload.get('labels', [])
+        return cast('list[dict[str, Any]]', labels) if isinstance(labels, list) else []
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(SEARCH_MESSAGES_OUTPUT)
     def search_messages(
         self,
-        query: str = "",
+        query: str = '',
         *,
         label_ids: list[str] | None = None,
         max_results: int = 10,
@@ -200,40 +379,44 @@ class GmailToolSet:
         because they are internal handles, not useful final-answer content.
         Set ``include_ids=True`` only when a follow-up Gmail tool needs a
         ``message_id`` or ``thread_id``.
+
+        ``returnedCount`` is the number of summaries actually returned on
+        this page. Gmail's ``resultSizeEstimate`` is an estimate of matching
+        messages, not a count that this call has reviewed.
         """
         if max_results < 1 or max_results > 500:
-            raise ValueError("max_results must be between 1 and 500")
+            raise ValueError('max_results must be between 1 and 500')
         requested_max_results = max_results
         if include_metadata:
             max_results = min(max_results, _METADATA_SUMMARY_MAX_RESULTS)
-        params: dict[str, Any] = {"maxResults": max_results}
+        params: dict[str, Any] = {'maxResults': max_results}
         if query:
-            params["q"] = query
+            params['q'] = query
         if label_ids:
-            params["labelIds"] = label_ids
+            params['labelIds'] = label_ids
         if page_token is not None:
-            params["pageToken"] = page_token
+            params['pageToken'] = page_token
         payload: dict[str, Any] = self._client.get(
-            self._user_path("/messages"), params=params
+            self._user_path('/messages'), params=params
         ).json()
         if not include_metadata:
             return payload
 
         summaries: list[dict[str, Any]] = []
-        raw_messages: object = payload.get("messages", [])
+        raw_messages: object = payload.get('messages', [])
         messages: list[object] = (
-            cast("list[object]", raw_messages) if isinstance(raw_messages, list) else []
+            cast('list[object]', raw_messages) if isinstance(raw_messages, list) else []
         )
         for index, item in enumerate(messages, start=1):
             if not isinstance(item, dict):
                 continue
-            entry: dict[str, Any] = cast("dict[str, Any]", item)
-            item_id: object = entry.get("id")
+            entry: dict[str, Any] = cast('dict[str, Any]', item)
+            item_id: object = entry.get('id')
             if not item_id:
                 continue
             message: dict[str, Any] = self._client.get(
-                self._user_path(f"/messages/{entry['id']}"),
-                params={"format": "metadata"},
+                self._user_path(f'/messages/{entry["id"]}'),
+                params={'format': 'metadata'},
             ).json()
             summaries.append(
                 self._message_summary(
@@ -243,20 +426,21 @@ class GmailToolSet:
                 )
             )
         result: dict[str, Any] = {
-            "messages": summaries,
-            "nextPageToken": payload.get("nextPageToken"),
-            "resultSizeEstimate": payload.get("resultSizeEstimate", len(summaries)),
+            'messages': summaries,
+            'nextPageToken': payload.get('nextPageToken'),
+            'returnedCount': len(summaries),
+            'resultSizeEstimate': payload.get('resultSizeEstimate', len(summaries)),
         }
         if requested_max_results != max_results:
-            result["requestedMaxResults"] = requested_max_results
-            result["summaryLimit"] = _METADATA_SUMMARY_MAX_RESULTS
+            result['requestedMaxResults'] = requested_max_results
+            result['summaryLimit'] = _METADATA_SUMMARY_MAX_RESULTS
         return result
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_message(
         self,
         message_id: str,
-        format: str = "metadata",
+        format: str = 'metadata',
     ) -> dict[str, Any]:
         """Fetch a single message by ID.
 
@@ -267,13 +451,72 @@ class GmailToolSet:
         ``message_id`` to inspect.
         """
         if not message_id:
-            raise ValueError("message_id must be a non-empty string")
-        if format not in {"minimal", "metadata", "full", "raw"}:
-            raise ValueError("format must be one of: minimal, metadata, full, raw")
+            raise ValueError('message_id must be a non-empty string')
+        if format not in {'minimal', 'metadata', 'full', 'raw'}:
+            raise ValueError('format must be one of: minimal, metadata, full, raw')
         return self._client.get(
-            self._user_path(f"/messages/{message_id}"),
-            params={"format": format},
+            self._user_path(f'/messages/{message_id}'),
+            params={'format': format},
         ).json()
+
+    @toolify(permissions=PermissionSet(PermissionFlag.READ))
+    @tool_output(GET_MESSAGE_CONTENT_OUTPUT)
+    def get_message_content(
+        self,
+        message_id: str,
+        *,
+        max_chars: int = _MESSAGE_CONTENT_DEFAULT_MAX_CHARS,
+    ) -> dict[str, Any]:
+        """Fetch one message as bounded, readable text for agent use.
+
+        This requests Gmail's ``format="full"`` resource, decodes text MIME
+        parts with their declared charset, and prefers ``text/plain`` over an
+        equivalent HTML alternative. HTML-only messages are converted to
+        visible text; script and style content is omitted. Attachments and
+        binary MIME parts are represented only by filename, MIME type, and
+        size. ``text_truncated`` and ``content_omitted`` make incomplete
+        content explicit. Use :meth:`get_message` when the raw Gmail resource
+        or more than ``max_chars`` of content is required.
+        """
+        if not message_id:
+            raise ValueError('message_id must be a non-empty string')
+        max_chars_obj = cast('object', max_chars)
+        if isinstance(max_chars_obj, bool) or not isinstance(max_chars_obj, int):
+            raise ValueError(
+                f'max_chars must be an integer between 1 and {_MESSAGE_CONTENT_MAX_CHARS}'
+            )
+        if max_chars_obj < 1 or max_chars_obj > _MESSAGE_CONTENT_MAX_CHARS:
+            raise ValueError(
+                f'max_chars must be an integer between 1 and {_MESSAGE_CONTENT_MAX_CHARS}'
+            )
+        message: dict[str, Any] = self._client.get(
+            self._user_path(f'/messages/{message_id}'),
+            params={'format': 'full'},
+        ).json()
+        payload_obj: object = message.get('payload')
+        if not isinstance(payload_obj, dict):
+            raise ValueError('Gmail message payload must be an object')
+        payload = cast('dict[str, Any]', payload_obj)
+        text, text_source, attachments, omitted_parts = _readable_message_content(payload)
+        omitted_characters = max(0, len(text) - max_chars_obj)
+        headers = self._headers_by_name(message)
+        message_id_obj: object = message.get('id')
+        thread_id_obj: object = message.get('threadId')
+        return {
+            'message_id': message_id_obj if isinstance(message_id_obj, str) else message_id,
+            'thread_id': thread_id_obj if isinstance(thread_id_obj, str) else None,
+            'sender': headers.get('from', ''),
+            'to': headers.get('to', ''),
+            'subject': headers.get('subject', ''),
+            'received_at': headers.get('date', ''),
+            'text': text[:max_chars_obj],
+            'text_source': text_source,
+            'text_truncated': omitted_characters > 0,
+            'omitted_characters': omitted_characters,
+            'content_omitted': text_source is None or bool(omitted_parts),
+            'attachments': attachments,
+            'omitted_parts': omitted_parts,
+        }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def send_email(
@@ -296,28 +539,28 @@ class GmailToolSet:
         in an interactive agent loop.
         """
         if not to:
-            raise ValueError("to must contain at least one recipient")
+            raise ValueError('to must contain at least one recipient')
         if body_text is None and body_html is None:
-            raise ValueError("body_text or body_html must be supplied")
+            raise ValueError('body_text or body_html must be supplied')
         message = EmailMessage()
-        message["To"] = ", ".join(to)
-        message["Subject"] = subject
+        message['To'] = ', '.join(to)
+        message['Subject'] = subject
         if sender:
-            message["From"] = sender
+            message['From'] = sender
         if cc:
-            message["Cc"] = ", ".join(cc)
+            message['Cc'] = ', '.join(cc)
         if bcc:
-            message["Bcc"] = ", ".join(bcc)
+            message['Bcc'] = ', '.join(bcc)
         if reply_to:
-            message["Reply-To"] = reply_to
-        message.set_content(body_text or "")
+            message['Reply-To'] = reply_to
+        message.set_content(body_text or '')
         if body_html is not None:
-            message.add_alternative(body_html, subtype="html")
-        encoded = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
-        payload: dict[str, Any] = {"raw": encoded}
+            message.add_alternative(body_html, subtype='html')
+        encoded = base64.urlsafe_b64encode(message.as_bytes()).decode('ascii')
+        payload: dict[str, Any] = {'raw': encoded}
         if thread_id is not None:
-            payload["threadId"] = thread_id
-        return self._client.post(self._user_path("/messages/send"), json=payload).json()
+            payload['threadId'] = thread_id
+        return self._client.post(self._user_path('/messages/send'), json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def modify_labels(
@@ -334,16 +577,16 @@ class GmailToolSet:
         or apply a category.
         """
         if not message_id:
-            raise ValueError("message_id must be a non-empty string")
+            raise ValueError('message_id must be a non-empty string')
         if not add_label_ids and not remove_label_ids:
-            raise ValueError("Provide at least one of add_label_ids or remove_label_ids")
+            raise ValueError('Provide at least one of add_label_ids or remove_label_ids')
         payload: dict[str, Any] = {}
         if add_label_ids:
-            payload["addLabelIds"] = list(add_label_ids)
+            payload['addLabelIds'] = list(add_label_ids)
         if remove_label_ids:
-            payload["removeLabelIds"] = list(remove_label_ids)
+            payload['removeLabelIds'] = list(remove_label_ids)
         return self._client.post(
-            self._user_path(f"/messages/{message_id}/modify"),
+            self._user_path(f'/messages/{message_id}/modify'),
             json=payload,
         ).json()
 
@@ -358,8 +601,8 @@ class GmailToolSet:
         calling — this is a destructive operation.
         """
         if not message_id:
-            raise ValueError("message_id must be a non-empty string")
-        return self._client.post(self._user_path(f"/messages/{message_id}/trash")).json()
+            raise ValueError('message_id must be a non-empty string')
+        return self._client.post(self._user_path(f'/messages/{message_id}/trash')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def untrash_message(
@@ -372,8 +615,8 @@ class GmailToolSet:
         include ``TRASH``).
         """
         if not message_id:
-            raise ValueError("message_id must be a non-empty string")
-        return self._client.post(self._user_path(f"/messages/{message_id}/untrash")).json()
+            raise ValueError('message_id must be a non-empty string')
+        return self._client.post(self._user_path(f'/messages/{message_id}/untrash')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_profile(self) -> dict[str, Any]:
@@ -384,14 +627,14 @@ class GmailToolSet:
         good starting point for :meth:`list_history` if you need
         incremental updates.
         """
-        return self._client.get(self._user_path("/profile")).json()
+        return self._client.get(self._user_path('/profile')).json()
 
     # MARK: - Threads
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_threads(
         self,
-        query: str = "",
+        query: str = '',
         *,
         label_ids: list[str] | None = None,
         max_results: int = 25,
@@ -406,21 +649,21 @@ class GmailToolSet:
         full bodies.
         """
         if max_results < 1 or max_results > 500:
-            raise ValueError("max_results must be between 1 and 500")
-        params: dict[str, Any] = {"maxResults": max_results}
+            raise ValueError('max_results must be between 1 and 500')
+        params: dict[str, Any] = {'maxResults': max_results}
         if query:
-            params["q"] = query
+            params['q'] = query
         if label_ids:
-            params["labelIds"] = label_ids
+            params['labelIds'] = label_ids
         if page_token is not None:
-            params["pageToken"] = page_token
-        return self._client.get(self._user_path("/threads"), params=params).json()
+            params['pageToken'] = page_token
+        return self._client.get(self._user_path('/threads'), params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_thread(
         self,
         thread_id: str,
-        format: str = "metadata",
+        format: str = 'metadata',
     ) -> dict[str, Any]:
         """Fetch a thread by ID with all its messages.
 
@@ -429,12 +672,12 @@ class GmailToolSet:
         response at the requested format level.
         """
         if not thread_id:
-            raise ValueError("thread_id must be a non-empty string")
-        if format not in {"minimal", "metadata", "full"}:
-            raise ValueError("format must be one of: minimal, metadata, full")
+            raise ValueError('thread_id must be a non-empty string')
+        if format not in {'minimal', 'metadata', 'full'}:
+            raise ValueError('format must be one of: minimal, metadata, full')
         return self._client.get(
-            self._user_path(f"/threads/{thread_id}"),
-            params={"format": format},
+            self._user_path(f'/threads/{thread_id}'),
+            params={'format': format},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -452,16 +695,16 @@ class GmailToolSet:
         (``remove=["UNREAD"]``).
         """
         if not thread_id:
-            raise ValueError("thread_id must be a non-empty string")
+            raise ValueError('thread_id must be a non-empty string')
         if not add_label_ids and not remove_label_ids:
-            raise ValueError("Provide at least one of add_label_ids or remove_label_ids")
+            raise ValueError('Provide at least one of add_label_ids or remove_label_ids')
         payload: dict[str, Any] = {}
         if add_label_ids:
-            payload["addLabelIds"] = list(add_label_ids)
+            payload['addLabelIds'] = list(add_label_ids)
         if remove_label_ids:
-            payload["removeLabelIds"] = list(remove_label_ids)
+            payload['removeLabelIds'] = list(remove_label_ids)
         return self._client.post(
-            self._user_path(f"/threads/{thread_id}/modify"),
+            self._user_path(f'/threads/{thread_id}/modify'),
             json=payload,
         ).json()
 
@@ -476,8 +719,8 @@ class GmailToolSet:
         user first.
         """
         if not thread_id:
-            raise ValueError("thread_id must be a non-empty string")
-        return self._client.post(self._user_path(f"/threads/{thread_id}/trash")).json()
+            raise ValueError('thread_id must be a non-empty string')
+        return self._client.post(self._user_path(f'/threads/{thread_id}/trash')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def untrash_thread(
@@ -489,8 +732,8 @@ class GmailToolSet:
         Returns the updated thread resource.
         """
         if not thread_id:
-            raise ValueError("thread_id must be a non-empty string")
-        return self._client.post(self._user_path(f"/threads/{thread_id}/untrash")).json()
+            raise ValueError('thread_id must be a non-empty string')
+        return self._client.post(self._user_path(f'/threads/{thread_id}/untrash')).json()
 
     # MARK: - Drafts
 
@@ -500,7 +743,7 @@ class GmailToolSet:
         *,
         max_results: int = 25,
         page_token: str | None = None,
-        query: str = "",
+        query: str = '',
     ) -> dict[str, Any]:
         """List drafts in the mailbox.
 
@@ -510,31 +753,31 @@ class GmailToolSet:
         send_draft, etc.
         """
         if max_results < 1 or max_results > 500:
-            raise ValueError("max_results must be between 1 and 500")
-        params: dict[str, Any] = {"maxResults": max_results}
+            raise ValueError('max_results must be between 1 and 500')
+        params: dict[str, Any] = {'maxResults': max_results}
         if query:
-            params["q"] = query
+            params['q'] = query
         if page_token is not None:
-            params["pageToken"] = page_token
-        return self._client.get(self._user_path("/drafts"), params=params).json()
+            params['pageToken'] = page_token
+        return self._client.get(self._user_path('/drafts'), params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_draft(
         self,
         draft_id: str,
-        format: str = "metadata",
+        format: str = 'metadata',
     ) -> dict[str, Any]:
         """Fetch one draft by ID.
 
         Returns ``{"id": ..., "message": <message resource>}``.
         """
         if not draft_id:
-            raise ValueError("draft_id must be a non-empty string")
-        if format not in {"minimal", "metadata", "full", "raw"}:
-            raise ValueError("format must be one of: minimal, metadata, full, raw")
+            raise ValueError('draft_id must be a non-empty string')
+        if format not in {'minimal', 'metadata', 'full', 'raw'}:
+            raise ValueError('format must be one of: minimal, metadata, full, raw')
         return self._client.get(
-            self._user_path(f"/drafts/{draft_id}"),
-            params={"format": format},
+            self._user_path(f'/drafts/{draft_id}'),
+            params={'format': format},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -557,9 +800,9 @@ class GmailToolSet:
         ``message.threadId``). Use :meth:`send_draft` to send it later.
         """
         if not to:
-            raise ValueError("to must contain at least one recipient")
+            raise ValueError('to must contain at least one recipient')
         if body_text is None and body_html is None:
-            raise ValueError("body_text or body_html must be supplied")
+            raise ValueError('body_text or body_html must be supplied')
         message = self._build_mime(
             to=to,
             subject=subject,
@@ -570,11 +813,11 @@ class GmailToolSet:
             sender=sender,
             reply_to=reply_to,
         )
-        encoded = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
-        payload: dict[str, Any] = {"message": {"raw": encoded}}
+        encoded = base64.urlsafe_b64encode(message.as_bytes()).decode('ascii')
+        payload: dict[str, Any] = {'message': {'raw': encoded}}
         if thread_id is not None:
-            payload["message"]["threadId"] = thread_id
-        return self._client.post(self._user_path("/drafts"), json=payload).json()
+            payload['message']['threadId'] = thread_id
+        return self._client.post(self._user_path('/drafts'), json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_draft(
@@ -597,11 +840,11 @@ class GmailToolSet:
         you omit are reset, not preserved.
         """
         if not draft_id:
-            raise ValueError("draft_id must be a non-empty string")
+            raise ValueError('draft_id must be a non-empty string')
         if not to:
-            raise ValueError("to must contain at least one recipient")
+            raise ValueError('to must contain at least one recipient')
         if body_text is None and body_html is None:
-            raise ValueError("body_text or body_html must be supplied")
+            raise ValueError('body_text or body_html must be supplied')
         message = self._build_mime(
             to=to,
             subject=subject,
@@ -612,12 +855,12 @@ class GmailToolSet:
             sender=sender,
             reply_to=reply_to,
         )
-        encoded = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
-        payload: dict[str, Any] = {"message": {"raw": encoded}}
+        encoded = base64.urlsafe_b64encode(message.as_bytes()).decode('ascii')
+        payload: dict[str, Any] = {'message': {'raw': encoded}}
         if thread_id is not None:
-            payload["message"]["threadId"] = thread_id
+            payload['message']['threadId'] = thread_id
         return self._client.put(
-            self._user_path(f"/drafts/{draft_id}"),
+            self._user_path(f'/drafts/{draft_id}'),
             json=payload,
         ).json()
 
@@ -632,10 +875,10 @@ class GmailToolSet:
         ``labelIds``). Always confirm with the user before calling.
         """
         if not draft_id:
-            raise ValueError("draft_id must be a non-empty string")
+            raise ValueError('draft_id must be a non-empty string')
         return self._client.post(
-            self._user_path("/drafts/send"),
-            json={"id": draft_id},
+            self._user_path('/drafts/send'),
+            json={'id': draft_id},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -649,9 +892,9 @@ class GmailToolSet:
         with the user before calling.
         """
         if not draft_id:
-            raise ValueError("draft_id must be a non-empty string")
-        self._client.delete(self._user_path(f"/drafts/{draft_id}"))
-        return {"id": draft_id, "deleted": True}
+            raise ValueError('draft_id must be a non-empty string')
+        self._client.delete(self._user_path(f'/drafts/{draft_id}'))
+        return {'id': draft_id, 'deleted': True}
 
     # MARK: - Labels
 
@@ -666,29 +909,29 @@ class GmailToolSet:
         or ``"user"``), and visibility fields.
         """
         if not label_id:
-            raise ValueError("label_id must be a non-empty string")
-        return self._client.get(self._user_path(f"/labels/{label_id}")).json()
+            raise ValueError('label_id must be a non-empty string')
+        return self._client.get(self._user_path(f'/labels/{label_id}')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_label(
         self,
         name: str,
         *,
-        label_list_visibility: str = "labelShow",
-        message_list_visibility: str = "show",
+        label_list_visibility: str = 'labelShow',
+        message_list_visibility: str = 'show',
     ) -> dict[str, Any]:
         """Create a user label.
 
         Returns the new label resource (with its server-assigned ``id``).
         """
         if not name:
-            raise ValueError("name must be a non-empty string")
+            raise ValueError('name must be a non-empty string')
         payload = {
-            "name": name,
-            "labelListVisibility": label_list_visibility,
-            "messageListVisibility": message_list_visibility,
+            'name': name,
+            'labelListVisibility': label_list_visibility,
+            'messageListVisibility': message_list_visibility,
         }
-        return self._client.post(self._user_path("/labels"), json=payload).json()
+        return self._client.post(self._user_path('/labels'), json=payload).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_label(
@@ -701,11 +944,11 @@ class GmailToolSet:
         Returns the updated label resource.
         """
         if not label_id:
-            raise ValueError("label_id must be a non-empty string")
+            raise ValueError('label_id must be a non-empty string')
         if not patch:
-            raise ValueError("patch must contain at least one field")
+            raise ValueError('patch must contain at least one field')
         return self._client.patch(
-            self._user_path(f"/labels/{label_id}"),
+            self._user_path(f'/labels/{label_id}'),
             json=patch,
         ).json()
 
@@ -720,9 +963,9 @@ class GmailToolSet:
         the user.
         """
         if not label_id:
-            raise ValueError("label_id must be a non-empty string")
-        self._client.delete(self._user_path(f"/labels/{label_id}"))
-        return {"id": label_id, "deleted": True}
+            raise ValueError('label_id must be a non-empty string')
+        self._client.delete(self._user_path(f'/labels/{label_id}'))
+        return {'id': label_id, 'deleted': True}
 
     # MARK: - Attachments and batch ops
 
@@ -738,9 +981,9 @@ class GmailToolSet:
         ``data`` with ``base64.urlsafe_b64decode`` to get the raw bytes.
         """
         if not message_id or not attachment_id:
-            raise ValueError("message_id and attachment_id must be non-empty")
+            raise ValueError('message_id and attachment_id must be non-empty')
         return self._client.get(
-            self._user_path(f"/messages/{message_id}/attachments/{attachment_id}")
+            self._user_path(f'/messages/{message_id}/attachments/{attachment_id}')
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -758,18 +1001,18 @@ class GmailToolSet:
         caller.
         """
         if not message_ids:
-            raise ValueError("message_ids must contain at least one id")
+            raise ValueError('message_ids must contain at least one id')
         if len(message_ids) > 1000:
-            raise ValueError("Gmail allows at most 1000 ids per batchModify call")
+            raise ValueError('Gmail allows at most 1000 ids per batchModify call')
         if not add_label_ids and not remove_label_ids:
-            raise ValueError("Provide at least one of add_label_ids or remove_label_ids")
-        payload: dict[str, Any] = {"ids": list(message_ids)}
+            raise ValueError('Provide at least one of add_label_ids or remove_label_ids')
+        payload: dict[str, Any] = {'ids': list(message_ids)}
         if add_label_ids:
-            payload["addLabelIds"] = list(add_label_ids)
+            payload['addLabelIds'] = list(add_label_ids)
         if remove_label_ids:
-            payload["removeLabelIds"] = list(remove_label_ids)
-        self._client.post(self._user_path("/messages/batchModify"), json=payload)
-        return {"count": len(message_ids), "ok": True}
+            payload['removeLabelIds'] = list(remove_label_ids)
+        self._client.post(self._user_path('/messages/batchModify'), json=payload)
+        return {'count': len(message_ids), 'ok': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def batch_delete_messages(
@@ -782,14 +1025,14 @@ class GmailToolSet:
         reversible (no Trash). Confirm with the user first.
         """
         if not message_ids:
-            raise ValueError("message_ids must contain at least one id")
+            raise ValueError('message_ids must contain at least one id')
         if len(message_ids) > 1000:
-            raise ValueError("Gmail allows at most 1000 ids per batchDelete call")
+            raise ValueError('Gmail allows at most 1000 ids per batchDelete call')
         self._client.post(
-            self._user_path("/messages/batchDelete"),
-            json={"ids": list(message_ids)},
+            self._user_path('/messages/batchDelete'),
+            json={'ids': list(message_ids)},
         )
-        return {"count": len(message_ids), "deleted": True}
+        return {'count': len(message_ids), 'deleted': True}
 
     # MARK: - History and filters
 
@@ -810,20 +1053,20 @@ class GmailToolSet:
         ``start_history_id`` on the next call.
         """
         if not start_history_id:
-            raise ValueError("start_history_id must be a non-empty string")
+            raise ValueError('start_history_id must be a non-empty string')
         if max_results < 1 or max_results > 500:
-            raise ValueError("max_results must be between 1 and 500")
+            raise ValueError('max_results must be between 1 and 500')
         params: dict[str, Any] = {
-            "startHistoryId": start_history_id,
-            "maxResults": max_results,
+            'startHistoryId': start_history_id,
+            'maxResults': max_results,
         }
         if label_id is not None:
-            params["labelId"] = label_id
+            params['labelId'] = label_id
         if history_types:
-            params["historyTypes"] = history_types
+            params['historyTypes'] = history_types
         if page_token is not None:
-            params["pageToken"] = page_token
-        return self._client.get(self._user_path("/history"), params=params).json()
+            params['pageToken'] = page_token
+        return self._client.get(self._user_path('/history'), params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_filters(self) -> dict[str, Any]:
@@ -832,7 +1075,7 @@ class GmailToolSet:
         Returns ``{"filter": [{"id": ..., "criteria": {...}, "action":
         {...}}]}``.
         """
-        return self._client.get(self._user_path("/settings/filters")).json()
+        return self._client.get(self._user_path('/settings/filters')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_filter(
@@ -845,10 +1088,10 @@ class GmailToolSet:
         Returns the new filter resource (``id``, ``criteria``, ``action``).
         """
         if not criteria or not action:
-            raise ValueError("criteria and action must both be non-empty")
+            raise ValueError('criteria and action must both be non-empty')
         return self._client.post(
-            self._user_path("/settings/filters"),
-            json={"criteria": criteria, "action": action},
+            self._user_path('/settings/filters'),
+            json={'criteria': criteria, 'action': action},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
@@ -861,9 +1104,9 @@ class GmailToolSet:
         Returns ``{"id": ..., "deleted": True}``.
         """
         if not filter_id:
-            raise ValueError("filter_id must be a non-empty string")
-        self._client.delete(self._user_path(f"/settings/filters/{filter_id}"))
-        return {"id": filter_id, "deleted": True}
+            raise ValueError('filter_id must be a non-empty string')
+        self._client.delete(self._user_path(f'/settings/filters/{filter_id}'))
+        return {'id': filter_id, 'deleted': True}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_send_as(self) -> dict[str, Any]:
@@ -872,7 +1115,7 @@ class GmailToolSet:
         Returns ``{"sendAs": [{"sendAsEmail": ..., "displayName": ...,
         "isPrimary": ..., "isDefault": ...}, ...]}``.
         """
-        return self._client.get(self._user_path("/settings/sendAs")).json()
+        return self._client.get(self._user_path('/settings/sendAs')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_vacation_settings(self) -> dict[str, Any]:
@@ -883,7 +1126,7 @@ class GmailToolSet:
         "restrictToContacts": bool, "restrictToDomain": bool,
         "startTime": str, "endTime": str}``.
         """
-        return self._client.get(self._user_path("/settings/vacation")).json()
+        return self._client.get(self._user_path('/settings/vacation')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_vacation_settings(
@@ -896,16 +1139,16 @@ class GmailToolSet:
         :meth:`get_vacation_settings`).
         """
         if not settings:
-            raise ValueError("settings must not be empty")
+            raise ValueError('settings must not be empty')
         return self._client.put(
-            self._user_path("/settings/vacation"),
+            self._user_path('/settings/vacation'),
             json=settings,
         ).json()
 
     # MARK: - Internal
 
     def _user_path(self, suffix: str) -> str:
-        return f"/users/{self._user}{suffix}"
+        return f'/users/{self._user}{suffix}'
 
     @staticmethod
     def _build_mime(
@@ -920,17 +1163,17 @@ class GmailToolSet:
         reply_to: str | None,
     ) -> EmailMessage:
         message = EmailMessage()
-        message["To"] = ", ".join(to)
-        message["Subject"] = subject
+        message['To'] = ', '.join(to)
+        message['Subject'] = subject
         if sender:
-            message["From"] = sender
+            message['From'] = sender
         if cc:
-            message["Cc"] = ", ".join(cc)
+            message['Cc'] = ', '.join(cc)
         if bcc:
-            message["Bcc"] = ", ".join(bcc)
+            message['Bcc'] = ', '.join(bcc)
         if reply_to:
-            message["Reply-To"] = reply_to
-        message.set_content(body_text or "")
+            message['Reply-To'] = reply_to
+        message.set_content(body_text or '')
         if body_html is not None:
-            message.add_alternative(body_html, subtype="html")
+            message.add_alternative(body_html, subtype='html')
         return message

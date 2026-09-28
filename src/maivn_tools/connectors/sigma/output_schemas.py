@@ -20,42 +20,42 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror the connector's ``_*_summary`` builders)
 
 _WORKBOOK_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "workbook_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "description": {"type": "string"},
-        "owner_email": {"type": "string"},
-        "updated_at": {"type": "string"},
-        "workbook_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'workbook_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'description': {'type': 'string'},
+        'owner_email': {'type': 'string'},
+        'updated_at': {'type': 'string'},
+        'workbook_id': {'type': 'string'},
     },
-    "required": ["workbook_ref"],
+    'required': ['workbook_ref'],
 }
 
 _DATASET_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "dataset_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "description": {"type": "string"},
-        "owner_email": {"type": "string"},
-        "updated_at": {"type": "string"},
-        "dataset_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'dataset_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'description': {'type': 'string'},
+        'owner_email': {'type': 'string'},
+        'updated_at': {'type': 'string'},
+        'dataset_id': {'type': 'string'},
     },
-    "required": ["dataset_ref"],
+    'required': ['dataset_ref'],
 }
 
 _MEMBER_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "member_ref": {"type": "string"},
-        "name": {"type": "string"},
-        "email": {"type": "string"},
-        "member_type": {"type": "string"},
-        "is_archived": {"type": "boolean"},
-        "member_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'member_ref': {'type': 'string'},
+        'name': {'type': 'string'},
+        'email': {'type': 'string'},
+        'member_type': {'type': 'string'},
+        'is_archived': {'type': 'boolean'},
+        'member_id': {'type': 'string'},
     },
-    "required": ["member_ref"],
+    'required': ['member_ref'],
 }
 
 
@@ -65,24 +65,24 @@ _MEMBER_SUMMARY: dict[str, JsonValue] = {
 def _listing(item_key: str, item_schema: dict[str, JsonValue]) -> dict[str, JsonValue]:
     """Build a ``{<item_key>: [...], nextPage: str | null}`` schema."""
     return {
-        "type": "object",
-        "properties": {
-            item_key: {"type": "array", "items": item_schema},
-            "nextPage": {"type": ["string", "null"]},
+        'type': 'object',
+        'properties': {
+            item_key: {'type': 'array', 'items': item_schema},
+            'nextPage': {'type': ['string', 'null']},
         },
-        "required": [item_key],
+        'required': [item_key],
     }
 
 
 # MARK: - Tool output schemas
 
-LIST_WORKBOOKS_OUTPUT: dict[str, JsonValue] = _listing("workbooks", _WORKBOOK_SUMMARY)
-LIST_DATASETS_OUTPUT: dict[str, JsonValue] = _listing("datasets", _DATASET_SUMMARY)
-LIST_MEMBERS_OUTPUT: dict[str, JsonValue] = _listing("members", _MEMBER_SUMMARY)
+LIST_WORKBOOKS_OUTPUT: dict[str, JsonValue] = _listing('workbooks', _WORKBOOK_SUMMARY)
+LIST_DATASETS_OUTPUT: dict[str, JsonValue] = _listing('datasets', _DATASET_SUMMARY)
+LIST_MEMBERS_OUTPUT: dict[str, JsonValue] = _listing('members', _MEMBER_SUMMARY)
 
 
 __all__ = [
-    "LIST_DATASETS_OUTPUT",
-    "LIST_MEMBERS_OUTPUT",
-    "LIST_WORKBOOKS_OUTPUT",
+    'LIST_DATASETS_OUTPUT',
+    'LIST_MEMBERS_OUTPUT',
+    'LIST_WORKBOOKS_OUTPUT',
 ]

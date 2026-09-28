@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json as _json
 from typing import Any, cast
 
 from maivn import toolify, toolset
@@ -15,7 +16,7 @@ from ...runtime.http import HttpClient, HttpTransport
 
 # MARK: Constants
 
-_API_VERSION = "v25.0"
+_API_VERSION = 'v25.0'
 
 
 # MARK: Helpers
@@ -28,14 +29,14 @@ def _coerce_id(candidate: Any, *, key: str) -> Any:
     if isinstance(candidate, int | str):
         return candidate
     if isinstance(candidate, dict):
-        mapping = cast("dict[str, Any]", candidate)
-        for k in (key, "id", "campaign_id", "ad_account_id", "ad_id", "adset_id"):
+        mapping = cast('dict[str, Any]', candidate)
+        for k in (key, 'id', 'campaign_id', 'ad_account_id', 'ad_id', 'adset_id'):
             value: Any = mapping.get(k)
             if isinstance(value, int | str):
                 return value
         return None
     if isinstance(candidate, list | tuple):
-        sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+        sequence = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in sequence:
             value = _coerce_id(item, key=key)
             if value is not None:
@@ -46,7 +47,7 @@ def _coerce_id(candidate: Any, *, key: str) -> Any:
 # MARK: Tool set
 
 
-@toolset(prefix="meta_ads")
+@toolset(prefix='meta_ads')
 class MetaAdsToolSet:
     """A connector for the Meta Marketing API.
 
@@ -56,15 +57,15 @@ class MetaAdsToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="meta_ads",
-        display_name="Meta Ads",
-        version="0.1.0",
-        description="Ad accounts, campaigns, ad sets, ads, audiences, and insights.",
+        name='meta_ads',
+        display_name='Meta Ads',
+        version='0.1.0',
+        description='Ad accounts, campaigns, ad sets, ads, audiences, and insights.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url=("https://developers.facebook.com/docs/marketing-apis/"),
-        homepage_url="https://www.facebook.com/business/",
-        tags=("marketing", "ads", "meta"),
+        documentation_url=('https://developers.facebook.com/docs/marketing-apis/'),
+        homepage_url='https://www.facebook.com/business/',
+        tags=('marketing', 'ads', 'meta'),
     )
 
     def __init__(
@@ -72,19 +73,19 @@ class MetaAdsToolSet:
         *,
         access_token: str,
         graph_version: str = _API_VERSION,
-        base_url: str = "https://graph.facebook.com",
+        base_url: str = 'https://graph.facebook.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._version = graph_version
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
-            auth=ApiKeyAuth(access_token, query_param="access_token"),
+            base_url=base_url.rstrip('/'),
+            auth=ApiKeyAuth(access_token, query_param='access_token'),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -92,13 +93,13 @@ class MetaAdsToolSet:
         return self._client
 
     def _path(self, suffix: str) -> str:
-        return f"/{self._version}{suffix}"
+        return f'/{self._version}{suffix}'
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_ad_accounts(
         self,
         *,
-        user_id: str = "me",
+        user_id: str = 'me',
         fields: list[str] | None = None,
         limit: int = 10,
         include_ids: bool = False,
@@ -113,38 +114,38 @@ class MetaAdsToolSet:
         when a follow-up tool (e.g. :meth:`list_campaigns`) needs the raw
         ``ad_account_id``.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if fields is None:
             fields = [
-                "name",
-                "account_status",
-                "currency",
-                "timezone_name",
-                "business_name",
+                'name',
+                'account_status',
+                'currency',
+                'timezone_name',
+                'business_name',
             ]
-        params["fields"] = ",".join(fields)
-        raw: Any = self._client.get(self._path(f"/{user_id}/adaccounts"), params=params).json()
-        payload: dict[str, Any] = cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
-        results: list[Any] = payload.get("data", [])
+        params['fields'] = ','.join(fields)
+        raw: Any = self._client.get(self._path(f'/{user_id}/adaccounts'), params=params).json()
+        payload: dict[str, Any] = cast('dict[str, Any]', raw) if isinstance(raw, dict) else {}
+        results: list[Any] = payload.get('data', [])
         summaries: list[dict[str, Any]] = []
         for index, account in enumerate(results, start=1):
             if not isinstance(account, dict):
                 continue
-            account_data = cast("dict[str, Any]", account)
+            account_data = cast('dict[str, Any]', account)
             summary: dict[str, Any] = {
-                "account_ref": f"account_{index}",
-                "name": account_data.get("name", ""),
-                "account_status": account_data.get("account_status"),
-                "currency": account_data.get("currency", ""),
-                "timezone_name": account_data.get("timezone_name", ""),
-                "business_name": account_data.get("business_name", ""),
+                'account_ref': f'account_{index}',
+                'name': account_data.get('name', ''),
+                'account_status': account_data.get('account_status'),
+                'currency': account_data.get('currency', ''),
+                'timezone_name': account_data.get('timezone_name', ''),
+                'business_name': account_data.get('business_name', ''),
             }
             if include_ids:
-                summary["ad_account_id"] = account_data.get("id", "")
+                summary['ad_account_id'] = account_data.get('id', '')
             summaries.append(summary)
         return {
-            "accounts": summaries,
-            "paging": payload.get("paging"),
+            'accounts': summaries,
+            'paging': payload.get('paging'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -160,13 +161,13 @@ class MetaAdsToolSet:
         account dict returned by :meth:`list_ad_accounts` (with
         ``include_ids=True``).
         """
-        resolved_id = _coerce_id(ad_account_id, key="ad_account_id")
+        resolved_id = _coerce_id(ad_account_id, key='ad_account_id')
         if not resolved_id:
-            raise ValueError("ad_account_id is required")
+            raise ValueError('ad_account_id is required')
         params: dict[str, Any] = {}
         if fields is not None:
-            params["fields"] = ",".join(fields)
-        return self._client.get(self._path(f"/{resolved_id}"), params=params or None).json()
+            params['fields'] = ','.join(fields)
+        return self._client.get(self._path(f'/{resolved_id}'), params=params or None).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_campaigns(
@@ -188,49 +189,49 @@ class MetaAdsToolSet:
         tool (:meth:`update_campaign`, :meth:`delete_campaign`) needs the
         raw ``campaign_id``.
         """
-        account = _coerce_id(ad_account_id, key="ad_account_id")
+        account = _coerce_id(ad_account_id, key='ad_account_id')
         if not account:
-            raise ValueError("ad_account_id is required")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('ad_account_id is required')
+        params: dict[str, Any] = {'limit': limit}
         if fields is None:
             fields = [
-                "name",
-                "status",
-                "effective_status",
-                "objective",
-                "daily_budget",
-                "lifetime_budget",
-                "start_time",
-                "stop_time",
+                'name',
+                'status',
+                'effective_status',
+                'objective',
+                'daily_budget',
+                'lifetime_budget',
+                'start_time',
+                'stop_time',
             ]
-        params["fields"] = ",".join(fields)
+        params['fields'] = ','.join(fields)
         if effective_status is not None:
-            params["effective_status"] = effective_status
-        raw: Any = self._client.get(self._path(f"/{account}/campaigns"), params=params).json()
-        payload: dict[str, Any] = cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
-        results: list[Any] = payload.get("data", [])
+            params['effective_status'] = effective_status
+        raw: Any = self._client.get(self._path(f'/{account}/campaigns'), params=params).json()
+        payload: dict[str, Any] = cast('dict[str, Any]', raw) if isinstance(raw, dict) else {}
+        results: list[Any] = payload.get('data', [])
         summaries: list[dict[str, Any]] = []
         for index, campaign in enumerate(results, start=1):
             if not isinstance(campaign, dict):
                 continue
-            campaign_data = cast("dict[str, Any]", campaign)
+            campaign_data = cast('dict[str, Any]', campaign)
             summary: dict[str, Any] = {
-                "campaign_ref": f"campaign_{index}",
-                "name": campaign_data.get("name", ""),
-                "status": campaign_data.get("status", ""),
-                "effective_status": campaign_data.get("effective_status", ""),
-                "objective": campaign_data.get("objective", ""),
-                "daily_budget": campaign_data.get("daily_budget"),
-                "lifetime_budget": campaign_data.get("lifetime_budget"),
-                "start_time": campaign_data.get("start_time", ""),
-                "stop_time": campaign_data.get("stop_time", ""),
+                'campaign_ref': f'campaign_{index}',
+                'name': campaign_data.get('name', ''),
+                'status': campaign_data.get('status', ''),
+                'effective_status': campaign_data.get('effective_status', ''),
+                'objective': campaign_data.get('objective', ''),
+                'daily_budget': campaign_data.get('daily_budget'),
+                'lifetime_budget': campaign_data.get('lifetime_budget'),
+                'start_time': campaign_data.get('start_time', ''),
+                'stop_time': campaign_data.get('stop_time', ''),
             }
             if include_ids:
-                summary["campaign_id"] = campaign_data.get("id", "")
+                summary['campaign_id'] = campaign_data.get('id', '')
             summaries.append(summary)
         return {
-            "campaigns": summaries,
-            "paging": payload.get("paging"),
+            'campaigns': summaries,
+            'paging': payload.get('paging'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -240,7 +241,7 @@ class MetaAdsToolSet:
         *,
         name: str,
         objective: str,
-        status: str = "PAUSED",
+        status: str = 'PAUSED',
         special_ad_categories: list[str] | None = None,
         daily_budget: int | None = None,
         lifetime_budget: int | None = None,
@@ -251,22 +252,22 @@ class MetaAdsToolSet:
         don't immediately spend. Switch to ``"ACTIVE"`` only after
         confirming budget, objective, and creative are correct.
         """
-        account = _coerce_id(ad_account_id, key="ad_account_id")
+        account = _coerce_id(ad_account_id, key='ad_account_id')
         if not account or not name or not objective:
-            raise ValueError("ad_account_id, name, and objective are required")
-        if status not in {"ACTIVE", "PAUSED", "ARCHIVED", "DELETED"}:
-            raise ValueError("invalid status")
+            raise ValueError('ad_account_id, name, and objective are required')
+        if status not in {'ACTIVE', 'PAUSED', 'ARCHIVED', 'DELETED'}:
+            raise ValueError('invalid status')
         body: dict[str, Any] = {
-            "name": name,
-            "objective": objective,
-            "status": status,
-            "special_ad_categories": special_ad_categories or [],
+            'name': name,
+            'objective': objective,
+            'status': status,
+            'special_ad_categories': special_ad_categories or [],
         }
         if daily_budget is not None:
-            body["daily_budget"] = daily_budget
+            body['daily_budget'] = daily_budget
         if lifetime_budget is not None:
-            body["lifetime_budget"] = lifetime_budget
-        return self._client.post(self._path(f"/{account}/campaigns"), params=body).json()
+            body['lifetime_budget'] = lifetime_budget
+        return self._client.post(self._path(f'/{account}/campaigns'), params=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_campaign(
@@ -281,10 +282,10 @@ class MetaAdsToolSet:
         :meth:`list_campaigns` (with ``include_ids=True``). ``fields`` is a
         partial-update dict (e.g. ``{"status": "PAUSED"}`` to pause).
         """
-        resolved_id = _coerce_id(campaign_id, key="campaign_id")
+        resolved_id = _coerce_id(campaign_id, key='campaign_id')
         if not resolved_id or not fields:
-            raise ValueError("campaign_id and fields are required")
-        return self._client.post(self._path(f"/{resolved_id}"), params=fields).json()
+            raise ValueError('campaign_id and fields are required')
+        return self._client.post(self._path(f'/{resolved_id}'), params=fields).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.DELETE), destructive=True)
     def delete_campaign(self, campaign_id: Any) -> dict[str, Any]:
@@ -294,10 +295,10 @@ class MetaAdsToolSet:
         serving. Confirm with the user first. Accepts a raw ID or a
         campaign dict (with ``include_ids=True``).
         """
-        resolved_id = _coerce_id(campaign_id, key="campaign_id")
+        resolved_id = _coerce_id(campaign_id, key='campaign_id')
         if not resolved_id:
-            raise ValueError("campaign_id is required")
-        return self._client.delete(self._path(f"/{resolved_id}")).json()
+            raise ValueError('campaign_id is required')
+        return self._client.delete(self._path(f'/{resolved_id}')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_ad_sets(
@@ -315,45 +316,45 @@ class MetaAdsToolSet:
         ``optimization_goal``, ``billing_event``. Raw IDs are omitted by
         default; set ``include_ids=True`` when needed.
         """
-        account = _coerce_id(ad_account_id, key="ad_account_id")
+        account = _coerce_id(ad_account_id, key='ad_account_id')
         if not account:
-            raise ValueError("ad_account_id is required")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('ad_account_id is required')
+        params: dict[str, Any] = {'limit': limit}
         if fields is None:
             fields = [
-                "name",
-                "status",
-                "effective_status",
-                "daily_budget",
-                "lifetime_budget",
-                "optimization_goal",
-                "billing_event",
+                'name',
+                'status',
+                'effective_status',
+                'daily_budget',
+                'lifetime_budget',
+                'optimization_goal',
+                'billing_event',
             ]
-        params["fields"] = ",".join(fields)
-        raw: Any = self._client.get(self._path(f"/{account}/adsets"), params=params).json()
-        payload: dict[str, Any] = cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
-        results: list[Any] = payload.get("data", [])
+        params['fields'] = ','.join(fields)
+        raw: Any = self._client.get(self._path(f'/{account}/adsets'), params=params).json()
+        payload: dict[str, Any] = cast('dict[str, Any]', raw) if isinstance(raw, dict) else {}
+        results: list[Any] = payload.get('data', [])
         summaries: list[dict[str, Any]] = []
         for index, ad_set in enumerate(results, start=1):
             if not isinstance(ad_set, dict):
                 continue
-            ad_set_data = cast("dict[str, Any]", ad_set)
+            ad_set_data = cast('dict[str, Any]', ad_set)
             summary: dict[str, Any] = {
-                "ad_set_ref": f"ad_set_{index}",
-                "name": ad_set_data.get("name", ""),
-                "status": ad_set_data.get("status", ""),
-                "effective_status": ad_set_data.get("effective_status", ""),
-                "daily_budget": ad_set_data.get("daily_budget"),
-                "lifetime_budget": ad_set_data.get("lifetime_budget"),
-                "optimization_goal": ad_set_data.get("optimization_goal", ""),
-                "billing_event": ad_set_data.get("billing_event", ""),
+                'ad_set_ref': f'ad_set_{index}',
+                'name': ad_set_data.get('name', ''),
+                'status': ad_set_data.get('status', ''),
+                'effective_status': ad_set_data.get('effective_status', ''),
+                'daily_budget': ad_set_data.get('daily_budget'),
+                'lifetime_budget': ad_set_data.get('lifetime_budget'),
+                'optimization_goal': ad_set_data.get('optimization_goal', ''),
+                'billing_event': ad_set_data.get('billing_event', ''),
             }
             if include_ids:
-                summary["ad_set_id"] = ad_set_data.get("id", "")
+                summary['ad_set_id'] = ad_set_data.get('id', '')
             summaries.append(summary)
         return {
-            "ad_sets": summaries,
-            "paging": payload.get("paging"),
+            'ad_sets': summaries,
+            'paging': payload.get('paging'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -371,41 +372,41 @@ class MetaAdsToolSet:
         ``effective_status``, ``created_time``, ``updated_time``. Raw IDs
         are omitted by default.
         """
-        account = _coerce_id(ad_account_id, key="ad_account_id")
+        account = _coerce_id(ad_account_id, key='ad_account_id')
         if not account:
-            raise ValueError("ad_account_id is required")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('ad_account_id is required')
+        params: dict[str, Any] = {'limit': limit}
         if fields is None:
             fields = [
-                "name",
-                "status",
-                "effective_status",
-                "created_time",
-                "updated_time",
+                'name',
+                'status',
+                'effective_status',
+                'created_time',
+                'updated_time',
             ]
-        params["fields"] = ",".join(fields)
-        raw: Any = self._client.get(self._path(f"/{account}/ads"), params=params).json()
-        payload: dict[str, Any] = cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
-        results: list[Any] = payload.get("data", [])
+        params['fields'] = ','.join(fields)
+        raw: Any = self._client.get(self._path(f'/{account}/ads'), params=params).json()
+        payload: dict[str, Any] = cast('dict[str, Any]', raw) if isinstance(raw, dict) else {}
+        results: list[Any] = payload.get('data', [])
         summaries: list[dict[str, Any]] = []
         for index, ad in enumerate(results, start=1):
             if not isinstance(ad, dict):
                 continue
-            ad_data = cast("dict[str, Any]", ad)
+            ad_data = cast('dict[str, Any]', ad)
             summary: dict[str, Any] = {
-                "ad_ref": f"ad_{index}",
-                "name": ad_data.get("name", ""),
-                "status": ad_data.get("status", ""),
-                "effective_status": ad_data.get("effective_status", ""),
-                "created_time": ad_data.get("created_time", ""),
-                "updated_time": ad_data.get("updated_time", ""),
+                'ad_ref': f'ad_{index}',
+                'name': ad_data.get('name', ''),
+                'status': ad_data.get('status', ''),
+                'effective_status': ad_data.get('effective_status', ''),
+                'created_time': ad_data.get('created_time', ''),
+                'updated_time': ad_data.get('updated_time', ''),
             }
             if include_ids:
-                summary["ad_id"] = ad_data.get("id", "")
+                summary['ad_id'] = ad_data.get('id', '')
             summaries.append(summary)
         return {
-            "ads": summaries,
-            "paging": payload.get("paging"),
+            'ads': summaries,
+            'paging': payload.get('paging'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -413,7 +414,7 @@ class MetaAdsToolSet:
         self,
         node_id: Any,
         *,
-        level: str = "ad",
+        level: str = 'ad',
         fields: list[str] | None = None,
         time_range: dict[str, str] | None = None,
         breakdowns: list[str] | None = None,
@@ -427,21 +428,19 @@ class MetaAdsToolSet:
         ``time_range`` is ``{"since": "YYYY-MM-DD", "until":
         "YYYY-MM-DD"}``. Returns the raw insights ``data`` array.
         """
-        resolved_id = _coerce_id(node_id, key="id")
+        resolved_id = _coerce_id(node_id, key='id')
         if not resolved_id:
-            raise ValueError("node_id is required")
-        if level not in {"account", "campaign", "adset", "ad"}:
-            raise ValueError("level must be account/campaign/adset/ad")
-        params: dict[str, Any] = {"level": level, "limit": limit}
+            raise ValueError('node_id is required')
+        if level not in {'account', 'campaign', 'adset', 'ad'}:
+            raise ValueError('level must be account/campaign/adset/ad')
+        params: dict[str, Any] = {'level': level, 'limit': limit}
         if fields is not None:
-            params["fields"] = ",".join(fields)
+            params['fields'] = ','.join(fields)
         if time_range is not None:
-            import json as _json
-
-            params["time_range"] = _json.dumps(time_range)
+            params['time_range'] = _json.dumps(time_range)
         if breakdowns is not None:
-            params["breakdowns"] = ",".join(breakdowns)
-        return self._client.get(self._path(f"/{resolved_id}/insights"), params=params).json()
+            params['breakdowns'] = ','.join(breakdowns)
+        return self._client.get(self._path(f'/{resolved_id}/insights'), params=params).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_custom_audiences(
@@ -459,41 +458,41 @@ class MetaAdsToolSet:
         ``time_created``, ``time_updated``. Raw IDs are omitted by
         default; set ``include_ids=True`` when needed.
         """
-        account = _coerce_id(ad_account_id, key="ad_account_id")
+        account = _coerce_id(ad_account_id, key='ad_account_id')
         if not account:
-            raise ValueError("ad_account_id is required")
-        params: dict[str, Any] = {"limit": limit}
+            raise ValueError('ad_account_id is required')
+        params: dict[str, Any] = {'limit': limit}
         if fields is None:
             fields = [
-                "name",
-                "description",
-                "subtype",
-                "approximate_count",
-                "time_created",
-                "time_updated",
+                'name',
+                'description',
+                'subtype',
+                'approximate_count',
+                'time_created',
+                'time_updated',
             ]
-        params["fields"] = ",".join(fields)
-        raw: Any = self._client.get(self._path(f"/{account}/customaudiences"), params=params).json()
-        payload: dict[str, Any] = cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
-        results: list[Any] = payload.get("data", [])
+        params['fields'] = ','.join(fields)
+        raw: Any = self._client.get(self._path(f'/{account}/customaudiences'), params=params).json()
+        payload: dict[str, Any] = cast('dict[str, Any]', raw) if isinstance(raw, dict) else {}
+        results: list[Any] = payload.get('data', [])
         summaries: list[dict[str, Any]] = []
         for index, audience in enumerate(results, start=1):
             if not isinstance(audience, dict):
                 continue
-            audience_data = cast("dict[str, Any]", audience)
+            audience_data = cast('dict[str, Any]', audience)
             summary: dict[str, Any] = {
-                "audience_ref": f"audience_{index}",
-                "name": audience_data.get("name", ""),
-                "description": audience_data.get("description", ""),
-                "subtype": audience_data.get("subtype", ""),
-                "approximate_count": audience_data.get("approximate_count"),
-                "time_created": audience_data.get("time_created", ""),
-                "time_updated": audience_data.get("time_updated", ""),
+                'audience_ref': f'audience_{index}',
+                'name': audience_data.get('name', ''),
+                'description': audience_data.get('description', ''),
+                'subtype': audience_data.get('subtype', ''),
+                'approximate_count': audience_data.get('approximate_count'),
+                'time_created': audience_data.get('time_created', ''),
+                'time_updated': audience_data.get('time_updated', ''),
             }
             if include_ids:
-                summary["audience_id"] = audience_data.get("id", "")
+                summary['audience_id'] = audience_data.get('id', '')
             summaries.append(summary)
         return {
-            "audiences": summaries,
-            "paging": payload.get("paging"),
+            'audiences': summaries,
+            'paging': payload.get('paging'),
         }

@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from .connector import HubSpotToolSet
 
-__all__ = ["HubSpotToolSet"]
+__all__ = ['HubSpotToolSet']

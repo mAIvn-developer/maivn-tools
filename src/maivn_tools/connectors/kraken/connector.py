@@ -34,7 +34,7 @@ def _form_body(params: dict[str, Any]) -> bytes:
     Sending them via ``params=`` would place them in the URL query string with
     an empty body, breaking both the body contract and the signing recipe.
     """
-    return urllib.parse.urlencode(params, doseq=True).encode("utf-8")
+    return urllib.parse.urlencode(params, doseq=True).encode('utf-8')
 
 
 def _select_id_from_value(
@@ -46,7 +46,7 @@ def _select_id_from_value(
         text = value.strip()
         return text or None
     if isinstance(value, dict):
-        mapping = cast("dict[str, object]", value)
+        mapping = cast('dict[str, object]', value)
         for key in keys:
             candidate = mapping.get(key)
             if isinstance(candidate, str):
@@ -60,7 +60,7 @@ def _select_id_from_value(
                     return resolved
         return None
     if isinstance(value, list | tuple):
-        sequence = cast("list[object] | tuple[object, ...]", value)
+        sequence = cast('list[object] | tuple[object, ...]', value)
         for item in sequence:
             resolved = _select_id_from_value(item, keys)
             if resolved is not None:
@@ -68,36 +68,36 @@ def _select_id_from_value(
     return None
 
 
-@toolset(prefix="kraken")
+@toolset(prefix='kraken')
 class KrakenToolSet:
     """A connector for Kraken Spot REST."""
 
     metadata = ProviderMetadata(
-        name="kraken",
-        display_name="Kraken",
-        version="0.1.0",
-        description="Balances, ledgers, trades, orders, and market data.",
+        name='kraken',
+        display_name='Kraken',
+        version='0.1.0',
+        description='Balances, ledgers, trades, orders, and market data.',
         auth_modes=(AuthMode.CUSTOM,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://docs.kraken.com/api/docs",
-        homepage_url="https://www.kraken.com/",
-        tags=("trading", "crypto"),
+        documentation_url='https://docs.kraken.com/api/docs',
+        homepage_url='https://www.kraken.com/',
+        tags=('trading', 'crypto'),
     )
 
     def __init__(
         self,
         *,
         auth: AuthStrategy | None = None,
-        base_url: str = "https://api.kraken.com",
+        base_url: str = 'https://api.kraken.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=auth or NoAuth(),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -112,7 +112,7 @@ class KrakenToolSet:
 
         Useful for clock-drift checks before signing nonced requests.
         """
-        return self._client.get("/0/public/Time").json()
+        return self._client.get('/0/public/Time').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def system_status(self) -> dict[str, Any]:
@@ -121,7 +121,7 @@ class KrakenToolSet:
         Check this if write tools start failing — Kraken sometimes goes
         into ``cancel_only`` or ``post_only`` modes during maintenance.
         """
-        return self._client.get("/0/public/SystemStatus").json()
+        return self._client.get('/0/public/SystemStatus').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_assets(self) -> dict[str, Any]:
@@ -131,7 +131,7 @@ class KrakenToolSet:
         prefixed asset codes (e.g. ``"XXBT"`` for BTC, ``"ZUSD"`` for
         USD).
         """
-        return self._client.get("/0/public/Assets").json()
+        return self._client.get('/0/public/Assets').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_asset_pairs(self, *, pair: str | None = None) -> dict[str, Any]:
@@ -143,9 +143,9 @@ class KrakenToolSet:
         """
         params: dict[str, Any] = {}
         if pair is not None:
-            params["pair"] = pair
+            params['pair'] = pair
         return self._client.get(
-            "/0/public/AssetPairs",
+            '/0/public/AssetPairs',
             params=params or None,
         ).json()
 
@@ -157,10 +157,10 @@ class KrakenToolSet:
         ``"BTCUSD"`` alias).
         """
         if not pair:
-            raise ValueError("pair must be a non-empty string")
+            raise ValueError('pair must be a non-empty string')
         return self._client.get(
-            "/0/public/Ticker",
-            params={"pair": pair},
+            '/0/public/Ticker',
+            params={'pair': pair},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -178,12 +178,12 @@ class KrakenToolSet:
         incremental fetches.
         """
         if not pair:
-            raise ValueError("pair must be a non-empty string")
-        params: dict[str, Any] = {"pair": pair, "interval": interval}
+            raise ValueError('pair must be a non-empty string')
+        params: dict[str, Any] = {'pair': pair, 'interval': interval}
         if since is not None:
-            params["since"] = since
+            params['since'] = since
         return self._client.get(
-            "/0/public/OHLC",
+            '/0/public/OHLC',
             params=params,
         ).json()
 
@@ -195,12 +195,12 @@ class KrakenToolSet:
         Default ``count`` is 25 levels per side (Kraken max 500).
         """
         if not pair:
-            raise ValueError("pair must be a non-empty string")
+            raise ValueError('pair must be a non-empty string')
         if count < 1 or count > 500:
-            raise ValueError("count must be between 1 and 500")
+            raise ValueError('count must be between 1 and 500')
         return self._client.get(
-            "/0/public/Depth",
-            params={"pair": pair, "count": count},
+            '/0/public/Depth',
+            params={'pair': pair, 'count': count},
         ).json()
 
     # MARK: - Private
@@ -213,9 +213,9 @@ class KrakenToolSet:
         a signed nonce — use a callable :class:`AuthStrategy`.
         """
         return self._client.post(
-            "/0/private/Balance",
-            data=_form_body({"nonce": "0"}),
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            '/0/private/Balance',
+            data=_form_body({'nonce': '0'}),
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -238,42 +238,42 @@ class KrakenToolSet:
         ``raw=True`` returns the unmodified Kraken response.
         """
         payload: dict[str, Any] = self._client.post(
-            "/0/private/OpenOrders",
-            data=_form_body({"nonce": "0"}),
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            '/0/private/OpenOrders',
+            data=_form_body({'nonce': '0'}),
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
         ).json()
         if raw:
             return payload
-        result = payload.get("result")
-        result_map = cast("dict[str, object]", result) if isinstance(result, dict) else None
-        open_orders = result_map.get("open") if result_map is not None else None
+        result = payload.get('result')
+        result_map = cast('dict[str, object]', result) if isinstance(result, dict) else None
+        open_orders = result_map.get('open') if result_map is not None else None
         if not isinstance(open_orders, dict):
-            return {"orders": [], "count": 0}
-        open_orders_map = cast("dict[str, object]", open_orders)
+            return {'orders': [], 'count': 0}
+        open_orders_map = cast('dict[str, object]', open_orders)
         summaries: list[dict[str, Any]] = []
         for index, (txid, order) in enumerate(open_orders_map.items(), start=1):
             if not isinstance(order, dict):
                 continue
-            order_map = cast("dict[str, object]", order)
-            raw_descr = order_map.get("descr")
-            descr = cast("dict[str, object]", raw_descr) if isinstance(raw_descr, dict) else {}
+            order_map = cast('dict[str, object]', order)
+            raw_descr = order_map.get('descr')
+            descr = cast('dict[str, object]', raw_descr) if isinstance(raw_descr, dict) else {}
             summary: dict[str, Any] = {
-                "order_ref": f"order_{index}",
-                "pair": descr.get("pair", ""),
-                "side": descr.get("type"),
-                "ordertype": descr.get("ordertype"),
-                "status": order_map.get("status"),
-                "volume": order_map.get("vol"),
-                "volume_executed": order_map.get("vol_exec"),
-                "price": descr.get("price"),
-                "opentm": order_map.get("opentm"),
+                'order_ref': f'order_{index}',
+                'pair': descr.get('pair', ''),
+                'side': descr.get('type'),
+                'ordertype': descr.get('ordertype'),
+                'status': order_map.get('status'),
+                'volume': order_map.get('vol'),
+                'volume_executed': order_map.get('vol_exec'),
+                'price': descr.get('price'),
+                'opentm': order_map.get('opentm'),
             }
             if include_ids:
-                summary["txid"] = txid
+                summary['txid'] = txid
             summaries.append(summary)
         return {
-            "orders": summaries,
-            "count": len(summaries),
+            'orders': summaries,
+            'count': len(summaries),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -290,17 +290,17 @@ class KrakenToolSet:
         "count": N}}``. ``start``/``end`` are unix timestamps; ``ofs``
         is a pagination offset.
         """
-        params: dict[str, Any] = {"nonce": "0"}
+        params: dict[str, Any] = {'nonce': '0'}
         if start is not None:
-            params["start"] = start
+            params['start'] = start
         if end is not None:
-            params["end"] = end
+            params['end'] = end
         if ofs is not None:
-            params["ofs"] = ofs
+            params['ofs'] = ofs
         return self._client.post(
-            "/0/private/ClosedOrders",
+            '/0/private/ClosedOrders',
             data=_form_body(params),
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -325,24 +325,24 @@ class KrakenToolSet:
         and ``txid`` (when placed).
         """
         if not pair or not type or not ordertype or not volume:
-            raise ValueError("pair, type, ordertype, and volume are required")
+            raise ValueError('pair, type, ordertype, and volume are required')
         params: dict[str, Any] = {
-            "nonce": "0",
-            "pair": pair,
-            "type": type,
-            "ordertype": ordertype,
-            "volume": volume,
+            'nonce': '0',
+            'pair': pair,
+            'type': type,
+            'ordertype': ordertype,
+            'volume': volume,
         }
         if price is not None:
-            params["price"] = price
+            params['price'] = price
         if leverage is not None:
-            params["leverage"] = leverage
+            params['leverage'] = leverage
         if validate:
-            params["validate"] = "true"
+            params['validate'] = 'true'
         return self._client.post(
-            "/0/private/AddOrder",
+            '/0/private/AddOrder',
             data=_form_body(params),
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
@@ -353,13 +353,13 @@ class KrakenToolSet:
         returned by :meth:`open_orders` (with ``include_ids=True``).
         Returns Kraken's ``{"result": {"count": N}}`` ack.
         """
-        resolved = _select_id_from_value(txid, ("txid", "order_id", "id"))
+        resolved = _select_id_from_value(txid, ('txid', 'order_id', 'id'))
         if not resolved:
-            raise ValueError("txid must be a non-empty string or order dict with txid")
+            raise ValueError('txid must be a non-empty string or order dict with txid')
         return self._client.post(
-            "/0/private/CancelOrder",
-            data=_form_body({"nonce": "0", "txid": resolved}),
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            '/0/private/CancelOrder',
+            data=_form_body({'nonce': '0', 'txid': resolved}),
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -369,9 +369,9 @@ class KrakenToolSet:
         Returns Kraken's raw ledgers payload.
         """
         return self._client.post(
-            "/0/private/Ledgers",
-            data=_form_body({"nonce": "0"}),
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            '/0/private/Ledgers',
+            data=_form_body({'nonce': '0'}),
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -381,7 +381,7 @@ class KrakenToolSet:
         Returns Kraken's raw trades-history payload.
         """
         return self._client.post(
-            "/0/private/TradesHistory",
-            data=_form_body({"nonce": "0"}),
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            '/0/private/TradesHistory',
+            data=_form_body({'nonce': '0'}),
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
         ).json()

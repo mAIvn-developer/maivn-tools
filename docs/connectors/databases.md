@@ -5,25 +5,23 @@ read-only schema introspection and parameterized query tools over one
 database engine. For analytics warehouses see
 [Warehouses](warehouses.md).
 
-Every connector follows the standard `@toolset` / `@toolify` shape and
-defaults to **read-only** -- writes (and write-style SQL) are rejected
-either at the parser or with `SET TRANSACTION READ ONLY` / `PRAGMA
-query_only`. Use `add_toolset(..., include_tags=["read"])` to drop any
-write surface a connector exposes.
+The SQL toolsets expose read-oriented query surfaces. The Supabase connector
+also exposes writes, auth administration, storage mutations and function calls.
+Use database credentials restricted to the intended operations: parser checks
+and registration tags do not replace database permissions.
 
 All five connectors in this group follow the same agent-ready pattern
 for catalog tools: `list_schemas`, `list_tables`, `list_views`,
 `list_indexes`, and `list_databases` return a summary envelope
 (`{<key>, returned, total, truncated}`) where each entry carries a
-stable ordinal ref (`schema_ref`, `table_ref`, `view_ref`, `index_ref`,
+response-local ordinal ref (`schema_ref`, `table_ref`, `view_ref`, `index_ref`,
 `database_ref`) plus the user-facing schema / table / view / column /
 index names. Those names are always present -- the connector never hides
 identifiers an agent needs to compose a follow-up query. The
 `max_results` argument caps each list (default **25**). `sample_table`
 defaults to **5 rows** so quick lookups stay tidy. The read-only safety
-guarantees still apply: parser denylists, `PRAGMA query_only`,
-`SET TRANSACTION READ ONLY`, and identifier validation prevent
-accidental writes.
+checks include parser denylists and engine-specific restrictions. A permitted
+SELECT can still call a function with side effects; use a restricted database role.
 
 ## SQLiteToolSet
 
@@ -37,7 +35,7 @@ from maivn import Agent
 from maivn_tools import SQLiteToolSet, register_connector
 
 connector = SQLiteToolSet("./reports.db", row_limit=500)
-agent = Agent(model="auto")
+agent = Agent(name="database-agent", model="auto")
 register_connector(agent, connector)
 ```
 
@@ -108,7 +106,7 @@ To use a different driver, supply a `connection_factory`:
 import psycopg
 
 connector = PostgresToolSet(
-    connection_factory=lambda: psycopg.connect(dsn, autocommit=True),
+    connection_factory=lambda: psycopg.connect(dsn, autocommit=False),
 )
 ```
 
@@ -122,9 +120,9 @@ Tools: `list_schemas(max_results)`, `list_tables(schema, max_results)`,
 `run_query(sql, parameters, row_limit)`.
 
 `run_query` only accepts `SELECT`, `WITH`, and `EXPLAIN`. The connector
-issues `SET TRANSACTION READ ONLY` per call (drivers that do not support
-it are silently ignored), so even if a query somehow bypasses the regex,
-the database itself refuses writes. `explain_query` refuses
+attempts `SET TRANSACTION READ ONLY` per call, but catches failures from that
+statement. Do not assume it established read-only mode. Custom factories should
+use transactions rather than autocommit and a database role without write rights. `explain_query` refuses
 `analyze=True` because `EXPLAIN ANALYZE` executes the underlying query
 and may have side effects.
 
@@ -267,7 +265,7 @@ Edge Functions: `invoke_function(function_name, body, ...)`.
 ### Agent-ready behavior
 
 - `list_users`, `list_buckets`, and `list_objects` return compact
-  summaries by default with stable refs (`user_ref`, `bucket_ref`,
+  summaries by default with display refs (`user_ref`, `bucket_ref`,
   `object_ref`). User-facing fields always shown: user `email` /
   `phone` / `role`, bucket `name`, object `name` (the bucket-relative
   path), `size`, `content_type`. Pass `include_metadata=False` for the

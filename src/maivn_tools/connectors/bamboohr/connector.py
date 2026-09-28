@@ -16,7 +16,7 @@ from ...runtime.http import HttpClient, HttpTransport
 from .output_schemas import LIST_EMPLOYEES_OUTPUT
 
 
-@toolset(prefix="bamboohr")
+@toolset(prefix='bamboohr')
 class BambooHRToolSet:
     """A connector for the BambooHR v1 API.
 
@@ -27,15 +27,15 @@ class BambooHRToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="bamboohr",
-        display_name="BambooHR",
-        version="0.1.0",
-        description="Employees, time off, custom reports, and webhooks.",
+        name='bamboohr',
+        display_name='BambooHR',
+        version='0.1.0',
+        description='Employees, time off, custom reports, and webhooks.',
         auth_modes=(AuthMode.BASIC,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://documentation.bamboohr.com/reference",
-        homepage_url="https://www.bamboohr.com/",
-        tags=("hr", "people-ops"),
+        documentation_url='https://documentation.bamboohr.com/reference',
+        homepage_url='https://www.bamboohr.com/',
+        tags=('hr', 'people-ops'),
     )
 
     def __init__(
@@ -47,15 +47,15 @@ class BambooHRToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not subdomain or not api_key:
-            raise ValueError("subdomain and api_key are required")
+            raise ValueError('subdomain and api_key are required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=f"https://api.bamboohr.com/api/gateway.php/{subdomain}",
-            auth=BasicAuth(api_key, "x"),
+            base_url=f'https://api.bamboohr.com/api/gateway.php/{subdomain}',
+            auth=BasicAuth(api_key, 'x'),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -72,57 +72,57 @@ class BambooHRToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        first = employee.get("firstName", "")
-        last = employee.get("lastName", "")
+        first = employee.get('firstName', '')
+        last = employee.get('lastName', '')
         display_name = (
-            employee.get("displayName")
-            or employee.get("preferredName")
-            or f"{first} {last}".strip()
+            employee.get('displayName')
+            or employee.get('preferredName')
+            or f'{first} {last}'.strip()
         )
         summary: dict[str, Any] = {
-            "employee_ref": f"employee_{index}",
-            "name": display_name,
-            "email": employee.get("workEmail", "") or employee.get("bestEmail", ""),
-            "title": employee.get("jobTitle", ""),
-            "department": employee.get("department", ""),
-            "hire_date": employee.get("hireDate", ""),
-            "status": employee.get("status", ""),
+            'employee_ref': f'employee_{index}',
+            'name': display_name,
+            'email': employee.get('workEmail', '') or employee.get('bestEmail', ''),
+            'title': employee.get('jobTitle', ''),
+            'department': employee.get('department', ''),
+            'hire_date': employee.get('hireDate', ''),
+            'status': employee.get('status', ''),
         }
         if include_ids:
-            summary["employee_id"] = employee.get("id", "")
+            summary['employee_id'] = employee.get('id', '')
         return summary
 
     @staticmethod
     def _select_employee_id(candidate: Any) -> int:
         """Accept an int, str ID, or a list/get dict (with ``employee_id``/``id``)."""
         if isinstance(candidate, bool):
-            raise ValueError("employee_id must be a positive integer")
+            raise ValueError('employee_id must be a positive integer')
         if isinstance(candidate, int):
             if candidate <= 0:
-                raise ValueError("employee_id must be a positive integer")
+                raise ValueError('employee_id must be a positive integer')
             return candidate
         if isinstance(candidate, str) and candidate:
             try:
                 parsed = int(candidate)
             except ValueError as exc:
-                raise ValueError(f"employee_id must be numeric, got {candidate!r}") from exc
+                raise ValueError(f'employee_id must be numeric, got {candidate!r}') from exc
             if parsed <= 0:
-                raise ValueError("employee_id must be a positive integer")
+                raise ValueError('employee_id must be a positive integer')
             return parsed
         if isinstance(candidate, dict):
             mapping = cast(dict[str, Any], candidate)
-            for key in ("employee_id", "id"):
+            for key in ('employee_id', 'id'):
                 value = mapping.get(key)
                 if value is not None:
                     return BambooHRToolSet._select_employee_id(value)
         if isinstance(candidate, list | tuple):
-            sequence = cast("list[Any] | tuple[Any, ...]", candidate)
+            sequence = cast('list[Any] | tuple[Any, ...]', candidate)
             for item in sequence:
                 try:
                     return BambooHRToolSet._select_employee_id(item)
                 except ValueError:
                     continue
-        raise ValueError("employee_id is required")
+        raise ValueError('employee_id is required')
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_EMPLOYEES_OUTPUT)
@@ -141,9 +141,9 @@ class BambooHRToolSet:
         ``include_ids=True`` — they are internal handles needed only by
         follow-up tools like :meth:`get_employee` or :meth:`update_employee`.
         """
-        raw_payload: Any = self._client.get("/v1/employees/directory").json()
+        raw_payload: Any = self._client.get('/v1/employees/directory').json()
         payload = cast(dict[str, Any], raw_payload) if isinstance(raw_payload, dict) else None
-        employees: Any = payload.get("employees") if payload is not None else None
+        employees: Any = payload.get('employees') if payload is not None else None
         if not isinstance(employees, list):
             return cast(dict[str, Any], raw_payload)
         employee_list = cast(list[Any], employees)
@@ -158,9 +158,9 @@ class BambooHRToolSet:
             if isinstance(employee, dict)
         ]
         return {
-            "employees": summaries,
-            "totalAvailable": len(employee_list),
-            "fields": payload.get("fields") if payload is not None else None,
+            'employees': summaries,
+            'totalAvailable': len(employee_list),
+            'fields': payload.get('fields') if payload is not None else None,
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -178,10 +178,10 @@ class BambooHRToolSet:
         field names (e.g. ``["firstName", "lastName", "jobTitle"]``).
         """
         if not employee_id or not fields:
-            raise ValueError("employee_id and fields are required")
+            raise ValueError('employee_id and fields are required')
         return self._client.get(
-            f"/v1/employees/{employee_id}",
-            params={"fields": ",".join(fields)},
+            f'/v1/employees/{employee_id}',
+            params={'fields': ','.join(fields)},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -192,8 +192,8 @@ class BambooHRToolSet:
         Confirm with the user before calling.
         """
         if not fields:
-            raise ValueError("fields must be non-empty")
-        return self._client.post("/v1/employees", json=fields).json()
+            raise ValueError('fields must be non-empty')
+        return self._client.post('/v1/employees', json=fields).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def update_employee(
@@ -211,8 +211,8 @@ class BambooHRToolSet:
         """
         resolved = self._select_employee_id(employee_id)
         if not fields:
-            raise ValueError("fields must be non-empty")
-        return self._client.post(f"/v1/employees/{resolved}", json=fields).json()
+            raise ValueError('fields must be non-empty')
+        return self._client.post(f'/v1/employees/{resolved}', json=fields).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_who_is_out(
@@ -228,10 +228,10 @@ class BambooHRToolSet:
         """
         params: dict[str, Any] = {}
         if start is not None:
-            params["start"] = start
+            params['start'] = start
         if end is not None:
-            params["end"] = end
-        return self._client.get("/v1/time_off/whos_out/", params=params or None).json()
+            params['end'] = end
+        return self._client.get('/v1/time_off/whos_out/', params=params or None).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_time_off_requests(
@@ -250,16 +250,16 @@ class BambooHRToolSet:
         """
         params: dict[str, Any] = {}
         if action is not None:
-            params["action"] = action
+            params['action'] = action
         if employee_id is not None:
-            params["employeeId"] = employee_id
+            params['employeeId'] = employee_id
         if start is not None:
-            params["start"] = start
+            params['start'] = start
         if end is not None:
-            params["end"] = end
+            params['end'] = end
         if status is not None:
-            params["status"] = status
-        return self._client.get("/v1/time_off/requests/", params=params or None).json()
+            params['status'] = status
+        return self._client.get('/v1/time_off/requests/', params=params or None).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_time_off_request(
@@ -278,14 +278,14 @@ class BambooHRToolSet:
         calling.
         """
         if not employee_id or not time_off_type_id or not start or not end:
-            raise ValueError("employee_id, time_off_type_id, start, and end are required")
+            raise ValueError('employee_id, time_off_type_id, start, and end are required')
         return self._client.put(
-            f"/v1/employees/{employee_id}/time_off/request",
+            f'/v1/employees/{employee_id}/time_off/request',
             json={
-                "timeOffTypeId": time_off_type_id,
-                "start": start,
-                "end": end,
-                "amount": amount,
+                'timeOffTypeId': time_off_type_id,
+                'start': start,
+                'end': end,
+                'amount': amount,
             },
         ).json()
 
@@ -294,7 +294,7 @@ class BambooHRToolSet:
         self,
         report_id: int,
         *,
-        format: str = "JSON",
+        format: str = 'JSON',
     ) -> dict[str, Any]:
         """Run a saved company report by ID.
 
@@ -305,13 +305,13 @@ class BambooHRToolSet:
         ``{"status", "body"}``.
         """
         if not report_id:
-            raise ValueError("report_id is required")
-        if format not in {"CSV", "JSON", "PDF", "XLS", "XML"}:
-            raise ValueError("invalid format")
-        response = self._client.get(f"/v1/reports/{report_id}", params={"format": format})
-        if format == "JSON":
+            raise ValueError('report_id is required')
+        if format not in {'CSV', 'JSON', 'PDF', 'XLS', 'XML'}:
+            raise ValueError('invalid format')
+        response = self._client.get(f'/v1/reports/{report_id}', params={'format': format})
+        if format == 'JSON':
             return response.json()
-        return {"status": response.status, "body": response.text()}
+        return {'status': response.status, 'body': response.text()}
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_meta_fields(self) -> dict[str, Any]:
@@ -320,7 +320,7 @@ class BambooHRToolSet:
         Useful for picking the right ``fields=`` list for
         :meth:`get_employee`.
         """
-        return self._client.get("/v1/meta/fields/").json()
+        return self._client.get('/v1/meta/fields/').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_meta_time_off_types(self) -> dict[str, Any]:
@@ -329,4 +329,4 @@ class BambooHRToolSet:
         Use to pick the ``time_off_type_id`` for
         :meth:`create_time_off_request`.
         """
-        return self._client.get("/v1/meta/time_off/types/").json()
+        return self._client.get('/v1/meta/time_off/types/').json()

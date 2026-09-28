@@ -23,19 +23,19 @@ def _extract_doc_id(candidate: Any) -> str:
     """
     if isinstance(candidate, str):
         if not candidate:
-            raise ValueError("document_id must be a non-empty string")
+            raise ValueError('document_id must be a non-empty string')
         return candidate
     if isinstance(candidate, dict):
-        doc: dict[str, Any] = cast("dict[str, Any]", candidate)
-        for key in ("doc_id", "document_id", "documentId", "file_id", "id"):
+        doc: dict[str, Any] = cast('dict[str, Any]', candidate)
+        for key in ('doc_id', 'document_id', 'documentId', 'file_id', 'id'):
             value: Any = doc.get(key)
             if isinstance(value, str) and value:
                 return value
-        raise ValueError("dict candidate has no document id")
-    raise ValueError("document_id must be a string or a document dict")
+        raise ValueError('dict candidate has no document id')
+    raise ValueError('document_id must be a string or a document dict')
 
 
-@toolset(prefix="google_docs")
+@toolset(prefix='google_docs')
 class GoogleDocsToolSet:
     """A connector for the Google Docs API v1.
 
@@ -46,35 +46,35 @@ class GoogleDocsToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="google_docs",
-        display_name="Google Docs",
-        version="0.1.0",
-        description="Create, read, and edit Google Docs documents.",
+        name='google_docs',
+        display_name='Google Docs',
+        version='0.1.0',
+        description='Create, read, and edit Google Docs documents.',
         auth_modes=(AuthMode.OAUTH2_AUTH_CODE,),
         scopes={
-            "https://www.googleapis.com/auth/documents": "Full Docs access.",
-            "https://www.googleapis.com/auth/documents.readonly": "Read-only Docs access.",
+            'https://www.googleapis.com/auth/documents': 'Full Docs access.',
+            'https://www.googleapis.com/auth/documents.readonly': 'Read-only Docs access.',
         },
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developers.google.com/docs/api/reference/rest",
-        homepage_url="https://docs.google.com/",
-        tags=("docs", "google-workspace"),
+        documentation_url='https://developers.google.com/docs/api/reference/rest',
+        homepage_url='https://docs.google.com/',
+        tags=('docs', 'google-workspace'),
     )
 
     def __init__(
         self,
         *,
         token: TokenSource,
-        base_url: str = "https://docs.googleapis.com",
+        base_url: str = 'https://docs.googleapis.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=make_bearer_auth(token),
             transport=transport,
-            default_headers={"Accept": "application/json"},
+            default_headers={'Accept': 'application/json'},
         )
 
     @property
@@ -91,7 +91,7 @@ class GoogleDocsToolSet:
         and ``revisionId``.
         """
         document_id = _extract_doc_id(document_id)
-        return self._client.get(f"/v1/documents/{document_id}").json()
+        return self._client.get(f'/v1/documents/{document_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_document(self, title: str) -> dict[str, Any]:
@@ -102,8 +102,8 @@ class GoogleDocsToolSet:
         it.
         """
         if not title:
-            raise ValueError("title must be a non-empty string")
-        return self._client.post("/v1/documents", json={"title": title}).json()
+            raise ValueError('title must be a non-empty string')
+        return self._client.post('/v1/documents', json={'title': title}).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def batch_update(
@@ -121,12 +121,12 @@ class GoogleDocsToolSet:
         """
         document_id = _extract_doc_id(document_id)
         if not requests:
-            raise ValueError("requests must be non-empty")
-        body: dict[str, Any] = {"requests": requests}
+            raise ValueError('requests must be non-empty')
+        body: dict[str, Any] = {'requests': requests}
         if write_control is not None:
-            body["writeControl"] = write_control
+            body['writeControl'] = write_control
         return self._client.post(
-            f"/v1/documents/{document_id}:batchUpdate",
+            f'/v1/documents/{document_id}:batchUpdate',
             json=body,
         ).json()
 
@@ -144,10 +144,10 @@ class GoogleDocsToolSet:
         insert at the start of the body.
         """
         if not text:
-            raise ValueError("text must be a non-empty string")
+            raise ValueError('text must be a non-empty string')
         return self.batch_update(
             document_id,
-            [{"insertText": {"location": {"index": index}, "text": text}}],
+            [{'insertText': {'location': {'index': index}, 'text': text}}],
         )
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -164,14 +164,14 @@ class GoogleDocsToolSet:
         Accepts a raw document ID or a document dict.
         """
         if not find:
-            raise ValueError("find must be a non-empty string")
+            raise ValueError('find must be a non-empty string')
         return self.batch_update(
             document_id,
             [
                 {
-                    "replaceAllText": {
-                        "containsText": {"text": find, "matchCase": match_case},
-                        "replaceText": replace,
+                    'replaceAllText': {
+                        'containsText': {'text': find, 'matchCase': match_case},
+                        'replaceText': replace,
                     }
                 }
             ],
@@ -191,15 +191,15 @@ class GoogleDocsToolSet:
         strictly greater than ``start_index``.
         """
         if end_index <= start_index:
-            raise ValueError("end_index must be greater than start_index")
+            raise ValueError('end_index must be greater than start_index')
         return self.batch_update(
             document_id,
             [
                 {
-                    "deleteContentRange": {
-                        "range": {
-                            "startIndex": start_index,
-                            "endIndex": end_index,
+                    'deleteContentRange': {
+                        'range': {
+                            'startIndex': start_index,
+                            'endIndex': end_index,
                         }
                     }
                 }

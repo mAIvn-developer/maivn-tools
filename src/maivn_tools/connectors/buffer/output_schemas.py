@@ -19,35 +19,35 @@ from pydantic import JsonValue
 # MARK: - Entity summary (mirrors the connector's ``_update_summary`` builder)
 
 _UPDATE_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "update_ref": {"type": "string"},
-        "text": {"type": "string"},
-        "status": {"type": "string"},
-        "scheduled_at": {"type": ["integer", "string", "null"]},
-        "sent_at": {"type": ["integer", "string", "null"]},
-        "service": {"type": "string"},
-        "author": {"type": "string"},
-        "update_id": {"type": "string"},
-        "profile_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'update_ref': {'type': 'string'},
+        'text': {'type': 'string'},
+        'status': {'type': 'string'},
+        'scheduled_at': {'type': ['integer', 'string', 'null']},
+        'sent_at': {'type': ['integer', 'string', 'null']},
+        'service': {'type': 'string'},
+        'author': {'type': 'string'},
+        'update_id': {'type': 'string'},
+        'profile_id': {'type': 'string'},
     },
-    "required": ["update_ref"],
+    'required': ['update_ref'],
 }
 
 
 # MARK: - Tool output schema
 
 LIST_UPDATES_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "updates": {"type": "array", "items": _UPDATE_SUMMARY},
-        "has_next_page": {"type": "boolean"},
-        "end_cursor": {"type": ["string", "null"]},
+    'type': 'object',
+    'properties': {
+        'updates': {'type': 'array', 'items': _UPDATE_SUMMARY},
+        'has_next_page': {'type': 'boolean'},
+        'end_cursor': {'type': ['string', 'null']},
     },
-    "required": ["updates"],
+    'required': ['updates'],
 }
 
 
 __all__ = [
-    "LIST_UPDATES_OUTPUT",
+    'LIST_UPDATES_OUTPUT',
 ]

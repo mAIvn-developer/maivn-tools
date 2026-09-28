@@ -3,8 +3,8 @@
 Connectors for identity providers, secret managers, MFA, and security
 scanners. Every connector follows the standard `@toolset` / `@toolify`
 shape and the agent-ready toolset pattern (compact summaries by default,
-opt-in raw IDs, tolerant write inputs) — and secret values are never
-returned in list/summary mode (see below).
+opt-in raw IDs, tolerant write inputs). Secret-store summaries omit designated
+value fields by default; explicit value-reading options are described below.
 
 ## Agent-ready behavior (overview)
 
@@ -12,7 +12,7 @@ This category covers identity (Auth0, Okta, JumpCloud, OneLogin, Duo),
 secret managers (Vault, 1Password, Bitwarden, Doppler, Infisical),
 security scanning (Snyk), and verification (Twilio). Across the group:
 
-- **List tools** return compact summaries with stable display refs
+- **List tools** return compact summaries with response-local display refs
   (`user_ref`, `role_ref`, `connection_ref`, `app_ref`, `org_ref`,
   `vault_ref`, `item_ref`, `secret_ref`, `project_ref`, `config_ref`,
   `system_ref`, `group_ref`, `vuln_ref`, `message_ref`,
@@ -31,13 +31,14 @@ security scanning (Snyk), and verification (Twilio). Across the group:
   maxima (Auth0 / Okta / JumpCloud / OneLogin: 100-200; Twilio:
   1000).
 
-### Secret values are NEVER returned in list/summary mode
+### Secret-store list summaries
 
 For every secret-store toolset (Vault, 1Password, Bitwarden, Doppler,
 Infisical), the **list** tools (`kv_list`, `list_items`,
 `list_secrets`) return metadata only -- keys, names, comments, types,
-timestamps -- never the secret value itself. Even when the underlying
-provider response carries the value, the summary stripper drops it.
+timestamps. The default summary removes the provider's designated secret-value
+field. Names, comments and other metadata can still contain sensitive text;
+summary mode is not a general-purpose redactor.
 
 Two opt-in paths exist for cases where the agent really does need the
 values:

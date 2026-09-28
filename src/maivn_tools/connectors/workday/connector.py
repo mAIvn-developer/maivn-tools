@@ -26,15 +26,15 @@ from .output_schemas import (
 # Recruiting is v4 (v1 does not exist), Staffing is at a higher current
 # version, while Absence Management and Common are still on v1.
 _SERVICE_VERSIONS: dict[str, str] = {
-    "recruiting": "v4",
-    "staffing": "v6",
-    "common": "v1",
-    "absenceManagement": "v1",
+    'recruiting': 'v4',
+    'staffing': 'v6',
+    'common': 'v1',
+    'absenceManagement': 'v1',
 }
-_DEFAULT_SERVICE_VERSION = "v1"
+_DEFAULT_SERVICE_VERSION = 'v1'
 
 
-@toolset(prefix="workday")
+@toolset(prefix='workday')
 class WorkdayToolSet:
     """A connector for Workday's REST APIs.
 
@@ -47,15 +47,15 @@ class WorkdayToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="workday",
-        display_name="Workday",
-        version="0.1.0",
-        description="Workers, jobs, time off, organizations, and recruiting.",
+        name='workday',
+        display_name='Workday',
+        version='0.1.0',
+        description='Workers, jobs, time off, organizations, and recruiting.',
         auth_modes=(AuthMode.BEARER,),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://community.workday.com/api",
-        homepage_url="https://www.workday.com/",
-        tags=("hr", "people-ops"),
+        documentation_url='https://community.workday.com/api',
+        homepage_url='https://www.workday.com/',
+        tags=('hr', 'people-ops'),
     )
 
     def __init__(
@@ -68,16 +68,16 @@ class WorkdayToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not tenant_url or not tenant or not access_token:
-            raise ValueError("tenant_url, tenant, and access_token are required")
+            raise ValueError('tenant_url, tenant, and access_token are required')
         self.connection = connection
         self._tenant = tenant
         self._client = HttpClient(
-            base_url=tenant_url.rstrip("/"),
+            base_url=tenant_url.rstrip('/'),
             auth=BearerTokenAuth(access_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -87,7 +87,7 @@ class WorkdayToolSet:
 
     def _path(self, service: str, suffix: str) -> str:
         version = _SERVICE_VERSIONS.get(service, _DEFAULT_SERVICE_VERSION)
-        return f"/api/{service}/{version}/{self._tenant}{suffix}"
+        return f'/api/{service}/{version}/{self._tenant}{suffix}'
 
     # MARK: - Internal helpers
 
@@ -98,21 +98,21 @@ class WorkdayToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        descriptor: Any = worker.get("descriptor") or worker.get("name") or ""
-        raw_primary_job: Any = worker.get("primaryJob")
+        descriptor: Any = worker.get('descriptor') or worker.get('name') or ''
+        raw_primary_job: Any = worker.get('primaryJob')
         primary_job: dict[str, Any] = (
             cast(dict[str, Any], raw_primary_job) if isinstance(raw_primary_job, dict) else {}
         )
         summary: dict[str, Any] = {
-            "worker_ref": f"worker_{index}",
-            "name": descriptor,
-            "email": worker.get("primaryWorkEmail", "") or worker.get("workEmail", ""),
-            "title": primary_job.get("descriptor", ""),
-            "hire_date": worker.get("hireDate", "") or worker.get("originalHireDate", ""),
-            "is_active": worker.get("active", True),
+            'worker_ref': f'worker_{index}',
+            'name': descriptor,
+            'email': worker.get('primaryWorkEmail', '') or worker.get('workEmail', ''),
+            'title': primary_job.get('descriptor', ''),
+            'hire_date': worker.get('hireDate', '') or worker.get('originalHireDate', ''),
+            'is_active': worker.get('active', True),
         }
         if include_ids:
-            summary["worker_id"] = worker.get("id", "")
+            summary['worker_id'] = worker.get('id', '')
         return summary
 
     @staticmethod
@@ -122,16 +122,16 @@ class WorkdayToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        descriptor = candidate.get("descriptor") or candidate.get("name") or ""
+        descriptor = candidate.get('descriptor') or candidate.get('name') or ''
         summary: dict[str, Any] = {
-            "candidate_ref": f"candidate_{index}",
-            "name": descriptor,
-            "email": candidate.get("email", ""),
-            "status": candidate.get("status", "") or "",
-            "application_date": candidate.get("applicationDate", ""),
+            'candidate_ref': f'candidate_{index}',
+            'name': descriptor,
+            'email': candidate.get('email', ''),
+            'status': candidate.get('status', '') or '',
+            'application_date': candidate.get('applicationDate', ''),
         }
         if include_ids:
-            summary["candidate_id"] = candidate.get("id", "")
+            summary['candidate_id'] = candidate.get('id', '')
         return summary
 
     @staticmethod
@@ -141,16 +141,16 @@ class WorkdayToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        descriptor = posting.get("descriptor") or posting.get("title") or ""
+        descriptor = posting.get('descriptor') or posting.get('title') or ''
         summary: dict[str, Any] = {
-            "job_ref": f"job_{index}",
-            "title": descriptor,
-            "location": posting.get("location", "") or "",
-            "posted_at": posting.get("postingDate", ""),
-            "status": posting.get("status", ""),
+            'job_ref': f'job_{index}',
+            'title': descriptor,
+            'location': posting.get('location', '') or '',
+            'posted_at': posting.get('postingDate', ''),
+            'status': posting.get('status', ''),
         }
         if include_ids:
-            summary["job_id"] = posting.get("id", "")
+            summary['job_id'] = posting.get('id', '')
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -171,13 +171,13 @@ class WorkdayToolSet:
         are omitted unless ``include_ids=True`` — they are internal
         handles. Pagination is via ``offset``/``limit``.
         """
-        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        params: dict[str, Any] = {'limit': limit, 'offset': offset}
         if search is not None:
-            params["search"] = search
+            params['search'] = search
         payload: dict[str, Any] = self._client.get(
-            self._path("staffing", "/workers"), params=params
+            self._path('staffing', '/workers'), params=params
         ).json()
-        data: Any = payload.get("data")
+        data: Any = payload.get('data')
         if not isinstance(data, list):
             return payload
         items: list[Any] = cast(list[Any], data)
@@ -187,8 +187,8 @@ class WorkdayToolSet:
             if isinstance(worker, dict)
         ]
         return {
-            "workers": summaries,
-            "total": payload.get("total"),
+            'workers': summaries,
+            'total': payload.get('total'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -200,8 +200,8 @@ class WorkdayToolSet:
         and should not appear in final answers.
         """
         if not worker_id:
-            raise ValueError("worker_id is required")
-        return self._client.get(self._path("staffing", f"/workers/{worker_id}")).json()
+            raise ValueError('worker_id is required')
+        return self._client.get(self._path('staffing', f'/workers/{worker_id}')).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def list_organizations(
@@ -217,8 +217,8 @@ class WorkdayToolSet:
         operations.
         """
         return self._client.get(
-            self._path("common", "/organizations"),
-            params={"limit": limit, "offset": offset},
+            self._path('common', '/organizations'),
+            params={'limit': limit, 'offset': offset},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -235,10 +235,10 @@ class WorkdayToolSet:
         position history.
         """
         if not worker_id:
-            raise ValueError("worker_id is required")
+            raise ValueError('worker_id is required')
         return self._client.get(
-            self._path("staffing", f"/workers/{worker_id}/jobChanges"),
-            params={"limit": limit, "offset": offset},
+            self._path('staffing', f'/workers/{worker_id}/jobChanges'),
+            params={'limit': limit, 'offset': offset},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -248,11 +248,11 @@ class WorkdayToolSet:
         Returns the available leave per balance type.
         """
         if not worker_id:
-            raise ValueError("worker_id is required")
+            raise ValueError('worker_id is required')
         return self._client.get(
             self._path(
-                "absenceManagement",
-                f"/workers/{worker_id}/timeOffBalances",
+                'absenceManagement',
+                f'/workers/{worker_id}/timeOffBalances',
             )
         ).json()
 
@@ -270,13 +270,13 @@ class WorkdayToolSet:
         before calling.
         """
         if not worker_id or not entries:
-            raise ValueError("worker_id and entries are required")
+            raise ValueError('worker_id and entries are required')
         return self._client.post(
             self._path(
-                "absenceManagement",
-                f"/workers/{worker_id}/requestTimeOff",
+                'absenceManagement',
+                f'/workers/{worker_id}/requestTimeOff',
             ),
-            json={"entries": entries},
+            json={'entries': entries},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -291,8 +291,8 @@ class WorkdayToolSet:
         Returns the raw position list.
         """
         return self._client.get(
-            self._path("staffing", "/positions"),
-            params={"limit": limit, "offset": offset},
+            self._path('staffing', '/positions'),
+            params={'limit': limit, 'offset': offset},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -311,10 +311,10 @@ class WorkdayToolSet:
         ``include_ids=True``.
         """
         payload: dict[str, Any] = self._client.get(
-            self._path("recruiting", "/jobPostings"),
-            params={"limit": limit, "offset": offset},
+            self._path('recruiting', '/jobPostings'),
+            params={'limit': limit, 'offset': offset},
         ).json()
-        data: Any = payload.get("data")
+        data: Any = payload.get('data')
         if not isinstance(data, list):
             return payload
         items: list[Any] = cast(list[Any], data)
@@ -326,8 +326,8 @@ class WorkdayToolSet:
             if isinstance(posting, dict)
         ]
         return {
-            "jobs": summaries,
-            "total": payload.get("total"),
+            'jobs': summaries,
+            'total': payload.get('total'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -346,10 +346,10 @@ class WorkdayToolSet:
         omitted unless ``include_ids=True``.
         """
         payload: dict[str, Any] = self._client.get(
-            self._path("recruiting", "/candidates"),
-            params={"limit": limit, "offset": offset},
+            self._path('recruiting', '/candidates'),
+            params={'limit': limit, 'offset': offset},
         ).json()
-        data: Any = payload.get("data")
+        data: Any = payload.get('data')
         if not isinstance(data, list):
             return payload
         items: list[Any] = cast(list[Any], data)
@@ -361,6 +361,6 @@ class WorkdayToolSet:
             if isinstance(candidate, dict)
         ]
         return {
-            "candidates": summaries,
-            "total": payload.get("total"),
+            'candidates': summaries,
+            'total': payload.get('total'),
         }

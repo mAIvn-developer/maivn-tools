@@ -20,18 +20,18 @@ import time
 from base64 import b64decode
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 # MARK: Signature types
 
 
-class SignatureAlgorithm(str, Enum):
+class SignatureAlgorithm(StrEnum):
     """Supported HMAC algorithms."""
 
-    HMAC_SHA1 = "sha1"
-    HMAC_SHA256 = "sha256"
-    HMAC_SHA512 = "sha512"
+    HMAC_SHA1 = 'sha1'
+    HMAC_SHA256 = 'sha256'
+    HMAC_SHA512 = 'sha512'
 
 
 class SignatureMismatchError(ValueError):
@@ -56,7 +56,7 @@ def verify_hmac_signature(
     signature: str,
     *,
     algorithm: SignatureAlgorithm = SignatureAlgorithm.HMAC_SHA256,
-    encoding: str = "hex",
+    encoding: str = 'hex',
 ) -> None:
     """Verify a webhook signature against ``payload``.
 
@@ -71,26 +71,26 @@ def verify_hmac_signature(
         SignatureMismatchError: When the signature does not match.
     """
     if not signature:
-        raise SignatureMismatchError("Signature header is empty")
+        raise SignatureMismatchError('Signature header is empty')
     hasher = _ALGORITHM_TO_HASH[algorithm]
-    key = secret.encode("utf-8") if isinstance(secret, str) else secret
+    key = secret.encode('utf-8') if isinstance(secret, str) else secret
     mac = hmac.new(key, payload, hasher)
-    if encoding == "hex":
+    if encoding == 'hex':
         expected = mac.hexdigest()
         provided = signature.strip()
-    elif encoding == "base64":
+    elif encoding == 'base64':
         expected = mac.digest()
         try:
             provided_bytes = b64decode(signature.strip(), validate=True)
         except Exception as exc:  # noqa: BLE001 - we re-raise as a stable type
-            raise SignatureMismatchError("Signature is not valid base64") from exc
+            raise SignatureMismatchError('Signature is not valid base64') from exc
         if not hmac.compare_digest(expected, provided_bytes):
-            raise SignatureMismatchError("Signature does not match payload")
+            raise SignatureMismatchError('Signature does not match payload')
         return
     else:
-        raise ValueError(f"Unsupported signature encoding: {encoding!r}")
+        raise ValueError(f'Unsupported signature encoding: {encoding!r}')
     if not hmac.compare_digest(expected, provided):
-        raise SignatureMismatchError("Signature does not match payload")
+        raise SignatureMismatchError('Signature does not match payload')
 
 
 @dataclass(frozen=True)
@@ -108,9 +108,9 @@ class WebhookVerifier:
     """
 
     secret: str
-    signature_header: str = "X-Maivn-Signature"
+    signature_header: str = 'X-Maivn-Signature'
     algorithm: SignatureAlgorithm = SignatureAlgorithm.HMAC_SHA256
-    encoding: str = "hex"
+    encoding: str = 'hex'
     timestamp_header: str | None = None
     tolerance_seconds: int = 300
 
@@ -129,19 +129,19 @@ class WebhookVerifier:
         """
         signature = _lookup_header(headers, self.signature_header)
         if signature is None:
-            raise SignatureMismatchError(f"Missing signature header {self.signature_header!r}")
+            raise SignatureMismatchError(f'Missing signature header {self.signature_header!r}')
 
         if self.timestamp_header is not None:
             ts_value = _lookup_header(headers, self.timestamp_header)
             if ts_value is None:
-                raise SignatureMismatchError(f"Missing timestamp header {self.timestamp_header!r}")
+                raise SignatureMismatchError(f'Missing timestamp header {self.timestamp_header!r}')
             try:
                 ts = float(ts_value)
             except ValueError as exc:
-                raise SignatureMismatchError("Timestamp header is not numeric") from exc
+                raise SignatureMismatchError('Timestamp header is not numeric') from exc
             reference = now if now is not None else time.time()
             if abs(reference - ts) > self.tolerance_seconds:
-                raise SignatureMismatchError("Timestamp outside allowed tolerance; possible replay")
+                raise SignatureMismatchError('Timestamp outside allowed tolerance; possible replay')
 
         verify_hmac_signature(
             self.secret,

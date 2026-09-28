@@ -19,70 +19,70 @@ from pydantic import JsonValue
 # MARK: - Entity summaries (mirror ``_content_item_summary`` and the search builder)
 
 _CONTENT_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "page_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "type": {"type": "string"},
-        "status": {"type": "string"},
-        "space_key": {"type": "string"},
-        "version": {"type": "integer"},
-        "url": {"type": "string"},
-        "content_id": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'page_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'type': {'type': 'string'},
+        'status': {'type': 'string'},
+        'space_key': {'type': 'string'},
+        'version': {'type': 'integer'},
+        'url': {'type': 'string'},
+        'content_id': {'type': 'string'},
     },
-    "required": ["page_ref", "title", "type"],
+    'required': ['page_ref', 'title', 'type'],
 }
 
 _SEARCH_SUMMARY: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "page_ref": {"type": "string"},
-        "title": {"type": "string"},
-        "type": {"type": "string"},
-        "status": {"type": "string"},
-        "space_key": {"type": "string"},
-        "version": {"type": "integer"},
-        "url": {"type": "string"},
-        "content_id": {"type": "string"},
-        "excerpt": {"type": "string"},
-        "resultGlobalContainer": {"type": ["object", "string", "null"]},
+    'type': 'object',
+    'properties': {
+        'page_ref': {'type': 'string'},
+        'title': {'type': 'string'},
+        'type': {'type': 'string'},
+        'status': {'type': 'string'},
+        'space_key': {'type': 'string'},
+        'version': {'type': 'integer'},
+        'url': {'type': 'string'},
+        'content_id': {'type': 'string'},
+        'excerpt': {'type': 'string'},
+        'resultGlobalContainer': {'type': ['object', 'string', 'null']},
     },
-    "required": ["page_ref", "title"],
+    'required': ['page_ref', 'title'],
 }
 
 
 # MARK: - Tool output schemas
 
 LIST_CONTENT_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "results": {"type": "array", "items": _CONTENT_SUMMARY},
-        "start": {"type": "integer"},
-        "limit": {"type": "integer"},
-        "size": {"type": "integer"},
-        "_links": {"type": "object"},
+    'type': 'object',
+    'properties': {
+        'results': {'type': 'array', 'items': _CONTENT_SUMMARY},
+        'start': {'type': 'integer'},
+        'limit': {'type': 'integer'},
+        'size': {'type': 'integer'},
+        '_links': {'type': 'object'},
     },
-    "required": ["results"],
+    'required': ['results'],
 }
 
 SEARCH_CONTENT_OUTPUT: dict[str, JsonValue] = LIST_CONTENT_OUTPUT
 
 SEARCH_OUTPUT: dict[str, JsonValue] = {
-    "type": "object",
-    "properties": {
-        "results": {"type": "array", "items": _SEARCH_SUMMARY},
-        "start": {"type": "integer"},
-        "limit": {"type": "integer"},
-        "size": {"type": "integer"},
-        "totalSize": {"type": "integer"},
-        "cqlQuery": {"type": "string"},
+    'type': 'object',
+    'properties': {
+        'results': {'type': 'array', 'items': _SEARCH_SUMMARY},
+        'start': {'type': 'integer'},
+        'limit': {'type': 'integer'},
+        'size': {'type': 'integer'},
+        'totalSize': {'type': 'integer'},
+        'cqlQuery': {'type': 'string'},
     },
-    "required": ["results"],
+    'required': ['results'],
 }
 
 
 __all__ = [
-    "LIST_CONTENT_OUTPUT",
-    "SEARCH_CONTENT_OUTPUT",
-    "SEARCH_OUTPUT",
+    'LIST_CONTENT_OUTPUT',
+    'SEARCH_CONTENT_OUTPUT',
+    'SEARCH_OUTPUT',
 ]

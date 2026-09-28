@@ -22,19 +22,19 @@ from .output_schemas import (
 # PostHog Cloud uses region-specific, split hosts: the private management API
 # lives on ``{region}.posthog.com`` and event ingestion on the public
 # ``{region}.i.posthog.com`` host. ``app.posthog.com`` is the legacy host.
-_DEFAULT_MANAGEMENT_HOST = "us.posthog.com"
+_DEFAULT_MANAGEMENT_HOST = 'us.posthog.com'
 # Maps a cloud management host to its paired ingestion host.
 _INGESTION_HOST_BY_MANAGEMENT: dict[str, str] = {
-    "us.posthog.com": "us.i.posthog.com",
-    "eu.posthog.com": "eu.i.posthog.com",
+    'us.posthog.com': 'us.i.posthog.com',
+    'eu.posthog.com': 'eu.i.posthog.com',
     # Legacy host still redirects; pair it with the legacy ingestion host.
-    "app.posthog.com": "app.i.posthog.com",
+    'app.posthog.com': 'app.i.posthog.com',
 }
 # Current single-event ingestion path (``/capture/`` is a legacy alias).
-_CAPTURE_PATH = "/i/v0/e/"
+_CAPTURE_PATH = '/i/v0/e/'
 
 
-@toolset(prefix="posthog")
+@toolset(prefix='posthog')
 class PostHogToolSet:
     """A connector for PostHog.
 
@@ -50,15 +50,15 @@ class PostHogToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="posthog",
-        display_name="PostHog",
-        version="0.1.0",
-        description="Event capture, insights, feature flags, persons, and cohorts.",
+        name='posthog',
+        display_name='PostHog',
+        version='0.1.0',
+        description='Event capture, insights, feature flags, persons, and cohorts.',
         auth_modes=(AuthMode.BEARER, AuthMode.API_KEY),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://posthog.com/docs/api",
-        homepage_url="https://posthog.com/",
-        tags=("analytics", "product"),
+        documentation_url='https://posthog.com/docs/api',
+        homepage_url='https://posthog.com/',
+        tags=('analytics', 'product'),
     )
 
     def __init__(
@@ -72,21 +72,21 @@ class PostHogToolSet:
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not personal_api_key or not project_id:
-            raise ValueError("personal_api_key and project_id are required")
+            raise ValueError('personal_api_key and project_id are required')
         self.connection = connection
         self._project_id = project_id
         self._project_api_key = project_api_key
         # Ingestion goes to the paired public host for cloud regions; for
         # self-hosted instances the same host serves both surfaces.
         ingestion_host = _INGESTION_HOST_BY_MANAGEMENT.get(host, host)
-        self._ingestion_base_url = f"https://{ingestion_host}"
+        self._ingestion_base_url = f'https://{ingestion_host}'
         self._client = HttpClient(
-            base_url=f"https://{host}",
+            base_url=f'https://{host}',
             auth=BearerTokenAuth(personal_api_key),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -103,19 +103,19 @@ class PostHogToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        raw_person: Any = event.get("person")
+        raw_person: Any = event.get('person')
         person: dict[str, Any] = (
-            cast("dict[str, Any]", raw_person) if isinstance(raw_person, dict) else {}
+            cast('dict[str, Any]', raw_person) if isinstance(raw_person, dict) else {}
         )
         summary: dict[str, Any] = {
-            "event_ref": f"event_{index}",
-            "event": event.get("event", ""),
-            "distinct_id": event.get("distinct_id", ""),
-            "timestamp": event.get("timestamp", ""),
-            "person_name": person.get("name", ""),
+            'event_ref': f'event_{index}',
+            'event': event.get('event', ''),
+            'distinct_id': event.get('distinct_id', ''),
+            'timestamp': event.get('timestamp', ''),
+            'person_name': person.get('name', ''),
         }
         if include_ids:
-            summary["event_id"] = event.get("id", "")
+            summary['event_id'] = event.get('id', '')
         return summary
 
     @staticmethod
@@ -125,20 +125,20 @@ class PostHogToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        raw_created_by: Any = insight.get("created_by")
+        raw_created_by: Any = insight.get('created_by')
         created_by: dict[str, Any] = (
-            cast("dict[str, Any]", raw_created_by) if isinstance(raw_created_by, dict) else {}
+            cast('dict[str, Any]', raw_created_by) if isinstance(raw_created_by, dict) else {}
         )
         summary: dict[str, Any] = {
-            "insight_ref": f"insight_{index}",
-            "name": insight.get("name", "") or insight.get("derived_name", ""),
-            "description": insight.get("description", ""),
-            "created_by": created_by.get("email", ""),
-            "updated_at": insight.get("updated_at", ""),
+            'insight_ref': f'insight_{index}',
+            'name': insight.get('name', '') or insight.get('derived_name', ''),
+            'description': insight.get('description', ''),
+            'created_by': created_by.get('email', ''),
+            'updated_at': insight.get('updated_at', ''),
         }
         if include_ids:
-            summary["insight_id"] = insight.get("id", "")
-            summary["short_id"] = insight.get("short_id", "")
+            summary['insight_id'] = insight.get('id', '')
+            summary['short_id'] = insight.get('short_id', '')
         return summary
 
     @staticmethod
@@ -148,24 +148,24 @@ class PostHogToolSet:
         index: int,
         include_ids: bool,
     ) -> dict[str, Any]:
-        raw_properties: Any = person.get("properties")
+        raw_properties: Any = person.get('properties')
         properties: dict[str, Any] = (
-            cast("dict[str, Any]", raw_properties) if isinstance(raw_properties, dict) else {}
+            cast('dict[str, Any]', raw_properties) if isinstance(raw_properties, dict) else {}
         )
-        raw_distinct_ids: Any = person.get("distinct_ids", [])
+        raw_distinct_ids: Any = person.get('distinct_ids', [])
         distinct_ids: list[Any] = (
-            cast("list[Any]", raw_distinct_ids) if isinstance(raw_distinct_ids, list) else []
+            cast('list[Any]', raw_distinct_ids) if isinstance(raw_distinct_ids, list) else []
         )
         summary: dict[str, Any] = {
-            "person_ref": f"person_{index}",
-            "name": properties.get("name", "") or properties.get("email", ""),
-            "email": properties.get("email", ""),
-            "distinct_id": distinct_ids[0] if distinct_ids else "",
-            "created_at": person.get("created_at", ""),
+            'person_ref': f'person_{index}',
+            'name': properties.get('name', '') or properties.get('email', ''),
+            'email': properties.get('email', ''),
+            'distinct_id': distinct_ids[0] if distinct_ids else '',
+            'created_at': person.get('created_at', ''),
         }
         if include_ids:
-            summary["person_id"] = person.get("id", "")
-            summary["distinct_ids"] = distinct_ids
+            summary['person_id'] = person.get('id', '')
+            summary['distinct_ids'] = distinct_ids
         return summary
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -185,19 +185,19 @@ class PostHogToolSet:
         (e.g. ``us.i.posthog.com``). Returns ``{"status": 1}`` on success.
         """
         if not event or not distinct_id:
-            raise ValueError("event and distinct_id are required")
+            raise ValueError('event and distinct_id are required')
         if not self._project_api_key:
-            raise ValueError("project_api_key must be set to capture events")
+            raise ValueError('project_api_key must be set to capture events')
         body: dict[str, Any] = {
-            "api_key": self._project_api_key,
-            "event": event,
-            "distinct_id": distinct_id,
+            'api_key': self._project_api_key,
+            'event': event,
+            'distinct_id': distinct_id,
         }
         if properties is not None:
-            body["properties"] = properties
+            body['properties'] = properties
         if timestamp is not None:
-            body["timestamp"] = timestamp
-        return self._client.post(f"{self._ingestion_base_url}{_CAPTURE_PATH}", json=body).json()
+            body['timestamp'] = timestamp
+        return self._client.post(f'{self._ingestion_base_url}{_CAPTURE_PATH}', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     @tool_output(LIST_EVENTS_OUTPUT)
@@ -219,34 +219,34 @@ class PostHogToolSet:
         IDs are omitted unless ``include_ids=True`` — they are internal
         handles. Pagination tokens (``next``) are preserved.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if after is not None:
-            params["after"] = after
+            params['after'] = after
         if before is not None:
-            params["before"] = before
+            params['before'] = before
         if distinct_id is not None:
-            params["distinct_id"] = distinct_id
+            params['distinct_id'] = distinct_id
         if event is not None:
-            params["event"] = event
+            params['event'] = event
         payload = cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._client.get(
-                f"/api/projects/{self._project_id}/events/",
+                f'/api/projects/{self._project_id}/events/',
                 params=params,
             ).json(),
         )
-        results: Any = payload.get("results")
+        results: Any = payload.get('results')
         if not isinstance(results, list):
             return payload
-        results_list = cast("list[Any]", results)
+        results_list = cast('list[Any]', results)
         summaries = [
-            self._event_summary(cast("dict[str, Any]", item), index=index, include_ids=include_ids)
+            self._event_summary(cast('dict[str, Any]', item), index=index, include_ids=include_ids)
             for index, item in enumerate(results_list, start=1)
             if isinstance(item, dict)
         ]
         return {
-            "events": summaries,
-            "next": payload.get("next"),
+            'events': summaries,
+            'next': payload.get('next'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -265,26 +265,26 @@ class PostHogToolSet:
         ``get_insight`` call needs the raw ID.
         """
         payload = cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._client.get(
-                f"/api/projects/{self._project_id}/insights/",
-                params={"limit": limit},
+                f'/api/projects/{self._project_id}/insights/',
+                params={'limit': limit},
             ).json(),
         )
-        results: Any = payload.get("results")
+        results: Any = payload.get('results')
         if not isinstance(results, list):
             return payload
-        results_list = cast("list[Any]", results)
+        results_list = cast('list[Any]', results)
         summaries = [
             self._insight_summary(
-                cast("dict[str, Any]", item), index=index, include_ids=include_ids
+                cast('dict[str, Any]', item), index=index, include_ids=include_ids
             )
             for index, item in enumerate(results_list, start=1)
             if isinstance(item, dict)
         ]
         return {
-            "insights": summaries,
-            "next": payload.get("next"),
+            'insights': summaries,
+            'next': payload.get('next'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -296,8 +296,8 @@ class PostHogToolSet:
         and should not appear in final answers.
         """
         if not insight_id:
-            raise ValueError("insight_id is required")
-        return self._client.get(f"/api/projects/{self._project_id}/insights/{insight_id}/").json()
+            raise ValueError('insight_id is required')
+        return self._client.get(f'/api/projects/{self._project_id}/insights/{insight_id}/').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def query_hogql(self, *, query: str) -> dict[str, Any]:
@@ -307,10 +307,10 @@ class PostHogToolSet:
         match a saved insight. Returns ``{"results": [...], ...}``.
         """
         if not query:
-            raise ValueError("query is required")
+            raise ValueError('query is required')
         return self._client.post(
-            f"/api/projects/{self._project_id}/query/",
-            json={"query": {"kind": "HogQLQuery", "query": query}},
+            f'/api/projects/{self._project_id}/query/',
+            json={'query': {'kind': 'HogQLQuery', 'query': query}},
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -320,7 +320,7 @@ class PostHogToolSet:
         Returns the PostHog feature-flag list payload. Use
         ``create_feature_flag``/``update_feature_flag`` to mutate.
         """
-        return self._client.get(f"/api/projects/{self._project_id}/feature_flags/").json()
+        return self._client.get(f'/api/projects/{self._project_id}/feature_flags/').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def create_feature_flag(
@@ -337,14 +337,14 @@ class PostHogToolSet:
         created flag resource.
         """
         if not key:
-            raise ValueError("key is required")
-        body: dict[str, Any] = {"key": key, "active": active}
+            raise ValueError('key is required')
+        body: dict[str, Any] = {'key': key, 'active': active}
         if name is not None:
-            body["name"] = name
+            body['name'] = name
         if filters is not None:
-            body["filters"] = filters
+            body['filters'] = filters
         return self._client.post(
-            f"/api/projects/{self._project_id}/feature_flags/", json=body
+            f'/api/projects/{self._project_id}/feature_flags/', json=body
         ).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
@@ -362,18 +362,18 @@ class PostHogToolSet:
         ``name`` to update. Returns the updated flag resource.
         """
         if not flag_id:
-            raise ValueError("flag_id is required")
+            raise ValueError('flag_id is required')
         body: dict[str, Any] = {}
         if active is not None:
-            body["active"] = active
+            body['active'] = active
         if filters is not None:
-            body["filters"] = filters
+            body['filters'] = filters
         if name is not None:
-            body["name"] = name
+            body['name'] = name
         if not body:
-            raise ValueError("at least one update field is required")
+            raise ValueError('at least one update field is required')
         return self._client.patch(
-            f"/api/projects/{self._project_id}/feature_flags/{flag_id}/",
+            f'/api/projects/{self._project_id}/feature_flags/{flag_id}/',
             json=body,
         ).json()
 
@@ -393,30 +393,30 @@ class PostHogToolSet:
         primary ``distinct_id``, and ``created_at``. Raw PostHog person
         IDs are omitted unless ``include_ids=True``.
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {'limit': limit}
         if search is not None:
-            params["search"] = search
+            params['search'] = search
         if distinct_id is not None:
-            params["distinct_id"] = distinct_id
+            params['distinct_id'] = distinct_id
         payload = cast(
-            "dict[str, Any]",
+            'dict[str, Any]',
             self._client.get(
-                f"/api/projects/{self._project_id}/persons/",
+                f'/api/projects/{self._project_id}/persons/',
                 params=params,
             ).json(),
         )
-        results: Any = payload.get("results")
+        results: Any = payload.get('results')
         if not isinstance(results, list):
             return payload
-        results_list = cast("list[Any]", results)
+        results_list = cast('list[Any]', results)
         summaries = [
-            self._person_summary(cast("dict[str, Any]", item), index=index, include_ids=include_ids)
+            self._person_summary(cast('dict[str, Any]', item), index=index, include_ids=include_ids)
             for index, item in enumerate(results_list, start=1)
             if isinstance(item, dict)
         ]
         return {
-            "persons": summaries,
-            "next": payload.get("next"),
+            'persons': summaries,
+            'next': payload.get('next'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
@@ -425,4 +425,4 @@ class PostHogToolSet:
 
         Returns the PostHog cohort list payload.
         """
-        return self._client.get(f"/api/projects/{self._project_id}/cohorts/").json()
+        return self._client.get(f'/api/projects/{self._project_id}/cohorts/').json()

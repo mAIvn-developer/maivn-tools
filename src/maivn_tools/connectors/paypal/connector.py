@@ -20,23 +20,23 @@ from ...runtime.http import HttpClient, HttpTransport
 def _format_amount(amount: Any) -> str:
     """Format a PayPal amount object as ``"12.34 USD"``."""
     if not isinstance(amount, dict):
-        return ""
-    amount_dict = cast("dict[str, Any]", amount)
-    value: Any = amount_dict.get("value", "")
-    currency: Any = amount_dict.get("currency_code", "")
-    return f"{value} {currency}".strip()
+        return ''
+    amount_dict = cast('dict[str, Any]', amount)
+    value: Any = amount_dict.get('value', '')
+    currency: Any = amount_dict.get('currency_code', '')
+    return f'{value} {currency}'.strip()
 
 
 def _coerce_id(
     candidate: Any,
     *,
-    keys: tuple[str, ...] = ("id",),
+    keys: tuple[str, ...] = ('id',),
 ) -> str:
     """Resolve a raw PayPal ID from a dict/string/list."""
     if isinstance(candidate, str) and candidate:
         return candidate
     if isinstance(candidate, dict):
-        candidate_dict = cast("dict[str, Any]", candidate)
+        candidate_dict = cast('dict[str, Any]', candidate)
         for key in keys:
             value: Any = candidate_dict.get(key)
             if isinstance(value, str) and value:
@@ -49,17 +49,17 @@ def _coerce_id(
                 except ValueError:
                     continue
     if isinstance(candidate, list | tuple):
-        candidate_seq = cast("list[Any] | tuple[Any, ...]", candidate)
+        candidate_seq = cast('list[Any] | tuple[Any, ...]', candidate)
         for item in candidate_seq:
             item_value: Any = item
             try:
                 return _coerce_id(item_value, keys=keys)
             except ValueError:
                 continue
-    raise ValueError("could not resolve a PayPal ID from the given input")
+    raise ValueError('could not resolve a PayPal ID from the given input')
 
 
-@toolset(prefix="paypal")
+@toolset(prefix='paypal')
 class PayPalToolSet:
     """A connector for the PayPal REST API.
 
@@ -74,35 +74,35 @@ class PayPalToolSet:
     """
 
     metadata = ProviderMetadata(
-        name="paypal",
-        display_name="PayPal",
-        version="0.1.0",
-        description="Orders, payments, subscriptions, and disputes.",
+        name='paypal',
+        display_name='PayPal',
+        version='0.1.0',
+        description='Orders, payments, subscriptions, and disputes.',
         auth_modes=(AuthMode.OAUTH2_CLIENT_CREDENTIALS, AuthMode.BEARER),
         capabilities=frozenset({ProviderCapability.READ, ProviderCapability.WRITE}),
-        documentation_url="https://developer.paypal.com/api/rest/",
-        homepage_url="https://www.paypal.com/",
-        tags=("payments",),
+        documentation_url='https://developer.paypal.com/api/rest/',
+        homepage_url='https://www.paypal.com/',
+        tags=('payments',),
     )
 
     def __init__(
         self,
         *,
         access_token: str,
-        base_url: str = "https://api-m.paypal.com",
+        base_url: str = 'https://api-m.paypal.com',
         transport: HttpTransport | None = None,
         connection: ConnectionMetadata | None = None,
     ) -> None:
         if not access_token:
-            raise ValueError("access_token is required")
+            raise ValueError('access_token is required')
         self.connection = connection
         self._client = HttpClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip('/'),
             auth=BearerTokenAuth(access_token),
             transport=transport,
             default_headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
         )
 
@@ -116,7 +116,7 @@ class PayPalToolSet:
     def create_order(
         self,
         *,
-        intent: str = "CAPTURE",
+        intent: str = 'CAPTURE',
         purchase_units: list[dict[str, Any]],
         application_context: dict[str, Any] | None = None,
         payment_source: dict[str, Any] | None = None,
@@ -128,23 +128,23 @@ class PayPalToolSet:
         ``amount={"value": "10.00", "currency_code": "USD"}``. Returns the
         new order with ``id`` and approval ``links``.
         """
-        if intent not in {"CAPTURE", "AUTHORIZE"}:
-            raise ValueError("intent must be CAPTURE or AUTHORIZE")
+        if intent not in {'CAPTURE', 'AUTHORIZE'}:
+            raise ValueError('intent must be CAPTURE or AUTHORIZE')
         if not purchase_units:
-            raise ValueError("purchase_units must be non-empty")
-        body: dict[str, Any] = {"intent": intent, "purchase_units": purchase_units}
+            raise ValueError('purchase_units must be non-empty')
+        body: dict[str, Any] = {'intent': intent, 'purchase_units': purchase_units}
         if application_context is not None:
-            body["application_context"] = application_context
+            body['application_context'] = application_context
         if payment_source is not None:
-            body["payment_source"] = payment_source
-        return self._client.post("/v2/checkout/orders", json=body).json()
+            body['payment_source'] = payment_source
+        return self._client.post('/v2/checkout/orders', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_order(self, order_id: str) -> dict[str, Any]:
         """Return one order by PayPal order ID."""
         if not order_id:
-            raise ValueError("order_id must be a non-empty string")
-        return self._client.get(f"/v2/checkout/orders/{order_id}").json()
+            raise ValueError('order_id must be a non-empty string')
+        return self._client.get(f'/v2/checkout/orders/{order_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def capture_order(self, order_id: str) -> dict[str, Any]:
@@ -154,9 +154,9 @@ class PayPalToolSet:
         user before calling — money moves at this point.
         """
         if not order_id:
-            raise ValueError("order_id must be a non-empty string")
+            raise ValueError('order_id must be a non-empty string')
         return self._client.post(
-            f"/v2/checkout/orders/{order_id}/capture",
+            f'/v2/checkout/orders/{order_id}/capture',
             json={},
         ).json()
 
@@ -168,9 +168,9 @@ class PayPalToolSet:
         to charge it, or :meth:`void_authorization` to release the hold.
         """
         if not order_id:
-            raise ValueError("order_id must be a non-empty string")
+            raise ValueError('order_id must be a non-empty string')
         return self._client.post(
-            f"/v2/checkout/orders/{order_id}/authorize",
+            f'/v2/checkout/orders/{order_id}/authorize',
             json={},
         ).json()
 
@@ -180,8 +180,8 @@ class PayPalToolSet:
     def get_capture(self, capture_id: str) -> dict[str, Any]:
         """Return a captured payment by capture ID."""
         if not capture_id:
-            raise ValueError("capture_id must be a non-empty string")
-        return self._client.get(f"/v2/payments/captures/{capture_id}").json()
+            raise ValueError('capture_id must be a non-empty string')
+        return self._client.get(f'/v2/payments/captures/{capture_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
     def refund_capture(
@@ -198,16 +198,16 @@ class PayPalToolSet:
         ``amount`` is ``{"value": "5.00", "currency_code": "USD"}``; omit
         it for a full refund. Always confirm with the user before calling.
         """
-        resolved = _coerce_id(capture_id, keys=("capture_id", "id"))
+        resolved = _coerce_id(capture_id, keys=('capture_id', 'id'))
         body: dict[str, Any] = {}
         if amount is not None:
-            body["amount"] = amount
+            body['amount'] = amount
         if note_to_payer is not None:
-            body["note_to_payer"] = note_to_payer
+            body['note_to_payer'] = note_to_payer
         if invoice_id is not None:
-            body["invoice_id"] = invoice_id
+            body['invoice_id'] = invoice_id
         return self._client.post(
-            f"/v2/payments/captures/{resolved}/refund",
+            f'/v2/payments/captures/{resolved}/refund',
             json=body or {},
         ).json()
 
@@ -215,8 +215,8 @@ class PayPalToolSet:
     def get_authorization(self, authorization_id: str) -> dict[str, Any]:
         """Return an authorization by ID."""
         if not authorization_id:
-            raise ValueError("authorization_id must be a non-empty string")
-        return self._client.get(f"/v2/payments/authorizations/{authorization_id}").json()
+            raise ValueError('authorization_id must be a non-empty string')
+        return self._client.get(f'/v2/payments/authorizations/{authorization_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
     def void_authorization(self, authorization_id: Any) -> dict[str, Any]:
@@ -227,12 +227,12 @@ class PayPalToolSet:
         :meth:`get_authorization`. Returns ``{"id": ..., "voided": True,
         "status": <http_status>}``.
         """
-        resolved = _coerce_id(authorization_id, keys=("authorization_id", "id"))
+        resolved = _coerce_id(authorization_id, keys=('authorization_id', 'id'))
         response = self._client.post(
-            f"/v2/payments/authorizations/{resolved}/void",
+            f'/v2/payments/authorizations/{resolved}/void',
             json={},
         )
-        return {"id": resolved, "voided": True, "status": response.status}
+        return {'id': resolved, 'voided': True, 'status': response.status}
 
     # MARK: - Subscriptions
 
@@ -250,27 +250,27 @@ class PayPalToolSet:
         subscription with approval ``links``.
         """
         if not plan_id:
-            raise ValueError("plan_id must be a non-empty string")
-        body: dict[str, Any] = {"plan_id": plan_id}
+            raise ValueError('plan_id must be a non-empty string')
+        body: dict[str, Any] = {'plan_id': plan_id}
         if subscriber is not None:
-            body["subscriber"] = subscriber
+            body['subscriber'] = subscriber
         if application_context is not None:
-            body["application_context"] = application_context
-        return self._client.post("/v1/billing/subscriptions", json=body).json()
+            body['application_context'] = application_context
+        return self._client.post('/v1/billing/subscriptions', json=body).json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_subscription(self, subscription_id: str) -> dict[str, Any]:
         """Return one subscription by ID."""
         if not subscription_id:
-            raise ValueError("subscription_id must be a non-empty string")
-        return self._client.get(f"/v1/billing/subscriptions/{subscription_id}").json()
+            raise ValueError('subscription_id must be a non-empty string')
+        return self._client.get(f'/v1/billing/subscriptions/{subscription_id}').json()
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE), destructive=True)
     def cancel_subscription(
         self,
         subscription_id: Any,
         *,
-        reason: str = "User canceled",
+        reason: str = 'User canceled',
     ) -> dict[str, Any]:
         """Cancel a subscription. Destructive — billing stops.
 
@@ -278,31 +278,31 @@ class PayPalToolSet:
         :meth:`get_subscription`. Always confirm with the user before
         calling.
         """
-        resolved = _coerce_id(subscription_id, keys=("subscription_id", "id"))
+        resolved = _coerce_id(subscription_id, keys=('subscription_id', 'id'))
         response = self._client.post(
-            f"/v1/billing/subscriptions/{resolved}/cancel",
-            json={"reason": reason},
+            f'/v1/billing/subscriptions/{resolved}/cancel',
+            json={'reason': reason},
         )
-        return {"id": resolved, "cancelled": True, "status": response.status}
+        return {'id': resolved, 'cancelled': True, 'status': response.status}
 
     @toolify(permissions=PermissionSet(PermissionFlag.WRITE))
     def suspend_subscription(
         self,
         subscription_id: Any,
         *,
-        reason: str = "Paused",
+        reason: str = 'Paused',
     ) -> dict[str, Any]:
         """Suspend a subscription (pausable, not destructive).
 
         Use :meth:`get_subscription` first to confirm state. Returns
         ``{"id": ..., "suspended": True, "status": <http_status>}``.
         """
-        resolved = _coerce_id(subscription_id, keys=("subscription_id", "id"))
+        resolved = _coerce_id(subscription_id, keys=('subscription_id', 'id'))
         response = self._client.post(
-            f"/v1/billing/subscriptions/{resolved}/suspend",
-            json={"reason": reason},
+            f'/v1/billing/subscriptions/{resolved}/suspend',
+            json={'reason': reason},
         )
-        return {"id": resolved, "suspended": True, "status": response.status}
+        return {'id': resolved, 'suspended': True, 'status': response.status}
 
     # MARK: - Disputes
 
@@ -321,40 +321,40 @@ class PayPalToolSet:
         unless ``include_ids=True``.
         """
         if page_size < 1 or page_size > 50:
-            raise ValueError("page_size must be between 1 and 50")
-        params: dict[str, Any] = {"page_size": page_size}
+            raise ValueError('page_size must be between 1 and 50')
+        params: dict[str, Any] = {'page_size': page_size}
         if status is not None:
-            params["dispute_state"] = status
-        raw_payload: Any = self._client.get("/v1/customer/disputes", params=params).json()
+            params['dispute_state'] = status
+        raw_payload: Any = self._client.get('/v1/customer/disputes', params=params).json()
         payload: dict[str, Any] = (
-            cast("dict[str, Any]", raw_payload) if isinstance(raw_payload, dict) else {}
+            cast('dict[str, Any]', raw_payload) if isinstance(raw_payload, dict) else {}
         )
-        items: list[Any] = payload.get("items", [])
+        items: list[Any] = payload.get('items', [])
         summaries: list[dict[str, Any]] = []
         for index, item in enumerate(items, start=1):
             if not isinstance(item, dict):
                 continue
-            item_dict = cast("dict[str, Any]", item)
+            item_dict = cast('dict[str, Any]', item)
             summary: dict[str, Any] = {
-                "dispute_ref": f"dispute_{index}",
-                "amount": _format_amount(item_dict.get("dispute_amount")),
-                "status": item_dict.get("status", ""),
-                "state": item_dict.get("dispute_state", ""),
-                "reason": item_dict.get("reason", ""),
-                "create_time": item_dict.get("create_time"),
-                "update_time": item_dict.get("update_time"),
+                'dispute_ref': f'dispute_{index}',
+                'amount': _format_amount(item_dict.get('dispute_amount')),
+                'status': item_dict.get('status', ''),
+                'state': item_dict.get('dispute_state', ''),
+                'reason': item_dict.get('reason', ''),
+                'create_time': item_dict.get('create_time'),
+                'update_time': item_dict.get('update_time'),
             }
             if include_ids:
-                summary["dispute_id"] = item_dict.get("dispute_id", "")
+                summary['dispute_id'] = item_dict.get('dispute_id', '')
             summaries.append(summary)
         return {
-            "disputes": summaries,
-            "links": payload.get("links"),
+            'disputes': summaries,
+            'links': payload.get('links'),
         }
 
     @toolify(permissions=PermissionSet(PermissionFlag.READ))
     def get_dispute(self, dispute_id: str) -> dict[str, Any]:
         """Return one dispute's full record by ID."""
         if not dispute_id:
-            raise ValueError("dispute_id must be a non-empty string")
-        return self._client.get(f"/v1/customer/disputes/{dispute_id}").json()
+            raise ValueError('dispute_id must be a non-empty string')
+        return self._client.get(f'/v1/customer/disputes/{dispute_id}').json()
